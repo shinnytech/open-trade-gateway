@@ -51,6 +51,7 @@
 *.log
 
 # Compiled document files
+_build
 /doc/tutorial/_templates
 /doc/tutorial/_build
 /doc/tutorial/_static
