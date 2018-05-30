@@ -30,3 +30,27 @@
 *.exe
 *.out
 *.app
+
+# Visual Studio files
+.vs
+*.suo
+*.psess
+*.vsp
+*.vspx
+*.aps
+*.ilk
+*.iobj
+*.ipdb
+/Debug
+/Release
+
+# Other Ide files
+.idea
+
+# Other files
+*.log
+
+# Compiled document files
+/doc/tutorial/_templates
+/doc/tutorial/_build
+/doc/tutorial/_static
