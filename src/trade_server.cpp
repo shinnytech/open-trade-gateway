@@ -60,10 +60,6 @@ TraderServer::~TraderServer()
 {
 }
 
-void TraderServer::SendJson(void* wsi, const std::string& utf8_msg)
-{
-}
-
 int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     void* user, void* in, size_t len)
 {
@@ -72,6 +68,7 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     case LWS_CALLBACK_ESTABLISHED:
         *pss = new std::string;
         m_send_queue[wsi] = std::list<std::string>();
+        OnNetworkConnected(wsi);
         break;
     case LWS_CALLBACK_CLOSED:
         break;
@@ -125,6 +122,21 @@ public:
     }
 };
 
+void TraderServer::OnNetworkConnected(struct lws* wsi)
+{
+    SerializerLogin ss;
+    rapidjson::Pointer("/aid").Set(*ss.m_doc, "rtn_brokers");
+    long long n = 0LL;
+    for(auto it = g_config.brokers.begin(); it!= g_config.brokers.end(); ++it){
+        std::string bid = it->first;
+        rapidjson::Pointer("/brokers/" + std::to_string(n)).Set(*ss.m_doc, bid);
+        n++;
+    }
+    std::string s;
+    ss.ToString(&s);
+    SendJson(wsi, s);
+}
+
 void TraderServer::OnNetworkInput(struct lws* wsi, const std::string& json)
 {
     SerializerLogin ss;
@@ -141,14 +153,10 @@ void TraderServer::OnNetworkInput(struct lws* wsi, const std::string& json)
             return;
         req.broker = broker->second;
         if (broker->second.broker_type == "ctp") {
-            m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(&TraderServer::OnTraderInput, this, wsi, std::placeholders::_1));
+            m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(&TraderServer::SendJson, this, wsi, std::placeholders::_1));
             m_trader_map[wsi]->Start(req);
         }
         return;
-        //if (aid == "req_login_femas_open")
-        //    m_trader_map[wsi] = new trader_dll::TraderFemasOpen();
-        //if (aid == "req_login_hs")
-        //    m_trader_map[wsi] = new trader_dll::TraderHs();
     }
     auto orign_trader = m_trader_map.find(wsi);
     if (orign_trader != m_trader_map.end())
@@ -165,7 +173,7 @@ void TraderServer::RemoveTrader(struct lws* wsi)
     }
 }
 
-void TraderServer::OnTraderInput(struct lws* wsi, const std::string& utf8_msg)
+void TraderServer::SendJson(struct lws* wsi, const std::string& utf8_msg)
 {
     if (utf8_msg.empty())
         return;

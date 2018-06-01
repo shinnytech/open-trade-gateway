@@ -39,8 +39,7 @@ Config
 -------------------------------------------------
 本系统运行需要两个配置文件:
 
-* config.json: 服务进程配置
-* brokers.json: 对接的期货公司交易系统前置机配置
+config.json 用于服务进程的一些配置项::
 
 .. code-block:: javascript
    :caption: config.json
@@ -50,11 +49,9 @@ Config
   "port": 7777
 }
 
-brokers.json 中可以设置一组或多组期货公司前置机
 
-.. code-block:: javascript
-   :caption: brokers.json
-   
+brokers.json 中可以设置一组或多组期货公司前置机::
+
 {
   "simnow": {
     "type": "ctp",
@@ -71,4 +68,16 @@ Run
 在命令行下运行服务器主程序::
 
   open_trade_gateway.exe
-  
+
+
+测试
+-------------------------------------------------
+主程序启动后，用任意websocket client 连接到服务端口，应该收到这样的信息::
+
+{
+  "aid": "rtn_brokers",
+  "brokers": ["simnow"]
+}
+
+表示服务器主程序启动正常
+
