@@ -137,7 +137,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>wldap32.lib;Ws2_32.lib;websockets_static.lib;libcrypto.lib;libssl.lib;Crypt32.lib;zlibstat.lib;USTPtraderapiFM.lib;t2sdk.lib;thosttraderapi.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ProgramDatabaseFile>$(ProjectDir)\..\pdb\$(TargetName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)\pdb\debug\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /E  /Y $(SolutionDir)\contrib\lib\*.dll $(SolutionDir)\bin\Debug\</Command>
@@ -175,7 +175,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>wldap32.lib;Ws2_32.lib;websockets_static.lib;libcrypto.lib;libssl.lib;Crypt32.lib;zlibstat.lib;USTPtraderapiFM.lib;t2sdk.lib;thosttraderapi.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ProgramDatabaseFile>$(ProjectDir)\..\pdb\$(TargetName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)\pdb\release\$(TargetName).pdb</ProgramDatabaseFile>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>

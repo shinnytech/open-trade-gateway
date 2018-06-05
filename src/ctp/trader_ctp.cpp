@@ -29,7 +29,6 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     //m_quotes_map = &(m_data.quotes);
     m_running = true;
     m_next_qry_dt = 0;
-    LoadFromFile();
 }
 
 TraderCtp::~TraderCtp(void)
@@ -71,6 +70,8 @@ void TraderCtp::OnInit()
     m_user_id = m_req_login.user_name;
     m_password = m_req_login.password;
     m_product_info = m_req_login.broker.product_info;
+    m_user_file_name = g_config.user_file_path + "/" + m_user_id;
+    LoadFromFile();
     m_api->Init();
 }
 
@@ -101,7 +102,6 @@ void TraderCtp::OnClientReqInsertOrder()
     m_api->ReqOrderInsert(&d.f, 0);
     char symbol[1024];
     sprintf_s(symbol, sizeof(symbol), "%s.%s", d.f.ExchangeID, d.f.InstrumentID);
-    //GetQuote(symbol);
     SaveToFile();
 }
 
@@ -233,28 +233,31 @@ void TraderCtp::UpdateUserData()
 
 void TraderCtp::SaveToFile()
 {
-    //OrderKeyFile kf;
-    //kf.trading_day = m_trading_day;
-    //for(auto it = m_ordermap_local_remote.begin(); it != m_ordermap_local_remote.end(); ++it){
-    //    OrderKeyPair item;
-    //    item.local_key = it->first;
-    //    item.remote_key = it->second;
-    //    kf.items.push_back(item);
-    //}
-    //std::string fn = GetRelativePath("config/cache/ctp");
-    //RapidSerialize::VarToJsonFile(kf, fn);
+    SerializerCtp s;
+    OrderKeyFile kf;
+    kf.trading_day = m_trading_day;
+    for(auto it = m_ordermap_local_remote.begin(); it != m_ordermap_local_remote.end(); ++it){
+        OrderKeyPair item;
+        item.local_key = it->first;
+        item.remote_key = it->second;
+        kf.items.push_back(item);
+    }
+    s.FromVar(kf);
+    s.ToFile(m_user_file_name.c_str());
 }
 
 void TraderCtp::LoadFromFile()
 {
-    //OrderKeyFile kf;
-    //std::string fn = GetRelativePath("config/cache/ctp");
-    //RapidSerialize::JsonFileToVar(kf, fn);
-    //for (auto it = kf.items.begin(); it != kf.items.end(); ++it){
-    //    m_ordermap_local_remote[it->local_key] = it->remote_key;
-    //    m_ordermap_remote_local[it->remote_key] = it->local_key;
-    //}
-    //m_trading_day = kf.trading_day;
+    SerializerCtp s;
+    if(s.FromFile(m_user_file_name.c_str())){
+        OrderKeyFile kf;
+        s.ToVar(kf);
+        for (auto it = kf.items.begin(); it != kf.items.end(); ++it) {
+            m_ordermap_local_remote[it->local_key] = it->remote_key;
+            m_ordermap_remote_local[it->remote_key] = it->local_key;
+        }
+        m_trading_day = kf.trading_day;
+    }
 }
 
 std::map<std::string, trader_dll::CtpPosition>& TraderCtp::GetPositions()

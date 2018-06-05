@@ -70,5 +70,6 @@ private:
     std::string m_trading_day;
     std::mutex m_ordermap_mtx;
     SerializerCtp ss;
+    std::string m_user_file_name;
 };
 }

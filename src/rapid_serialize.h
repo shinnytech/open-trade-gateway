@@ -116,7 +116,7 @@ public:
 
     bool ToFile(const char* json_file)
     {
-        FILE* fp = fopen(json_file, _T("wb")); // 非 Windows 平台使用 "w"
+        FILE* fp = fopen(json_file, "wb"); // 非 Windows 平台使用 "w"
         if (!fp)
             return false;
         char* writeBuffer = new char[65536];
