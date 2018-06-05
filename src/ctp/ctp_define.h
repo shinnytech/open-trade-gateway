@@ -598,6 +598,7 @@ public:
             AddItem(static_balance, "static_balance");
             double risk = (d.f->Balance - d.f->Available) / d.f->Balance;
             AddItem(risk, "risk_ratio");
+            AddItem(d.f->CashIn, "premium");
             AddItem(d.f->CurrMargin, "margin");
             AddItem(d.f->FrozenMargin, "frozen_margin");
             AddItem(d.f->FrozenCommission, "frozen_commission");
