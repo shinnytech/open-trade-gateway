@@ -41,27 +41,24 @@ Config
 
 config.json 用于服务进程的一些配置项::
 
-.. code-block:: javascript
-   :caption: config.json
-   
-{
-  "host": "127.0.0.1",
-  "port": 7777
-}
+    {
+      "host": "127.0.0.1",
+      "port": 7777
+    }
 
 
 brokers.json 中可以设置一组或多组期货公司前置机::
 
-{
-  "simnow": {
-    "type": "ctp",
-    "broker_id": "9999",
-    "product_info": "abcd",
-    "trading_fronts": [
-      "tcp://218.202.237.33:10002"
-    ]
-  }
-}
+    {
+      "simnow": {
+        "type": "ctp",
+        "broker_id": "9999",
+        "product_info": "abcd",
+        "trading_fronts": [
+          "tcp://218.202.237.33:10002"
+        ]
+      }
+    }
 
 Run
 -------------------------------------------------
@@ -74,10 +71,10 @@ Run
 -------------------------------------------------
 主程序启动后，用任意websocket client 连接到服务端口，应该收到这样的信息::
 
-{
-  "aid": "rtn_brokers",
-  "brokers": ["simnow"]
-}
+    {
+      "aid": "rtn_brokers",
+      "brokers": ["simnow"]
+    }
 
 表示服务器主程序启动正常
 
