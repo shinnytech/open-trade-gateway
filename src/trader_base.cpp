@@ -36,7 +36,8 @@ void TraderBase::Output(const std::string& json)
     //	f = fopen("c:\\tmp\\out.json", "wt");
     //fprintf(f, "%s\n", json.c_str());
     //fflush(f);
-    m_callback(json);
+    if(m_running)
+        m_callback(json);
 }
 
 #include <chrono>
@@ -71,7 +72,7 @@ void TraderBase::Release()
     m_worker_thread.join();
 }
 
-void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, const char* type)
+void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, const char* level, const char* type)
 {
     char* notify_template = "{"\
                                   "\"aid\": \"rtn_data\","\
@@ -80,12 +81,13 @@ void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, c
                                   "\"notify\":{"\
                                   "\"%d\": {"\
                                   "\"type\": \"%s\","\
+                                  "\"level\": \"%s\","\
                                   "\"code\": %d,"\
                                   "\"content\" : \"%s\""\
                                   "}}}]}";
     char buf[1024];
     static int notify_req = 0;
-    sprintf(buf, notify_template, notify_req++, type, notify_code, notify_msg.c_str());
+    sprintf(buf, notify_template, notify_req++, level, type, notify_code, notify_msg.c_str());
     Output(buf);
 }
 

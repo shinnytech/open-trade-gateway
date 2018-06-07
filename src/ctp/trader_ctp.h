@@ -61,6 +61,7 @@ private:
     void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, std::string* local_order_key);
     void FindLocalOrderId(const std::string& order_sys_id, std::string* local_order_key);
     void SetSession(std::string trading_day, int front_id, int session_id, int order_ref);
+    virtual void Release() override;
     int m_next_qry_dt;
     bool m_need_query_positions;
     bool m_need_query_account;

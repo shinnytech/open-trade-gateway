@@ -36,6 +36,9 @@
     <ClCompile Include="src\utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="contrib\include\ctp\ThostFtdcTraderApi.h" />
+    <ClInclude Include="contrib\include\ctp\ThostFtdcUserApiDataType.h" />
+    <ClInclude Include="contrib\include\ctp\ThostFtdcUserApiStruct.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\cpp_logger.h" />
     <ClInclude Include="src\ctp\ctp_define.h" />

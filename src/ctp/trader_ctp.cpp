@@ -285,7 +285,6 @@ void TraderCtp::OrderIdLocalToRemote(const std::string& local_order_key, RemoteO
         remote_order_key->order_ref = std::to_string(m_order_ref++);
         m_ordermap_local_remote[local_order_key] = *remote_order_key;
         m_ordermap_remote_local[*remote_order_key] = local_order_key;
-        it = m_ordermap_local_remote.find(local_order_key);
     } else {
         *remote_order_key = it->second;
     }
@@ -331,6 +330,12 @@ void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id
     m_front_id = front_id;
     m_session_id = session_id;
     m_order_ref = order_ref + 1;
+}
+
+void TraderCtp::Release()
+{
+    TraderBase::Release();
+    m_api->Release();
 }
 
 }

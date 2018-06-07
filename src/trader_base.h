@@ -32,10 +32,10 @@ class TraderBase
 public:
     TraderBase(std::function<void(const std::string&)> callback);
     virtual ~TraderBase();
-    void Start(const ReqLogin& req_login);
-    void Release();
+    virtual void Start(const ReqLogin& req_login);
+    virtual void Release();
     void Input(const std::string& json);
-    void OutputNotify(long notify_class_id, const std::string& ret_msg, const char* type = "MESSAGE");
+    void OutputNotify(long notify_class_id, const std::string& ret_msg, const char* level = "INFO", const char* type = "MESSAGE");
 
 protected:
     virtual void OnInit() {};

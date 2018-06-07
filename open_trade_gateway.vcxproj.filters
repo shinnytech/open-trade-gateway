@@ -84,6 +84,15 @@
     <ClInclude Include="src\utility.h">
       <Filter>base</Filter>
     </ClInclude>
+    <ClInclude Include="contrib\include\ctp\ThostFtdcTraderApi.h">
+      <Filter>ctp</Filter>
+    </ClInclude>
+    <ClInclude Include="contrib\include\ctp\ThostFtdcUserApiDataType.h">
+      <Filter>ctp</Filter>
+    </ClInclude>
+    <ClInclude Include="contrib\include\ctp\ThostFtdcUserApiStruct.h">
+      <Filter>ctp</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="doc\todo.txt" />
