@@ -162,6 +162,7 @@ void CCtpSpiHandler::OutputPack(CtpRtnDataPack& pack)
     SerializerCtp ss;
     ss.FromVar(pack);
     ss.ToString(&json_str);
+    m_trader->Input(json_str);
     m_trader->Output(json_str);
 }
 
