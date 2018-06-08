@@ -93,8 +93,14 @@
     <ClInclude Include="contrib\include\ctp\ThostFtdcUserApiStruct.h">
       <Filter>ctp</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="doc\todo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="open_trade_gateway.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
