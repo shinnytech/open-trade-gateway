@@ -1,6 +1,6 @@
 Introduction
 =================================================
-Open Trade Gateway 是一套主要用于期货交易的中继服务器系统. 它可以接受客户端以 `DIFF协议 (Differential Information Flow for Finance) <https://github.com/shinnytech/diff>`_  接入, 完成用户终端与常见期货柜台系统的数据交互.
+Open Trade Gateway 是一套主要用于期货交易的中继服务器系统. 它可以接受客户端以 `DIFF协议 (Differential Information Flow for Finance) <https://github.com/shinnytech/diff>`_  接入, 完成用户终端与期货柜台系统的数据交互.
 
 本项目目前支持的期货交易柜台系统包括:
 
@@ -8,33 +8,20 @@ Open Trade Gateway 是一套主要用于期货交易的中继服务器系统. �
 * Femas 主席系统 (测试中)
 * 恒生 UFX 系统 (测试中)
 
-可以通过 `DIFF协议 <https://github.com/shinnytech/diff>`_ 接入本系统的终端产品包括:
-
-* `Shinny Future Android <https://github.com/shinnytech/shinny-futures-android>`_ : 一个开源的 android 平台期货行情交易终端
-* `天勤衍生品研究终端 <http://www.tq18.cn>`_ : 一套免费的PC行情交易终端, 支持以 DIFF 协议进行扩展开发.
-* `Tianqin Python Sdk <https://github.com/tianqin18/tqsdk-python>`_ : 一套开源的 python 框架, 
+`DIFF Collection <https://shinnytech.github.io/>`_ 中列出了一些支持本系统的终端产品
 
 
 Install
 -------------------------------------------------
 安装前准备:
 
-* 编译器：Microsoft Visual Studio 2015 或 2017
-* 运行环境：Microsoft Windows Server 2008/2012 或 Windows 7/8/10
+    Microsoft Windows Server 2008/2012 或 Windows 7/8/10
 
-从github下载 本项目代码::
+下载本项目运行包，解压::
 
-    git clone https://github.com/shinnytech/open-trade-gateway.git
+    https://github.com/shinnytech/open-trade-gateway/releases
 
-编译::
-
-    用 Microsoft Visual Studio 打开 open_trade_gateway.sln, 编译 release 版本
-
-安装::
-
-    将 bin/release 目录下所有内容复制到准备运行的服务器上
-
-
+    
 Config
 -------------------------------------------------
 本系统运行需要两个配置文件:
@@ -42,8 +29,9 @@ Config
 config.json 用于服务进程的一些配置项::
 
     {
-      "host": "127.0.0.1",
-      "port": 7777
+      "host": "127.0.0.1",                          //提供服务的IP地址
+      "port": 7777,                                 //提供服务的端口号
+      "user_file_path": "c:\\tmp"                   //存放用户文件的目录，必须事先创建好
     }
 
 
@@ -51,10 +39,10 @@ brokers.json 中可以设置一组或多组期货公司前置机::
 
     {
       "simnow": {
-        "type": "ctp",
-        "broker_id": "9999",
+        "type": "ctp",                              //交易系统类型
+        "broker_id": "9999",                        //broker_id, 必须与交易系统中的设置一致
         "product_info": "abcd",
-        "trading_fronts": [
+        "trading_fronts": [                         //交易前置机地址
           "tcp://218.202.237.33:10002"
         ]
       }
@@ -67,7 +55,7 @@ Run
   open_trade_gateway.exe
 
 
-测试
+Test
 -------------------------------------------------
 主程序启动后，用任意websocket client 连接到服务端口，应该收到这样的信息::
 
@@ -77,4 +65,19 @@ Run
     }
 
 表示服务器主程序启动正常
+
+
+Compile
+-------------------------------------------------
+编译前准备::
+
+    Microsoft Visual Studio 2015 或 2017
+
+从github下载 本项目代码::
+
+    git clone https://github.com/shinnytech/open-trade-gateway.git
+
+编译::
+
+    用 Microsoft Visual Studio 打开 open_trade_gateway.sln, 编译 release 版本
 
