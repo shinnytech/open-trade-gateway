@@ -74,7 +74,10 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
         break;
     case LWS_CALLBACK_WSI_DESTROY:
         RemoveTrader(wsi);
-        delete (*pss);
+        if(pss && *pss){
+            delete (*pss);
+            *pss = NULL;
+        }
         break;
     case LWS_CALLBACK_SERVER_WRITEABLE: {
         std::lock_guard<std::mutex> lck(m_mtx);

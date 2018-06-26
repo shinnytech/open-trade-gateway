@@ -97,6 +97,8 @@ public:
         typedef rapidjson::EncodedInputStream<rapidjson::UTF8<>, rapidjson::StringStream> InputStream;
         InputStream os(buffer);
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
+        if (m_doc->HasParseError())
+            return false;
         return true;
     }
 
@@ -111,6 +113,8 @@ public:
         InputStream os(is);
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
         delete[] readBuffer;
+        if (m_doc->HasParseError())
+            return false;
         return true;
     }
 
@@ -415,12 +419,14 @@ public:
         auto orign_current_node = m_current_node;
         m_current_node = &node;
         if (is_save) {
-            node.SetObject();
+            m_current_node->SetObject();
             static_cast<TSerializer*>(this)->DefineStruct(data);
             m_current_node = orign_current_node;
             return false;
         } else {
             m_deleted = false;
+            if (!m_current_node->IsObject())
+                return false;
             static_cast<TSerializer*>(this)->DefineStruct(data);
             m_current_node = orign_current_node;
             if (m_deleted)
