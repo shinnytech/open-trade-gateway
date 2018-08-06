@@ -1,6 +1,6 @@
 Introduction
 =================================================
-Open Trade Gateway 是一套主要用于期货交易的中继服务器系统. 它可以接受客户端以 `DIFF协议 (Differential Information Flow for Finance) <http://doc.shinnytech.com/diff/index.html>`_  接入, 完成用户终端与期货柜台系统的数据交互.
+Open Trade Gateway 是一套主要用于期货交易的中继服务器系统. 它可以接受客户端以 `DIFF协议 (Differential Information Flow for Finance) <http://doc.shinnytech.com/diff/latest/index.html>`_  接入, 完成用户终端与期货柜台系统的数据交互.
 
 本项目目前支持的期货交易柜台系统包括:
 
