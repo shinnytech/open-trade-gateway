@@ -100,12 +100,18 @@
     <ClInclude Include="src\http.h">
       <Filter>base</Filter>
     </ClInclude>
+    <ClInclude Include="src\version.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="doc\todo.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="open_trade_gateway.rc">
+    <ResourceCompile Include="src\open_trade_gateway.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

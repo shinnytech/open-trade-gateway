@@ -51,16 +51,18 @@
     <ClInclude Include="src\http.h" />
     <ClInclude Include="src\numset.h" />
     <ClInclude Include="src\rapid_serialize.h" />
+    <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\trader_base.h" />
     <ClInclude Include="src\trade_server.h" />
     <ClInclude Include="src\utility.h" />
+    <ClInclude Include="src\version.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="doc\todo.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="open_trade_gateway.rc" />
+    <ResourceCompile Include="src\open_trade_gateway.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
