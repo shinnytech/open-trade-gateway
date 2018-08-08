@@ -91,9 +91,9 @@ public:
         return true;
     }
     
-    bool FromString(const std::string& json_utf8_string)
+    bool FromString(const char* json_utf8_string)
     {
-        rapidjson::StringStream buffer(json_utf8_string.c_str());
+        rapidjson::StringStream buffer(json_utf8_string);
         typedef rapidjson::EncodedInputStream<rapidjson::UTF8<>, rapidjson::StringStream> InputStream;
         InputStream os(buffer);
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);

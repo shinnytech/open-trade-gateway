@@ -22,7 +22,7 @@ class TraderCtp
 public:
     TraderCtp(std::function<void(const std::string&)> callback);
     virtual ~TraderCtp();
-    virtual void ProcessInput(const std::string& json_str) override;
+    virtual void ProcessInput(const char* json_str) override;
 
 private:
     friend class CCtpSpiHandler;

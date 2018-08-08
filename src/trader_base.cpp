@@ -52,7 +52,7 @@ void TraderBase::Run()
         lck.unlock();
         while (!m_processing_in_queue.empty()) {
             auto& f = m_processing_in_queue.front();
-            ProcessInput(f);
+            ProcessInput(f.c_str());
             m_processing_in_queue.pop();
         }
         OnIdle();

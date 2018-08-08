@@ -37,7 +37,7 @@ TraderCtp::~TraderCtp(void)
         m_api->Release();
 }
 
-void TraderCtp::ProcessInput(const std::string& json_str)
+void TraderCtp::ProcessInput(const char* json_str)
 {
     if (!ss.FromString(json_str))
         return;

@@ -40,7 +40,7 @@ public:
 protected:
     virtual void OnInit() {};
     virtual void OnIdle() {};
-    virtual void ProcessInput(const std::string& msg) = 0;
+    virtual void ProcessInput(const char* msg) = 0;
     void Output(const std::string& json);
     void Run();
 
