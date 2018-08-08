@@ -25,6 +25,7 @@
     <ClCompile Include="src\ctp\trader_ctp.cpp" />
     <ClCompile Include="src\datetime.cpp" />
     <ClCompile Include="src\encoding.cpp" />
+    <ClCompile Include="src\http.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\numset.cpp" />
     <ClCompile Include="src\stdafx.cpp">
@@ -47,6 +48,7 @@
     <ClInclude Include="src\ctp\trader_ctp.h" />
     <ClInclude Include="src\datetime.h" />
     <ClInclude Include="src\encoding.h" />
+    <ClInclude Include="src\http.h" />
     <ClInclude Include="src\numset.h" />
     <ClInclude Include="src\rapid_serialize.h" />
     <ClInclude Include="src\stdafx.h" />
@@ -136,14 +138,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>wldap32.lib;Ws2_32.lib;websockets_static.lib;libcrypto.lib;libssl.lib;Crypt32.lib;zlibstat.lib;USTPtraderapiFM.lib;t2sdk.lib;thosttraderapi.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>wldap32.lib;Ws2_32.lib;websockets_static.lib;libcrypto.lib;libssl.lib;Crypt32.lib;zlibstat.lib;USTPtraderapiFM.lib;t2sdk.lib;thosttraderapi.lib;Psapi.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(ProjectDir)\pdb\debug\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
@@ -172,7 +174,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -181,7 +183,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>wldap32.lib;Ws2_32.lib;websockets_static.lib;libcrypto.lib;libssl.lib;Crypt32.lib;zlibstat.lib;USTPtraderapiFM.lib;t2sdk.lib;thosttraderapi.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>wldap32.lib;Ws2_32.lib;websockets_static.lib;libcrypto.lib;libssl.lib;Crypt32.lib;zlibstat.lib;USTPtraderapiFM.lib;t2sdk.lib;thosttraderapi.lib;Psapi.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(ProjectDir)\pdb\release\$(TargetName).pdb</ProgramDatabaseFile>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
