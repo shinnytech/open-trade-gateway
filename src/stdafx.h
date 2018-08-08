@@ -70,6 +70,7 @@
 
 #include <atlstr.h>
 #include <atlwin.h>
+#include "cpp_logger.h"
 
 #undef min
 #undef max
