@@ -10,6 +10,10 @@
 #include "../datetime.h"
 #include "../rapid_serialize.h"
 
+namespace md_service {
+struct Instrument;
+}
+
 namespace trader_dll
 {
 
@@ -19,21 +23,19 @@ struct CtpAccount {
         balance = 0;
         available = 0;
         need_query = false;
-        changed = true;
     }
     double position_profit;
     double balance;
     double available;
     double risk_ratio;
     bool need_query;
-    bool changed;
 };
 
 struct CtpPosition
 {
     CtpPosition() {
         need_query = false;
-        changed = true;
+        ins = NULL;
     }
     //std::string symbol;
     std::string e_ins_id;
@@ -68,7 +70,7 @@ struct CtpPosition
         return volume_short_today + volume_short_his;
     }
     bool need_query;
-    bool changed;
+    md_service::Instrument* ins;
 };
 
 struct CtpOrder {
@@ -319,7 +321,6 @@ public:
             AddItem(d.open_cost_short, "open_cost_short");
             AddItem(d.position_cost_long, "position_cost_long");
             AddItem(d.position_cost_short, "position_cost_short");
-            d.changed = true;
         }
     }
 
@@ -334,31 +335,14 @@ public:
             AddItem(d.position_profit, "position_profit");
             AddItem(d.balance, "balance");
             AddItem(d.available, "available");
-            d.changed = true;
         }
     }
 
     void DefineStruct(trader_dll::TradeData& d)
     {
         if (is_save) {
-            d.m_changed_accounts.clear();
-            for (auto it = d.m_accounts.begin(); it != d.m_accounts.end(); ++it) {
-                if (it->second.changed) {
-                    d.m_changed_accounts[it->first] = it->second;
-                    it->second.changed = false;
-                }
-            }
-            d.m_changed_positions.clear();
-            for (auto it = d.m_positions.begin(); it != d.m_positions.end(); ++it) {
-                if (it->second.changed) {
-                    d.m_changed_positions[it->first] = it->second;
-                    it->second.changed = false;
-                }
-            }
-            if (!d.m_changed_accounts.empty())
-                AddItem(d.m_changed_accounts, "accounts");
-            if (!d.m_changed_positions.empty())
-                AddItem(d.m_changed_positions, "positions");
+            AddItem(d.m_accounts, "accounts");
+            AddItem(d.m_positions, "positions");
         } else {
             AddItem(d.m_accounts, "accounts");
             AddItem(d.m_positions, "positions");
@@ -368,12 +352,7 @@ public:
 
     void DefineStruct(trader_dll::RtnData& d)
     {
-        if (is_save) {
-            AddItem(d.trade, "trade");
-        } else {
-            AddItem(d.trade, "trade");
-            //AddItem(d.quotes, "quotes");
-        }
+        AddItem(d.trade, "trade");
     }
 
     void DefineStruct(trader_dll::RtnDataPack& d)

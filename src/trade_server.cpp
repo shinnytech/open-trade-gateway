@@ -10,6 +10,7 @@
 #include "config.h"
 #include "rapid_serialize.h"
 #include "libwebsockets/libwebsockets.h"
+#include "md_service.h"
 #include "trader_base.h"
 #include "ctp/trader_ctp.h"
 
@@ -101,7 +102,7 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
         memcpy((void*)((*pss)->data() + orign_len), in, len);
         int final = lws_is_final_fragment(wsi);
         if (final) {
-            OnNetworkInput(wsi, **pss);
+            OnNetworkInput(wsi, (*pss)->c_str());
             (*pss)->clear();
         }
         DASSERT((*pss)->length() < 8 * 1024 * 1024);
@@ -140,7 +141,7 @@ void TraderServer::OnNetworkConnected(struct lws* wsi)
     SendJson(wsi, s);
 }
 
-void TraderServer::OnNetworkInput(struct lws* wsi, const std::string& json)
+void TraderServer::OnNetworkInput(struct lws* wsi, const char* json)
 {
     SerializerLogin ss;
     if (!ss.FromString(json))
@@ -190,9 +191,14 @@ void TraderServer::SendJson(struct lws* wsi, const std::string& utf8_msg)
 
 void TraderServer::Run()
 {
+    //加载合约文件
+    if (!md_service::Init())
+        return;
+    //提供交易服务
     while (true) {
         lws_service(ws_context, 10);
-        //lws_callback_on_writable_all_protocol(ws_context, &protocols[0]);
     }
+    //服务结束
+    md_service::CleanUp();
     lws_context_destroy(ws_context);
 }

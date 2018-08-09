@@ -20,7 +20,7 @@ public:
 
 private:
     void OnNetworkConnected(struct lws* wsi);
-    void OnNetworkInput(struct lws* wsi, const std::string& req_json);
+    void OnNetworkInput(struct lws* wsi, const char* req_json);
 
     void RemoveTrader(struct lws* wsi);
 

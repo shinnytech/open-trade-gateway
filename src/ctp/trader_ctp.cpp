@@ -12,7 +12,7 @@
 #include "ctp/ThostFtdcTraderApi.h"
 #include "../rapid_serialize.h"
 #include "../numset.h"
-
+#include "../md_service.h"
 
 
 namespace trader_dll
@@ -26,7 +26,6 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     m_front_id = 0;
     m_session_id = 0;
     m_order_ref = 0;
-    //m_quotes_map = &(m_data.quotes);
     m_running = true;
     m_next_qry_dt = 0;
 }
@@ -49,6 +48,8 @@ void TraderCtp::ProcessInput(const char* json_str)
         OnClientReqInsertOrder();
     } else if (aid == "cancel_order") {
         OnClientReqCancelOrder();
+    } else if (aid == "peek_message") {
+        OnClientPeekMessage();
     } else if (aid == "rtn_data") {
         OnRtnData();
     }
@@ -163,14 +164,7 @@ void TraderCtp::ReqConfirmSettlement()
 
 void TraderCtp::OnIdle()
 {
-    /*
-    有空的时候就要做的几件事情:
-        标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
-        标记为需通知主程序的项, 如果知道现在处于一波的结束位置, 应该向主程序推送
-    */
-    // 检查是否有需要向主程序发送的
-    UpdateUserData();
-    // 检查是否需要发持仓查询请求
+    //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
     int now = GetTickCount();
     if (m_need_query_account && m_next_qry_dt < now) {
         if (ReqQryAccount() == 0) {
@@ -196,39 +190,43 @@ void TraderCtp::OnIdle()
     }
 }
 
-/*
-处理行情变更时,需要更新持仓盈亏和对应账户资金的包
-*/
-void TraderCtp::UpdateUserData()
+void TraderCtp::OnClientPeekMessage()
 {
-    bool pos_changed = false;
+    //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
     double total_float_profit = 0;
     auto& positions = GetPositions();
     for (auto it = positions.begin(); it != positions.end(); ++it) {
         CtpPosition& ps = it->second;
+        if (!ps.ins)
+            ps.ins = md_service::GetInstrument(ps.e_symbol);
+        if (ps.ins) {
+            ps.position_profit_long = ps.ins->last_price * ps.volume_long() * ps.ins->volume_multiple - ps.position_cost_long;
+            ps.position_profit_short = ps.position_cost_short - ps.ins->last_price * ps.volume_short() * ps.ins->volume_multiple;
+            ps.float_profit_long = ps.ins->last_price * ps.volume_long() * ps.ins->volume_multiple - ps.open_cost_long;
+            ps.float_profit_short = ps.open_cost_short - ps.ins->last_price * ps.volume_short() * ps.ins->volume_multiple;
+        }
         if (IsValid(ps.position_profit()))
             total_position_profit += ps.position_profit();
         if (IsValid(ps.float_profit()))
             total_float_profit += ps.float_profit();
-        ps.changed = true;
     }
+    //重算资金账户
     CtpAccount& acc = GetAccount();
-    if (pos_changed || acc.changed) {
-        double dv = total_position_profit - acc.position_profit;
-        acc.position_profit = total_position_profit;
-        acc.available += dv;
-        acc.balance += dv;
-        if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
-            acc.risk_ratio = 1.0 - acc.available / acc.balance;
-        else
-            acc.risk_ratio = NAN;
-        acc.changed = true;
-        std::string json_str;
-        SerializerCtp nss;
-        nss.FromVar(m_data_pack);
-        nss.ToString(&json_str);
-    }
+    double dv = total_position_profit - acc.position_profit;
+    acc.position_profit = total_position_profit;
+    acc.available += dv;
+    acc.balance += dv;
+    if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
+        acc.risk_ratio = 1.0 - acc.available / acc.balance;
+    else
+        acc.risk_ratio = NAN;
+    //向客户端发送账户信息
+    std::string json_str;
+    SerializerCtp nss;
+    nss.FromVar(m_data_pack);
+    nss.ToString(&json_str);
+    Output(json_str);
 }
 
 void TraderCtp::SaveToFile()

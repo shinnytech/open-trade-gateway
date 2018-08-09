@@ -31,13 +31,13 @@ private:
 
     void OnClientReqInsertOrder();
     void OnClientReqCancelOrder();
+    void OnClientPeekMessage();
     void OnRtnData();
 
     void SendLoginRequest();
     int ReqQryAccount();
     int ReqQryPosition();
     void ReqConfirmSettlement();
-    void UpdateUserData();
 
     void LoadFromFile();
     void SaveToFile();
