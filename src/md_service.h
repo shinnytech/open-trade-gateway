@@ -30,6 +30,7 @@ const int kExchangeCzce = 0x00000004;
 const int kExchangeDce = 0x00000008;
 const int kExchangeIne = 0x00000010;
 const int kExchangeKq = 0x00000020;
+const int kExchangeSswe = 0x00000040;
 const int kExchangeUser = 0x10000000;
 const int kExchangeAll = 0xFFFFFFFF;
 

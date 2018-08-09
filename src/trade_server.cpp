@@ -111,24 +111,9 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     return 0;
 }
 
-class SerializerLogin
-    : public RapidSerialize::Serializer<SerializerLogin>
-{
-public:
-    using RapidSerialize::Serializer<SerializerLogin>::Serializer;
-
-    void DefineStruct(ReqLogin& d)
-    {
-        AddItem(d.aid, "aid");
-        AddItem(d.bid, "bid");
-        AddItem(d.user_name, "user_name");
-        AddItem(d.password, "password");
-    }
-};
-
 void TraderServer::OnNetworkConnected(struct lws* wsi)
 {
-    SerializerLogin ss;
+    trader_dll::SerializerTradeBase ss;
     rapidjson::Pointer("/aid").Set(*ss.m_doc, "rtn_brokers");
     long long n = 0LL;
     for(auto it = g_config.brokers.begin(); it!= g_config.brokers.end(); ++it){
@@ -143,10 +128,10 @@ void TraderServer::OnNetworkConnected(struct lws* wsi)
 
 void TraderServer::OnNetworkInput(struct lws* wsi, const char* json)
 {
-    SerializerLogin ss;
+    trader_dll::SerializerTradeBase ss;
     if (!ss.FromString(json))
         return;
-    ReqLogin req;
+    trader_dll::ReqLogin req;
     ss.ToVar(req);
     if (req.aid == "req_login") {
         if (m_trader_map.find(wsi) != m_trader_map.end()) {

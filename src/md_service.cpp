@@ -47,6 +47,7 @@ public:
             { kExchangeCffex, ("CFFEX") },
             { kExchangeIne, ("INE") },
             { kExchangeKq, ("KQ") },
+            { kExchangeSswe, ("SSWE") },
             });
         AddItemEnum(d.product_class, ("class"), {
             { kProductClassFutures, ("FUTURE") },

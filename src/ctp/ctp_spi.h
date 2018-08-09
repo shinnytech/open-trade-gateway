@@ -12,7 +12,6 @@
 namespace trader_dll
 {
 
-struct CtpRtnDataPack;
 class TraderCtp;
 
 
@@ -25,18 +24,6 @@ public:
     {
     }
 
-private:
-    void OutputPack(CtpRtnDataPack& pack);
-    TraderCtp* m_trader;
-    std::map<std::string, CtpRtnTradeUnit> m_trade_units;
-    std::map<std::string, int> m_order_volume;
-    void ProcessUnitTrade(std::map<std::string, CtpRtnTradeUnit>* units, std::string unit_id, std::string symbol, long direction, long offset, int volume, double price);
-    void ProcessOrder(std::map<std::string, CtpRtnTradeUnit>* units, std::string order_id, std::string symbol, long direction, long offset, int volume);
-    void ProcessUnitOrder(std::map<std::string, CtpRtnTradeUnit>* units, std::string unit_id, std::string symbol, long direction, long offset, int volume_change);
-    int GetOrderChangeVolume(std::string order_id, int current_volume);
-    void ProcessTrade(std::map<std::string, CtpRtnTradeUnit>* units, std::string order_id, std::string symbol, long direction, long offset, int volume, double price);
-
-public:
     ///当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用。
     virtual void OnFrontConnected();
 
@@ -72,6 +59,9 @@ public:
 
     ///成交通知
     virtual void OnRtnTrade(CThostFtdcTradeField* pTrade);
+
+private:
+    TraderCtp * m_trader;
 };
 
 }

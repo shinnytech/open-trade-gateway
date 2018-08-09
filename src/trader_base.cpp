@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include "trader_base.h"
-
+#include "md_service.h"
 
 namespace trader_dll
 {
@@ -23,7 +23,7 @@ TraderBase::~TraderBase()
 void TraderBase::Input(const std::string& json)
 {
     {
-        std::lock_guard<std::mutex> lck(m_mtx);
+        std::lock_guard<std::mutex> lck(m_input_mtx);
         m_in_queue.push(json);
     }
     m_cv.notify_all();
@@ -46,7 +46,7 @@ void TraderBase::Run()
 {
     OnInit();
     while (m_running) {
-        std::unique_lock<std::mutex> lck(m_mtx);
+        std::unique_lock<std::mutex> lck(m_input_mtx);
         m_cv.wait_for(lck, 100ms, [=] {return (!m_in_queue.empty()); });
         m_processing_in_queue.swap(m_in_queue);
         lck.unlock();
@@ -59,10 +59,32 @@ void TraderBase::Run()
     }
 }
 
+trader_dll::Account& TraderBase::GetAccount(const std::string account_key)
+{
+    return m_data.m_accounts[account_key];
+}
+
+trader_dll::Position& TraderBase::GetPosition(const std::string position_key)
+{
+    return m_data.m_positions[position_key];
+}
+
+trader_dll::Order& TraderBase::GetOrder(const std::string order_key)
+{
+    return m_data.m_orders[order_key];
+}
+
+trader_dll::Trade& TraderBase::GetTrade(const std::string trade_key)
+{
+    return m_data.m_trades[trade_key];
+}
+
 void TraderBase::Start(const ReqLogin& req_login)
 {
     m_running = true;
     m_req_login = req_login;
+    m_user_id = m_req_login.user_name;
+    m_data.user_id = m_user_id;
     m_worker_thread = std::thread(std::bind(&TraderBase::Run, this));
 }
 
@@ -89,6 +111,293 @@ void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, c
     static int notify_req = 0;
     sprintf(buf, notify_template, notify_req++, level, type, notify_code, notify_msg.c_str());
     Output(buf);
+}
+
+void SerializerTradeBase::DefineStruct(ReqLogin& d)
+{
+    AddItem(d.aid, "aid");
+    AddItem(d.bid, "bid");
+    AddItem(d.user_name, "user_name");
+    AddItem(d.password, "password");
+}
+
+void SerializerTradeBase::DefineStruct(Bank& d)
+{
+    AddItem(d.bank_id, ("id"));
+    AddItem(d.bank_brch_id, ("brch_id"));
+    AddItem(d.bank_name, ("name"));
+    AddItem(d.bank_account, ("account"));
+}
+
+void SerializerTradeBase::DefineStruct(TransferLog& d)
+{
+    AddItem(d.seq_no, ("seq_no"));
+    AddItem(d.bank_account, ("bank_account"));
+    AddItem(d.trade_type, ("trade_type"));
+    AddItem(d.amount, ("amount"));
+    AddItem(d.datetime, ("datetime"));
+    AddItem(d.memo, ("memo"));
+}
+
+void SerializerTradeBase::DefineStruct(User& d)
+{
+    AddItem(d.user_id, ("user_id"));
+    AddItem(d.m_banks, ("banks"));
+    AddItem(d.m_accounts, ("accounts"));
+    AddItem(d.m_positions, ("positions"));
+    AddItem(d.m_orders, ("orders"));
+    AddItem(d.m_trades, ("trades"));
+    AddItem(d.m_transfers, ("transfers"));
+}
+
+void SerializerTradeBase::DefineStruct(Notify& d)
+{
+    AddItemEnum(d.type, ("type"), {
+        { kNotifyTypeMessage, ("MESSAGE") },
+        { kNotifyTypeText, ("TEXT") },
+        });
+    AddItem(d.code, ("code"));
+    AddItem(d.content, ("content"));
+}
+
+void SerializerTradeBase::DefineStruct(Account& d)
+{
+    AddItem(d.account_id, ("account_id"));
+    AddItem(d.currency, ("currency"));
+
+    AddItem(d.pre_balance, ("pre_balance"));
+
+    AddItem(d.deposit, ("deposit"));
+    AddItem(d.withdraw, ("withdraw"));
+    AddItem(d.close_profit, ("close_profit"));
+    AddItem(d.commission, ("commission"));
+    AddItem(d.premium, ("premium"));
+    AddItem(d.static_balance, ("static_balance"));
+
+    AddItem(d.position_profit, ("position_profit"));
+    AddItem(d.float_profit, ("float_profit"));
+
+    AddItem(d.balance, ("balance"));
+
+    AddItem(d.margin, ("margin"));
+    AddItem(d.frozen_margin, ("frozen_margin"));
+    AddItem(d.frozen_commission, ("frozen_commission"));
+    AddItem(d.frozen_premium, ("frozen_premium"));
+    AddItem(d.available, ("available"));
+    AddItem(d.risk_ratio, ("risk_ratio"));
+}
+
+void SerializerTradeBase::DefineStruct(Position& d)
+{
+    AddItem(d.exchange_id, ("exchange_id"));
+    AddItem(d.instrument_id, ("instrument_id"));
+
+    AddItem(d.volume_long_today, ("volume_long_today"));
+    AddItem(d.volume_long_his, ("volume_long_his"));
+    AddItem(d.volume_long, ("volume_long"));
+    AddItem(d.volume_long_frozen_today, ("volume_long_frozen_today"));
+    AddItem(d.volume_long_frozen_his, ("volume_long_frozen_his"));
+    AddItem(d.volume_short_today, ("volume_short_today"));
+    AddItem(d.volume_short_his, ("volume_short_his"));
+    AddItem(d.volume_short, ("volume_short"));
+    AddItem(d.volume_short_frozen_today, ("volume_short_frozen_today"));
+    AddItem(d.volume_short_frozen_his, ("volume_short_frozen_his"));
+
+    AddItem(d.open_price_long, ("open_price_long"));
+    AddItem(d.open_price_short, ("open_price_short"));
+    AddItem(d.open_cost_long, ("open_cost_long"));
+    AddItem(d.open_cost_short, ("open_cost_short"));
+    AddItem(d.position_price_long, ("position_price_long"));
+    AddItem(d.position_price_short, ("position_price_short"));
+    AddItem(d.position_cost_long, ("position_cost_long"));
+    AddItem(d.position_cost_short, ("position_cost_short"));
+    AddItem(d.last_price, ("last_price"));
+    AddItem(d.float_profit_long, ("float_profit_long"));
+    AddItem(d.float_profit_short, ("float_profit_short"));
+    AddItem(d.float_profit, ("float_profit"));
+    AddItem(d.position_profit_long, ("position_profit_long"));
+    AddItem(d.position_profit_short, ("position_profit_short"));
+    AddItem(d.position_profit, ("position_profit"));
+
+    AddItem(d.margin_long, ("margin_long"));
+    AddItem(d.margin_short, ("margin_short"));
+    AddItem(d.margin, ("margin"));
+}
+
+void SerializerTradeBase::DefineStruct(Order& d)
+{
+    AddItem(d.order_id, ("order_id"));
+    AddItem(d.exchange_id, ("exchange_id"));
+    AddItem(d.instrument_id, ("instrument_id"));
+    AddItemEnum(d.direction, ("direction"), {
+        { kDirectionBuy, ("BUY") },
+        { kDirectionSell, ("SELL") },
+        });
+    AddItemEnum(d.offset, ("offset"), {
+        { kOffsetOpen, ("OPEN") },
+        { kOffsetClose, ("CLOSE") },
+        { kOffsetCloseToday, ("CLOSETODAY") },
+        });
+    AddItem(d.volume_orign, ("volume_orign"));
+    AddItemEnum(d.price_type, ("price_type"), {
+        { kPriceTypeLimit, ("LIMIT") },
+        { kPriceTypeAny, ("ANY") },
+        { kPriceTypeBest, ("BEST") },
+        { kPriceTypeFiveLevel, ("FIVELEVEL") },
+        });
+    AddItem(d.limit_price, ("limit_price"));
+    AddItemEnum(d.time_condition, ("time_condition"), {
+        { kOrderTimeConditionIOC, ("IOC") },
+        { kOrderTimeConditionGFS, ("GFS") },
+        { kOrderTimeConditionGFD, ("GFD") },
+        { kOrderTimeConditionGTD, ("GTD") },
+        { kOrderTimeConditionGTC, ("GTC") },
+        { kOrderTimeConditionGFA, ("GFA") },
+        });
+    AddItemEnum(d.volume_condition, ("volume_condition"), {
+        { kOrderVolumeConditionAny, ("ANY") },
+        { kOrderVolumeConditionMin, ("MIN") },
+        { kOrderVolumeConditionAll, ("ALL") },
+        });
+    AddItem(d.insert_date_time, ("insert_date_time"));
+    AddItem(d.exchange_order_id, ("exchange_order_id"));
+
+    AddItemEnum(d.status, ("status"), {
+        { kOrderStatusAlive, ("ALIVE") },
+        { kOrderStatusFinished, ("FINISHED") },
+        });
+    AddItem(d.volume_left, ("volume_left"));
+}
+
+void SerializerTradeBase::DefineStruct(Trade& d)
+{
+    AddItem(d.trade_id, ("trade_id"));
+    AddItem(d.exchange_id, ("exchange_id"));
+    AddItem(d.instrument_id, ("instrument_id"));
+    AddItem(d.order_id, ("order_id"));
+    AddItem(d.exchange_trade_id, ("exchange_trade_id"));
+
+    AddItemEnum(d.direction, ("direction"), {
+        { kDirectionBuy, ("BUY") },
+        { kDirectionSell, ("SELL") },
+        });
+    AddItemEnum(d.offset, ("offset"), {
+        { kOffsetOpen, ("OPEN") },
+        { kOffsetClose, ("CLOSE") },
+        { kOffsetCloseToday, ("CLOSETODAY") },
+        });
+    AddItem(d.volume, ("volume"));
+    AddItem(d.price, ("price"));
+    AddItem(d.trade_date_time, ("trade_date_time"));
+    AddItem(d.commission, ("commission"));
+}
+
+Order::Order()
+{
+    //委托单初始属性(由下单者在下单前确定, 不再改变)
+    direction = kDirectionBuy;
+    offset = kOffsetOpen;
+    volume_orign = 0;
+    price_type = kPriceTypeLimit;
+    limit_price = 0.0;
+    volume_condition = kOrderVolumeConditionAny;
+    time_condition = kOrderTimeConditionGFD;
+
+    //下单后获得的信息(由期货公司返回, 不会改变)
+    insert_date_time = 0;
+
+    //委托单当前状态
+    status = kOrderStatusAlive;
+    volume_left = 0;
+
+    //内部使用
+    changed = true;
+}
+
+Trade::Trade()
+{
+    direction = kDirectionBuy;
+    offset = kOffsetOpen;
+    volume = 0;
+    price = 0.0;
+    trade_date_time = 0; //epoch nano
+    commission = 0;
+
+    //内部使用
+    changed = true;
+}
+
+Position::Position()
+{
+    //持仓手数与冻结手数
+    volume_long_today = 0;
+    volume_long_his = 0;
+    volume_long = 0;
+    volume_long_frozen_today = 0;
+    volume_long_frozen_his = 0;
+    volume_short_today = 0;
+    volume_short_his = 0;
+    volume_short = 0;
+    volume_short_frozen_today = 0;
+    volume_short_frozen_his = 0;
+
+    //成本, 现价与盈亏
+    open_price_long = 0.0;
+    open_price_short = 0.0;
+    open_cost_long = 0.0;
+    open_cost_short = 0.0;
+    position_price_long = 0.0; //多头持仓均价
+    position_price_short = 0.0; //空头持仓均价
+    position_cost_long = 0.0; //多头持仓成本
+    position_cost_short = 0.0; //空头持仓成本
+    last_price = 0.0;
+    float_profit_long = 0.0;
+    float_profit_short = 0.0;
+    float_profit = 0.0;
+    position_profit_long = 0.0;
+    position_profit_short = 0.0;
+    position_profit = 0.0;
+
+    //保证金占用
+    margin_long = 0.0;
+    margin_short = 0.0;
+    margin = 0.0;
+
+    //内部使用
+    ins = NULL;
+    changed = true;
+}
+
+Account::Account()
+{
+    //本交易日开盘前状态
+    pre_balance = 0.0;
+
+    //本交易日内已发生事件的影响
+    deposit = 0.0;
+    withdraw = 0.0;
+    close_profit = 0.0;
+    commission = 0.0;
+    premium = 0.0;
+    static_balance = 0.0;
+
+    //当前持仓盈亏
+    float_profit = 0.0;
+    position_profit = 0.0;
+
+    //当前权益
+    balance = 0.0;
+
+    //保证金占用, 冻结及风险度
+    margin = 0.0;
+    frozen_margin = 0.0;
+    frozen_commission = 0.0;
+    frozen_premium = 0.0;
+    available = 0.0;
+    risk_ratio = 0.0;
+
+    //内部使用
+    changed = true;
 }
 
 }

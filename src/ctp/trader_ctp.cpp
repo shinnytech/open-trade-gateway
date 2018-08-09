@@ -21,7 +21,6 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     : TraderBase(callback)
     , m_pThostTraderSpiHandler(NULL)
     , m_api(NULL)
-    , m_data(m_data_pack.data[0])
 {
     m_front_id = 0;
     m_session_id = 0;
@@ -50,8 +49,6 @@ void TraderCtp::ProcessInput(const char* json_str)
         OnClientReqCancelOrder();
     } else if (aid == "peek_message") {
         OnClientPeekMessage();
-    } else if (aid == "rtn_data") {
-        OnRtnData();
     }
 }
 
@@ -68,9 +65,6 @@ void TraderCtp::OnInit()
     }
     m_api->SubscribePrivateTopic(THOST_TERT_RESUME);
     m_api->SubscribePublicTopic(THOST_TERT_RESUME);
-    m_user_id = m_req_login.user_name;
-    m_password = m_req_login.password;
-    m_product_info = m_req_login.broker.product_info;
     m_user_file_name = g_config.user_file_path + "/" + m_user_id;
     LoadFromFile();
     m_api->Init();
@@ -80,11 +74,11 @@ void TraderCtp::SendLoginRequest()
 {
     CThostFtdcReqUserLoginField field;
     memset(&field, 0, sizeof(field));
-    strcpy_x(field.BrokerID, m_broker_id.c_str());
-    strcpy_x(field.UserID, m_user_id.c_str());
-    strcpy_x(field.Password, m_password.c_str());
-    strcpy_x(field.UserProductInfo, m_product_info.c_str());
-    int ret = m_api->ReqUserLogin(&field, 33);
+    strcpy_x(field.BrokerID, m_req_login.broker.ctp_broker_id.c_str());
+    strcpy_x(field.UserID, m_req_login.user_name.c_str());
+    strcpy_x(field.Password, m_req_login.password.c_str());
+    strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
+    int ret = m_api->ReqUserLogin(&field, 1);
     assert(ret == 0);
 }
 
@@ -126,15 +120,6 @@ void TraderCtp::OnClientReqCancelOrder()
     m_api->ReqOrderAction(&d.f, 0);
 }
 
-void TraderCtp::OnRtnData()
-{
-    rapidjson::Value* dt = rapidjson::Pointer("/data").Get(*(ss.m_doc));
-    if (dt && dt->IsArray()) {
-        for (auto& v : dt->GetArray())
-            ss.ToVar(m_data, &v);
-    }
-}
-
 int TraderCtp::ReqQryAccount()
 {
     CThostFtdcQryTradingAccountField field;
@@ -166,27 +151,20 @@ void TraderCtp::OnIdle()
 {
     //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
     int now = GetTickCount();
-    if (m_need_query_account && m_next_qry_dt < now) {
-        if (ReqQryAccount() == 0) {
-            m_need_query_account = false;
-        } else {
-            m_next_qry_dt = now + 1100;
-        }
-        return;
-    }
-    auto& orders = GetOrders();
-    if (!orders.empty()){
-        if (now < m_next_qry_dt)
-            m_next_qry_dt = now + 1000;
-        m_need_query_positions = true;
-        orders.clear();
-    }
     if (m_need_query_positions && m_next_qry_dt < now) {
         if (ReqQryPosition() == 0) {
             m_need_query_positions = false;
             m_need_query_account = true;
         }
         m_next_qry_dt = now + 1100;
+        return;
+    }
+    if (m_need_query_account && m_next_qry_dt < now) {
+        if (ReqQryAccount() == 0) {
+            m_need_query_account = false;
+        }
+        m_next_qry_dt = now + 1100;
+        return;
     }
 }
 
@@ -195,24 +173,45 @@ void TraderCtp::OnClientPeekMessage()
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
     double total_float_profit = 0;
-    auto& positions = GetPositions();
-    for (auto it = positions.begin(); it != positions.end(); ++it) {
-        CtpPosition& ps = it->second;
+    for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end(); ++it) {
+        const std::string& symbol = it->first;
+        Position& ps = it->second;
         if (!ps.ins)
-            ps.ins = md_service::GetInstrument(ps.e_symbol);
-        if (ps.ins) {
-            ps.position_profit_long = ps.ins->last_price * ps.volume_long() * ps.ins->volume_multiple - ps.position_cost_long;
-            ps.position_profit_short = ps.position_cost_short - ps.ins->last_price * ps.volume_short() * ps.ins->volume_multiple;
-            ps.float_profit_long = ps.ins->last_price * ps.volume_long() * ps.ins->volume_multiple - ps.open_cost_long;
-            ps.float_profit_short = ps.open_cost_short - ps.ins->last_price * ps.volume_short() * ps.ins->volume_multiple;
+            ps.ins = md_service::GetInstrument(symbol);
+        if (!ps.ins){
+            LOG_ERROR("miss symbol %s when processing position", symbol);
+            continue;
         }
-        if (IsValid(ps.position_profit()))
-            total_position_profit += ps.position_profit();
-        if (IsValid(ps.float_profit()))
-            total_float_profit += ps.float_profit();
+        ps.volume_long = ps.volume_long_his + ps.volume_long_today;
+        ps.volume_short = ps.volume_short_his + ps.volume_short_today;
+        ps.margin = ps.margin_long + ps.margin_short;
+        double last_price = ps.ins->last_price;
+        if (!IsValid(last_price))
+            last_price = ps.ins->pre_settlement;
+        if (last_price == ps.ins->last_price)
+            continue;
+        ps.last_price = last_price;
+        ps.position_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+        ps.position_profit_short = ps.position_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
+        ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+        ps.float_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+        ps.float_profit_short = ps.open_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
+        ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+        if (ps.volume_long > 0){
+            ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+            ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+        }
+        if (ps.volume_short > 0) {
+            ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+            ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+        }
+        if (IsValid(ps.position_profit))
+            total_position_profit += ps.position_profit;
+        if (IsValid(ps.float_profit))
+            total_float_profit += ps.float_profit;
     }
     //重算资金账户
-    CtpAccount& acc = GetAccount();
+    Account& acc = GetAccount("CNY");
     double dv = total_position_profit - acc.position_profit;
     acc.position_profit = total_position_profit;
     acc.available += dv;
@@ -222,9 +221,19 @@ void TraderCtp::OnClientPeekMessage()
     else
         acc.risk_ratio = NAN;
     //向客户端发送账户信息
+    SendUserData();
+}
+
+void TraderCtp::SendUserData()
+{
+    SerializerTradeBase nss;
+    rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+    //合约和行情数据截面
+    rapidjson::Value node_data;
+    nss.FromVar(m_data, &node_data);
+    rapidjson::Pointer("/data/0/trade/" + m_user_id).Set(*nss.m_doc, node_data);
+    //发送
     std::string json_str;
-    SerializerCtp nss;
-    nss.FromVar(m_data_pack);
     nss.ToString(&json_str);
     Output(json_str);
 }
@@ -256,21 +265,6 @@ void TraderCtp::LoadFromFile()
         }
         m_trading_day = kf.trading_day;
     }
-}
-
-std::map<std::string, trader_dll::CtpPosition>& TraderCtp::GetPositions()
-{
-    return m_data_pack.data[0].trade[m_user_id].m_positions;
-}
-
-std::map<std::string, trader_dll::CtpOrder>& TraderCtp::GetOrders()
-{
-    return m_data_pack.data[0].trade[m_user_id].m_orders;
-}
-
-trader_dll::CtpAccount& TraderCtp::GetAccount()
-{
-    return m_data_pack.data[0].trade[m_user_id].m_accounts[("CNY")];
 }
 
 void TraderCtp::OrderIdLocalToRemote(const std::string& local_order_key, RemoteOrderKey* remote_order_key)
