@@ -61,5 +61,4 @@ Config::Config()
 
     //各类文件位置
     ins_file_path = root_path + "\\ins.json";
-    md_ca_file_path = root_path + "\\ca.cert";
 }

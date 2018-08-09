@@ -61,9 +61,6 @@
     <ClInclude Include="src\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="doc\todo.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="src\open_trade_gateway.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
