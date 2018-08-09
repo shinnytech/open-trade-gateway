@@ -27,6 +27,7 @@
     <ClCompile Include="src\encoding.cpp" />
     <ClCompile Include="src\http.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\md_service.cpp" />
     <ClCompile Include="src\numset.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -49,6 +50,7 @@
     <ClInclude Include="src\datetime.h" />
     <ClInclude Include="src\encoding.h" />
     <ClInclude Include="src\http.h" />
+    <ClInclude Include="src\md_service.h" />
     <ClInclude Include="src\numset.h" />
     <ClInclude Include="src\rapid_serialize.h" />
     <ClInclude Include="src\resource.h" />

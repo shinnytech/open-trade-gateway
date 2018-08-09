@@ -48,6 +48,9 @@
     <ClCompile Include="src\http.cpp">
       <Filter>base</Filter>
     </ClCompile>
+    <ClCompile Include="src\md_service.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\trader_base.h">
@@ -105,6 +108,9 @@
     </ClInclude>
     <ClInclude Include="src\resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\md_service.h">
+      <Filter>base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
