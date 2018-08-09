@@ -1,24 +1,33 @@
+﻿/////////////////////////////////////////////////////////////////////////
+///@file md_service.cpp
+///@brief	合约及行情服务
+///@copyright	上海信易信息科技股份有限公司 版权所有 
+/////////////////////////////////////////////////////////////////////////
+
 #include "stdafx.h"
 #include "md_service.h"
 
 #include <functional>
+#include <assert.h>
 #include "version.h"
 #include "libwebsockets/libwebsockets.h"
 #include "config.h"
 #include "http.h"
 #include "rapid_serialize.h"
 
-const char* md_host = "mdopen.shinnytech.com";
+
+namespace md_service{
+
+const char* md_host = "openmd.shinnytech.com";
 const char* md_path = "/t/md/front/mobile";
 const char* ins_file_url = "https://openmd.shinnytech.com/t/md/symbols/latest.json";
-
 
 Instrument::Instrument()
 {
     product_class = kProductClassFutures;
     exchange_id = kExchangeUser;
     last_price = NAN;
-    pre_settlement_price = NAN;
+    pre_settlement = NAN;
 }
 
 
@@ -62,7 +71,7 @@ public:
     void DefineStruct(Instrument& data)
     {
         AddItem(data.last_price, ("last_price"));
-        AddItem(data.pre_settlement_price, ("pre_settlement_price"));
+        AddItem(data.pre_settlement, ("pre_settlement"));
     }
 
     void DefineStruct(MdData& d)
@@ -73,6 +82,29 @@ public:
     }
 };
 
+static struct MdServiceContext
+{
+    //合约及行情数据
+    MdData m_data;
+
+    //发送包管理
+    std::string m_req_subscribe_quote;
+    std::string m_req_peek_message;
+    bool m_need_subscribe_quote;
+    bool m_need_peek_message;
+
+    //工作线程
+    std::thread m_worker_thread;
+    bool m_running_flag;
+
+    //websocket client
+    struct lws* m_ws_md;
+    struct lws_context* m_ws_context;
+    char* m_send_buf;
+    char* m_recv_buf;
+    int m_recv_len;
+    unsigned int m_rate_limit_connect;
+} md_context;
 
 static struct lws_extension exts[] = {
     {
@@ -83,64 +115,25 @@ static struct lws_extension exts[] = {
     { NULL, NULL, NULL /* terminator */ }
 };
 
-static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
-    void* user, void* in, size_t len)
+void CleanUp()
 {
-    MdService* ws = static_cast<MdService*>(user);
-    if (ws)
-        return ws->OnWsMessage(wsi, reason, user, in, len);
-    return 0;
+    md_context.m_running_flag = false;
+    md_context.m_worker_thread.join();
+    if (md_context.m_send_buf)
+        delete[] md_context.m_send_buf;
+    if (md_context.m_recv_buf)
+        delete[] md_context.m_recv_buf;
 }
 
-static struct lws_protocols protocols[] = {
-    {
-        "md",
-        OnWsMessage,
-        0,
-        40000,
-    },
-    { NULL, NULL, 0, 0 } /* end */
-};
-
-MdService::MdService()
+Instrument* GetInstrument(const std::string& symbol)
 {
-    m_need_subscribe_quote = false;
-    m_need_peek_message = false;
-
-    struct lws_context_creation_info info;
-    memset(&info, 0, sizeof(info));
-    info.port = CONTEXT_PORT_NO_LISTEN;
-    info.protocols = protocols;
-    info.gid = -1;
-    info.uid = -1;
-    info.extensions = exts;
-    info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-    m_ca_path = "default\\ca.cert";
-    info.ssl_ca_filepath = m_ca_path.c_str();
-    m_ws_context = lws_create_context(&info);
-    m_running_flag = false;
-    m_send_buf = new char[LWS_PRE + 524228];
-    m_recv_buf = new char[8 * 1024 * 1024];
-    m_recv_len = 0;
-    m_rate_limit_connect = 0;
-    m_ws_md = NULL;
+    auto it = md_context.m_data.quotes.find(symbol);
+    if (it != md_context.m_data.quotes.end())
+        return &(it->second);
+    return NULL;
 }
 
-MdService::~MdService()
-{
-    if (m_send_buf)
-        delete[] m_send_buf;
-    if (m_recv_buf)
-        delete[] m_recv_buf;
-}
-
-void MdService::CleanUp()
-{
-    m_running_flag = false;
-    m_worker_thread.join();
-}
-
-int MdService::Ratelimit(unsigned int* last, unsigned int millsecs)
+int Ratelimit(unsigned int* last, unsigned int millsecs)
 {
     DWORD d = GetTickCount();
     if (d - (*last) < millsecs)
@@ -149,45 +142,56 @@ int MdService::Ratelimit(unsigned int* last, unsigned int millsecs)
     return 1;
 }
 
-int MdService::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
+void OnWsMdData(const char* in)
+{
+    MdParser ss;
+    ss.FromString(in);
+    rapidjson::Value* dt = rapidjson::Pointer("/data").Get(*(ss.m_doc));
+    if (dt && dt->IsArray()) {
+        for (auto& v : dt->GetArray())
+            ss.ToVar(md_context.m_data, &v);
+    }
+}
+
+static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     void* user, void* in, size_t len)
 {
-    if (wsi != m_ws_md)
+    if (wsi != md_context.m_ws_md)
         return 0;
     switch (reason) {
     case LWS_CALLBACK_CLIENT_ESTABLISHED:
         LOG_INFO("md server connected");
-        m_need_subscribe_quote = true;
+        md_context.m_need_subscribe_quote = true;
         break;
     case LWS_CALLBACK_CLOSED:
         LOG_ERROR("md server connect loss");
-        m_ws_md = NULL;
+        md_context.m_ws_md = NULL;
         break;
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
         LOG_ERROR("md server connect error");
-        m_ws_md = NULL;
+        md_context.m_ws_md = NULL;
         break;
     case LWS_CALLBACK_WSI_DESTROY:
         LOG_ERROR("md server connect destroy");
-        m_ws_md = NULL;
+        md_context.m_ws_md = NULL;
         break;
     case LWS_CALLBACK_CLIENT_RECEIVE: {
-        memcpy(m_recv_buf + m_recv_len, in, len);
-        m_recv_len += len;
+        memcpy(md_context.m_recv_buf + md_context.m_recv_len, in, len);
+        md_context.m_recv_len += len;
         int final = lws_is_final_fragment(wsi);
         if (final) {
-            *(m_recv_buf + m_recv_len) = '\0';
-            DASSERT(m_recv_len > 0);
-            m_recv_len = 0;
-            OnWsMdData(m_recv_buf);
-            m_need_peek_message = true;
+            *(md_context.m_recv_buf + md_context.m_recv_len) = '\0';
+            assert(md_context.m_recv_len > 0);
+            md_context.m_recv_len = 0;
+            OnWsMdData(md_context.m_recv_buf);
+            md_context.m_need_peek_message = true;
         }
-        DASSERT(m_recv_len < 8 * 1024 * 1024);
-        lws_callback_on_writable(m_ws_md);
+        assert(md_context.m_recv_len < 8 * 1024 * 1024);
+        lws_callback_on_writable(md_context.m_ws_md);
         break;
     }
     case LWS_CALLBACK_CLIENT_RECEIVE_PONG: {
-        lws_callback_on_writable(m_ws_md);
+        lws_callback_on_writable(md_context.m_ws_md);
         break;
     }
     case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER: {
@@ -202,19 +206,19 @@ int MdService::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     case LWS_CALLBACK_CLIENT_CONFIRM_EXTENSION_SUPPORTED:
         break;
     case LWS_CALLBACK_CLIENT_WRITEABLE: {
-        std::string *p = nullptr;
-        if (m_need_subscribe_quote) {
-            p = &m_req_subscribe_quote;
-            m_need_subscribe_quote = false;
-        } else if (m_need_peek_message) {
-            p = &m_req_peek_message;
-            m_need_peek_message = false;
+        std::string* p = NULL;
+        if (md_context.m_need_subscribe_quote) {
+            p = &md_context.m_req_subscribe_quote;
+            md_context.m_need_subscribe_quote = false;
+        } else if (md_context.m_need_peek_message) {
+            p = &md_context.m_req_peek_message;
+            md_context.m_need_peek_message = false;
         }
         if (p) {
             int length = p->size();
-            if (length > 0 && length < 32768) {
-                memcpy(m_send_buf + LWS_PRE, p->c_str(), p->size());
-                int c = lws_write(m_ws_md, (unsigned char*)(&m_send_buf[LWS_PRE]), p->size(), LWS_WRITE_TEXT);
+            if (length > 0 && length < 524228) {
+                memcpy(md_context.m_send_buf + LWS_PRE, p->c_str(), p->size());
+                int c = lws_write(md_context.m_ws_md, (unsigned char*)(&md_context.m_send_buf[LWS_PRE]), p->size(), LWS_WRITE_TEXT);
             } else {
                 LOG_ERROR("行情接口发送数据包过大, %d", length);
             }
@@ -228,44 +232,41 @@ int MdService::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     return 0;
 }
 
-void MdService::Run()
-{
-    while (m_running_flag)
-        RunOnce();
-}
+static struct lws_protocols protocols[] = {
+    {
+        "md",
+        OnWsMessage,
+        0,
+        40000,
+    },
+    { NULL, NULL, 0, 0 } /* end */
+};
 
-void MdService::RunOnce()
+void RunOnce()
 {
-    if (!m_ws_md && Ratelimit(&m_rate_limit_connect, 10000u)) {
+    if (!md_context.m_ws_md && Ratelimit(&md_context.m_rate_limit_connect, 10000u)) {
         struct lws_client_connect_info conn_info;
         memset(&conn_info, 0, sizeof(conn_info));
-        conn_info.userdata = this;
         conn_info.address = md_host;
         conn_info.path = md_path;
-        conn_info.context = m_ws_context;
-        conn_info.port = 443;
-        conn_info.ssl_connection = LCCSCF_USE_SSL;
-        conn_info.host = "mdopen.shinnytech.com";
-        conn_info.origin = "mdopen.shinnytech.com";
+        conn_info.context = md_context.m_ws_context;
+        conn_info.port = 80;
+        conn_info.host = "openmd.shinnytech.com";
+        conn_info.origin = "openmd.shinnytech.com";
         conn_info.ietf_version_or_minus_one = -1;
         conn_info.client_exts = exts;
         conn_info.protocol = "md";
-        m_ws_md = lws_client_connect_via_info(&conn_info);
+        md_context.m_ws_md = lws_client_connect_via_info(&conn_info);
     }
-    if (m_ws_md)
-        lws_callback_on_writable(m_ws_md);
-    lws_service(m_ws_context, 10);
+    if (md_context.m_ws_md)
+        lws_callback_on_writable(md_context.m_ws_md);
+    lws_service(md_context.m_ws_context, 10);
 }
 
-void MdService::OnWsMdData(const char* in)
+void Run()
 {
-    MdParser ss;
-    ss.FromString(in);
-    rapidjson::Value* dt = rapidjson::Pointer("/data").Get(*(ss.m_doc));
-    if (dt && dt->IsArray()) {
-        for (auto& v : dt->GetArray())
-            ss.ToVar(m_data, &v);
-    }
+    while (md_context.m_running_flag)
+        RunOnce();
 }
 
 bool WriteWholeFile(const char* filename, const char* content, long length)
@@ -278,8 +279,12 @@ bool WriteWholeFile(const char* filename, const char* content, long length)
     return true;
 }
 
-bool MdService::Init()
+bool Init()
 {
+    //初始化context
+    md_context.m_need_subscribe_quote = false;
+    md_context.m_need_peek_message = false;
+    //下载和加载合约表文件
     bool download_success = true;
     LOG_DEBUG("download ins file start");
     std::string content;
@@ -289,7 +294,7 @@ bool MdService::Init()
         LOG_INFO("download ins file fail");
         if (ss.FromString(content.c_str())) {
             LOG_DEBUG("parse ins file success");
-            ss.ToVar(m_data.quotes);
+            ss.ToVar(md_context.m_data.quotes);
             load_success = true;
             if (WriteWholeFile(g_config.ins_file_path.c_str(), content.c_str(), content.size())) {
                 LOG_DEBUG("save ins file success");
@@ -304,20 +309,45 @@ bool MdService::Init()
     }
     if (!load_success) {
         if (!ss.FromFile(g_config.ins_file_path.c_str())) {
-            ss.ToVar(m_data.quotes);
+            ss.ToVar(md_context.m_data.quotes);
             LOG_WARNING("load local ins file fail");
             return false;
         }
     }
+    //初始化websocket
+    struct lws_context_creation_info info;
+    memset(&info, 0, sizeof(info));
+    info.port = CONTEXT_PORT_NO_LISTEN;
+    info.protocols = protocols;
+    info.gid = -1;
+    info.uid = -1;
+    info.extensions = exts;
+    info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+    md_context.m_ws_context = lws_create_context(&info);
+    md_context.m_running_flag = false;
+    md_context.m_send_buf = new char[LWS_PRE + 524228];
+    md_context.m_recv_buf = new char[8 * 1024 * 1024];
+    md_context.m_recv_len = 0;
+    md_context.m_rate_limit_connect = 0;
+    md_context.m_ws_md = NULL;
+    //订阅全行情
     std::string ins_list;
-    for (auto it = m_data.quotes.begin(); it != m_data.quotes.end(); ++it) {
+    for (auto it = md_context.m_data.quotes.begin(); it != md_context.m_data.quotes.end(); ++it) {
         auto& symbol = it->first;
-        ins_list += symbol;
-        ins_list += ",";
+        auto& ins = it->second;
+        if(!ins.expired && (ins.product_class == kProductClassFutures
+            || ins.product_class == kProductClassOptions
+            || ins.product_class == kProductClassFOption
+            )){
+            ins_list += symbol;
+            ins_list += ",";
+        }
     }
-    m_req_subscribe_quote = "{\"aid\": \"subscribe_quote\", \"ins_list\": \"" + ins_list + "\"}";
-    m_need_subscribe_quote = true;
-    m_running_flag = true;
-    m_worker_thread = std::thread(std::bind(&MdService::Run, this));
+    md_context.m_req_peek_message = "{\"aid\":\"peek_message\"}";
+    md_context.m_req_subscribe_quote = "{\"aid\": \"subscribe_quote\", \"ins_list\": \"" + ins_list + "\"}";
+    md_context.m_need_subscribe_quote = true;
+    md_context.m_running_flag = true;
+    md_context.m_worker_thread = std::thread(Run);
     return true;
+}
 }
