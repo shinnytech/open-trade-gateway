@@ -27,6 +27,9 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     m_order_ref = 0;
     m_running = true;
     m_next_qry_dt = 0;
+
+    m_peeking_message = false;
+    m_something_changed = false;
 }
 
 TraderCtp::~TraderCtp(void)
@@ -170,6 +173,7 @@ void TraderCtp::OnIdle()
 
 void TraderCtp::OnClientPeekMessage()
 {
+    m_peeking_message = true;
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
     double total_float_profit = 0;
@@ -209,6 +213,7 @@ void TraderCtp::OnClientPeekMessage()
             total_position_profit += ps.position_profit;
         if (IsValid(ps.float_profit))
             total_float_profit += ps.float_profit;
+        m_something_changed = true;
     }
     //重算资金账户
     Account& acc = GetAccount("CNY");
@@ -226,6 +231,10 @@ void TraderCtp::OnClientPeekMessage()
 
 void TraderCtp::SendUserData()
 {
+    if (!m_peeking_message)
+        return;
+    if (!m_something_changed)
+        return;
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
     //合约和行情数据截面
@@ -236,6 +245,8 @@ void TraderCtp::SendUserData()
     std::string json_str;
     nss.ToString(&json_str);
     Output(json_str);
+    m_something_changed = false;
+    m_peeking_message = false;
 }
 
 void TraderCtp::SaveToFile()

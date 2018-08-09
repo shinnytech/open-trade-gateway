@@ -232,6 +232,8 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     order.changed = true;
     //要求重新查询持仓
     m_trader->m_need_query_positions = true;
+    m_trader->m_something_changed = true;
+    m_trader->SendUserData();
 }
 
 void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
@@ -284,6 +286,8 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
     trade.trade_date_time = DateTimeToEpochNano(&dt);
     trade.commission = 0.0;
     trade.changed = true;
+    m_trader->m_something_changed = true;
+    m_trader->SendUserData();
 }
 
 void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pRspInvestorPosition, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
@@ -320,6 +324,10 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
         position.margin_short = pRspInvestorPosition->UseMargin;
     }
     position.changed = true;
+    if(bIsLast){
+        m_trader->m_something_changed = true;
+        m_trader->SendUserData();
+    }
 }
 
 void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvestorAccount, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
@@ -353,6 +361,10 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
     account.frozen_premium = pRspInvestorAccount->FrozenCash;
     account.available = pRspInvestorAccount->Available;
     account.changed = true;
+    if (bIsLast) {
+        m_trader->m_something_changed = true;
+        m_trader->SendUserData();
+    }
 }
 
 void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
