@@ -192,7 +192,7 @@ void TraderCtp::OnClientPeekMessage()
         double last_price = ps.ins->last_price;
         if (!IsValid(last_price))
             last_price = ps.ins->pre_settlement;
-        if (last_price == ps.ins->last_price)
+        if (last_price == ps.last_price)
             continue;
         ps.last_price = last_price;
         ps.position_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;

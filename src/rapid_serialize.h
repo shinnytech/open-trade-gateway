@@ -169,6 +169,11 @@ public:
     {
         return true;
     }
+    template<class TMapKey, class TMapValue>
+    bool FilterMapItem(const TMapKey& key, TMapValue& value)
+    {
+        return true;
+    }
 
     template<class T>
     void AddItem(T& data, const char* name)
@@ -272,10 +277,12 @@ public:
         if (is_save){
             node.SetObject();
             for (std::map<K, V>::iterator it = data.begin(); it != data.end(); ++it) {
-                rapidjson::Value value;
-                rapidjson::Value key(StringSerialize<K>::to_str(it->first), m_doc->GetAllocator());
-                Process(it->second, value);
-                node.AddMember(key, value, m_doc->GetAllocator());
+                if (static_cast<TSerializer*>(this)->FilterMapItem(it->first, it->second)){
+                    rapidjson::Value value;
+                    rapidjson::Value key(StringSerialize<K>::to_str(it->first), m_doc->GetAllocator());
+                    Process(it->second, value);
+                    node.AddMember(key, value, m_doc->GetAllocator());
+                }
             }
             return false;
         }else{

@@ -270,7 +270,39 @@ class SerializerTradeBase
 {
 public:
     using RapidSerialize::Serializer<SerializerTradeBase>::Serializer;
-
+    template<class TMapKey, class TMapValue>
+    bool FilterMapItem(const TMapKey& key, TMapValue& value)
+    {
+        return true;
+    }
+    template<>
+    bool FilterMapItem(const std::string& key, Order& value)
+    {
+        bool b = value.changed;
+        value.changed = false;
+        return b;
+    }
+    template<>
+    bool FilterMapItem(const std::string& key, Trade& value)
+    {
+        bool b = value.changed;
+        value.changed = false;
+        return b;
+    }
+    template<>
+    bool FilterMapItem(const std::string& key, Position& value)
+    {
+        bool b = value.changed;
+        value.changed = false;
+        return b;
+    }
+    template<>
+    bool FilterMapItem(const std::string& key, Account& value)
+    {
+        bool b = value.changed;
+        value.changed = false;
+        return b;
+    }
     void DefineStruct(ReqLogin& d);
     void DefineStruct(Bank& d);
 
