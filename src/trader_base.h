@@ -13,8 +13,55 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <chrono>
+using namespace std::chrono_literals;
+
 #include "config.h"
 #include "rapid_serialize.h"
+
+
+/*
+线程安全的FIFO队列
+*/
+class StringChannel
+{
+public:
+    bool empty() {
+        std::lock_guard<std::mutex> lck(m_mutex);
+        return m_items.empty();
+    }
+    void push_back(const std::string& item) {
+        //向队列尾部加入一个元素
+        std::lock_guard<std::mutex> lck(m_mutex);
+        m_items.push_back(item);
+        m_cv.notify_one();
+    }
+    bool try_pop_front(std::string* out_str) {
+        //尝试从队列头部提取一个元素, 如果队列为空则立即返回false
+        std::lock_guard<std::mutex> lck(m_mutex);
+        if (m_items.empty())
+            return false;
+        *out_str = m_items.front();
+        m_items.pop_front();
+        return true;
+    }
+    bool pop_front(std::string* out_str) {
+        //尝试从队列头部提取一个元素, 如果队列为空则阻塞等待最多100ms, 如果一直为空则返回false
+        std::unique_lock<std::mutex> lk(m_mutex);
+        if (!m_cv.wait_for(lk, 100ms, [=] {return !m_items.empty(); })) {
+            return false;
+        }
+        *out_str = m_items.front();
+        m_items.pop_front();
+        // 通知前完成手动锁定，以避免等待线程只再阻塞（细节见 notify_one ）
+        lk.unlock();
+        m_cv.notify_one();
+        return true;
+    }
+    std::list<std::string> m_items;
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+};
 
 namespace md_service{
 struct Instrument;
@@ -338,19 +385,29 @@ public:
 class TraderBase
 {
 public:
-    TraderBase(std::function<void(const std::string&)> callback);
+    TraderBase(std::function<void()> callback);
     virtual ~TraderBase();
     virtual void Start(const ReqLogin& req_login);
-    virtual void Release();
-    void Input(const std::string& json);
+    virtual void Stop();
+    //输入TraderBase的数据包队列
+    StringChannel m_in_queue;
+    //TraderBase要求输出的数据包队列
+    StringChannel m_out_queue;
+    
+    //工作线程
+    std::thread m_worker_thread;
+    std::function<void()> m_notify_send_callback;
+    bool m_running; //需要工作线程运行
+    bool m_finished; //工作线程已完
 
 protected:
+    void Run();
     virtual void OnInit() {};
     virtual void OnIdle() {};
+    virtual void OnFinish() {};
     virtual void ProcessInput(const char* msg) = 0;
     void Output(const std::string& json);
     void OutputNotify(long notify_class_id, const std::string& ret_msg, const char* level = "INFO", const char* type = "MESSAGE");
-    void Run();
 
     //业务信息
     std::string m_user_id; //交易账号
@@ -361,16 +418,5 @@ protected:
     Position& GetPosition(const std::string position_key);
     Order& GetOrder(const std::string order_key);
     Trade& GetTrade(const std::string trade_key);
-
-    //输入TraderBase的数据包队列
-    std::queue<std::string> m_in_queue;
-    std::queue<std::string> m_processing_in_queue;
-    std::mutex m_input_mtx;
-    std::condition_variable m_cv;
-
-    //工作线程
-    std::thread m_worker_thread;
-    std::function<void(const std::string&)> m_callback;
-    bool m_running;
 };
 }

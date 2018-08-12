@@ -20,8 +20,7 @@ class TraderCtp
     : public TraderBase
 {
 public:
-    TraderCtp(std::function<void(const std::string&)> callback);
-    virtual ~TraderCtp();
+    TraderCtp(std::function<void()> callback);
     virtual void ProcessInput(const char* json_str) override;
 
 private:
@@ -29,7 +28,7 @@ private:
     //框架函数
     virtual void OnInit() override;
     virtual void OnIdle() override;
-    virtual void Release() override;
+    virtual void OnFinish() override;
 
     //用户请求处理
     SerializerCtp ss;
@@ -65,7 +64,7 @@ private:
 
     //CTP API 实例
     bool m_bTraderApiConnected;
-    CCtpSpiHandler* m_pThostTraderSpiHandler;
+    CCtpSpiHandler* m_spi;
     CThostFtdcTraderApi* m_api;
 
     //查询请求

@@ -74,9 +74,3 @@
 
 #undef min
 #undef max
-
-#ifdef _DEBUG
-#define DASSERT(_Expression) if(!(_Expression)) DebugBreak();
-#else
-#define DASSERT(_Expression) ((void)0)
-#endif

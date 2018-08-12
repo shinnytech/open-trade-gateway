@@ -17,25 +17,18 @@
 
 namespace trader_dll
 {
-TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
+TraderCtp::TraderCtp(std::function<void()> callback)
     : TraderBase(callback)
-    , m_pThostTraderSpiHandler(NULL)
+    , m_spi(NULL)
     , m_api(NULL)
 {
     m_front_id = 0;
     m_session_id = 0;
     m_order_ref = 0;
-    m_running = true;
     m_next_qry_dt = 0;
 
     m_peeking_message = false;
     m_something_changed = false;
-}
-
-TraderCtp::~TraderCtp(void)
-{
-    if (m_api)
-        m_api->Release();
 }
 
 void TraderCtp::ProcessInput(const char* json_str)
@@ -59,8 +52,8 @@ void TraderCtp::OnInit()
 {
     std::string flow_file_name = GenerateUniqFileName();
     m_api = CThostFtdcTraderApi::CreateFtdcTraderApi(flow_file_name.c_str());
-    m_pThostTraderSpiHandler = new CCtpSpiHandler(this);
-    m_api->RegisterSpi(m_pThostTraderSpiHandler);
+    m_spi = new CCtpSpiHandler(this);
+    m_api->RegisterSpi(m_spi);
     m_broker_id = m_req_login.broker.ctp_broker_id;
     for (auto it = m_req_login.broker.trading_fronts.begin(); it != m_req_login.broker.trading_fronts.end(); ++it) {
         std::string& f = *it;
@@ -173,6 +166,7 @@ void TraderCtp::OnIdle()
 
 void TraderCtp::OnClientPeekMessage()
 {
+    std::lock_guard<std::mutex> lck(m_data_mtx);
     m_peeking_message = true;
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
@@ -335,10 +329,10 @@ void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id
     m_order_ref = order_ref + 1;
 }
 
-void TraderCtp::Release()
+void TraderCtp::OnFinish()
 {
-    TraderBase::Release();
     m_api->Release();
+    delete m_spi;
 }
 
 }

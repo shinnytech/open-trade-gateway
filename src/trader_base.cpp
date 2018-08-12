@@ -11,22 +11,15 @@
 namespace trader_dll
 {
 
-TraderBase::TraderBase(std::function<void(const std::string&)> callback)
-    : m_callback(callback)
+TraderBase::TraderBase(std::function<void()> callback)
+    : m_notify_send_callback(callback)
 {
+    m_running = true;
+    m_finished = false;
 }
 
 TraderBase::~TraderBase()
 {
-}
-
-void TraderBase::Input(const std::string& json)
-{
-    {
-        std::lock_guard<std::mutex> lck(m_input_mtx);
-        m_in_queue.push(json);
-    }
-    m_cv.notify_all();
 }
 
 void TraderBase::Output(const std::string& json)
@@ -36,8 +29,10 @@ void TraderBase::Output(const std::string& json)
     //	f = fopen("c:\\tmp\\out.json", "wt");
     //fprintf(f, "%s\n", json.c_str());
     //fflush(f);
-    if(m_running)
-        m_callback(json);
+    if (m_running) {
+        m_out_queue.push_back(json);
+        m_notify_send_callback();
+    }
 }
 
 #include <chrono>
@@ -46,17 +41,14 @@ void TraderBase::Run()
 {
     OnInit();
     while (m_running) {
-        std::unique_lock<std::mutex> lck(m_input_mtx);
-        m_cv.wait_for(lck, 100ms, [=] {return (!m_in_queue.empty()); });
-        m_processing_in_queue.swap(m_in_queue);
-        lck.unlock();
-        while (!m_processing_in_queue.empty()) {
-            auto& f = m_processing_in_queue.front();
-            ProcessInput(f.c_str());
-            m_processing_in_queue.pop();
+        std::string input_str;
+        while(m_in_queue.pop_front(&input_str)){
+            ProcessInput(input_str.c_str());
         }
         OnIdle();
     }
+    OnFinish();
+    m_finished = true;
 }
 
 trader_dll::Account& TraderBase::GetAccount(const std::string account_key)
@@ -88,10 +80,9 @@ void TraderBase::Start(const ReqLogin& req_login)
     m_worker_thread = std::thread(std::bind(&TraderBase::Run, this));
 }
 
-void TraderBase::Release()
+void TraderBase::Stop()
 {
     m_running = false;
-    m_worker_thread.join();
 }
 
 void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, const char* level, const char* type)

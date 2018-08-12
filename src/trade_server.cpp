@@ -61,6 +61,17 @@ TraderServer::~TraderServer()
 {
 }
 
+void TraderServer::SendJson(struct lws* wsi, const std::string& p)
+{
+    if (!p.empty()) {
+        int length = p.size();
+        char* buf = new char[length + LWS_PRE];
+        memcpy(buf + LWS_PRE, p.data(), p.size());
+        int c = lws_write(wsi, (unsigned char*)(&buf[LWS_PRE]), length, LWS_WRITE_TEXT);
+        delete[] buf;
+    }
+}
+
 int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     void* user, void* in, size_t len)
 {
@@ -68,7 +79,6 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     switch (reason) {
     case LWS_CALLBACK_ESTABLISHED:
         *pss = new std::string;
-        m_send_queue[wsi] = std::list<std::string>();
         OnNetworkConnected(wsi);
         break;
     case LWS_CALLBACK_CLOSED:
@@ -81,17 +91,16 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
         }
         break;
     case LWS_CALLBACK_SERVER_WRITEABLE: {
-        std::lock_guard<std::mutex> lck(m_mtx);
-        if (!m_send_queue[wsi].empty()) {
-            std::string& p = m_send_queue[wsi].front();
-            int length = p.size();
-            char* buf = new char[length + LWS_PRE];
-            memcpy(buf + LWS_PRE, p.data(), p.size());
-            int c = lws_write(wsi, (unsigned char*)(&buf[LWS_PRE]), length, LWS_WRITE_TEXT);
-            delete[] buf;
-            m_send_queue[wsi].pop_front();
-            if (!m_send_queue[wsi].empty()) {
-                lws_callback_on_writable(wsi);
+        auto trader = GetTrader(wsi);
+        if (!trader){
+            SendJson(wsi, m_broker_list_str);
+        } else {
+            std::string p;
+            if (trader->m_out_queue.try_pop_front(&p)) {
+                SendJson(wsi, p);
+                if (!trader->m_out_queue.empty()) {
+                    lws_callback_on_writable(wsi);
+                }
             }
         }
         break;
@@ -105,7 +114,7 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
             OnNetworkInput(wsi, (*pss)->c_str());
             (*pss)->clear();
         }
-        DASSERT((*pss)->length() < 8 * 1024 * 1024);
+        assert((*pss)->length() < 8 * 1024 * 1024);
         break;
     }
     return 0;
@@ -126,10 +135,10 @@ void TraderServer::OnNetworkConnected(struct lws* wsi)
     SendJson(wsi, s);
 }
 
-void TraderServer::OnNetworkInput(struct lws* wsi, const char* json)
+void TraderServer::OnNetworkInput(struct lws* wsi, const char* json_str)
 {
     trader_dll::SerializerTradeBase ss;
-    if (!ss.FromString(json))
+    if (!ss.FromString(json_str))
         return;
     trader_dll::ReqLogin req;
     ss.ToVar(req);
@@ -142,40 +151,59 @@ void TraderServer::OnNetworkInput(struct lws* wsi, const char* json)
             return;
         req.broker = broker->second;
         if (broker->second.broker_type == "ctp") {
-            m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(&TraderServer::SendJson, this, wsi, std::placeholders::_1));
+            m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(lws_callback_on_writable, wsi));
             m_trader_map[wsi]->Start(req);
         }
         return;
     }
-    auto orign_trader = m_trader_map.find(wsi);
-    if (orign_trader != m_trader_map.end())
-        orign_trader->second->Input(json);
+    auto trader = GetTrader(wsi);
+    if (trader)
+        trader->m_in_queue.push_back(json_str);
 }
 
 void TraderServer::RemoveTrader(struct lws* wsi)
 {
-    std::lock_guard<std::mutex> lck(m_mtx);
-    auto it_trader = m_trader_map.find(wsi);
-    if (it_trader != m_trader_map.end()){
-        it_trader->second->Release();
-        m_trader_map.erase(it_trader);
+    auto trader = GetTrader(wsi);
+    if(trader){
+        m_trader_map.erase(wsi);
+        m_removing_trader_map[wsi] = trader;
+        trader->Stop();
+    }
+    for (auto it = m_removing_trader_map.begin(); it != m_removing_trader_map.end(); ) {
+        if (it->second->m_finished){
+            it->second->m_worker_thread.join();
+            delete(it->second);
+            it = m_removing_trader_map.erase(it);
+        }else{
+            ++it;
+        }
     }
 }
 
-void TraderServer::SendJson(struct lws* wsi, const std::string& utf8_msg)
+trader_dll::TraderBase* TraderServer::GetTrader(void* wsi)
 {
-    if (utf8_msg.empty())
-        return;
-    std::lock_guard<std::mutex> lck(m_mtx);
-    auto it = m_send_queue.find(wsi);
-    if (it == m_send_queue.end())
-        return;
-    m_send_queue[wsi].push_back(utf8_msg);
-    lws_callback_on_writable(wsi);
+    auto it = m_trader_map.find(wsi);
+    if (it != m_trader_map.end())
+        return it->second;
+    return NULL;
+}
+
+void TraderServer::InitBrokerList()
+{
+    trader_dll::SerializerTradeBase ss;
+    rapidjson::Pointer("/aid").Set(*ss.m_doc, "rtn_brokers");
+    long long n = 0LL;
+    for (auto it = g_config.brokers.begin(); it != g_config.brokers.end(); ++it) {
+        std::string bid = it->first;
+        rapidjson::Pointer("/brokers/" + std::to_string(n)).Set(*ss.m_doc, bid);
+        n++;
+    }
+    ss.ToString(&m_broker_list_str);
 }
 
 void TraderServer::Run()
 {
+    InitBrokerList();
     //加载合约文件
     if (!md_service::Init())
         return;
