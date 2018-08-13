@@ -229,6 +229,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
         break;
     }
     order.volume_left = pOrder->VolumeTotal;
+    order.last_msg = GBKToUTF8(pOrder->StatusMsg);
     order.changed = true;
     //要求重新查询持仓
     m_trader->m_need_query_positions = true;
@@ -240,7 +241,7 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
 {
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     std::string local_key;
-    m_trader->FindLocalOrderId(pTrade->OrderSysID, &local_key);
+    m_trader->FindLocalOrderId(pTrade->ExchangeID, pTrade->OrderSysID, &local_key);
     std::string trade_key = local_key + "|" + std::string(pTrade->TradeID);
     Trade& trade = m_trader->GetTrade(trade_key);
     trade.trade_id = trade_key;

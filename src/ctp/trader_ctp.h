@@ -58,7 +58,7 @@ private:
     std::string m_user_file_name;
     void OrderIdLocalToRemote(const std::string& local_order_key, RemoteOrderKey* remote_order_key);
     void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, std::string* local_order_key);
-    void FindLocalOrderId(const std::string& order_sys_id, std::string* local_order_key);
+    void FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, std::string* local_order_key);
     void LoadFromFile();
     void SaveToFile();
 
@@ -71,7 +71,7 @@ private:
     int ReqQryAccount();
     int ReqQryPosition();
     int m_next_qry_dt;
-    bool m_need_query_positions;
-    bool m_need_query_account;
+    std::atomic_bool m_need_query_positions;
+    std::atomic_bool m_need_query_account;
 };
 }

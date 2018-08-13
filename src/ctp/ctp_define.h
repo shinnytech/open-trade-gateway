@@ -127,12 +127,13 @@ public:
             { THOST_FTDC_TC_GTC, ("GTC") },
             { THOST_FTDC_TC_GFA, ("GFA") },
             });
-        AddItemEnum(d.f.CombHedgeFlag[0], ("hedge_flag"), {
-            { THOST_FTDC_HF_Speculation, ("SPECULATION") },
-            { THOST_FTDC_HF_Arbitrage, ("ARBITRAGE") },
-            { THOST_FTDC_HF_Hedge, ("HEDGE") },
-            { THOST_FTDC_HF_MarketMaker, ("MARKETMAKER") },
-            });
+        //AddItemEnum(d.f.CombHedgeFlag[0], ("hedge_flag"), {
+        //    { THOST_FTDC_HF_Speculation, ("SPECULATION") },
+        //    { THOST_FTDC_HF_Arbitrage, ("ARBITRAGE") },
+        //    { THOST_FTDC_HF_Hedge, ("HEDGE") },
+        //    { THOST_FTDC_HF_MarketMaker, ("MARKETMAKER") },
+        //    });
+        d.f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
         d.f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
         d.f.ContingentCondition = THOST_FTDC_CC_Immediately;
     }

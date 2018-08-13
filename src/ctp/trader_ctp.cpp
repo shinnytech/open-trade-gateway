@@ -147,17 +147,19 @@ void TraderCtp::OnIdle()
 {
     //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
     int now = GetTickCount();
-    if (m_need_query_positions && m_next_qry_dt < now) {
-        if (ReqQryPosition() == 0) {
-            m_need_query_positions = false;
-            m_need_query_account = true;
+    if (m_next_qry_dt >= now)
+        return;
+    if (m_need_query_positions.exchange(false)) {
+        if (ReqQryPosition() != 0) {
+            m_need_query_positions.store(true);
         }
+        m_need_query_account.store(true);
         m_next_qry_dt = now + 1100;
         return;
     }
-    if (m_need_query_account && m_next_qry_dt < now) {
-        if (ReqQryAccount() == 0) {
-            m_need_query_account = false;
+    if (m_need_query_account.exchange(false)) {
+        if (ReqQryAccount() != 0) {
+            m_need_query_account.store(true);
         }
         m_next_qry_dt = now + 1100;
         return;
@@ -186,28 +188,29 @@ void TraderCtp::OnClientPeekMessage()
         double last_price = ps.ins->last_price;
         if (!IsValid(last_price))
             last_price = ps.ins->pre_settlement;
-        if (last_price == ps.last_price)
-            continue;
-        ps.last_price = last_price;
-        ps.position_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-        ps.position_profit_short = ps.position_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
-        ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-        ps.float_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
-        ps.float_profit_short = ps.open_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
-        ps.float_profit = ps.float_profit_long + ps.float_profit_short;
-        if (ps.volume_long > 0){
-            ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-            ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-        }
-        if (ps.volume_short > 0) {
-            ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-            ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+        if (last_price != ps.last_price || ps.changed) {
+            ps.last_price = last_price;
+            ps.position_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+            ps.position_profit_short = ps.position_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
+            ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+            ps.float_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+            ps.float_profit_short = ps.open_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
+            ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+            if (ps.volume_long > 0) {
+                ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+                ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+            }
+            if (ps.volume_short > 0) {
+                ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+                ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+            }
+            ps.changed = true;
+            m_something_changed = true;
         }
         if (IsValid(ps.position_profit))
             total_position_profit += ps.position_profit;
         if (IsValid(ps.float_profit))
             total_float_profit += ps.float_profit;
-        m_something_changed = true;
     }
     //重算资金账户
     Account& acc = GetAccount("CNY");
@@ -305,12 +308,13 @@ void TraderCtp::OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, std
     }
 }
 
-void TraderCtp::FindLocalOrderId(const std::string& order_sys_id, std::string* local_order_key)
+void TraderCtp::FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, std::string* local_order_key)
 {
     std::unique_lock<std::mutex> lck(m_ordermap_mtx);
     for(auto it = m_ordermap_remote_local.begin(); it != m_ordermap_remote_local.end(); ++it){
         const RemoteOrderKey& rkey = it->first;
-        if (rkey.order_sys_id == order_sys_id){
+        if (rkey.order_sys_id == order_sys_id
+            && rkey.exchange_id == exchange_id){
             *local_order_key = it->second;
             return;
         }
@@ -319,6 +323,7 @@ void TraderCtp::FindLocalOrderId(const std::string& order_sys_id, std::string* l
 
 void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id, int order_ref)
 {
+    std::unique_lock<std::mutex> lck(m_ordermap_mtx);
     if(m_trading_day != trading_day){
         m_ordermap_local_remote.clear();
         m_ordermap_remote_local.clear();

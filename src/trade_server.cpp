@@ -122,17 +122,7 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
 
 void TraderServer::OnNetworkConnected(struct lws* wsi)
 {
-    trader_dll::SerializerTradeBase ss;
-    rapidjson::Pointer("/aid").Set(*ss.m_doc, "rtn_brokers");
-    long long n = 0LL;
-    for(auto it = g_config.brokers.begin(); it!= g_config.brokers.end(); ++it){
-        std::string bid = it->first;
-        rapidjson::Pointer("/brokers/" + std::to_string(n)).Set(*ss.m_doc, bid);
-        n++;
-    }
-    std::string s;
-    ss.ToString(&s);
-    SendJson(wsi, s);
+    lws_callback_on_writable(wsi);
 }
 
 void TraderServer::OnNetworkInput(struct lws* wsi, const char* json_str)
@@ -166,14 +156,14 @@ void TraderServer::RemoveTrader(struct lws* wsi)
     auto trader = GetTrader(wsi);
     if(trader){
         m_trader_map.erase(wsi);
-        m_removing_trader_map[wsi] = trader;
+        m_removing_trader_set.insert(trader);
         trader->Stop();
     }
-    for (auto it = m_removing_trader_map.begin(); it != m_removing_trader_map.end(); ) {
-        if (it->second->m_finished){
-            it->second->m_worker_thread.join();
-            delete(it->second);
-            it = m_removing_trader_map.erase(it);
+    for (auto it = m_removing_trader_set.begin(); it != m_removing_trader_set.end(); ) {
+        if ((*it)->m_finished){
+            (*it)->m_worker_thread.join();
+            delete(*it);
+            it = m_removing_trader_set.erase(it);
         }else{
             ++it;
         }

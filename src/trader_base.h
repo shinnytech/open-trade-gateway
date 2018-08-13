@@ -152,6 +152,7 @@ struct Order {
     //委托单当前状态
     long status;
     int volume_left;
+    std::string last_msg;
 
     //内部使用
     bool changed;
@@ -414,6 +415,7 @@ protected:
     User m_data;   //交易账户全信息
     std::mutex m_data_mtx; //m_data访问的mutex
     ReqLogin m_req_login;   //登录请求, 保存以备断线重连时使用
+    int m_notify_seq;
     Account& GetAccount(const std::string account_key);
     Position& GetPosition(const std::string position_key);
     Order& GetOrder(const std::string order_key);

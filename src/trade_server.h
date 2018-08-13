@@ -31,7 +31,7 @@ private:
 
     //traderÊµÀı±í
     std::map<void*, trader_dll::TraderBase*> m_trader_map;
-    std::map<void*, trader_dll::TraderBase*> m_removing_trader_map;
+    std::set<trader_dll::TraderBase*> m_removing_trader_set;
     trader_dll::TraderBase* GetTrader(void* wsi);
     void RemoveTrader(struct lws* wsi);
 };

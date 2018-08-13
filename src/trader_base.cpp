@@ -16,6 +16,7 @@ TraderBase::TraderBase(std::function<void()> callback)
 {
     m_running = true;
     m_finished = false;
+    m_notify_seq = 0;
 }
 
 TraderBase::~TraderBase()
@@ -99,8 +100,7 @@ void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, c
                                   "\"content\" : \"%s\""\
                                   "}}}]}";
     char buf[1024];
-    static int notify_req = 0;
-    sprintf(buf, notify_template, notify_req++, level, type, notify_code, notify_msg.c_str());
+    sprintf(buf, notify_template, m_notify_seq++, level, type, notify_code, notify_msg.c_str());
     Output(buf);
 }
 
@@ -258,6 +258,7 @@ void SerializerTradeBase::DefineStruct(Order& d)
         { kOrderStatusFinished, ("FINISHED") },
         });
     AddItem(d.volume_left, ("volume_left"));
+    AddItem(d.last_msg, ("last_msg"));
 }
 
 void SerializerTradeBase::DefineStruct(Trade& d)
