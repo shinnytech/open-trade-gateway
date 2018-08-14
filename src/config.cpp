@@ -51,7 +51,7 @@ bool LoadConfig()
 Config::Config()
 {
     //配置参数默认值
-    port = 7777;
+    port = 7788;
 
     //主程序exe所在路径
     char buffer[MAX_PATH + 1];
