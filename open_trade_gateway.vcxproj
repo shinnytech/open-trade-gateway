@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\cpp_logger.cpp" />
+    <ClCompile Include="src\ctp\ctp_define.cpp" />
     <ClCompile Include="src\ctp\ctp_spi.cpp" />
     <ClCompile Include="src\ctp\trader_ctp.cpp" />
     <ClCompile Include="src\datetime.cpp" />

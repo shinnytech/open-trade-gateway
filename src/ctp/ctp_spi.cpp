@@ -95,6 +95,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
                 , (pRspUserLogin->MaxOrderRef[0] == '\0') ? "0" : (pRspUserLogin->MaxOrderRef));
         m_trader->Output(json_str);
         m_trader->ReqConfirmSettlement();
+        m_trader->ReqQryBank();
         m_trader->m_need_query_account = true;
         m_trader->m_need_query_positions = true;
     } else {
@@ -117,6 +118,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     m_trader->OrderIdRemoteToLocal(remote_key, &local_key);
     Order& order = m_trader->GetOrder(local_key);
     //委托单初始属性(由下单者在下单前确定, 不再改变)
+    order.user_id = pOrder->UserID;
     order.order_id = local_key;
     order.exchange_id = pOrder->ExchangeID;
     order.instrument_id = pOrder->InstrumentID;
@@ -134,16 +136,16 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     switch (pOrder->CombOffsetFlag[0])
     {
     case THOST_FTDC_OF_Open:
-        order.direction = kOffsetOpen;
+        order.offset = kOffsetOpen;
         break;
     case THOST_FTDC_OF_CloseToday:
-        order.direction = kOffsetCloseToday;
+        order.offset = kOffsetCloseToday;
         break;
     case THOST_FTDC_OF_Close:
     case THOST_FTDC_OF_CloseYesterday:
     case THOST_FTDC_OF_ForceOff:
     case THOST_FTDC_OF_LocalForceClose:
-        order.direction = kOffsetClose;
+        order.offset = kOffsetClose;
         break;
     default:
         break;
@@ -245,6 +247,7 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
     std::string trade_key = local_key + "|" + std::string(pTrade->TradeID);
     Trade& trade = m_trader->GetTrade(trade_key);
     trade.trade_id = trade_key;
+    trade.user_id = pTrade->UserID;
     trade.exchange_id = pTrade->ExchangeID;
     trade.instrument_id = pTrade->InstrumentID;
     trade.order_id = local_key;
@@ -263,16 +266,16 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
     switch (pTrade->OffsetFlag)
     {
     case THOST_FTDC_OF_Open:
-        trade.direction = kOffsetOpen;
+        trade.offset = kOffsetOpen;
         break;
     case THOST_FTDC_OF_CloseToday:
-        trade.direction = kOffsetCloseToday;
+        trade.offset = kOffsetCloseToday;
         break;
     case THOST_FTDC_OF_Close:
     case THOST_FTDC_OF_CloseYesterday:
     case THOST_FTDC_OF_ForceOff:
     case THOST_FTDC_OF_LocalForceClose:
-        trade.direction = kOffsetClose;
+        trade.offset = kOffsetClose;
         break;
     default:
         break;
@@ -299,6 +302,7 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
     std::string exchange_id = trader_dll::GuessExchangeId(pRspInvestorPosition->InstrumentID);
     std::string position_key = exchange_id + "." + pRspInvestorPosition->InstrumentID;
     Position& position = m_trader->GetPosition(position_key);
+    position.user_id = pRspInvestorPosition->InvestorID;
     position.exchange_id = exchange_id;
     position.instrument_id = pRspInvestorPosition->InstrumentID;
     if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long) {
@@ -339,7 +343,7 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
     Account& account = m_trader->GetAccount(pRspInvestorAccount->CurrencyID);
 
     //账号及币种
-    account.account_id = pRspInvestorAccount->AccountID;
+    account.user_id = pRspInvestorAccount->AccountID;
     account.currency = pRspInvestorAccount->CurrencyID;
     //本交易日开盘前状态
     account.pre_balance = pRspInvestorAccount->PreBalance;
@@ -368,6 +372,33 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
     }
 }
 
+void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    if (!pContractBank)
+        return;
+    std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
+    Bank& bank = m_trader->GetBank(pContractBank->BankID);
+    bank.bank_id = pContractBank->BankID;
+    bank.bank_name = GBKToUTF8(pContractBank->BankName);
+    if (bIsLast) {
+        m_trader->ReqQryAccountRegister();
+    }
+}
+
+
+void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccountregister, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    if (!pAccountregister)
+        return;
+    std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
+    Bank& bank = m_trader->GetBank(pAccountregister->BankID);
+    bank.changed = true;
+    if (bIsLast) {
+        m_trader->m_something_changed = true;
+        m_trader->SendUserData();
+    }
+}
+
 void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
     if (pRspInfo && pRspInfo->ErrorID != 0) {
@@ -379,6 +410,73 @@ void CCtpSpiHandler::OnRspOrderAction(CThostFtdcInputOrderActionField* pOrderAct
 {
     if (pRspInfo->ErrorID != 0)
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+}
+
+void CCtpSpiHandler::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferSerial, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    if (!pTransferSerial)
+        return;
+    std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
+    TransferLog& d = m_trader->GetTransferLog(std::to_string(pTransferSerial->PlateSerial));
+    d.currency = pTransferSerial->CurrencyID;
+    d.amount = pTransferSerial->TradeAmount;
+    if (pTransferSerial->TradeCode == std::string("202002"))
+        d.amount = 0 - d.amount;
+    DateTime dt;
+    dt.time.microsecond = 0;
+    sscanf(pTransferSerial->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
+    sscanf(pTransferSerial->TradeTime, "%02d:%02d:%02d", &dt.time.hour, &dt.time.minute, &dt.time.second);
+    d.datetime = DateTimeToEpochNano(&dt);
+    d.error_id = pTransferSerial->ErrorID;
+    d.error_msg = GBKToUTF8(pTransferSerial->ErrorMsg);
+    if (bIsLast) {
+        m_trader->m_something_changed = true;
+        m_trader->SendUserData();
+    }
+}
+
+void CCtpSpiHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *pRspTransfer)
+{
+    if (!pRspTransfer)
+        return;
+    if(pRspTransfer->ErrorID == 0){
+        std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
+        TransferLog& d = m_trader->GetTransferLog(std::to_string(pRspTransfer->PlateSerial));
+        d.currency = pRspTransfer->CurrencyID;
+        d.amount = pRspTransfer->TradeAmount;
+        if (pRspTransfer->TradeCode == std::string("202002"))
+            d.amount = 0 - d.amount;
+        DateTime dt;
+        dt.time.microsecond = 0;
+        sscanf(pRspTransfer->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
+        sscanf(pRspTransfer->TradeTime, "%02d:%02d:%02d", &dt.time.hour, &dt.time.minute, &dt.time.second);
+        d.datetime = DateTimeToEpochNano(&dt);
+        d.error_id = pRspTransfer->ErrorID;
+        d.error_msg = GBKToUTF8(pRspTransfer->ErrorMsg);
+        m_trader->m_something_changed = true;
+        m_trader->SendUserData();
+    } else {
+        m_trader->OutputNotify(pRspTransfer->ErrorID, u8"银期错误, " + GBKToUTF8(pRspTransfer->ErrorMsg));
+    }
+}
+
+void CCtpSpiHandler::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTransfer)
+{
+    return OnRtnFromBankToFutureByFuture(pRspTransfer);
+}
+
+void CCtpSpiHandler::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
+{
+    if (pRspInfo && pRspInfo->ErrorID != 0) {
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"银行资金转期货错误, " + GBKToUTF8(pRspInfo->ErrorMsg));
+    }
+}
+
+void CCtpSpiHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
+{
+    if (pRspInfo && pRspInfo->ErrorID != 0) {
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"期货资金转银行错误, " + GBKToUTF8(pRspInfo->ErrorMsg));
+    }
 }
 
 }

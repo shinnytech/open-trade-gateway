@@ -134,6 +134,7 @@ struct Order {
     Order();
 
     //委托单初始属性(由下单者在下单前确定, 不再改变)
+    std::string user_id;
     std::string order_id;
     std::string exchange_id;
     std::string instrument_id;
@@ -161,6 +162,7 @@ struct Order {
 struct Trade {
     Trade();
 
+    std::string user_id;
     std::string trade_id;
     std::string exchange_id;
     std::string instrument_id;
@@ -182,6 +184,7 @@ struct Position {
     Position();
 
     //交易所和合约代码
+    std::string user_id;
     std::string exchange_id;
     std::string instrument_id;
 
@@ -228,7 +231,7 @@ struct Account {
     Account();
 
     //账号及币种
-    std::string account_id;
+    std::string user_id;
     std::string currency;
 
     //本交易日开盘前状态
@@ -268,19 +271,24 @@ struct Notify {
 };
 
 struct Bank {
+    Bank(){
+        changed = false;
+    }
     std::string bank_id;
-    std::string bank_brch_id;
     std::string bank_name;
-    std::string bank_account;
+    bool changed;
 };
 
 struct TransferLog {
-    std::string seq_no;
-    std::string bank_account;
-    std::string trade_type;
+    TransferLog(){
+        changed = true;
+    }
+    long long datetime;
+    std::string currency;
     double amount;
-    std::string datetime;
-    std::string memo;
+    long error_id;
+    std::string error_msg;
+    bool changed;
 };
 
 struct User {
@@ -351,35 +359,33 @@ public:
         value.changed = false;
         return b;
     }
+    template<>
+    bool FilterMapItem(const std::string& key, Bank& value)
+    {
+        bool b = value.changed;
+        value.changed = false;
+        return b;
+    }
+    template<>
+    bool FilterMapItem(const std::string& key, TransferLog& value)
+    {
+        bool b = value.changed;
+        value.changed = false;
+        return b;
+    }
     void DefineStruct(ReqLogin& d);
-    void DefineStruct(Bank& d);
-
-    //void DefineStruct(TradeData& d)
-    //{
-    //    AddItem(d.m_trade, ("trade"));
-    //    AddItem(d.m_notify, ("notify"));
-    //}
-
-    //void DefineStruct(Session& d)
-    //{
-    //    AddItem(d.user_id, ("user_id"));
-    //    AddItem(d.session_id, ("session_id"));
-    //    AddItem(d.max_order_id, ("max_order_id"));
-    //}
-
-    void DefineStruct(TransferLog& d);
 
     void DefineStruct(User& d);
 
-    void DefineStruct(Notify& d);
+    void DefineStruct(Bank& d);
+    void DefineStruct(TransferLog& d);
 
     void DefineStruct(Account& d);
-
     void DefineStruct(Position& d);
-
     void DefineStruct(Order& d);
-
     void DefineStruct(Trade& d);
+
+    void DefineStruct(Notify& d);
 };
 
 
@@ -420,5 +426,7 @@ protected:
     Position& GetPosition(const std::string position_key);
     Order& GetOrder(const std::string order_key);
     Trade& GetTrade(const std::string trade_key);
+    Bank& GetBank(const std::string& bank_id);
+    TransferLog& GetTransferLog(const std::string& seq_id);
 };
 }

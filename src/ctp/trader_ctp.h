@@ -34,6 +34,7 @@ private:
     SerializerCtp ss;
     void OnClientReqInsertOrder();
     void OnClientReqCancelOrder();
+    void OnClientReqTransfer();
 
     //数据更新发送
     void OnClientPeekMessage();
@@ -44,6 +45,8 @@ private:
     //登录相关
     void SendLoginRequest();
     void ReqConfirmSettlement();
+    void ReqQryBank();
+    void ReqQryAccountRegister();
     void SetSession(std::string trading_day, int front_id, int session_id, int order_ref);
     std::string m_broker_id;
     int m_session_id;

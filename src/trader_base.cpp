@@ -72,6 +72,16 @@ trader_dll::Trade& TraderBase::GetTrade(const std::string trade_key)
     return m_data.m_trades[trade_key];
 }
 
+trader_dll::Bank& TraderBase::GetBank(const std::string& bank_id)
+{
+    return m_data.m_banks[bank_id];
+}
+
+trader_dll::TransferLog& TraderBase::GetTransferLog(const std::string& seq_id)
+{
+    return m_data.m_transfers[seq_id];
+}
+
 void TraderBase::Start(const ReqLogin& req_login)
 {
     m_running = true;
@@ -115,29 +125,26 @@ void SerializerTradeBase::DefineStruct(ReqLogin& d)
 void SerializerTradeBase::DefineStruct(Bank& d)
 {
     AddItem(d.bank_id, ("id"));
-    AddItem(d.bank_brch_id, ("brch_id"));
     AddItem(d.bank_name, ("name"));
-    AddItem(d.bank_account, ("account"));
 }
 
 void SerializerTradeBase::DefineStruct(TransferLog& d)
 {
-    AddItem(d.seq_no, ("seq_no"));
-    AddItem(d.bank_account, ("bank_account"));
-    AddItem(d.trade_type, ("trade_type"));
-    AddItem(d.amount, ("amount"));
     AddItem(d.datetime, ("datetime"));
-    AddItem(d.memo, ("memo"));
+    AddItem(d.currency, ("currency"));
+    AddItem(d.amount, ("amount"));
+    AddItem(d.error_id, ("error_id"));
+    AddItem(d.error_msg, ("error_msg"));
 }
 
 void SerializerTradeBase::DefineStruct(User& d)
 {
     AddItem(d.user_id, ("user_id"));
-    AddItem(d.m_banks, ("banks"));
     AddItem(d.m_accounts, ("accounts"));
     AddItem(d.m_positions, ("positions"));
     AddItem(d.m_orders, ("orders"));
     AddItem(d.m_trades, ("trades"));
+    AddItem(d.m_banks, ("banks"));
     AddItem(d.m_transfers, ("transfers"));
 }
 
@@ -153,7 +160,7 @@ void SerializerTradeBase::DefineStruct(Notify& d)
 
 void SerializerTradeBase::DefineStruct(Account& d)
 {
-    AddItem(d.account_id, ("account_id"));
+    AddItem(d.user_id, ("user_id"));
     AddItem(d.currency, ("currency"));
 
     AddItem(d.pre_balance, ("pre_balance"));
@@ -180,6 +187,7 @@ void SerializerTradeBase::DefineStruct(Account& d)
 
 void SerializerTradeBase::DefineStruct(Position& d)
 {
+    AddItem(d.user_id, ("user_id"));
     AddItem(d.exchange_id, ("exchange_id"));
     AddItem(d.instrument_id, ("instrument_id"));
 
@@ -217,6 +225,7 @@ void SerializerTradeBase::DefineStruct(Position& d)
 
 void SerializerTradeBase::DefineStruct(Order& d)
 {
+    AddItem(d.user_id, ("user_id"));
     AddItem(d.order_id, ("order_id"));
     AddItem(d.exchange_id, ("exchange_id"));
     AddItem(d.instrument_id, ("instrument_id"));
@@ -263,6 +272,7 @@ void SerializerTradeBase::DefineStruct(Order& d)
 
 void SerializerTradeBase::DefineStruct(Trade& d)
 {
+    AddItem(d.user_id, ("user_id"));
     AddItem(d.trade_id, ("trade_id"));
     AddItem(d.exchange_id, ("exchange_id"));
     AddItem(d.instrument_id, ("instrument_id"));

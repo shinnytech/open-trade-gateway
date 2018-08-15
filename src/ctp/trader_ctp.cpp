@@ -43,6 +43,8 @@ void TraderCtp::ProcessInput(const char* json_str)
         OnClientReqInsertOrder();
     } else if (aid == "cancel_order") {
         OnClientReqCancelOrder();
+    } else if (aid == "req_transfer") {
+        OnClientReqTransfer();
     } else if (aid == "peek_message") {
         OnClientPeekMessage();
     }
@@ -116,6 +118,40 @@ void TraderCtp::OnClientReqCancelOrder()
     m_api->ReqOrderAction(&d.f, 0);
 }
 
+void TraderCtp::OnClientReqTransfer()
+{
+    CThostFtdcReqTransferField f;
+    memset(&f, 0, sizeof(f));
+    ss.ToVar(f);
+    strcpy_x(f.BrokerID, m_broker_id.c_str());
+    strcpy_x(f.UserID, m_user_id.c_str());
+    strcpy_x(f.AccountID, m_user_id.c_str());
+    strcpy_x(f.BankBranchID, "0000");
+    f.SecuPwdFlag = THOST_FTDC_BPWDF_BlankCheck;	// 核对密码
+    f.BankPwdFlag = THOST_FTDC_BPWDF_NoCheck;	// 核对密码
+    f.VerifyCertNoFlag = THOST_FTDC_YNI_No;
+    if (f.TradeAmount >= 0) {
+        strcpy_x(f.TradeCode, "202001");
+        m_api->ReqFromBankToFutureByFuture(&f, 0);
+    } else {
+        strcpy_x(f.TradeCode, "202002");
+        f.TradeAmount = -f.TradeAmount;
+        m_api->ReqFromFutureToBankByFuture(&f, 0);
+    }
+}
+
+//void TraderCtp::OnClientReqQueryBankAccount()
+//{
+//    CUstpFtdcAccountFieldReqField field;
+//    memset(&field, 0, sizeof(field));
+//    strcpy_x(field.BrokerID, m_broker_id.c_str());
+//    strcpy_x(field.UserID, m_user_id.c_str());
+//    strcpy_x(field.InvestorID, m_user_id.c_str());
+//    if (TinySerialize::JsonStringToVar(field, json_str)) {
+//        m_api->ReqQueryBankAccountMoneyByFuture(&field, 0);
+//    }
+//}
+
 int TraderCtp::ReqQryAccount()
 {
     CThostFtdcQryTradingAccountField field;
@@ -141,6 +177,22 @@ void TraderCtp::ReqConfirmSettlement()
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
     m_api->ReqSettlementInfoConfirm(&field, 0);
+}
+
+void TraderCtp::ReqQryBank()
+{
+    CThostFtdcQryContractBankField field;
+    memset(&field, 0, sizeof(field));
+    strcpy_x(field.BrokerID, m_broker_id.c_str());
+    m_api->ReqQryContractBank(&field, 0);
+}
+
+void TraderCtp::ReqQryAccountRegister()
+{
+    CThostFtdcQryAccountregisterField field;
+    memset(&field, 0, sizeof(field));
+    strcpy_x(field.BrokerID, m_broker_id.c_str());
+    m_api->ReqQryAccountregister(&field, 0);
 }
 
 void TraderCtp::OnIdle()
@@ -232,15 +284,20 @@ void TraderCtp::SendUserData()
         return;
     if (!m_something_changed)
         return;
+    //构建数据包
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
-    //合约和行情数据截面
     rapidjson::Value node_data;
     nss.FromVar(m_data, &node_data);
-    rapidjson::Pointer("/data/0/trade/" + m_user_id).Set(*nss.m_doc, node_data);
-    //发送
+    rapidjson::Value node_user_id;
+    node_user_id.SetString(m_user_id, nss.m_doc->GetAllocator());
+    rapidjson::Value node_user;
+    node_user.SetObject();
+    node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
+    rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
     std::string json_str;
     nss.ToString(&json_str);
+    //发送
     Output(json_str);
     m_something_changed = false;
     m_peeking_message = false;

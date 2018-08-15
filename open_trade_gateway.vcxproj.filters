@@ -51,6 +51,9 @@
     <ClCompile Include="src\md_service.cpp">
       <Filter>base</Filter>
     </ClCompile>
+    <ClCompile Include="src\ctp\ctp_define.cpp">
+      <Filter>ctp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\trader_base.h">
