@@ -31,7 +31,7 @@ static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
 
 static struct lws_protocols protocols[] = {
     {
-        "api",
+        "diff",
         ::OnWsMessage,
         sizeof(std::string*),
         40000,
