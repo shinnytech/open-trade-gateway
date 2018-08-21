@@ -51,6 +51,12 @@ void SerializerCtp::DefineStruct(OrderKeyPair& d)
     AddItem(d.remote_key, "remote");
 }
 
+void SerializerCtp::DefineStruct(LocalOrderKey& d)
+{
+    AddItem(d.user_id, "user_id");
+    AddItem(d.order_id, "order_id");
+}
+
 void SerializerCtp::DefineStruct(RemoteOrderKey& d)
 {
     AddItem(d.exchange_id, "exchange_id");
@@ -62,7 +68,8 @@ void SerializerCtp::DefineStruct(RemoteOrderKey& d)
 
 void SerializerCtp::DefineStruct(CtpActionInsertOrder& d)
 {
-    AddItem(d.local_key, ("order_id"));
+    AddItem(d.local_key.user_id, ("user_id"));
+    AddItem(d.local_key.order_id, ("order_id"));
     AddItem(d.f.ExchangeID, ("exchange_id"));
     AddItem(d.f.InstrumentID, ("instrument_id"));
     AddItemEnum(d.f.Direction, ("direction"), {
@@ -111,6 +118,7 @@ void SerializerCtp::DefineStruct(CtpActionInsertOrder& d)
 
 void SerializerCtp::DefineStruct(CtpActionCancelOrder& d)
 {
-    AddItem(d.local_key, "order_id");
+    AddItem(d.local_key.user_id, ("user_id"));
+    AddItem(d.local_key.order_id, ("order_id"));
 }
 }

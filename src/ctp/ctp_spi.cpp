@@ -86,13 +86,12 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
                            "\"aid\": \"rtn_data\","\
                            "\"data\" : [{\"trade\":{\"%s\":{\"session\":{"\
                            "\"user_id\" : \"%s\","\
-                           "\"session_id\" : \"%d\","\
-                           "\"max_order_id\" : %s"
+                           "\"trading_day\" : %s"
                            "}}}}]}")
                 , pRspUserLogin->UserID
                 , pRspUserLogin->UserID
-                , pRspUserLogin->SessionID
-                , (pRspUserLogin->MaxOrderRef[0] == '\0') ? "0" : (pRspUserLogin->MaxOrderRef));
+                , pRspUserLogin->TradingDay
+                );
         m_trader->Output(json_str);
         m_trader->ReqConfirmSettlement();
         m_trader->ReqQryBank();
@@ -114,12 +113,13 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     remote_key.session_id = pOrder->SessionID;
     remote_key.order_ref = pOrder->OrderRef;
     remote_key.order_sys_id = pOrder->OrderSysID;
-    std::string local_key;
+    trader_dll::LocalOrderKey local_key;
     m_trader->OrderIdRemoteToLocal(remote_key, &local_key);
-    Order& order = m_trader->GetOrder(local_key);
+    Order& order = m_trader->GetOrder(local_key.order_id);
     //委托单初始属性(由下单者在下单前确定, 不再改变)
-    order.user_id = pOrder->UserID;
-    order.order_id = local_key;
+    order.seqno = m_trader->m_data_seq++;
+    order.user_id = local_key.user_id;
+    order.order_id = local_key.order_id;
     order.exchange_id = pOrder->ExchangeID;
     order.instrument_id = pOrder->InstrumentID;
     switch (pOrder->Direction)
@@ -242,15 +242,16 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
 void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
 {
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
-    std::string local_key;
+    LocalOrderKey local_key;
     m_trader->FindLocalOrderId(pTrade->ExchangeID, pTrade->OrderSysID, &local_key);
-    std::string trade_key = local_key + "|" + std::string(pTrade->TradeID);
+    std::string trade_key = local_key.order_id + "|" + std::string(pTrade->TradeID);
     Trade& trade = m_trader->GetTrade(trade_key);
+    trade.seqno = m_trader->m_data_seq++;
     trade.trade_id = trade_key;
-    trade.user_id = pTrade->UserID;
+    trade.user_id = local_key.user_id;
+    trade.order_id = local_key.order_id;
     trade.exchange_id = pTrade->ExchangeID;
     trade.instrument_id = pTrade->InstrumentID;
-    trade.order_id = local_key;
     trade.exchange_trade_id = pTrade->TradeID;
     switch (pTrade->Direction)
     {

@@ -16,6 +16,18 @@ struct Instrument;
 
 namespace trader_dll
 {
+struct LocalOrderKey
+{
+    std::string user_id;
+    std::string order_id;
+    bool operator < (const LocalOrderKey& key) const
+    {
+        if (user_id != key.user_id)
+            return user_id < key.user_id;
+        return order_id < key.order_id;
+    }
+};
+
 struct RemoteOrderKey
 {
     std::string exchange_id;
@@ -36,7 +48,7 @@ struct RemoteOrderKey
 
 struct OrderKeyPair
 {
-    std::string local_key;
+    LocalOrderKey local_key;
     RemoteOrderKey remote_key;
 };
 
@@ -50,7 +62,7 @@ struct CtpActionInsertOrder {
     CtpActionInsertOrder() {
         memset(&f, 0, sizeof(f));
     }
-    std::string local_key;
+    LocalOrderKey local_key;
     CThostFtdcInputOrderField f;
 };
 
@@ -59,7 +71,7 @@ struct CtpActionCancelOrder
     CtpActionCancelOrder() {
         memset(&f, 0, sizeof(f));
     }
-    std::string local_key;
+    LocalOrderKey local_key;
     CThostFtdcInputOrderActionField f;
 };
 
@@ -72,6 +84,7 @@ public:
 
     void DefineStruct(OrderKeyFile& d);
     void DefineStruct(OrderKeyPair& d);
+    void DefineStruct(LocalOrderKey& d);
     void DefineStruct(RemoteOrderKey& d);
     void DefineStruct(CtpActionInsertOrder& d);
     void DefineStruct(CtpActionCancelOrder& d);

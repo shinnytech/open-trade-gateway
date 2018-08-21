@@ -156,6 +156,7 @@ struct Order {
     std::string last_msg;
 
     //内部使用
+    int seqno;
     bool changed;
 };
 
@@ -177,6 +178,7 @@ struct Trade {
     double commission;
 
     //内部使用
+    int seqno;
     bool changed;
 };
 
@@ -422,6 +424,7 @@ protected:
     std::mutex m_data_mtx; //m_data访问的mutex
     ReqLogin m_req_login;   //登录请求, 保存以备断线重连时使用
     int m_notify_seq;
+    int m_data_seq;
     Account& GetAccount(const std::string account_key);
     Position& GetPosition(const std::string position_key);
     Order& GetOrder(const std::string order_key);

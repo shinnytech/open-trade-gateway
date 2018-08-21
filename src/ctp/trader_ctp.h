@@ -54,14 +54,14 @@ private:
     int m_order_ref;
 
     //委托单单号映射表管理
-    std::map<std::string, RemoteOrderKey> m_ordermap_local_remote;
-    std::map<RemoteOrderKey, std::string> m_ordermap_remote_local;
+    std::map<LocalOrderKey, RemoteOrderKey> m_ordermap_local_remote;
+    std::map<RemoteOrderKey, LocalOrderKey> m_ordermap_remote_local;
     std::string m_trading_day;
     std::mutex m_ordermap_mtx;
     std::string m_user_file_name;
-    void OrderIdLocalToRemote(const std::string& local_order_key, RemoteOrderKey* remote_order_key);
-    void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, std::string* local_order_key);
-    void FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, std::string* local_order_key);
+    void OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key);
+    void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, LocalOrderKey* local_order_key);
+    void FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, LocalOrderKey* local_order_key);
     void LoadFromFile();
     void SaveToFile();
 

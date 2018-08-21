@@ -17,6 +17,7 @@ TraderBase::TraderBase(std::function<void()> callback)
     m_running = true;
     m_finished = false;
     m_notify_seq = 0;
+    m_data_seq = 0;
 }
 
 TraderBase::~TraderBase()
@@ -62,9 +63,9 @@ trader_dll::Position& TraderBase::GetPosition(const std::string position_key)
     return m_data.m_positions[position_key];
 }
 
-trader_dll::Order& TraderBase::GetOrder(const std::string order_key)
+trader_dll::Order& TraderBase::GetOrder(const std::string order_id)
 {
-    return m_data.m_orders[order_key];
+    return m_data.m_orders[order_id];
 }
 
 trader_dll::Trade& TraderBase::GetTrade(const std::string trade_key)
@@ -225,6 +226,7 @@ void SerializerTradeBase::DefineStruct(Position& d)
 
 void SerializerTradeBase::DefineStruct(Order& d)
 {
+    AddItem(d.seqno, ("seqno"));
     AddItem(d.user_id, ("user_id"));
     AddItem(d.order_id, ("order_id"));
     AddItem(d.exchange_id, ("exchange_id"));
@@ -272,6 +274,7 @@ void SerializerTradeBase::DefineStruct(Order& d)
 
 void SerializerTradeBase::DefineStruct(Trade& d)
 {
+    AddItem(d.seqno, ("seqno"));
     AddItem(d.user_id, ("user_id"));
     AddItem(d.trade_id, ("trade_id"));
     AddItem(d.exchange_id, ("exchange_id"));
