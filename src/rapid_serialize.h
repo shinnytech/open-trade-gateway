@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file rapid_serialize.h
-///@brief	jsonпРап╩╞╧╓╬ъ
-///@copyright	ио╨ёпервпео╒©ф╪╪╧и╥щспоч╧╚к╬ ╟Фх╗кЫсп 
+///@brief	jsonЕ╨▐Е┬≈Е▄√Е╥╔Е┘╥
+///@copyright	Д╦┼Ф╣╥Д©║Ф≤⌠Д©║Ф│╞Г╖▒Ф┼─Х┌║Д╩╫Ф°┴И≥░Е┘╛Е▐╦ Г┴┬Ф²┐Ф┴─Ф°┴ 
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -120,7 +120,7 @@ public:
 
     bool ToFile(const char* json_file)
     {
-        FILE* fp = fopen(json_file, "wb"); // ╥г Windows ф╫л╗й╧сц "w"
+        FILE* fp = fopen(json_file, "wb"); // И²· Windows Е╧ЁЕ▐╟Д╫©Г■╗ "w"
         if (!fp)
             return false;
         char* writeBuffer = new char[65536];

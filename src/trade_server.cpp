@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file trade_server.cpp
-///@brief	½»Ò×Íø¹Ø·şÎñÆ÷
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	äº¤æ˜“ç½‘å…³æœåŠ¡å™¨
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
@@ -194,14 +194,14 @@ void TraderServer::InitBrokerList()
 void TraderServer::Run()
 {
     InitBrokerList();
-    //¼ÓÔØºÏÔ¼ÎÄ¼ş
+    //åŠ è½½åˆçº¦æ–‡ä»¶
     if (!md_service::Init())
         return;
-    //Ìá¹©½»Ò×·şÎñ
+    //æä¾›äº¤æ˜“æœåŠ¡
     while (true) {
         lws_service(ws_context, 10);
     }
-    //·şÎñ½áÊø
+    //æœåŠ¡ç»“æŸ
     md_service::CleanUp();
     lws_context_destroy(ws_context);
 }

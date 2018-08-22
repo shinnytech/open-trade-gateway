@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file trade_server.h
-///@brief	½»Ò×Íø¹Ø·şÎñÆ÷
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	äº¤æ˜“ç½‘å…³æœåŠ¡å™¨
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -19,17 +19,17 @@ public:
     int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 
 private:
-    //ÆÚ»õ¹«Ë¾ÁĞ±í
+    //æœŸè´§å…¬å¸åˆ—è¡¨
     std::string m_broker_list_str;
     void InitBrokerList();
 
-    //websocket·şÎñ
+    //websocketæœåŠ¡
     void OnNetworkConnected(struct lws* wsi);
     void OnNetworkInput(struct lws* wsi, const char* req_json);
     void SendJson(struct lws* wsi, const std::string& utf8_msg);
     struct lws_context* ws_context;
 
-    //traderÊµÀı±í
+    //traderå®ä¾‹è¡¨
     std::map<void*, trader_dll::TraderBase*> m_trader_map;
     std::set<trader_dll::TraderBase*> m_removing_trader_set;
     trader_dll::TraderBase* GetTrader(void* wsi);

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file trader_ctp.h
-///@brief	CTP½Ó¿ÚÊµÏÖ
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ
+///@brief	CTPæ¥å£å®ç°
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -25,24 +25,24 @@ public:
 
 private:
     friend class CCtpSpiHandler;
-    //¿ò¼Üº¯Êı
+    //æ¡†æ¶å‡½æ•°
     virtual void OnInit() override;
     virtual void OnIdle() override;
     virtual void OnFinish() override;
 
-    //ÓÃ»§ÇëÇó´¦Àí
+    //ç”¨æˆ·è¯·æ±‚å¤„ç†
     SerializerCtp ss;
     void OnClientReqInsertOrder();
     void OnClientReqCancelOrder();
     void OnClientReqTransfer();
 
-    //Êı¾İ¸üĞÂ·¢ËÍ
+    //æ•°æ®æ›´æ–°å‘é€
     void OnClientPeekMessage();
     void SendUserData();
     bool m_peeking_message;
     bool m_something_changed;
 
-    //µÇÂ¼Ïà¹Ø
+    //ç™»å½•ç›¸å…³
     void SendLoginRequest();
     void ReqConfirmSettlement();
     void ReqQryBank();
@@ -53,7 +53,7 @@ private:
     int m_front_id;
     int m_order_ref;
 
-    //Î¯ÍĞµ¥µ¥ºÅÓ³Éä±í¹ÜÀí
+    //å§”æ‰˜å•å•å·æ˜ å°„è¡¨ç®¡ç†
     std::map<LocalOrderKey, RemoteOrderKey> m_ordermap_local_remote;
     std::map<RemoteOrderKey, LocalOrderKey> m_ordermap_remote_local;
     std::string m_trading_day;
@@ -65,12 +65,12 @@ private:
     void LoadFromFile();
     void SaveToFile();
 
-    //CTP API ÊµÀı
+    //CTP API å®ä¾‹
     bool m_bTraderApiConnected;
     CCtpSpiHandler* m_spi;
     CThostFtdcTraderApi* m_api;
 
-    //²éÑ¯ÇëÇó
+    //æŸ¥è¯¢è¯·æ±‚
     int ReqQryAccount();
     int ReqQryPosition();
     long long m_next_qry_dt;
