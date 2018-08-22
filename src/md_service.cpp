@@ -104,7 +104,7 @@ static struct MdServiceContext
     char* m_send_buf;
     char* m_recv_buf;
     int m_recv_len;
-    unsigned int m_rate_limit_connect;
+    long long m_rate_limit_connect;
 } md_context;
 
 static struct lws_extension exts[] = {
@@ -134,9 +134,9 @@ Instrument* GetInstrument(const std::string& symbol)
     return NULL;
 }
 
-int Ratelimit(unsigned int* last, unsigned int millsecs)
+int Ratelimit(long long* last, long long millsecs)
 {
-    DWORD d = GetTickCount();
+    long long d = GetTickCount64();
     if (d - (*last) < millsecs)
         return 0;
     *last = d;

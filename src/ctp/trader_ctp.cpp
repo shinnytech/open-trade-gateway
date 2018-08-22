@@ -198,7 +198,7 @@ void TraderCtp::ReqQryAccountRegister()
 void TraderCtp::OnIdle()
 {
     //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
-    int now = GetTickCount();
+    long long now = GetTickCount64();
     if (m_next_qry_dt >= now)
         return;
     if (m_need_query_positions.exchange(false)) {
