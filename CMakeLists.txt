@@ -1,13 +1,15 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.7)
 project(open_trade_gateway_git)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 
 include_directories(contrib/include)
 include_directories(src)
 include_directories(src/ctp)
 include_directories(src/femas_open)
 include_directories(src/hs)
+
+link_directories(contrib/lib)
 
 add_executable(open_trade_gateway_git
         contrib/include/ctp/ThostFtdcMdApi.h
@@ -45,10 +47,6 @@ add_executable(open_trade_gateway_git
         src/utility.h
         src/version.h src/iconvpp.h)
 
-#link_directories(contrib/lib)
-
-#link_libraries(libthosttraderapi.so)
-
 target_link_libraries (open_trade_gateway_git
         ssl
         crypto
@@ -56,3 +54,5 @@ target_link_libraries (open_trade_gateway_git
         websockets
         thosttraderapi
         curl)
+
+#install(TARGETS open_trade_gateway_git DESTINATION bin)
