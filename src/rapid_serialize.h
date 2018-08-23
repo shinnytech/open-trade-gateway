@@ -234,7 +234,7 @@ public:
             node.SetArray();
             typedef T value_type;
             typedef typename T::value_type element_type;
-            for (T::iterator it = data.begin(); it != data.end(); ++it) {
+            for (typename T::iterator it = data.begin(); it != data.end(); ++it) {
                 rapidjson::Value value;
                 Process(*it, value);
                 node.PushBack(value, m_doc->GetAllocator());
@@ -276,7 +276,7 @@ public:
     {
         if (is_save){
             node.SetObject();
-            for (std::map<K, V>::iterator it = data.begin(); it != data.end(); ++it) {
+            for (typename std::map<K, V>::iterator it = data.begin(); it != data.end(); ++it) {
                 if (static_cast<TSerializer*>(this)->FilterMapItem(it->first, it->second)){
                     rapidjson::Value value;
                     rapidjson::Value key(StringSerialize<K>::to_str(it->first), m_doc->GetAllocator());
@@ -312,7 +312,7 @@ public:
     {
         if (is_save) {
             node.SetObject();
-            for (std::map<K, V>::iterator it = data.begin(); it != data.end(); ++it) {
+            for (typename std::map<K, V>::iterator it = data.begin(); it != data.end(); ++it) {
                 rapidjson::Value value;
                 rapidjson::Value key(StringSerialize<K>::to_str(it->first), m_doc->GetAllocator());
                 Process(it->second, value);
@@ -395,9 +395,9 @@ public:
                     data = node.GetInt();
             } else {
                 if (sizeof(data) == 8)
-                    data = LLONG_MAX;
+                    data = std::numeric_limits<long long>::max();
                 else
-                    data = INT_MAX;
+                    data = std::numeric_limits<int>::max();
             }
             return false;
         }
@@ -414,14 +414,13 @@ public:
             } else if (node.IsInt()) {
                 data = node.GetInt();
             } else {
-                data = NAN;
+                data = std::numeric_limits<double>::quiet_NaN();
             }
             return false;
         }
     }
     template<class T, typename std::enable_if<std::is_class<T>::value, int>::type = 0>
     auto Process(T& data, rapidjson::Value& node)
-        -> decltype(static_cast<TSerializer*>(this)->DefineStruct(data), bool())
     {
         auto orign_current_node = m_current_node;
         m_current_node = &node;

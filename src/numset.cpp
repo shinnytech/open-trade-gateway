@@ -27,7 +27,7 @@ bool IsZero( long long x )
 
 bool IsValid(double x)
 {
-    return (!_isnan(x)) && (x < 1e20) && (x > -1e20);
+    return (!std::isnan(x)) && (x < 1e20) && (x > -1e20);
 }
 
 bool IsValid(long x)

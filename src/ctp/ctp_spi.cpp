@@ -82,7 +82,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
         m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
         m_trader->OutputNotify(0, u8"登录成功");
         char json_str[1024];
-        sprintf_s(json_str, sizeof(json_str), (u8"{"\
+        sprintf(json_str, (u8"{"\
                            "\"aid\": \"rtn_data\","\
                            "\"data\" : [{\"trade\":{\"%s\":{\"session\":{"\
                            "\"user_id\" : \"%s\","\

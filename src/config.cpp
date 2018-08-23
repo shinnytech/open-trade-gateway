@@ -53,12 +53,6 @@ Config::Config()
     //配置参数默认值
     port = 7788;
 
-    //主程序exe所在路径
-    char buffer[MAX_PATH + 1];
-    GetModuleFileNameA(NULL, buffer, MAX_PATH);
-    std::string str = buffer;
-    std::string root_path = str.substr(0, str.rfind('\\') + 1);
-
     //各类文件位置
-    ins_file_path = root_path + "\\ins.json";
+    ins_file_path = "/var/ins.json";
 }

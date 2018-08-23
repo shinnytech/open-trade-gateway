@@ -7,7 +7,6 @@
 #pragma once
 
 #include <time.h>
-#include <Windows.h>
 
 typedef int BOOL;
 #define TRUE 1
@@ -91,7 +90,6 @@ BOOL SetDateTime(struct DateTime* datetime, long year, long month, long day, lon
 void SetDateTimeNow( struct DateTime* datetime );
 void SetDateTimeInvalid( struct DateTime* datetime );
 void SetTimeInvalid(struct Time* time);
-void SetDateFromString(struct Date* date, LPCTSTR datestr);
 
 BOOL AlignTime(struct Time* target, long hour, long minute, long second, long microsecond);
 BOOL AlignDateByDays(struct Date* target, long days);

@@ -7,14 +7,11 @@
 #include "stdafx.h"
 #include "md_service.h"
 
-#include <functional>
-#include <assert.h>
-#include "version.h"
-#include "libwebsockets/libwebsockets.h"
+#include <libwebsockets.h>
 #include "config.h"
-#include "http.h"
 #include "rapid_serialize.h"
-
+#include "http.h"
+#include "version.h"
 
 namespace md_service{
 
@@ -134,9 +131,11 @@ Instrument* GetInstrument(const std::string& symbol)
     return NULL;
 }
 
+using namespace std::chrono;
+
 int Ratelimit(long long* last, long long millsecs)
 {
-    long long d = GetTickCount64();
+    long long d = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
     if (d - (*last) < millsecs)
         return 0;
     *last = d;
@@ -161,19 +160,19 @@ static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
         return 0;
     switch (reason) {
     case LWS_CALLBACK_CLIENT_ESTABLISHED:
-        LOG_INFO("md server connected");
+        syslog(LOG_INFO, "md server connected");
         md_context.m_need_subscribe_quote = true;
         break;
     case LWS_CALLBACK_CLOSED:
-        LOG_ERROR("md server connect loss");
+        syslog(LOG_ERR, "md server connect loss");
         md_context.m_ws_md = NULL;
         break;
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-        LOG_ERROR("md server connect error");
+        syslog(LOG_ERR, "md server connect error");
         md_context.m_ws_md = NULL;
         break;
     case LWS_CALLBACK_WSI_DESTROY:
-        LOG_ERROR("md server connect destroy");
+        syslog(LOG_ERR, "md server connect destroy");
         md_context.m_ws_md = NULL;
         break;
     case LWS_CALLBACK_CLIENT_RECEIVE: {
@@ -221,7 +220,7 @@ static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
                 memcpy(md_context.m_send_buf + LWS_PRE, p->c_str(), p->size());
                 int c = lws_write(md_context.m_ws_md, (unsigned char*)(&md_context.m_send_buf[LWS_PRE]), p->size(), LWS_WRITE_TEXT);
             } else {
-                LOG_ERROR("行情接口发送数据包过大, %d", length);
+                syslog(LOG_ERR, "行情接口发送数据包过大, %d", length);
             }
             lws_callback_on_writable(wsi);
         }
@@ -287,31 +286,27 @@ bool Init()
     md_context.m_need_peek_message = false;
     //下载和加载合约表文件
     bool download_success = true;
-    LOG_DEBUG("download ins file start");
     std::string content;
     bool load_success = false;
     InsFileParser ss;
     if (0 == HttpGet(ins_file_url, &content)) {
-        LOG_INFO("download ins file fail");
+        syslog(LOG_WARNING, "download ins file fail");
         if (ss.FromString(content.c_str())) {
-            LOG_DEBUG("parse ins file success");
             ss.ToVar(md_context.m_data.quotes);
             load_success = true;
-            if (WriteWholeFile(g_config.ins_file_path.c_str(), content.c_str(), content.size())) {
-                LOG_DEBUG("save ins file success");
-            } else {
-                LOG_WARNING("save ins file fail");
+            if (!WriteWholeFile(g_config.ins_file_path.c_str(), content.c_str(), content.size())) {
+                syslog(LOG_WARNING, "save ins file fail");
             }
         } else {
-            LOG_WARNING("parse ins file fail");
+            syslog(LOG_WARNING, "parse ins file fail");
         }
     } else {
-        LOG_WARNING("download ins file fail");
+        syslog(LOG_WARNING, "download ins file fail");
     }
     if (!load_success) {
         if (!ss.FromFile(g_config.ins_file_path.c_str())) {
             ss.ToVar(md_context.m_data.quotes);
-            LOG_WARNING("load local ins file fail");
+            syslog(LOG_WARNING, "load local ins file fail");
             return false;
         }
     }

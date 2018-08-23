@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "rapid_serialize.h"
-#include "libwebsockets/libwebsockets.h"
 #include "md_service.h"
 #include "trader_base.h"
 #include "ctp/trader_ctp.h"

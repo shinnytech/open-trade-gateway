@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <libwebsockets.h>
+
 namespace trader_dll{
 class TraderBase;
 }

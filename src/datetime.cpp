@@ -7,13 +7,7 @@
 #include "stdafx.h"
 
 #include "datetime.h"
-#include <assert.h>
 #include <stdlib.h>
-#include <time.h>
-#include <string.h>
-#include <stdio.h>
-#include <tchar.h>
-#include <algorithm>
 
 static const long _DAYS_IN_MONTH[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static const long _DAYS_BEFORE_MONTH[13] = {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
@@ -516,21 +510,6 @@ BOOL IsDateTimeValid( const struct DateTime* datetime )
 {
     return _check_date_fields(datetime->date.year, datetime->date.month, datetime->date.day)
            && _check_time_fields(datetime->time.hour, datetime->time.minute, datetime->time.second, datetime->time.microsecond);
-}
-
-void SetDateFromString(struct Date* date, LPCTSTR datestr )
-{
-    if (_tcslen(datestr) == 8) {
-        //YYYYMMDD
-        int y, m, d;
-        _stscanf(datestr, _T("%4d%2d%2d"), &y, &m, &d);
-        SetDate(date, y, m, d);
-    } else if (_tcslen(datestr) == 10 && datestr[4] == _T('/') && datestr[7] == _T('/')) {
-        //YYYY/MM/DD
-        int y, m, d;
-        _stscanf(datestr, _T("%4d/%2d/%2d"), &y, &m, &d);
-        SetDate(date, y, m, d);
-    }
 }
 
 void SetDateTimeFromTimeT(struct DateTime* datetime, time_t* src)

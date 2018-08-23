@@ -7,6 +7,7 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <atomic>
 #include "../trader_base.h"
 #include "ctp_define.h"
 
