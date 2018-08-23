@@ -4,7 +4,7 @@ CXX_OBJS := ${CXX_SRCS:.cpp=.o}
 
 CXXFLAGS += -Wall -Wextra -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ -Isrc/
 LDFLAGS += -Lcontrib/lib
-LDLIBS += -lwebsockets -l:thosttraderapi.so -lcurl
+LDLIBS += -lssl -lcrypto -lwebsockets -l:thosttraderapi.so -lcurl
 
 all: $(NAME)
 
