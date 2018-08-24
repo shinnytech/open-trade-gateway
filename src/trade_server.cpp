@@ -190,17 +190,12 @@ void TraderServer::InitBrokerList()
     ss.ToString(&m_broker_list_str);
 }
 
-void TraderServer::Run()
+int TraderServer::RunOnce()
 {
-    InitBrokerList();
-    //加载合约文件
-    if (!md_service::Init())
-        return;
-    //提供交易服务
-    while (true) {
-        lws_service(ws_context, 10);
-    }
-    //服务结束
-    md_service::CleanUp();
+    return lws_service(ws_context, 10);
+}
+
+void TraderServer::CleanUp()
+{
     lws_context_destroy(ws_context);
 }

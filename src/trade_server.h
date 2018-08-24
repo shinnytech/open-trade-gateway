@@ -17,13 +17,14 @@ class TraderServer
 public:
     TraderServer();
     ~TraderServer();
-    void Run();
+    int RunOnce();
+    void InitBrokerList();
+    void CleanUp();
     int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 
 private:
     //期货公司列表
     std::string m_broker_list_str;
-    void InitBrokerList();
 
     //websocket服务
     void OnNetworkConnected(struct lws* wsi);
