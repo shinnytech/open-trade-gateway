@@ -258,8 +258,6 @@ void RunOnce()
         conn_info.protocol = "md";
         md_context.m_ws_md = lws_client_connect_via_info(&conn_info);
     }
-    if (md_context.m_ws_md)
-        lws_callback_on_writable(md_context.m_ws_md);
     lws_service(md_context.m_ws_context, 10);
 }
 
