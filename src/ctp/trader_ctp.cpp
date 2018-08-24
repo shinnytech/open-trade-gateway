@@ -267,15 +267,18 @@ void TraderCtp::OnClientPeekMessage()
             total_float_profit += ps.float_profit;
     }
     //重算资金账户
-    Account& acc = GetAccount("CNY");
-    double dv = total_position_profit - acc.position_profit;
-    acc.position_profit = total_position_profit;
-    acc.available += dv;
-    acc.balance += dv;
-    if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
-        acc.risk_ratio = 1.0 - acc.available / acc.balance;
-    else
-        acc.risk_ratio = NAN;
+    if(m_something_changed){
+        Account& acc = GetAccount("CNY");
+        double dv = total_position_profit - acc.position_profit;
+        acc.position_profit = total_position_profit;
+        acc.available += dv;
+        acc.balance += dv;
+        if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
+            acc.risk_ratio = 1.0 - acc.available / acc.balance;
+        else
+            acc.risk_ratio = NAN;
+        acc.changed = true;
+    }
     //向客户端发送账户信息
     SendUserData();
 }
