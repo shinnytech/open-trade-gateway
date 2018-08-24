@@ -38,14 +38,14 @@ Config g_config;
 bool LoadConfig()
 {
     SerializerConfig ss;
-    if (!ss.FromFile("config.json")){
-        syslog(LOG_CRIT, "load config.json file fail");
+    if (!ss.FromFile("/etc/open-trade-gateway/config.json")){
+        syslog(LOG_CRIT, "load /etc/open-trade-gateway/config.json file fail");
         return false;
     }
     ss.ToVar(g_config);
     SerializerConfig ss_broker;
-    if (!ss_broker.FromFile("brokers.json")){
-        syslog(LOG_CRIT, "load brokers.json file fail");
+    if (!ss_broker.FromFile("/etc/open-trade-gateway/brokers.json")){
+        syslog(LOG_CRIT, "load /etc/open-trade-gateway/brokers.json file fail");
         return false;
     }
     ss_broker.ToVar(g_config.brokers);

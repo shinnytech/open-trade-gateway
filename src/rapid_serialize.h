@@ -113,16 +113,20 @@ public:
         InputStream os(is);
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
         delete[] readBuffer;
-        if (m_doc->HasParseError())
+        if (m_doc->HasParseError()){
+            syslog(LOG_ERR, "json file (%s) parse fail", json_file);
             return false;
+        }
         return true;
     }
 
     bool ToFile(const char* json_file)
     {
         FILE* fp = fopen(json_file, "wb"); // 非 Windows 平台使用 "w"
-        if (!fp)
+        if (!fp){
+            syslog(LOG_ERR, "open file (%s) for write fail", json_file);
             return false;
+        }
         char* writeBuffer = new char[65536];
         rapidjson::FileWriteStream file_stream(fp, writeBuffer, sizeof(writeBuffer));
         typedef rapidjson::EncodedOutputStream<rapidjson::UTF8<>, rapidjson::FileWriteStream> OutputStream;

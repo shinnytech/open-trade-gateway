@@ -93,8 +93,6 @@ void TraderCtp::OnClientReqInsertOrder()
     OrderIdLocalToRemote(d.local_key, &rkey);
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
     m_api->ReqOrderInsert(&d.f, 0);
-    char symbol[1024];
-    sprintf(symbol, "%s.%s", d.f.ExchangeID, d.f.InstrumentID);
     SaveToFile();
 }
 
