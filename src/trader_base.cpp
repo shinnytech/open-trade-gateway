@@ -37,7 +37,7 @@ void TraderBase::Output(const std::string& json)
     }
 }
 
-#include <chrono>
+
 using namespace std::chrono_literals;
 void TraderBase::Run()
 {
@@ -99,7 +99,7 @@ void TraderBase::Stop()
 
 void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, const char* level, const char* type)
 {
-    char* notify_template = "{"\
+    const char* notify_template = "{"\
                                   "\"aid\": \"rtn_data\","\
                                   "\"data\" : ["\
                                   "{"\

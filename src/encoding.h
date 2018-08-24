@@ -1,16 +1,13 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file encoding.h
-///@brief	×Ö·û±àÂë´¦Àí¹¤¾ß
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	å­—ç¬¦ç¼–ç å¤„ç†å·¥å…·
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
 #include <string>
-#include <Windows.h>
 
 std::string GBKToUTF8(const char* strGBK);
 std::string UTF8ToGBK(const char* strUTF8);
-std::string WideToUtf8(const wchar_t* wstr);
-std::wstring Utf8ToWide(const char* str_utf8);
 

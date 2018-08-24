@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file trade_server.cpp
-///@brief	½»Ò×Íø¹Ø·şÎñÆ÷
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	äº¤æ˜“ç½‘å…³æœåŠ¡å™¨
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "rapid_serialize.h"
-#include "libwebsockets/libwebsockets.h"
 #include "md_service.h"
 #include "trader_base.h"
 #include "ctp/trader_ctp.h"
@@ -191,17 +190,12 @@ void TraderServer::InitBrokerList()
     ss.ToString(&m_broker_list_str);
 }
 
-void TraderServer::Run()
+int TraderServer::RunOnce()
 {
-    InitBrokerList();
-    //¼ÓÔØºÏÔ¼ÎÄ¼ş
-    if (!md_service::Init())
-        return;
-    //Ìá¹©½»Ò×·şÎñ
-    while (true) {
-        lws_service(ws_context, 10);
-    }
-    //·şÎñ½áÊø
-    md_service::CleanUp();
+    return lws_service(ws_context, 10);
+}
+
+void TraderServer::CleanUp()
+{
     lws_context_destroy(ws_context);
 }

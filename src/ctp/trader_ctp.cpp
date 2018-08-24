@@ -7,12 +7,12 @@
 #include "stdafx.h"
 #include "trader_ctp.h"
 
-#include "../utility.h"
-#include "ctp_spi.h"
 #include "ctp/ThostFtdcTraderApi.h"
+#include "ctp_spi.h"
 #include "../rapid_serialize.h"
 #include "../numset.h"
 #include "../md_service.h"
+#include "../utility.h"
 
 
 namespace trader_dll
@@ -93,8 +93,6 @@ void TraderCtp::OnClientReqInsertOrder()
     OrderIdLocalToRemote(d.local_key, &rkey);
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
     m_api->ReqOrderInsert(&d.f, 0);
-    char symbol[1024];
-    sprintf_s(symbol, sizeof(symbol), "%s.%s", d.f.ExchangeID, d.f.InstrumentID);
     SaveToFile();
 }
 
@@ -195,10 +193,12 @@ void TraderCtp::ReqQryAccountRegister()
     m_api->ReqQryAccountregister(&field, 0);
 }
 
+using namespace std::chrono;
+
 void TraderCtp::OnIdle()
 {
     //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
-    long long now = GetTickCount64();
+    long long now = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
     if (m_next_qry_dt >= now)
         return;
     if (m_need_query_positions.exchange(false)) {
@@ -231,7 +231,7 @@ void TraderCtp::OnClientPeekMessage()
         if (!ps.ins)
             ps.ins = md_service::GetInstrument(symbol);
         if (!ps.ins){
-            LOG_ERROR("miss symbol %s when processing position", symbol);
+            syslog(LOG_ERR, "miss symbol %s when processing position", symbol);
             continue;
         }
         ps.volume_long = ps.volume_long_his + ps.volume_long_today;
@@ -265,15 +265,18 @@ void TraderCtp::OnClientPeekMessage()
             total_float_profit += ps.float_profit;
     }
     //重算资金账户
-    Account& acc = GetAccount("CNY");
-    double dv = total_position_profit - acc.position_profit;
-    acc.position_profit = total_position_profit;
-    acc.available += dv;
-    acc.balance += dv;
-    if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
-        acc.risk_ratio = 1.0 - acc.available / acc.balance;
-    else
-        acc.risk_ratio = NAN;
+    if(m_something_changed){
+        Account& acc = GetAccount("CNY");
+        double dv = total_position_profit - acc.position_profit;
+        acc.position_profit = total_position_profit;
+        acc.available += dv;
+        acc.balance += dv;
+        if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
+            acc.risk_ratio = 1.0 - acc.available / acc.balance;
+        else
+            acc.risk_ratio = NAN;
+        acc.changed = true;
+    }
     //向客户端发送账户信息
     SendUserData();
 }

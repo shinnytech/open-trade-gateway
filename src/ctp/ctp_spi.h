@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file ctp_spi.h
-///@brief	CTP»Øµ÷½Ó¿ÚÊµÏÖ
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ
+///@brief	CTPå›è°ƒæ¥å£å®ç°
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -24,61 +24,67 @@ public:
     {
     }
 
-    ///µ±¿Í»§¶ËÓë½»Ò×ºóÌ¨½¨Á¢ÆğÍ¨ĞÅÁ¬½ÓÊ±£¨»¹Î´µÇÂ¼Ç°£©£¬¸Ã·½·¨±»µ÷ÓÃ¡£
+    ///å½“å®¢æˆ·ç«¯ä¸äº¤æ˜“åå°å»ºç«‹èµ·é€šä¿¡è¿æ¥æ—¶ï¼ˆè¿˜æœªç™»å½•å‰ï¼‰ï¼Œè¯¥æ–¹æ³•è¢«è°ƒç”¨ã€‚
     virtual void OnFrontConnected();
 
-    ///µ±¿Í»§¶ËÓë½»Ò×ºóÌ¨Í¨ĞÅÁ¬½Ó¶Ï¿ªÊ±£¬¸Ã·½·¨±»µ÷ÓÃ¡£µ±·¢ÉúÕâ¸öÇé¿öºó£¬API»á×Ô¶¯ÖØĞÂÁ¬½Ó£¬¿Í»§¶Ë¿É²»×ö´¦Àí¡£
-    ///@param nReason ´íÎóÔ­Òò
-    ///        0x1001 ÍøÂç¶ÁÊ§°Ü
-    ///        0x1002 ÍøÂçĞ´Ê§°Ü
-    ///        0x2001 ½ÓÊÕĞÄÌø³¬Ê±
-    ///        0x2002 ·¢ËÍĞÄÌøÊ§°Ü
-    ///        0x2003 ÊÕµ½´íÎó±¨ÎÄ
+    ///å½“å®¢æˆ·ç«¯ä¸äº¤æ˜“åå°é€šä¿¡è¿æ¥æ–­å¼€æ—¶ï¼Œè¯¥æ–¹æ³•è¢«è°ƒç”¨ã€‚å½“å‘ç”Ÿè¿™ä¸ªæƒ…å†µåï¼ŒAPIä¼šè‡ªåŠ¨é‡æ–°è¿æ¥ï¼Œå®¢æˆ·ç«¯å¯ä¸åšå¤„ç†ã€‚
+    ///@param nReason é”™è¯¯åŸå› 
+    ///        0x1001 ç½‘ç»œè¯»å¤±è´¥
+    ///        0x1002 ç½‘ç»œå†™å¤±è´¥
+    ///        0x2001 æ¥æ”¶å¿ƒè·³è¶…æ—¶
+    ///        0x2002 å‘é€å¿ƒè·³å¤±è´¥
+    ///        0x2003 æ”¶åˆ°é”™è¯¯æŠ¥æ–‡
     virtual void OnFrontDisconnected(int nReason);
 
-    ///µÇÂ¼ÇëÇóÏìÓ¦
+    ///ç™»å½•è¯·æ±‚å“åº”
     virtual void OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-    ///±¨µ¥Â¼ÈëÇëÇóÏìÓ¦
+    ///æŠ¥å•å½•å…¥è¯·æ±‚å“åº”
     virtual void OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-    ///±¨µ¥²Ù×÷ÇëÇóÏìÓ¦
+    ///æŠ¥å•æ“ä½œè¯·æ±‚å“åº”
     virtual void OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAction, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-    ///ÇëÇó²éÑ¯Í¶×ÊÕß³Ö²ÖÏìÓ¦
+    ///æŠ¥å•å½•å…¥é”™è¯¯å›æŠ¥
+    virtual void OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo);
+
+    ///æŠ¥å•æ“ä½œé”™è¯¯å›æŠ¥
+    virtual void OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo);
+
+    ///è¯·æ±‚æŸ¥è¯¢æŠ•èµ„è€…æŒä»“å“åº”
     virtual void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInvestorPosition, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-    ///ÇëÇó²éÑ¯×Ê½ğÕË»§ÏìÓ¦
+    ///è¯·æ±‚æŸ¥è¯¢èµ„é‡‘è´¦æˆ·å“åº”
     virtual void OnRspQryTradingAccount(CThostFtdcTradingAccountField* pTradingAccount, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-    ///ÇëÇó²éÑ¯Ç©Ô¼ÒøĞĞÏìÓ¦
+    ///è¯·æ±‚æŸ¥è¯¢ç­¾çº¦é“¶è¡Œå“åº”
     virtual void OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);;
 
-    ///ÇëÇó²éÑ¯ÒøÆÚÇ©Ô¼¹ØÏµÏìÓ¦
+    ///è¯·æ±‚æŸ¥è¯¢é“¶æœŸç­¾çº¦å…³ç³»å“åº”
     virtual void OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccountregister, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-    ///ÇëÇó²éÑ¯×ªÕÊÁ÷Ë®ÏìÓ¦
+    ///è¯·æ±‚æŸ¥è¯¢è½¬å¸æµæ°´å“åº”
     virtual void OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferSerial, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-    ///ÆÚ»õ·¢ÆğÒøĞĞ×Ê½ğ×ªÆÚ»õÍ¨Öª
+    ///æœŸè´§å‘èµ·é“¶è¡Œèµ„é‡‘è½¬æœŸè´§é€šçŸ¥
     virtual void OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *pRspTransfer);
 
-    ///ÆÚ»õ·¢ÆğÆÚ»õ×Ê½ğ×ªÒøĞĞÍ¨Öª
+    ///æœŸè´§å‘èµ·æœŸè´§èµ„é‡‘è½¬é“¶è¡Œé€šçŸ¥
     virtual void OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTransfer);
 
-    ///ÆÚ»õ·¢ÆğÒøĞĞ×Ê½ğ×ªÆÚ»õ´íÎó»Ø±¨
+    ///æœŸè´§å‘èµ·é“¶è¡Œèµ„é‡‘è½¬æœŸè´§é”™è¯¯å›æŠ¥
     virtual void OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo);
 
-    ///ÆÚ»õ·¢ÆğÆÚ»õ×Ê½ğ×ªÒøĞĞ´íÎó»Ø±¨
+    ///æœŸè´§å‘èµ·æœŸè´§èµ„é‡‘è½¬é“¶è¡Œé”™è¯¯å›æŠ¥
     virtual void OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo);
 
-    ///´íÎóÓ¦´ğ
+    ///é”™è¯¯åº”ç­”
     virtual void OnRspError(CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-    ///±¨µ¥Í¨Öª
+    ///æŠ¥å•é€šçŸ¥
     virtual void OnRtnOrder(CThostFtdcOrderField* pOrder);
 
-    ///³É½»Í¨Öª
+    ///æˆäº¤é€šçŸ¥
     virtual void OnRtnTrade(CThostFtdcTradeField* pTrade);
 
 private:

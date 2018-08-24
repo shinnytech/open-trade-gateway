@@ -1,11 +1,10 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file trade_base.h
-///@brief	½»Ò×ºóÌ¨½Ó¿Ú»ùÀà
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	äº¤æ˜“åå°æ¥å£åŸºç±»
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include <concurrent_queue.h>
 #include <string>
 #include <queue>
 #include <map>
@@ -21,7 +20,7 @@ using namespace std::chrono_literals;
 
 
 /*
-Ïß³Ì°²È«µÄFIFO¶ÓÁĞ
+çº¿ç¨‹å®‰å…¨çš„FIFOé˜Ÿåˆ—
 */
 class StringChannel
 {
@@ -31,13 +30,13 @@ public:
         return m_items.empty();
     }
     void push_back(const std::string& item) {
-        //Ïò¶ÓÁĞÎ²²¿¼ÓÈëÒ»¸öÔªËØ
+        //å‘é˜Ÿåˆ—å°¾éƒ¨åŠ å…¥ä¸€ä¸ªå…ƒç´ 
         std::lock_guard<std::mutex> lck(m_mutex);
         m_items.push_back(item);
         m_cv.notify_one();
     }
     bool try_pop_front(std::string* out_str) {
-        //³¢ÊÔ´Ó¶ÓÁĞÍ·²¿ÌáÈ¡Ò»¸öÔªËØ, Èç¹û¶ÓÁĞÎª¿ÕÔòÁ¢¼´·µ»Øfalse
+        //å°è¯•ä»é˜Ÿåˆ—å¤´éƒ¨æå–ä¸€ä¸ªå…ƒç´ , å¦‚æœé˜Ÿåˆ—ä¸ºç©ºåˆ™ç«‹å³è¿”å›false
         std::lock_guard<std::mutex> lck(m_mutex);
         if (m_items.empty())
             return false;
@@ -46,14 +45,14 @@ public:
         return true;
     }
     bool pop_front(std::string* out_str) {
-        //³¢ÊÔ´Ó¶ÓÁĞÍ·²¿ÌáÈ¡Ò»¸öÔªËØ, Èç¹û¶ÓÁĞÎª¿ÕÔò×èÈûµÈ´ı×î¶à100ms, Èç¹ûÒ»Ö±Îª¿ÕÔò·µ»Øfalse
+        //å°è¯•ä»é˜Ÿåˆ—å¤´éƒ¨æå–ä¸€ä¸ªå…ƒç´ , å¦‚æœé˜Ÿåˆ—ä¸ºç©ºåˆ™é˜»å¡ç­‰å¾…æœ€å¤š100ms, å¦‚æœä¸€ç›´ä¸ºç©ºåˆ™è¿”å›false
         std::unique_lock<std::mutex> lk(m_mutex);
         if (!m_cv.wait_for(lk, 100ms, [=] {return !m_items.empty(); })) {
             return false;
         }
         *out_str = m_items.front();
         m_items.pop_front();
-        // Í¨ÖªÇ°Íê³ÉÊÖ¶¯Ëø¶¨£¬ÒÔ±ÜÃâµÈ´ıÏß³ÌÖ»ÔÙ×èÈû£¨Ï¸½Ú¼û notify_one £©
+        // é€šçŸ¥å‰å®Œæˆæ‰‹åŠ¨é”å®šï¼Œä»¥é¿å…ç­‰å¾…çº¿ç¨‹åªå†é˜»å¡ï¼ˆç»†èŠ‚è§ notify_one ï¼‰
         lk.unlock();
         m_cv.notify_one();
         return true;
@@ -73,10 +72,10 @@ namespace trader_dll
 struct ReqLogin
 {
     std::string aid;
-    std::string bid;        //¶ÔÓ¦·şÎñÆ÷brokersÅäÖÃÎÄ¼şÖĞµÄidºÅ
-    std::string user_name;  //ÓÃ»§ÊäÈëµÄÓÃ»§Ãû
-    std::string password;   //ÓÃ»§ÊäÈëµÄÃÜÂë
-    BrokerConfig broker;    //ÓÃ»§¿ÉÒÔÇ¿ÖÆÊäÈëbrokerĞÅÏ¢
+    std::string bid;        //å¯¹åº”æœåŠ¡å™¨brokersé…ç½®æ–‡ä»¶ä¸­çš„idå·
+    std::string user_name;  //ç”¨æˆ·è¾“å…¥çš„ç”¨æˆ·å
+    std::string password;   //ç”¨æˆ·è¾“å…¥çš„å¯†ç 
+    BrokerConfig broker;    //ç”¨æˆ·å¯ä»¥å¼ºåˆ¶è¾“å…¥brokerä¿¡æ¯
 };
 
 
@@ -133,7 +132,7 @@ struct Bank;
 struct Order {
     Order();
 
-    //Î¯ÍĞµ¥³õÊ¼ÊôĞÔ(ÓÉÏÂµ¥ÕßÔÚÏÂµ¥Ç°È·¶¨, ²»ÔÙ¸Ä±ä)
+    //å§”æ‰˜å•åˆå§‹å±æ€§(ç”±ä¸‹å•è€…åœ¨ä¸‹å•å‰ç¡®å®š, ä¸å†æ”¹å˜)
     std::string user_id;
     std::string order_id;
     std::string exchange_id;
@@ -146,16 +145,16 @@ struct Order {
     long time_condition;
     long volume_condition;
 
-    //ÏÂµ¥ºó»ñµÃµÄĞÅÏ¢(ÓÉÆÚ»õ¹«Ë¾·µ»Ø, ²»»á¸Ä±ä)
+    //ä¸‹å•åè·å¾—çš„ä¿¡æ¯(ç”±æœŸè´§å…¬å¸è¿”å›, ä¸ä¼šæ”¹å˜)
     long long insert_date_time;
     std::string exchange_order_id;
 
-    //Î¯ÍĞµ¥µ±Ç°×´Ì¬
+    //å§”æ‰˜å•å½“å‰çŠ¶æ€
     long status;
     int volume_left;
     std::string last_msg;
 
-    //ÄÚ²¿Ê¹ÓÃ
+    //å†…éƒ¨ä½¿ç”¨
     int seqno;
     bool changed;
 };
@@ -177,7 +176,7 @@ struct Trade {
     long long trade_date_time; //epoch nano
     double commission;
 
-    //ÄÚ²¿Ê¹ÓÃ
+    //å†…éƒ¨ä½¿ç”¨
     int seqno;
     bool changed;
 };
@@ -185,12 +184,12 @@ struct Trade {
 struct Position {
     Position();
 
-    //½»Ò×ËùºÍºÏÔ¼´úÂë
+    //äº¤æ˜“æ‰€å’Œåˆçº¦ä»£ç 
     std::string user_id;
     std::string exchange_id;
     std::string instrument_id;
 
-    //³Ö²ÖÊÖÊıÓë¶³½áÊÖÊı
+    //æŒä»“æ‰‹æ•°ä¸å†»ç»“æ‰‹æ•°
     int volume_long_today;
     int volume_long_his;
     int volume_long;
@@ -202,15 +201,15 @@ struct Position {
     int volume_short_frozen_today;
     int volume_short_frozen_his;
 
-    //³É±¾, ÏÖ¼ÛÓëÓ¯¿÷
-    double open_price_long; //¶àÍ·¿ª²Ö¾ù¼Û
-    double open_price_short; //¿ÕÍ·¿ª²Ö¾ù¼Û
-    double open_cost_long; //¶àÍ·¿ª²ÖÊĞÖµ
-    double open_cost_short; //¿ÕÍ·¿ª²ÖÊĞÖµ
-    double position_price_long; //¶àÍ·³Ö²Ö¾ù¼Û
-    double position_price_short; //¿ÕÍ·³Ö²Ö¾ù¼Û
-    double position_cost_long; //¶àÍ·³Ö²Ö³É±¾
-    double position_cost_short; //¿ÕÍ·³Ö²Ö³É±¾
+    //æˆæœ¬, ç°ä»·ä¸ç›ˆäº
+    double open_price_long; //å¤šå¤´å¼€ä»“å‡ä»·
+    double open_price_short; //ç©ºå¤´å¼€ä»“å‡ä»·
+    double open_cost_long; //å¤šå¤´å¼€ä»“å¸‚å€¼
+    double open_cost_short; //ç©ºå¤´å¼€ä»“å¸‚å€¼
+    double position_price_long; //å¤šå¤´æŒä»“å‡ä»·
+    double position_price_short; //ç©ºå¤´æŒä»“å‡ä»·
+    double position_cost_long; //å¤šå¤´æŒä»“æˆæœ¬
+    double position_cost_short; //ç©ºå¤´æŒä»“æˆæœ¬
     double last_price;
     double float_profit_long;
     double float_profit_short;
@@ -219,12 +218,12 @@ struct Position {
     double position_profit_short;
     double position_profit;
 
-    //±£Ö¤½ğÕ¼ÓÃ
+    //ä¿è¯é‡‘å ç”¨
     double margin_long;
     double margin_short;
     double margin;
 
-    //ÄÚ²¿Ê¹ÓÃ
+    //å†…éƒ¨ä½¿ç”¨
     const md_service::Instrument* ins;
     bool changed;
 };
@@ -232,14 +231,14 @@ struct Position {
 struct Account {
     Account();
 
-    //ÕËºÅ¼°±ÒÖÖ
+    //è´¦å·åŠå¸ç§
     std::string user_id;
     std::string currency;
 
-    //±¾½»Ò×ÈÕ¿ªÅÌÇ°×´Ì¬
+    //æœ¬äº¤æ˜“æ—¥å¼€ç›˜å‰çŠ¶æ€
     double pre_balance;
 
-    //±¾½»Ò×ÈÕÄÚÒÑ·¢ÉúÊÂ¼şµÄÓ°Ïì
+    //æœ¬äº¤æ˜“æ—¥å†…å·²å‘ç”Ÿäº‹ä»¶çš„å½±å“
     double deposit;
     double withdraw;
     double close_profit;
@@ -247,14 +246,14 @@ struct Account {
     double premium;
     double static_balance;
 
-    //µ±Ç°³Ö²ÖÓ¯¿÷
+    //å½“å‰æŒä»“ç›ˆäº
     double position_profit;
     double float_profit;
 
-    //µ±Ç°È¨Òæ
+    //å½“å‰æƒç›Š
     double balance;
 
-    //±£Ö¤½ğÕ¼ÓÃ, ¶³½á¼°·çÏÕ¶È
+    //ä¿è¯é‡‘å ç”¨, å†»ç»“åŠé£é™©åº¦
     double margin;
     double frozen_margin;
     double frozen_commission;
@@ -262,7 +261,7 @@ struct Account {
     double available;
     double risk_ratio;
 
-    //ÄÚ²¿Ê¹ÓÃ
+    //å†…éƒ¨ä½¿ç”¨
     bool changed;
 };
 
@@ -328,47 +327,37 @@ class SerializerTradeBase
 {
 public:
     using RapidSerialize::Serializer<SerializerTradeBase>::Serializer;
-    template<class TMapKey, class TMapValue>
-    bool FilterMapItem(const TMapKey& key, TMapValue& value)
-    {
-        return true;
-    }
-    template<>
+
     bool FilterMapItem(const std::string& key, Order& value)
     {
         bool b = value.changed;
         value.changed = false;
         return b;
     }
-    template<>
     bool FilterMapItem(const std::string& key, Trade& value)
     {
         bool b = value.changed;
         value.changed = false;
         return b;
     }
-    template<>
     bool FilterMapItem(const std::string& key, Position& value)
     {
         bool b = value.changed;
         value.changed = false;
         return b;
     }
-    template<>
     bool FilterMapItem(const std::string& key, Account& value)
     {
         bool b = value.changed;
         value.changed = false;
         return b;
     }
-    template<>
     bool FilterMapItem(const std::string& key, Bank& value)
     {
         bool b = value.changed;
         value.changed = false;
         return b;
     }
-    template<>
     bool FilterMapItem(const std::string& key, TransferLog& value)
     {
         bool b = value.changed;
@@ -398,16 +387,16 @@ public:
     virtual ~TraderBase();
     virtual void Start(const ReqLogin& req_login);
     virtual void Stop();
-    //ÊäÈëTraderBaseµÄÊı¾İ°ü¶ÓÁĞ
+    //è¾“å…¥TraderBaseçš„æ•°æ®åŒ…é˜Ÿåˆ—
     StringChannel m_in_queue;
-    //TraderBaseÒªÇóÊä³öµÄÊı¾İ°ü¶ÓÁĞ
+    //TraderBaseè¦æ±‚è¾“å‡ºçš„æ•°æ®åŒ…é˜Ÿåˆ—
     StringChannel m_out_queue;
     
-    //¹¤×÷Ïß³Ì
+    //å·¥ä½œçº¿ç¨‹
     std::thread m_worker_thread;
     std::function<void()> m_notify_send_callback;
-    bool m_running; //ĞèÒª¹¤×÷Ïß³ÌÔËĞĞ
-    bool m_finished; //¹¤×÷Ïß³ÌÒÑÍê
+    bool m_running; //éœ€è¦å·¥ä½œçº¿ç¨‹è¿è¡Œ
+    bool m_finished; //å·¥ä½œçº¿ç¨‹å·²å®Œ
 
 protected:
     void Run();
@@ -418,11 +407,11 @@ protected:
     void Output(const std::string& json);
     void OutputNotify(long notify_class_id, const std::string& ret_msg, const char* level = "INFO", const char* type = "MESSAGE");
 
-    //ÒµÎñĞÅÏ¢
-    std::string m_user_id; //½»Ò×ÕËºÅ
-    User m_data;   //½»Ò×ÕË»§È«ĞÅÏ¢
-    std::mutex m_data_mtx; //m_data·ÃÎÊµÄmutex
-    ReqLogin m_req_login;   //µÇÂ¼ÇëÇó, ±£´æÒÔ±¸¶ÏÏßÖØÁ¬Ê±Ê¹ÓÃ
+    //ä¸šåŠ¡ä¿¡æ¯
+    std::string m_user_id; //äº¤æ˜“è´¦å·
+    User m_data;   //äº¤æ˜“è´¦æˆ·å…¨ä¿¡æ¯
+    std::mutex m_data_mtx; //m_dataè®¿é—®çš„mutex
+    ReqLogin m_req_login;   //ç™»å½•è¯·æ±‚, ä¿å­˜ä»¥å¤‡æ–­çº¿é‡è¿æ—¶ä½¿ç”¨
     int m_notify_seq;
     int m_data_seq;
     Account& GetAccount(const std::string account_key);
