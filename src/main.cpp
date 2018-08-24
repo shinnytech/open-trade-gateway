@@ -10,12 +10,15 @@
 #include "config.h"
 
 int main() {
+    openlog("open-trade-gateway", LOG_CONS|LOG_NDELAY|LOG_PID, LOG_USER);
+    syslog(LOG_NOTICE, "server init");
     if (!LoadConfig()) {
-        puts("error loading config files");
         return 0;
     }
     TraderServer t;
     t.Run();
+    syslog(LOG_NOTICE, "server exit");
+    closelog();
     return 0;
 }
 

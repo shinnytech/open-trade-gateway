@@ -220,7 +220,7 @@ static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
                 memcpy(md_context.m_send_buf + LWS_PRE, p->c_str(), p->size());
                 int c = lws_write(md_context.m_ws_md, (unsigned char*)(&md_context.m_send_buf[LWS_PRE]), p->size(), LWS_WRITE_TEXT);
             } else {
-                syslog(LOG_ERR, "行情接口发送数据包过大, %d", length);
+                syslog(LOG_ERR, "md service send pack size(%d) should less than 524228", length);
             }
             lws_callback_on_writable(wsi);
         }
@@ -270,9 +270,14 @@ void Run()
 bool WriteWholeFile(const char* filename, const char* content, long length)
 {
     FILE* pf = fopen(filename, "wb");
-    if (!pf)
+    if (!pf){
+        syslog(LOG_ERR, "open file (%s) for write fail", filename);
         return false;
-    fwrite(content, length, 1, pf);
+    }
+    if (fwrite(content, length, 1, pf) != length){
+        syslog(LOG_ERR, "write (%d) bytes to file (%s) fail", length, filename);
+        return false;
+    }
     fclose(pf);
     return true;
 }
@@ -288,23 +293,22 @@ bool Init()
     bool load_success = false;
     InsFileParser ss;
     if (0 == HttpGet(ins_file_url, &content)) {
-        syslog(LOG_WARNING, "download ins file fail");
         if (ss.FromString(content.c_str())) {
             ss.ToVar(md_context.m_data.quotes);
             load_success = true;
             if (!WriteWholeFile(g_config.ins_file_path.c_str(), content.c_str(), content.size())) {
-                syslog(LOG_WARNING, "save ins file fail");
+                syslog(LOG_ERR, "md service save ins file fail");
             }
         } else {
-            syslog(LOG_WARNING, "parse ins file fail");
+            syslog(LOG_ERR, "md service parse downloaded ins file fail");
         }
     } else {
-        syslog(LOG_WARNING, "download ins file fail");
+        syslog(LOG_ERR, "md service download ins file fail");
     }
     if (!load_success) {
         if (!ss.FromFile(g_config.ins_file_path.c_str())) {
             ss.ToVar(md_context.m_data.quotes);
-            syslog(LOG_WARNING, "load local ins file fail");
+            syslog(LOG_ERR, "md service load ins file fail");
             return false;
         }
     }

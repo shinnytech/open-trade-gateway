@@ -38,12 +38,16 @@ Config g_config;
 bool LoadConfig()
 {
     SerializerConfig ss;
-    if (!ss.FromFile("config.json"))
+    if (!ss.FromFile("config.json")){
+        syslog(LOG_CRIT, "load config.json file fail");
         return false;
+    }
     ss.ToVar(g_config);
     SerializerConfig ss_broker;
-    if (!ss_broker.FromFile("brokers.json"))
+    if (!ss_broker.FromFile("brokers.json")){
+        syslog(LOG_CRIT, "load brokers.json file fail");
         return false;
+    }
     ss_broker.ToVar(g_config.brokers);
     return true;
 }
