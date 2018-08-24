@@ -1,8 +1,0 @@
-{
-  "simnow": {
-    "type": "ctp",
-    "broker_id": "9999",
-    "product_info": "abcd",
-    "trading_fronts": ["tcp://218.202.237.33:10002"]
-  }
-}
