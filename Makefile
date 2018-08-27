@@ -27,4 +27,4 @@ install: all
 	install -d /etc/$(NAME)
 	install -m 755 bin/$(NAME) /usr/local/bin/
 	install -m 755 contrib/lib/*.so /usr/local/lib/
-	install -m 644 conf/*.json /etc/$(NAME)/
+	install -m 644 conf/* /etc/$(NAME)/
