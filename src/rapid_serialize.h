@@ -27,6 +27,36 @@
 #include "rapidjson/filewritestream.h"
 #include "encoding.h"
 
+namespace rapidjson{
+
+template<>
+bool Writer<rapidjson::EncodedOutputStream<rapidjson::UTF8<>, rapidjson::StringBuffer>, rapidjson::UTF8<>, rapidjson::UTF8<>, rapidjson::CrtAllocator, rapidjson::kWriteNanAndInfFlag>::WriteDouble(double d) 
+{
+    if (internal::Double(d).IsNanOrInf()) {
+        if (internal::Double(d).IsNan()) {
+            PutReserve(*os_, 3);
+            PutUnsafe(*os_, '"'); PutUnsafe(*os_, '-'); PutUnsafe(*os_, '"');
+            return true;
+        }
+        if (internal::Double(d).Sign()) {
+            PutReserve(*os_, 9);
+            PutUnsafe(*os_, '-');
+        }
+        else
+            PutReserve(*os_, 8);
+        PutUnsafe(*os_, 'I'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'f');
+        PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 't'); PutUnsafe(*os_, 'y');
+        return true;
+    }
+
+    char buffer[25];
+    char* end = internal::dtoa(d, buffer, maxDecimalPlaces_);
+    PutReserve(*os_, static_cast<size_t>(end - buffer));
+    for (char* p = buffer; p != end; ++p)
+        PutUnsafe(*os_, static_cast<typename UTF8<>::Ch>(*p));
+    return true;
+}
+};
 
 namespace RapidSerialize
 {

@@ -30,6 +30,7 @@
 *.ilk
 *.iobj
 *.ipdb
+.vscode
 /Debug
 /Release
 

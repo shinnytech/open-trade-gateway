@@ -320,6 +320,8 @@ bool Init()
     info.gid = -1;
     info.uid = -1;
     info.extensions = exts;
+    info.ka_time = 15000;
+    info.ka_interval = 3000;
     info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     md_context.m_ws_context = lws_create_context(&info);
     md_context.m_running_flag = false;

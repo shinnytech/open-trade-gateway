@@ -222,6 +222,16 @@ void TraderCtp::OnClientPeekMessage()
 {
     std::lock_guard<std::mutex> lck(m_data_mtx);
     m_peeking_message = true;
+    //向客户端发送账户信息
+    SendUserData();
+}
+
+void TraderCtp::SendUserData()
+{
+    if (!m_peeking_message)
+        return;
+    if (!m_something_changed)
+        return;
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
     double total_float_profit = 0;
@@ -242,11 +252,11 @@ void TraderCtp::OnClientPeekMessage()
             last_price = ps.ins->pre_settlement;
         if (last_price != ps.last_price || ps.changed) {
             ps.last_price = last_price;
-            ps.position_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-            ps.position_profit_short = ps.position_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
+            ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+            ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
             ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-            ps.float_profit_long = ps.ins->last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
-            ps.float_profit_short = ps.open_cost_short - ps.ins->last_price * ps.volume_short * ps.ins->volume_multiple;
+            ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+            ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
             ps.float_profit = ps.float_profit_long + ps.float_profit_short;
             if (ps.volume_long > 0) {
                 ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
@@ -277,16 +287,6 @@ void TraderCtp::OnClientPeekMessage()
             acc.risk_ratio = NAN;
         acc.changed = true;
     }
-    //向客户端发送账户信息
-    SendUserData();
-}
-
-void TraderCtp::SendUserData()
-{
-    if (!m_peeking_message)
-        return;
-    if (!m_something_changed)
-        return;
     //构建数据包
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
