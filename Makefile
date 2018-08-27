@@ -6,14 +6,14 @@ CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ -Isrc/
 LDFLAGS += -Lcontrib/lib
 LDLIBS += -lssl -lcrypto -lwebsockets -l:thosttraderapi.so -lcurl
 
-all: directories $(NAME)
+all: directories bin/$(NAME)
 
 directories:
 	@mkdir -p bin
 	@mkdir -p obj
 
-$(NAME): $(CXX_OBJS)
-	$(CXX) -o bin/$@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS)
+bin/$(NAME): $(CXX_OBJS)
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS)
 
 obj/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
@@ -22,9 +22,9 @@ obj/%.o: src/%.cpp
 clean:
 	@$(RM) -rf bin obj
 
-install:
+install: all
 	install -d /var/local/$(NAME)
 	install -d /etc/$(NAME)
-	install -m 755 bin/$(NAME) /usr/local/bin
-	install -m 755 contrib/lib/*.so /usr/local/lib
+	install -m 755 bin/$(NAME) /usr/local/bin/
+	install -m 755 contrib/lib/*.so /usr/local/lib/
 	install -m 644 conf/*.json /etc/$(NAME)/

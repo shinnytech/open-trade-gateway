@@ -30,7 +30,7 @@
 namespace rapidjson{
 
 template<>
-bool Writer<rapidjson::EncodedOutputStream<rapidjson::UTF8<>, rapidjson::StringBuffer>, rapidjson::UTF8<>, rapidjson::UTF8<>, rapidjson::CrtAllocator, rapidjson::kWriteNanAndInfFlag>::WriteDouble(double d) 
+inline bool Writer<rapidjson::EncodedOutputStream<rapidjson::UTF8<>, rapidjson::StringBuffer>, rapidjson::UTF8<>, rapidjson::UTF8<>, rapidjson::CrtAllocator, rapidjson::kWriteNanAndInfFlag>::WriteDouble(double d) 
 {
     if (internal::Double(d).IsNanOrInf()) {
         if (internal::Double(d).IsNan()) {
