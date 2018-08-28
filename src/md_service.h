@@ -43,8 +43,8 @@ struct Instrument {
     long exchange_id;
     long product_class;
     long volume_multiple;
-    volatile float last_price;
-    volatile float pre_settlement;
+    volatile double last_price;
+    volatile double pre_settlement;
 };
 
 struct MdData {
