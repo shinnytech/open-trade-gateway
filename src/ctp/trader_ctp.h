@@ -75,6 +75,7 @@ private:
     int ReqQryAccount();
     int ReqQryPosition();
     long long m_next_qry_dt;
+    long long m_next_send_dt;
     std::atomic_bool m_need_query_positions;
     std::atomic_bool m_need_query_account;
 };

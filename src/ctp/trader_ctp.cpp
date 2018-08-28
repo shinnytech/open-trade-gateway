@@ -26,7 +26,8 @@ TraderCtp::TraderCtp(std::function<void()> callback)
     m_session_id = 0;
     m_order_ref = 0;
     m_next_qry_dt = 0;
-
+    m_next_send_dt = 0;
+    
     m_peeking_message = false;
     m_something_changed = false;
 }
@@ -199,6 +200,11 @@ void TraderCtp::OnIdle()
 {
     //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
     long long now = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+    if (m_peeking_message && (m_next_send_dt < now)){
+        m_next_send_dt = now + 100;
+        std::lock_guard<std::mutex> lck(m_data_mtx);
+        SendUserData();
+    }
     if (m_next_qry_dt >= now)
         return;
     if (m_need_query_positions.exchange(false)) {
@@ -229,8 +235,6 @@ void TraderCtp::OnClientPeekMessage()
 void TraderCtp::SendUserData()
 {
     if (!m_peeking_message)
-        return;
-    if (!m_something_changed)
         return;
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
@@ -279,6 +283,7 @@ void TraderCtp::SendUserData()
         Account& acc = GetAccount("CNY");
         double dv = total_position_profit - acc.position_profit;
         acc.position_profit = total_position_profit;
+        acc.float_profit = total_float_profit;
         acc.available += dv;
         acc.balance += dv;
         if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
@@ -287,6 +292,8 @@ void TraderCtp::SendUserData()
             acc.risk_ratio = NAN;
         acc.changed = true;
     }
+    if (!m_something_changed)
+        return;
     //构建数据包
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
