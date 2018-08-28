@@ -347,6 +347,15 @@ Position::Position()
     volume_short_frozen_his = 0;
 
     //成本, 现价与盈亏
+    open_cost_long_today = 0.0;
+    open_cost_short_today = 0.0;
+    open_cost_long_his = 0.0;
+    open_cost_short_his = 0.0;
+    position_cost_long_today = 0.0;
+    position_cost_short_today = 0.0;
+    position_cost_long_his = 0.0;
+    position_cost_short_his = 0.0;
+
     open_price_long = 0.0;
     open_price_short = 0.0;
     open_cost_long = 0.0;
@@ -366,6 +375,10 @@ Position::Position()
     //保证金占用
     margin_long = 0.0;
     margin_short = 0.0;
+    margin_long_today = 0.0;
+    margin_short_today = 0.0;
+    margin_long_his = 0.0;
+    margin_short_his = 0.0;
     margin = 0.0;
 
     //内部使用

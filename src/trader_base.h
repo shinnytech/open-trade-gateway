@@ -206,10 +206,18 @@ struct Position {
     double open_price_short; //空头开仓均价
     double open_cost_long; //多头开仓市值
     double open_cost_short; //空头开仓市值
+    double open_cost_long_today; //多头开仓市值
+    double open_cost_short_today; //空头开仓市值
+    double open_cost_long_his; //多头开仓市值
+    double open_cost_short_his; //空头开仓市值
     double position_price_long; //多头持仓均价
     double position_price_short; //空头持仓均价
     double position_cost_long; //多头持仓成本
     double position_cost_short; //空头持仓成本
+    double position_cost_long_today; //多头持仓成本
+    double position_cost_short_today; //空头持仓成本
+    double position_cost_long_his; //多头持仓成本
+    double position_cost_short_his; //空头持仓成本
     double last_price;
     double float_profit_long;
     double float_profit_short;
@@ -221,6 +229,10 @@ struct Position {
     //保证金占用
     double margin_long;
     double margin_short;
+    double margin_long_today;
+    double margin_short_today;
+    double margin_long_his;
+    double margin_short_his;
     double margin;
 
     //内部使用
