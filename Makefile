@@ -23,8 +23,9 @@ clean:
 	@$(RM) -rf bin obj
 
 install: all
-	install -d /var/local/$(NAME)
 	install -d /etc/$(NAME)
+	install -d /var/local/$(NAME)
+	install -m 777 -d /var/log/$(NAME)
 	install -m 755 bin/$(NAME) /usr/local/bin/
 	install -m 755 contrib/lib/*.so /usr/local/lib/
 	install -m 644 conf/* /etc/$(NAME)/

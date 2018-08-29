@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "trader_ctp.h"
 
+#include "log.h"
 #include "ctp/ThostFtdcTraderApi.h"
 #include "ctp_spi.h"
 #include "../rapid_serialize.h"
@@ -27,7 +28,7 @@ TraderCtp::TraderCtp(std::function<void()> callback)
     m_order_ref = 0;
     m_next_qry_dt = 0;
     m_next_send_dt = 0;
-    
+
     m_peeking_message = false;
     m_something_changed = false;
 }
@@ -67,6 +68,7 @@ void TraderCtp::OnInit()
     m_user_file_name = g_config.user_file_path + "/" + m_user_id;
     LoadFromFile();
     m_api->Init();
+    Log(LOG_INFO, NULL, "ctp Init, UserID=%s", m_user_id.c_str());
 }
 
 void TraderCtp::SendLoginRequest()
@@ -78,6 +80,7 @@ void TraderCtp::SendLoginRequest()
     strcpy_x(field.Password, m_req_login.password.c_str());
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
     int ret = m_api->ReqUserLogin(&field, 1);
+    Log(LOG_INFO, NULL, "ctp ReqUserLogin, UserID=%s, ret=%d", field.UserID, ret);
     assert(ret == 0);
 }
 
@@ -93,7 +96,8 @@ void TraderCtp::OnClientReqInsertOrder()
     rkey.instrument_id = d.f.InstrumentID;
     OrderIdLocalToRemote(d.local_key, &rkey);
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
-    m_api->ReqOrderInsert(&d.f, 0);
+    int r = m_api->ReqOrderInsert(&d.f, 0);
+    Log(LOG_INFO, NULL, "ctp ReqOrderInsert, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
     SaveToFile();
 }
 
@@ -114,7 +118,8 @@ void TraderCtp::OnClientReqCancelOrder()
     d.f.ActionFlag = THOST_FTDC_AF_Delete;
     d.f.LimitPrice = 0;
     d.f.VolumeChange = 0;
-    m_api->ReqOrderAction(&d.f, 0);
+    int r = m_api->ReqOrderAction(&d.f, 0);
+    Log(LOG_INFO, NULL, "ctp ReqOrderAction, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }
 
 void TraderCtp::OnClientReqTransfer()
@@ -131,11 +136,13 @@ void TraderCtp::OnClientReqTransfer()
     f.VerifyCertNoFlag = THOST_FTDC_YNI_No;
     if (f.TradeAmount >= 0) {
         strcpy_x(f.TradeCode, "202001");
-        m_api->ReqFromBankToFutureByFuture(&f, 0);
+        int r = m_api->ReqFromBankToFutureByFuture(&f, 0);
+        Log(LOG_INFO, NULL, "ctp ReqFromBankToFutureByFuture, UserID=%s, TradeAmount=%f, ret=%d", f.UserID, f.TradeAmount, r);
     } else {
         strcpy_x(f.TradeCode, "202002");
         f.TradeAmount = -f.TradeAmount;
-        m_api->ReqFromFutureToBankByFuture(&f, 0);
+        int r = m_api->ReqFromFutureToBankByFuture(&f, 0);
+        Log(LOG_INFO, NULL, "ctp ReqFromFutureToBankByFuture, UserID=%s, TradeAmount=%f, ret=%d", f.UserID, f.TradeAmount, r);
     }
 }
 
@@ -157,7 +164,9 @@ int TraderCtp::ReqQryAccount()
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
-    return m_api->ReqQryTradingAccount(&field, 0);
+    int r = m_api->ReqQryTradingAccount(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQryTradingAccount, InvestorID=%s, ret=%d", field.InvestorID, r);
+    return r;
 }
 
 int TraderCtp::ReqQryPosition()
@@ -166,7 +175,9 @@ int TraderCtp::ReqQryPosition()
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
-    return m_api->ReqQryInvestorPosition(&field, 0);
+    int r = m_api->ReqQryInvestorPosition(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQryInvestorPosition, InvestorID=%s, ret=%d", field.InvestorID, r);
+    return r;
 }
 
 void TraderCtp::ReqConfirmSettlement()
@@ -175,7 +186,8 @@ void TraderCtp::ReqConfirmSettlement()
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
-    m_api->ReqSettlementInfoConfirm(&field, 0);
+    int r = m_api->ReqSettlementInfoConfirm(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqSettlementInfoConfirm, InvestorID=%s, ret=%d", field.InvestorID, r);
 }
 
 void TraderCtp::ReqQryBank()
@@ -184,6 +196,8 @@ void TraderCtp::ReqQryBank()
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     m_api->ReqQryContractBank(&field, 0);
+    int r = m_api->ReqQryContractBank(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQryContractBank, ret=%d", r);
 }
 
 void TraderCtp::ReqQryAccountRegister()
@@ -192,6 +206,8 @@ void TraderCtp::ReqQryAccountRegister()
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     m_api->ReqQryAccountregister(&field, 0);
+    int r = m_api->ReqQryAccountregister(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQryAccountregister, ret=%d", r);
 }
 
 using namespace std::chrono;
@@ -245,7 +261,7 @@ void TraderCtp::SendUserData()
         if (!ps.ins)
             ps.ins = md_service::GetInstrument(symbol);
         if (!ps.ins){
-            syslog(LOG_ERR, "miss symbol %s when processing position", symbol);
+            Log(LOG_ERROR, NULL, "miss symbol %s when processing position", symbol);
             continue;
         }
         ps.volume_long = ps.volume_long_his + ps.volume_long_today;

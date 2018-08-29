@@ -26,8 +26,6 @@ struct Config
     std::string user_file_path;
     //broker配置
     std::map<std::string, BrokerConfig> brokers;
-    //合约文件保存位置
-    std::string ins_file_path;
 };
 
 extern Config g_config;

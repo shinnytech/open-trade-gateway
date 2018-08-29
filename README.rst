@@ -99,7 +99,7 @@ Run
 
   open_trade_gateway
 
-系统运行日志输出到syslog, 应该可以在syslog中看到 "server init" 信息
+系统运行日志将输出到 /var/log/open-trade-gateway
 
 
 Test

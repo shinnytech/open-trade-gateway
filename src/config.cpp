@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "config.h"
 
+#include "log.h"
 #include "rapid_serialize.h"
 
 class SerializerConfig
@@ -39,13 +40,13 @@ bool LoadConfig()
 {
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json")){
-        syslog(LOG_CRIT, "load /etc/open-trade-gateway/config.json file fail");
+        Log(LOG_FATAL, NULL, "load /etc/open-trade-gateway/config.json file fail");
         return false;
     }
     ss.ToVar(g_config);
     SerializerConfig ss_broker;
     if (!ss_broker.FromFile("/etc/open-trade-gateway/brokers.json")){
-        syslog(LOG_CRIT, "load /etc/open-trade-gateway/brokers.json file fail");
+        Log(LOG_FATAL, NULL, "load /etc/open-trade-gateway/brokers.json file fail");
         return false;
     }
     ss_broker.ToVar(g_config.brokers);
@@ -56,7 +57,4 @@ Config::Config()
 {
     //配置参数默认值
     port = 7788;
-
-    //各类文件位置
-    ins_file_path = "/var/ins.json";
 }

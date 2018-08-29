@@ -26,6 +26,7 @@
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
 #include "encoding.h"
+#include "log.h"
 
 namespace rapidjson{
 
@@ -127,8 +128,10 @@ public:
         typedef rapidjson::EncodedInputStream<rapidjson::UTF8<>, rapidjson::StringStream> InputStream;
         InputStream os(buffer);
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
-        if (m_doc->HasParseError())
+        if (m_doc->HasParseError()){
+            Log(LOG_ERROR, NULL, "json string (%s) parse fail", json_utf8_string);
             return false;
+        }
         return true;
     }
 
@@ -144,7 +147,7 @@ public:
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
         delete[] readBuffer;
         if (m_doc->HasParseError()){
-            syslog(LOG_ERR, "json file (%s) parse fail", json_file);
+            Log(LOG_ERROR, NULL, "json file (%s) parse fail", json_file);
             return false;
         }
         return true;
@@ -154,7 +157,7 @@ public:
     {
         FILE* fp = fopen(json_file, "wb"); // 非 Windows 平台使用 "w"
         if (!fp){
-            syslog(LOG_ERR, "open file (%s) for write fail", json_file);
+            Log(LOG_ERROR, NULL, "open json file (%s) for write fail", json_file);
             return false;
         }
         char* writeBuffer = new char[65536];

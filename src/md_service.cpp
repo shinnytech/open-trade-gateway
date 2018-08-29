@@ -8,6 +8,7 @@
 #include "md_service.h"
 
 #include <libwebsockets.h>
+#include "log.h"
 #include "config.h"
 #include "rapid_serialize.h"
 #include "http.h"
@@ -159,27 +160,32 @@ static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
     if (wsi != md_context.m_ws_md)
         return 0;
     switch (reason) {
-    case LWS_CALLBACK_CLIENT_ESTABLISHED:
-        syslog(LOG_INFO, "md server connected");
+    case LWS_CALLBACK_CLIENT_ESTABLISHED:{
+        Log(LOG_INFO, NULL, "md service got connection, session=%p", wsi);
         md_context.m_need_subscribe_quote = true;
         break;
-    case LWS_CALLBACK_CLOSED:
-        syslog(LOG_ERR, "md server connect loss");
+    }
+    case LWS_CALLBACK_CLOSED:{
+        Log(LOG_ERROR, NULL, "md service connection closed, session=%p", wsi);
         md_context.m_ws_md = NULL;
         break;
-    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-        syslog(LOG_ERR, "md server connect error");
+    }
+    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:{
+        Log(LOG_ERROR, NULL, "md service connection error, session=%p", wsi);
         md_context.m_ws_md = NULL;
         break;
-    case LWS_CALLBACK_WSI_DESTROY:
-        syslog(LOG_ERR, "md server connect destroy");
+    }
+    case LWS_CALLBACK_WSI_DESTROY:{
+        Log(LOG_ERROR, NULL, "md service connection destroy, session=%p", wsi);
         md_context.m_ws_md = NULL;
         break;
+    }
     case LWS_CALLBACK_CLIENT_RECEIVE: {
         memcpy(md_context.m_recv_buf + md_context.m_recv_len, in, len);
         md_context.m_recv_len += len;
         int final = lws_is_final_fragment(wsi);
         if (final) {
+            Log(LOG_INFO, NULL, "md service received package, length=%d", md_context.m_recv_len);
             *(md_context.m_recv_buf + md_context.m_recv_len) = '\0';
             assert(md_context.m_recv_len > 0);
             md_context.m_recv_len = 0;
@@ -217,10 +223,11 @@ static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
         if (p) {
             int length = p->size();
             if (length > 0 && length < 524228) {
+                Log(LOG_INFO, NULL, "md service send package, length=%d", p->size());
                 memcpy(md_context.m_send_buf + LWS_PRE, p->c_str(), p->size());
                 int c = lws_write(md_context.m_ws_md, (unsigned char*)(&md_context.m_send_buf[LWS_PRE]), p->size(), LWS_WRITE_TEXT);
             } else {
-                syslog(LOG_ERR, "md service send pack size(%d) should less than 524228", length);
+                Log(LOG_FATAL, NULL, "md service send pack size(%d) should less than 524228", length);
             }
             lws_callback_on_writable(wsi);
         }
@@ -271,11 +278,11 @@ bool WriteWholeFile(const char* filename, const char* content, long length)
 {
     FILE* pf = fopen(filename, "wb");
     if (!pf){
-        syslog(LOG_ERR, "open file (%s) for write fail", filename);
+        Log(LOG_ERROR, NULL, "open file (%s) for write fail", filename);
         return false;
     }
     if (fwrite(content, length, 1, pf) != length){
-        syslog(LOG_ERR, "write (%d) bytes to file (%s) fail", length, filename);
+        Log(LOG_ERROR, NULL, "write (%d) bytes to file (%s) fail", length, filename);
         return false;
     }
     fclose(pf);
@@ -296,21 +303,11 @@ bool Init()
         if (ss.FromString(content.c_str())) {
             ss.ToVar(md_context.m_data.quotes);
             load_success = true;
-            if (!WriteWholeFile(g_config.ins_file_path.c_str(), content.c_str(), content.size())) {
-                syslog(LOG_ERR, "md service save ins file fail");
-            }
         } else {
-            syslog(LOG_ERR, "md service parse downloaded ins file fail");
+            Log(LOG_ERROR, NULL, "md service parse downloaded ins file fail");
         }
     } else {
-        syslog(LOG_ERR, "md service download ins file fail");
-    }
-    if (!load_success) {
-        if (!ss.FromFile(g_config.ins_file_path.c_str())) {
-            ss.ToVar(md_context.m_data.quotes);
-            syslog(LOG_ERR, "md service load ins file fail");
-            return false;
-        }
+        Log(LOG_ERROR, NULL, "md service download ins file fail");
     }
     //初始化websocket
     struct lws_context_creation_info info;

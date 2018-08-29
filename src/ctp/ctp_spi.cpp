@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "ctp_spi.h"
 
+#include "log.h"
 #include "ctp_define.h"
 #include "../datetime.h"
 #include "../rapid_serialize.h"
@@ -61,6 +62,7 @@ static std::string GuessExchangeId(std::string instrument_id)
 
 void CCtpSpiHandler::OnFrontConnected()
 {
+    Log(LOG_INFO, NULL, "ctp OnFrontConnected, UserID=%s", m_trader->m_user_id.c_str());
     m_trader->m_bTraderApiConnected = true;
     m_trader->SendLoginRequest();
     m_trader->OutputNotify(0, u8"已经连接到交易前置");
@@ -68,16 +70,21 @@ void CCtpSpiHandler::OnFrontConnected()
 
 void CCtpSpiHandler::OnFrontDisconnected(int nReason)
 {
+    Log(LOG_WARNING, NULL, "ctp OnFrontDisconnected, nReason=%d, UserID=%s", nReason, m_trader->m_user_id.c_str());
     m_trader->m_bTraderApiConnected = false;
     m_trader->OutputNotify(1, u8"已经断开与交易前置的连接");
 }
 
 void CCtpSpiHandler::OnRspError(CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+    if(pRspInfo){
+        Log(LOG_INFO, NULL, "ctp OnRspError, UserID=%s, ErrMsg=%s", m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
+    }
 }
 
 void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspUserLogin, UserID=%s, ErrMsg=%s", m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
     if (pRspInfo->ErrorID == 0) {
         m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
         m_trader->OutputNotify(0, u8"登录成功");
@@ -104,6 +111,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
 
 void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
 {
+    Log(LOG_INFO, NULL, "ctp OnRtnOrder, UserID=%s, InstrumentId=%s, OrderRef=%s", m_trader->m_user_id.c_str(), pOrder->InstrumentID, pOrder->OrderRef);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     //找到委托单
     trader_dll::RemoteOrderKey remote_key;
@@ -241,6 +249,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
 
 void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
 {
+    Log(LOG_INFO, NULL, "ctp OnRtnTrade, UserID=%s, InstrumentId=%s, OrderRef=%s", m_trader->m_user_id.c_str(), pTrade->InstrumentID, pTrade->OrderRef);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     LocalOrderKey local_key;
     m_trader->FindLocalOrderId(pTrade->ExchangeID, pTrade->OrderSysID, &local_key);
@@ -299,6 +308,7 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
 {
     if (!pRspInvestorPosition)
         return;
+    Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, UserID=%s, InstrumentId=%s", m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     std::string exchange_id = trader_dll::GuessExchangeId(pRspInvestorPosition->InstrumentID);
     std::string position_key = exchange_id + "." + pRspInvestorPosition->InstrumentID;
@@ -352,6 +362,7 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
 {
     if (!pRspInvestorAccount)
         return;
+    Log(LOG_INFO, NULL, "ctp OnRspQryTradingAccount, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Account& account = m_trader->GetAccount(pRspInvestorAccount->CurrencyID);
 
@@ -389,6 +400,7 @@ void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContract
 {
     if (!pContractBank)
         return;
+    Log(LOG_INFO, NULL, "ctp OnRspQryContractBank, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Bank& bank = m_trader->GetBank(pContractBank->BankID);
     bank.bank_id = pContractBank->BankID;
@@ -403,6 +415,7 @@ void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAc
 {
     if (!pAccountregister)
         return;
+    Log(LOG_INFO, NULL, "ctp OnRspQryAccountregister, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Bank& bank = m_trader->GetBank(pAccountregister->BankID);
     bank.changed = true;
@@ -415,6 +428,7 @@ void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAc
 void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
     if (pRspInfo && pRspInfo->ErrorID != 0) {
+        Log(LOG_INFO, NULL, "ctp OnRspOrderInsert, UserID=%s", m_trader->m_user_id.c_str());
         std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
         //找到委托单
         trader_dll::RemoteOrderKey remote_key;
@@ -547,6 +561,7 @@ void CCtpSpiHandler::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTran
 {
     if (!pTransferSerial)
         return;
+    Log(LOG_INFO, NULL, "ctp OnRspQryTransferSerial, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     TransferLog& d = m_trader->GetTransferLog(std::to_string(pTransferSerial->PlateSerial));
     d.currency = pTransferSerial->CurrencyID;
@@ -570,6 +585,7 @@ void CCtpSpiHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *p
 {
     if (!pRspTransfer)
         return;
+    Log(LOG_INFO, NULL, "ctp OnRtnFromBankToFutureByFuture, UserID=%s", m_trader->m_user_id.c_str());
     if(pRspTransfer->ErrorID == 0){
         std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
         TransferLog& d = m_trader->GetTransferLog(std::to_string(pRspTransfer->PlateSerial));

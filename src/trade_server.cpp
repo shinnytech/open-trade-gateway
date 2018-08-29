@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "trade_server.h"
 
+#include "log.h"
 #include "config.h"
 #include "rapid_serialize.h"
 #include "md_service.h"
@@ -63,6 +64,7 @@ TraderServer::~TraderServer()
 void TraderServer::SendJson(struct lws* wsi, const std::string& p)
 {
     if (!p.empty()) {
+        Log(LOG_INFO, p.c_str(), "ws server send package, session=%p", wsi);
         int length = p.size();
         char* buf = new char[length + LWS_PRE];
         memcpy(buf + LWS_PRE, p.data(), p.size());
@@ -76,19 +78,22 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
 {
     std::string** pss = (std::string**)(user);
     switch (reason) {
-    case LWS_CALLBACK_ESTABLISHED:
+    case LWS_CALLBACK_ESTABLISHED:{
         *pss = new std::string;
         OnNetworkConnected(wsi);
         break;
+    }
     case LWS_CALLBACK_CLOSED:
         break;
-    case LWS_CALLBACK_WSI_DESTROY:
+    case LWS_CALLBACK_WSI_DESTROY:{
+        Log(LOG_INFO, NULL, "ws server loss connection, session=%p", wsi);
         RemoveTrader(wsi);
         if(pss && *pss){
             delete (*pss);
             *pss = NULL;
         }
         break;
+    }
     case LWS_CALLBACK_SERVER_WRITEABLE: {
         auto trader = GetTrader(wsi);
         if (!trader){
@@ -113,7 +118,10 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
             OnNetworkInput(wsi, (*pss)->c_str());
             (*pss)->clear();
         }
-        assert((*pss)->length() < 8 * 1024 * 1024);
+        if((*pss)->length() >= 8 * 1024 * 1024){
+            Log(LOG_FATAL, NULL, "ws server receive too big package, session=%p", wsi);
+            (*pss)->clear();
+        }
         break;
     }
     return 0;
@@ -121,11 +129,13 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
 
 void TraderServer::OnNetworkConnected(struct lws* wsi)
 {
+    Log(LOG_INFO, NULL, "ws server got connection, session=%p", wsi);
     lws_callback_on_writable(wsi);
 }
 
 void TraderServer::OnNetworkInput(struct lws* wsi, const char* json_str)
 {
+    Log(LOG_INFO, json_str, "ws server received package, session=%p", wsi);
     trader_dll::SerializerTradeBase ss;
     if (!ss.FromString(json_str))
         return;

@@ -7,6 +7,7 @@
 #include "stdafx.h"
 
 #include <signal.h>
+#include "log.h"
 #include "trade_server.h"
 #include "md_service.h"
 #include "config.h"
@@ -19,8 +20,8 @@ void sigint_handler(int sig)
 }
 
 int main() {
-    openlog("open-trade-gateway", LOG_CONS|LOG_NDELAY|LOG_PID, LOG_USER);
-    syslog(LOG_NOTICE, "server init");
+    LogInit();
+    Log(LOG_INFO, NULL, "server init");
     if (!LoadConfig()) {
         return 0;
     }
@@ -37,8 +38,8 @@ int main() {
     //服务结束
     md_service::CleanUp();
     t.CleanUp();
-    syslog(LOG_NOTICE, "server exit");
-    closelog();
+    Log(LOG_INFO, NULL, "server exit");
+    LogCleanup();
     return interrupted != 2;
 }
 
