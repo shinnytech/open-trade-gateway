@@ -399,8 +399,10 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
 void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     Log(LOG_INFO, NULL, "ctp OnRspQryContractBank, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
-    if (!pContractBank)
+    if (!pContractBank){
+        m_trader->m_need_query_bank.store(false);
         return;
+    }
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Bank& bank = m_trader->GetBank(pContractBank->BankID);
     bank.bank_id = pContractBank->BankID;
@@ -414,8 +416,10 @@ void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContract
 void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccountregister, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     Log(LOG_INFO, NULL, "ctp OnRspQryAccountregister, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
-    if (!pAccountregister)
-        return;
+    if (!pAccountregister){
+        m_trader->m_need_query_register.store(false);
+	return;
+    }
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Bank& bank = m_trader->GetBank(pAccountregister->BankID);
     bank.changed = true;

@@ -87,7 +87,6 @@ void TraderCtp::SendLoginRequest()
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
     int ret = m_api->ReqUserLogin(&field, 1);
     Log(LOG_INFO, NULL, "ctp ReqUserLogin, UserID=%s, ret=%d", field.UserID, ret);
-    assert(ret == 0);
 }
 
 void TraderCtp::OnClientReqInsertOrder()
