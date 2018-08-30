@@ -29,6 +29,12 @@ TraderCtp::TraderCtp(std::function<void()> callback)
     m_next_qry_dt = 0;
     m_next_send_dt = 0;
 
+    m_need_login.store(false);
+    m_need_query_positions.store(false);
+    m_need_query_account.store(false);
+    m_need_query_bank.store(false);
+    m_need_query_register.store(false);
+
     m_peeking_message = false;
     m_something_changed = false;
 }
@@ -223,6 +229,11 @@ void TraderCtp::OnIdle()
     }
     if (m_next_qry_dt >= now)
         return;
+    if (m_need_login){
+        SendLoginRequest();
+        m_next_qry_dt = now + 1100;
+        return;
+    }
     if (m_need_query_positions.exchange(false)) {
         if (ReqQryPosition() != 0) {
             m_need_query_positions.store(true);

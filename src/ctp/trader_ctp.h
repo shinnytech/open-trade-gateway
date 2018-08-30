@@ -64,7 +64,6 @@ private:
     void SaveToFile();
 
     //CTP API 实例
-    bool m_bTraderApiConnected;
     CCtpSpiHandler* m_spi;
     CThostFtdcTraderApi* m_api;
 
@@ -73,6 +72,7 @@ private:
     int ReqQryPosition();
     long long m_next_qry_dt;
     long long m_next_send_dt;
+    std::atomic_bool m_need_login;
     std::atomic_bool m_need_query_positions;
     std::atomic_bool m_need_query_account;
     std::atomic_bool m_need_query_bank;

@@ -63,15 +63,13 @@ static std::string GuessExchangeId(std::string instrument_id)
 void CCtpSpiHandler::OnFrontConnected()
 {
     Log(LOG_INFO, NULL, "ctp OnFrontConnected, UserID=%s", m_trader->m_user_id.c_str());
-    m_trader->m_bTraderApiConnected = true;
-    m_trader->SendLoginRequest();
+    m_trader->m_need_login.store(true);
     m_trader->OutputNotify(0, u8"已经连接到交易前置");
 }
 
 void CCtpSpiHandler::OnFrontDisconnected(int nReason)
 {
     Log(LOG_WARNING, NULL, "ctp OnFrontDisconnected, nReason=%d, UserID=%s", nReason, m_trader->m_user_id.c_str());
-    m_trader->m_bTraderApiConnected = false;
     m_trader->OutputNotify(1, u8"已经断开与交易前置的连接");
 }
 
@@ -85,6 +83,7 @@ void CCtpSpiHandler::OnRspError(CThostFtdcRspInfoField* pRspInfo, int nRequestID
 void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
     Log(LOG_INFO, NULL, "ctp OnRspUserLogin, UserID=%s, ErrMsg=%s", m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
+    m_trader->m_need_login.store(false);
     if (pRspInfo->ErrorID == 0) {
         m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
         m_trader->OutputNotify(0, u8"登录成功");
@@ -243,7 +242,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     order.last_msg = GBKToUTF8(pOrder->StatusMsg);
     order.changed = true;
     //要求重新查询持仓
-    m_trader->m_need_query_positions = true;
+    m_trader->m_need_query_positions.store(true);
     m_trader->m_something_changed = true;
     m_trader->SendUserData();
 }
