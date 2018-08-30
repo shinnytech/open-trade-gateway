@@ -26,6 +26,8 @@ struct Config
     std::string user_file_path;
     //broker配置
     std::map<std::string, BrokerConfig> brokers;
+    //当前交易日
+    std::string trading_day;
 };
 
 extern Config g_config;

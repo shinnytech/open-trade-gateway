@@ -211,5 +211,15 @@ int TraderServer::RunOnce()
 
 void TraderServer::CleanUp()
 {
+    for (auto it = m_trader_map.begin(); it != m_trader_map.end(); ++it){
+        auto trader = it->second;
+        trader->Stop();
+    }
+    for (auto it = m_trader_map.begin(); it != m_trader_map.end(); ++it){
+        auto trader = it->second;
+        trader->m_worker_thread.join();
+        assert(trader->m_finished);
+        delete trader;
+    }
     lws_context_destroy(ws_context);
 }

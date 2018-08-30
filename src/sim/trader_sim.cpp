@@ -7,11 +7,14 @@
 #include "stdafx.h"
 #include "trader_sim.h"
 
-#include "log.h"
+#include <regex>
+#include <experimental/filesystem>
+#include "../log.h"
 #include "../rapid_serialize.h"
 #include "../numset.h"
 #include "../md_service.h"
 #include "../utility.h"
+#include "../config.h"
 
 using namespace std::chrono;
 
@@ -67,24 +70,27 @@ TraderSim::TraderSim(std::function<void()> callback)
 
 void TraderSim::OnInit()
 {
+    LoadUserDataFile();
     m_account = &(m_data.m_accounts["CNY"]);
-    m_account->user_id = m_user_id;
-    m_account->currency = "CNY";
-    m_account->pre_balance = 1000000;
-    m_account->static_balance = 1000000;
-    m_account->frozen_margin = 0;
-    m_account->frozen_commission = 0;
-    m_account->close_profit = 0;
-    m_account->position_profit = 0;
-    m_account->deposit = 1000000;
-    m_account->withdraw = 0;
-    m_account->balance = m_account->static_balance;
-    m_account->available = m_account->static_balance;
-    m_account->margin = 0;
-    m_account->commission = 0;
-    m_account->float_profit = 0;
-    m_account->risk_ratio = 0;
-    m_account->changed = true;
+    if (m_account->static_balance < 1.0){
+        m_account->user_id = m_user_id;
+        m_account->currency = "CNY";
+        m_account->pre_balance = 0;
+        m_account->deposit = 1000000;
+        m_account->withdraw = 0;
+        m_account->close_profit = 0;
+        m_account->commission = 0;
+        m_account->static_balance = 1000000;
+        m_account->position_profit = 0;
+        m_account->float_profit = 0;
+        m_account->balance = m_account->static_balance;
+        m_account->frozen_margin = 0;
+        m_account->frozen_commission = 0;
+        m_account->margin = 0;
+        m_account->available = m_account->static_balance;
+        m_account->risk_ratio = 0;
+        m_account->changed = true;
+    }
     m_something_changed = true;
     char json_str[1024];
     sprintf(json_str, (u8"{"\
@@ -95,7 +101,7 @@ void TraderSim::OnInit()
                         "}}}}]}")
             , m_user_id.c_str()
             , m_user_id.c_str()
-            , "20180801"
+            , g_config.trading_day.c_str()
             );
     Output(json_str);
     Log(LOG_INFO, NULL, "sim OnInit, UserID=%s", m_user_id.c_str());
@@ -122,6 +128,7 @@ void TraderSim::ProcessInput(const char* json_str)
 
 void TraderSim::OnFinish()
 {
+    SaveUserDataFile();
 }
 
 void TraderSim::OnIdle()
@@ -466,5 +473,65 @@ void TraderSim::UpdatePositionVolume(Position* position)
     position->changed = true;
 }
 
+void TraderSim::LoadUserDataFile()
+{
+    //选出最新的一个存档文件
+    std::regex my_filter(m_user_id + "\\..+");
+    std::vector<std::string> saved_files;
+    for (auto& p : std::experimental::filesystem::v1::directory_iterator(m_user_file_path)) {
+        if (!std::experimental::filesystem::v1::is_regular_file(p.status()))
+            continue;
+        std::smatch what;
+        std::string file_name = p.path().filename().c_str();
+        if (!std::regex_match(file_name.cbegin(), file_name.cend(), what, my_filter))
+            continue;
+        saved_files.push_back(p.path().c_str());
+    }
+    if (saved_files.empty())
+        return;
+    std::sort(saved_files.begin(), saved_files.end());
+    auto fn = saved_files.back();
+    //加载存档文件
+    SerializerTradeBase nss;
+    nss.FromFile(fn.c_str());
+    nss.ToVar(m_data);
+    /*如果不是当天的存档文件, 则需要调整
+        委托单和成交记录全部清空
+        用户权益转为昨权益, 平仓盈亏
+        持仓手数全部移动到昨仓, 持仓均价调整到昨结算价
+    */
+    if (fn.substr(fn.size()-8, 8) == g_config.trading_day)
+        return;
+    m_data.m_orders.clear();
+    m_data.m_trades.clear();
+    for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it) {
+        Account& item = it->second;
+        item.pre_balance += (item.close_profit - item.commission + item.deposit - item.withdraw);
+        item.close_profit = 0;
+        item.commission = 0;
+        item.withdraw = 0;
+        item.deposit = 0;
+        item.changed = true;
+    }
+    for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end(); ++it) {
+        Position& item = it->second;
+        item.volume_long_his = item.volume_long_his + item.volume_long_today;
+        item.volume_long_today = 0;
+        item.volume_long_frozen_today = 0;
+        item.volume_short_his = item.volume_short_his + item.volume_short_today;
+        item.volume_short_today = 0;
+        item.volume_short_frozen_today = 0;
+        item.changed = true;
+    }
+}
+
+void TraderSim::SaveUserDataFile()
+{
+    std::string fn = m_user_file_path + "/" + m_user_id + "." + g_config.trading_day;
+    SerializerTradeBase nss;
+    nss.dump_all = true;
+    nss.FromVar(m_data);
+    nss.ToFile(fn.c_str());
+}
 
 }

@@ -65,7 +65,7 @@ void TraderCtp::OnInit()
     }
     m_api->SubscribePrivateTopic(THOST_TERT_RESUME);
     m_api->SubscribePublicTopic(THOST_TERT_RESUME);
-    m_user_file_name = g_config.user_file_path + "/" + m_user_id;
+    m_user_file_name = m_user_file_path + "/" + m_user_id;
     LoadFromFile();
     m_api->Init();
     Log(LOG_INFO, NULL, "ctp Init, UserID=%s", m_user_id.c_str());

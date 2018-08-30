@@ -81,5 +81,9 @@ private:
     Position* GetOrCreatePosition(const std::string& position_symbol);
     std::set<Order*> m_alive_order_set;
     int m_last_seq_no;
+
+    //数据存取档
+    void LoadUserDataFile();
+    void SaveUserDataFile();
 };
 }

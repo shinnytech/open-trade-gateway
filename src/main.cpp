@@ -22,22 +22,23 @@ void sigint_handler(int sig)
 int main() {
     LogInit();
     Log(LOG_INFO, NULL, "server init");
+    //加载配置文件
     if (!LoadConfig()) {
         return 0;
     }
     signal(SIGINT, sigint_handler);
-    TraderServer t;
-    t.InitBrokerList();
-    //加载合约文件
+    TraderServer trade_server;
+    trade_server.InitBrokerList();
+    //加载合约文件, 连接行情服务
     if (!md_service::Init())
         return 0;
     //提供交易服务
     int n = 0;
     while (n >= 0 && !interrupted)
-        n = t.RunOnce();
+        n = trade_server.RunOnce();
     //服务结束
     md_service::CleanUp();
-    t.CleanUp();
+    trade_server.CleanUp();
     Log(LOG_INFO, NULL, "server exit");
     LogCleanup();
     return interrupted != 2;

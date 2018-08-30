@@ -7,7 +7,9 @@
 #include "stdafx.h"
 #include "config.h"
 
+#include <experimental/filesystem>
 #include "log.h"
+#include "utility.h"
 #include "rapid_serialize.h"
 
 class SerializerConfig
@@ -38,6 +40,7 @@ Config g_config;
 
 bool LoadConfig()
 {
+    g_config.trading_day = GuessTradingDay();
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json")){
         Log(LOG_FATAL, NULL, "load /etc/open-trade-gateway/config.json file fail");
@@ -50,6 +53,11 @@ bool LoadConfig()
         return false;
     }
     ss_broker.ToVar(g_config.brokers);
+    std::experimental::filesystem::v1::path ufpath(g_config.user_file_path);
+    for (auto it = g_config.brokers.begin(); it != g_config.brokers.end(); ++it) {
+        std::string bid = it->first;
+        std::experimental::filesystem::v1::create_directories(ufpath / bid);
+    }
     return true;
 }
 

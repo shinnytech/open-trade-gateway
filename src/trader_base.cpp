@@ -93,6 +93,7 @@ trader_dll::TransferLog& TraderBase::GetTransferLog(const std::string& seq_id)
 void TraderBase::Start(const ReqLogin& req_login)
 {
     m_running = true;
+    m_user_file_path = g_config.user_file_path + "/" + req_login.bid;
     m_req_login = req_login;
     m_user_id = m_req_login.user_name;
     m_data.user_id = m_user_id;

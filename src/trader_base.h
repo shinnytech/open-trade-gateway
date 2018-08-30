@@ -342,27 +342,39 @@ class SerializerTradeBase
 {
 public:
     using RapidSerialize::Serializer<SerializerTradeBase>::Serializer;
-
+    SerializerTradeBase()
+    {
+        dump_all = false;
+    }
+    bool dump_all;
     bool FilterMapItem(const std::string& key, Order& value)
     {
+        if(dump_all)
+            return true;
         bool b = value.changed;
         value.changed = false;
         return b;
     }
     bool FilterMapItem(const std::string& key, Trade& value)
     {
+        if(dump_all)
+            return true;
         bool b = value.changed;
         value.changed = false;
         return b;
     }
     bool FilterMapItem(const std::string& key, Position& value)
     {
+        if(dump_all)
+            return true;
         bool b = value.changed;
         value.changed = false;
         return b;
     }
     bool FilterMapItem(const std::string& key, Account& value)
     {
+        if(dump_all)
+            return true;
         bool b = value.changed;
         value.changed = false;
         return b;
@@ -435,5 +447,7 @@ protected:
     Trade& GetTrade(const std::string trade_key);
     Bank& GetBank(const std::string& bank_id);
     TransferLog& GetTransferLog(const std::string& seq_id);
+    std::string m_user_file_path;
+
 };
 }

@@ -4,7 +4,7 @@ CXX_OBJS := $(patsubst src/%,obj/%,$(CXX_SRCS:.cpp=.o))
 
 CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ -Isrc/
 LDFLAGS += -Lcontrib/lib
-LDLIBS += -lssl -lcrypto -lwebsockets -l:thosttraderapi.so -lcurl
+LDLIBS += -lssl -lcrypto -lwebsockets -l:thosttraderapi.so -lcurl -lstdc++fs 
 
 all: directories bin/$(NAME)
 
@@ -24,7 +24,7 @@ clean:
 
 install: all
 	install -d /etc/$(NAME)
-	install -d /var/local/$(NAME)
+	install -m 777 -d /var/local/$(NAME)
 	install -m 777 -d /var/log/$(NAME)
 	install -m 755 bin/$(NAME) /usr/local/bin/
 	install -m 755 contrib/lib/*.so /usr/local/lib/
