@@ -205,11 +205,13 @@ void SerializerTradeBase::DefineStruct(Position& d)
     AddItem(d.volume_long, ("volume_long"));
     AddItem(d.volume_long_frozen_today, ("volume_long_frozen_today"));
     AddItem(d.volume_long_frozen_his, ("volume_long_frozen_his"));
+    AddItem(d.volume_long_frozen, ("volume_long_frozen"));
     AddItem(d.volume_short_today, ("volume_short_today"));
     AddItem(d.volume_short_his, ("volume_short_his"));
     AddItem(d.volume_short, ("volume_short"));
     AddItem(d.volume_short_frozen_today, ("volume_short_frozen_today"));
     AddItem(d.volume_short_frozen_his, ("volume_short_frozen_his"));
+    AddItem(d.volume_short_frozen, ("volume_short_frozen"));
 
     AddItem(d.open_price_long, ("open_price_long"));
     AddItem(d.open_price_short, ("open_price_short"));
@@ -354,11 +356,13 @@ Position::Position()
     volume_long = 0;
     volume_long_frozen_today = 0;
     volume_long_frozen_his = 0;
+    volume_long_frozen = 0;
     volume_short_today = 0;
     volume_short_his = 0;
     volume_short = 0;
     volume_short_frozen_today = 0;
     volume_short_frozen_his = 0;
+    volume_short_frozen = 0;
 
     //成本, 现价与盈亏
     open_cost_long_today = 0.0;

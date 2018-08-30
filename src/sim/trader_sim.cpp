@@ -463,6 +463,8 @@ void TraderSim::UpdatePositionVolume(Position* position)
                 position->volume_long_frozen_today += order->volume_left;
         }
     }
+    position->volume_long_frozen = position->volume_long_frozen_his + position->volume_long_frozen_today;
+    position->volume_short_frozen = position->volume_short_frozen_his + position->volume_short_frozen_today;
     position->volume_long = position->volume_long_his + position->volume_long_today;
     position->volume_short = position->volume_short_his + position->volume_short_today;
     position->margin_long = position->ins->margin * position->volume_long;

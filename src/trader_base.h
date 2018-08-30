@@ -197,11 +197,13 @@ struct Position {
     int volume_long;
     int volume_long_frozen_today;
     int volume_long_frozen_his;
+    int volume_long_frozen;
     int volume_short_today;
     int volume_short_his;
     int volume_short;
     int volume_short_frozen_today;
     int volume_short_frozen_his;
+    int volume_short_frozen;
 
     //成本, 现价与盈亏
     double open_price_long; //多头开仓均价

@@ -287,6 +287,8 @@ void TraderCtp::SendUserData()
         }
         ps.volume_long = ps.volume_long_his + ps.volume_long_today;
         ps.volume_short = ps.volume_short_his + ps.volume_short_today;
+        ps.volume_long_frozen = ps.volume_long_frozen_today + ps.volume_long_frozen_his;
+        ps.volume_short_frozen = ps.volume_short_frozen_today + ps.volume_short_frozen_his;
         ps.margin = ps.margin_long + ps.margin_short;
         double last_price = ps.ins->last_price;
         if (!IsValid(last_price))
