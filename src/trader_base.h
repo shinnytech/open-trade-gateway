@@ -422,7 +422,7 @@ public:
     //工作线程
     std::thread m_worker_thread;
     std::function<void()> m_notify_send_callback;
-    bool m_running; //需要工作线程运行
+    std::atomic_bool m_running; //需要工作线程运行
     bool m_finished; //工作线程已完
 
 protected:
