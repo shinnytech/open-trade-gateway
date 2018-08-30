@@ -101,9 +101,10 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
                 );
         m_trader->Output(json_str);
         m_trader->ReqConfirmSettlement();
-        m_trader->ReqQryBank();
-        m_trader->m_need_query_account = true;
-        m_trader->m_need_query_positions = true;
+        m_trader->m_need_query_account.store(true);
+        m_trader->m_need_query_positions.store(true);
+        m_trader->m_need_query_bank.store(true);
+        m_trader->m_need_query_register.store(true);
     } else {
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"交易服务器登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
     }
@@ -360,9 +361,9 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
 
 void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvestorAccount, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspQryTradingAccount, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pRspInvestorAccount)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryTradingAccount, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Account& account = m_trader->GetAccount(pRspInvestorAccount->CurrencyID);
 
@@ -398,28 +399,29 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
 
 void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspQryContractBank, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pContractBank)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryContractBank, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Bank& bank = m_trader->GetBank(pContractBank->BankID);
     bank.bank_id = pContractBank->BankID;
     bank.bank_name = GBKToUTF8(pContractBank->BankName);
     if (bIsLast) {
-        m_trader->ReqQryAccountRegister();
+        m_trader->m_need_query_bank.store(false);
     }
 }
 
 
 void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccountregister, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspQryAccountregister, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pAccountregister)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryAccountregister, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     Bank& bank = m_trader->GetBank(pAccountregister->BankID);
     bank.changed = true;
     if (bIsLast) {
+        m_trader->m_need_query_register.store(false);
         m_trader->m_something_changed = true;
         m_trader->SendUserData();
     }
@@ -427,8 +429,8 @@ void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAc
 
 void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspOrderInsert, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (pRspInfo && pRspInfo->ErrorID != 0) {
-        Log(LOG_INFO, NULL, "ctp OnRspOrderInsert, UserID=%s", m_trader->m_user_id.c_str());
         std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
         //找到委托单
         trader_dll::RemoteOrderKey remote_key;
@@ -543,6 +545,7 @@ void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CT
 
 void CCtpSpiHandler::OnRspOrderAction(CThostFtdcInputOrderActionField* pOrderAction, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspOrderAction, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (pRspInfo->ErrorID != 0)
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
 }
@@ -559,9 +562,9 @@ void CCtpSpiHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderActio
 
 void CCtpSpiHandler::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferSerial, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspQryTransferSerial, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pTransferSerial)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryTransferSerial, UserID=%s", m_trader->m_user_id.c_str());
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     TransferLog& d = m_trader->GetTransferLog(std::to_string(pTransferSerial->PlateSerial));
     d.currency = pTransferSerial->CurrencyID;

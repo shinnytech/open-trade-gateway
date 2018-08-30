@@ -238,6 +238,16 @@ void TraderCtp::OnIdle()
         m_next_qry_dt = now + 1100;
         return;
     }
+    if (m_need_query_bank.load()) {
+        ReqQryBank();
+        m_next_qry_dt = now + 1100;
+        return;
+    }
+    if (m_need_query_register.load()) {
+        ReqQryAccountRegister();
+        m_next_qry_dt = now + 1100;
+        return;
+    }
 }
 
 void TraderCtp::OnClientPeekMessage()

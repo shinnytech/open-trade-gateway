@@ -78,5 +78,7 @@ private:
     long long m_next_send_dt;
     std::atomic_bool m_need_query_positions;
     std::atomic_bool m_need_query_account;
+    std::atomic_bool m_need_query_bank;
+    std::atomic_bool m_need_query_register;
 };
 }
