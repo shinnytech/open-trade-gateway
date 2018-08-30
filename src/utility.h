@@ -17,3 +17,5 @@ inline char* strcpy_x(char(&dest)[N], const std::string& src)
 {
     return strncpy(dest, src.c_str(), N - 1);
 }
+
+long long GetLocalEpochNano();

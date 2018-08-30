@@ -137,6 +137,7 @@ struct Order {
     std::string order_id;
     std::string exchange_id;
     std::string instrument_id;
+    std::string symbol() const;
     long direction;
     long offset;
     int volume_orign;
@@ -148,6 +149,7 @@ struct Order {
     //下单后获得的信息(由期货公司返回, 不会改变)
     long long insert_date_time;
     std::string exchange_order_id;
+    double frozen_margin;
 
     //委托单当前状态
     long status;
@@ -234,7 +236,8 @@ struct Position {
     double margin_long_his;
     double margin_short_his;
     double margin;
-
+    double frozen_margin;
+    
     //内部使用
     const md_service::Instrument* ins;
     bool changed;

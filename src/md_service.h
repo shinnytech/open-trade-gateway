@@ -40,11 +40,19 @@ struct Instrument {
     std::string symbol;
     bool expired;
     std::string ins_id;
-    long exchange_id;
+    std::string exchange_id;
     long product_class;
     long volume_multiple;
+    volatile double margin;
+    volatile double commission;
+    volatile double price_tick;
+
     volatile double last_price;
     volatile double pre_settlement;
+    volatile double upper_limit;
+    volatile double lower_limit;
+    volatile double ask_price1;
+    volatile double bid_price1;
 };
 
 struct MdData {

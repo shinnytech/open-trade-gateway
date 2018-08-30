@@ -1,5 +1,5 @@
 NAME := open-trade-gateway
-CXX_SRCS := $(wildcard src/*.cpp src/ctp/*.cpp)
+CXX_SRCS := $(wildcard src/*.cpp src/ctp/*.cpp src/sim/*.cpp)
 CXX_OBJS := $(patsubst src/%,obj/%,$(CXX_SRCS:.cpp=.o))
 
 CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ -Isrc/

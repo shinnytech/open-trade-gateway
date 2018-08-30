@@ -13,6 +13,7 @@
 #include "md_service.h"
 #include "trader_base.h"
 #include "ctp/trader_ctp.h"
+#include "sim/trader_sim.h"
 
 
 static struct lws_extension exts[] = {
@@ -151,6 +152,9 @@ void TraderServer::OnNetworkInput(struct lws* wsi, const char* json_str)
         req.broker = broker->second;
         if (broker->second.broker_type == "ctp") {
             m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(lws_callback_on_writable, wsi));
+            m_trader_map[wsi]->Start(req);
+        } else if (broker->second.broker_type == "sim") {
+            m_trader_map[wsi] = new trader_dll::TraderSim(std::bind(lws_callback_on_writable, wsi));
             m_trader_map[wsi]->Start(req);
         }
         return;

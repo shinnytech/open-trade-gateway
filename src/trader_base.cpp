@@ -53,17 +53,24 @@ void TraderBase::Run()
     m_finished = true;
 }
 
-trader_dll::Account& TraderBase::GetAccount(const std::string account_key)
+Account& TraderBase::GetAccount(const std::string account_key)
 {
     return m_data.m_accounts[account_key];
 }
 
-trader_dll::Position& TraderBase::GetPosition(const std::string position_key)
+Position& TraderBase::GetPosition(const std::string symbol)
 {
-    return m_data.m_positions[position_key];
+    Position& position = m_data.m_positions[symbol];
+    if (!position.ins){
+        position.ins = md_service::GetInstrument(symbol);
+        position.instrument_id = position.ins->ins_id;
+        position.exchange_id = position.ins->exchange_id;
+        position.user_id = m_user_id;
+    }
+    return position;
 }
 
-trader_dll::Order& TraderBase::GetOrder(const std::string order_id)
+Order& TraderBase::GetOrder(const std::string order_id)
 {
     return m_data.m_orders[order_id];
 }
@@ -310,6 +317,7 @@ Order::Order()
 
     //下单后获得的信息(由期货公司返回, 不会改变)
     insert_date_time = 0;
+    frozen_margin = 0.0;
 
     //委托单当前状态
     status = kOrderStatusAlive;
@@ -317,6 +325,11 @@ Order::Order()
 
     //内部使用
     changed = true;
+}
+
+std::string Order::symbol() const
+{
+    return exchange_id + "." + instrument_id;
 }
 
 Trade::Trade()
@@ -380,7 +393,8 @@ Position::Position()
     margin_long_his = 0.0;
     margin_short_his = 0.0;
     margin = 0.0;
-
+    frozen_margin = 0.0;
+    
     //内部使用
     ins = NULL;
     changed = true;

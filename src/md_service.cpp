@@ -23,9 +23,15 @@ const char* ins_file_url = "https://openmd.shinnytech.com/t/md/symbols/latest.js
 Instrument::Instrument()
 {
     product_class = kProductClassFutures;
-    exchange_id = kExchangeUser;
+    price_tick = NAN;
     last_price = NAN;
     pre_settlement = NAN;
+    margin = 0.0;
+    commission = 0.0;
+    upper_limit = NAN;
+    lower_limit = NAN;
+    ask_price1 = NAN;
+    bid_price1 = NAN;
 }
 
 
@@ -38,15 +44,7 @@ public:
         AddItem(d.symbol, ("instrument_id"));
         AddItem(d.expired, ("expired"));
         AddItem(d.ins_id, ("ins_id"));
-        AddItemEnum(d.exchange_id, ("exchange_id"), {
-            { kExchangeShfe, ("SHFE") },
-            { kExchangeDce, ("DCE") },
-            { kExchangeCzce, ("CZCE") },
-            { kExchangeCffex, ("CFFEX") },
-            { kExchangeIne, ("INE") },
-            { kExchangeKq, ("KQ") },
-            { kExchangeSswe, ("SSWE") },
-            });
+        AddItem(d.exchange_id, ("exchange_id"));
         AddItemEnum(d.product_class, ("class"), {
             { kProductClassFutures, ("FUTURE") },
             { kProductClassOptions, ("OPTION") },
@@ -56,7 +54,10 @@ public:
             { kProductClassFutureContinuous, ("FUTURE_CONT") },
             { kProductClassStock, ("STOCK") },
             });
-        AddItem(d.volume_multiple, ("volume_multiple"));
+        AddItem(d.volume_multiple, ("volume_multiple")); 
+        AddItem(d.price_tick, ("price_tick"));
+        AddItem(d.margin, ("margin"));
+        AddItem(d.commission, ("commission"));
     }
 };
 
@@ -71,6 +72,10 @@ public:
     {
         AddItem(data.last_price, ("last_price"));
         AddItem(data.pre_settlement, ("pre_settlement"));
+        AddItem(data.upper_limit, ("upper_limit"));
+        AddItem(data.lower_limit, ("lower_limit"));
+        AddItem(data.ask_price1, ("ask_price1"));
+        AddItem(data.bid_price1, ("bid_price1"));
     }
 
     void DefineStruct(MdData& d)
