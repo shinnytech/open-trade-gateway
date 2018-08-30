@@ -271,14 +271,6 @@ void TraderSim::SendUserData()
             ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
             ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
             ps.float_profit = ps.float_profit_long + ps.float_profit_short;
-            if (ps.volume_long > 0) {
-                ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-                ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-            }
-            if (ps.volume_short > 0) {
-                ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-                ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-            }
             ps.changed = true;
             m_something_changed = true;
         }
@@ -381,6 +373,7 @@ void TraderSim::CheckOrderTrade(Order* order)
 
 void TraderSim::DoTrade(Order* order, int volume, double price)
 {
+    //创建成交记录
     std::string trade_id = std::to_string(m_last_seq_no++);
     Trade* trade = &(m_data.m_trades[trade_id]);
     trade->trade_id = trade_id;
@@ -395,10 +388,17 @@ void TraderSim::DoTrade(Order* order, int volume, double price)
     trade->volume = volume;
     trade->price = price;
     trade->trade_date_time = GetLocalEpochNano();
-    Position* position = GetOrCreatePosition(order->symbol());
+    //调整委托单数据
     assert(volume <= order->volume_left);
     assert(order->status == kOrderStatusAlive);
     order->volume_left -= volume;
+    if (order->volume_left == 0){
+        order->status = kOrderStatusFinished;
+    }
+    order->seqno = m_last_seq_no++;
+    order->changed = true;
+    //调整持仓数据
+    Position* position = GetOrCreatePosition(order->symbol());
     double commission = position->ins->commission * volume;
     trade->commission = commission;
     if (order->offset == kOffsetOpen) {
@@ -418,23 +418,20 @@ void TraderSim::DoTrade(Order* order, int volume, double price)
     } else {
         double close_profit = 0;
         if (order->direction == kDirectionBuy) {
-            position->open_cost_short = position->open_cost_short * volume / position->volume_short;
-            position->position_cost_short = position->position_cost_short * volume / position->volume_short;
-            close_profit = (position->open_price_short - price) * volume * position->ins->volume_multiple;
+            position->open_cost_short = position->open_cost_short * (position->volume_short - volume) / position->volume_short;
+            position->position_cost_short = position->position_cost_short * (position->volume_short - volume) / position->volume_short;
+            close_profit = (position->position_price_short - price) * volume * position->ins->volume_multiple;
             position->volume_short_today -= volume;
         } else {
-            position->open_cost_long = position->open_cost_long * volume / position->volume_long;
-            position->position_cost_long = position->position_cost_long * volume / position->volume_long;
-            close_profit = (price - position->open_price_long) * volume * position->ins->volume_multiple;
+            position->open_cost_long = position->open_cost_long * (position->volume_long - volume) / position->volume_long;
+            position->position_cost_long = position->position_cost_long * (position->volume_long - volume) / position->volume_long;
+            close_profit = (price - position->position_price_long) * volume * position->ins->volume_multiple;
             position->volume_long_today -= volume;
         }
         m_account->close_profit += close_profit;
     }
+    //调整账户资金
     m_account->commission += commission;
-    if (order->volume_left == 0)
-        order->status = kOrderStatusFinished;
-    order->seqno = m_last_seq_no++;
-    order->changed = true;
     UpdatePositionVolume(position);
 }
 
@@ -448,6 +445,7 @@ void TraderSim::UpdateOrder(Order* order)
 
 void TraderSim::UpdatePositionVolume(Position* position)
 {
+    position->frozen_margin = 0;
     position->volume_long_frozen_today = 0;
     position->volume_short_frozen_today = 0;
     for (auto it_order = m_alive_order_set.begin(); it_order != m_alive_order_set.end(); ++it_order) {
@@ -470,6 +468,14 @@ void TraderSim::UpdatePositionVolume(Position* position)
     position->margin_long = position->ins->margin * position->volume_long;
     position->margin_short = position->ins->margin * position->volume_short;
     position->margin = position->margin_long + position->margin_short;
+    if (position->volume_long > 0) {
+        position->open_price_long = position->open_cost_long / (position->volume_long * position->ins->volume_multiple);
+        position->position_price_long = position->position_cost_long / (position->volume_long * position->ins->volume_multiple);
+    }
+    if (position->volume_short > 0) {
+        position->open_price_short = position->open_cost_short / (position->volume_short * position->ins->volume_multiple);
+        position->position_price_short = position->position_cost_short / (position->volume_short * position->ins->volume_multiple);
+    }
     position->changed = true;
 }
 
@@ -500,28 +506,31 @@ void TraderSim::LoadUserDataFile()
         用户权益转为昨权益, 平仓盈亏
         持仓手数全部移动到昨仓, 持仓均价调整到昨结算价
     */
-    if (fn.substr(fn.size()-8, 8) == g_config.trading_day)
-        return;
-    m_data.m_orders.clear();
-    m_data.m_trades.clear();
-    for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it) {
-        Account& item = it->second;
-        item.pre_balance += (item.close_profit - item.commission + item.deposit - item.withdraw);
-        item.close_profit = 0;
-        item.commission = 0;
-        item.withdraw = 0;
-        item.deposit = 0;
-        item.changed = true;
+    if (fn.substr(fn.size()-8, 8) != g_config.trading_day){
+        m_data.m_orders.clear();
+        m_data.m_trades.clear();
+        for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it) {
+            Account& item = it->second;
+            item.pre_balance += (item.close_profit - item.commission + item.deposit - item.withdraw);
+            item.close_profit = 0;
+            item.commission = 0;
+            item.withdraw = 0;
+            item.deposit = 0;
+            item.changed = true;
+        }
+        for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end(); ++it) {
+            Position& item = it->second;
+            item.volume_long_his = item.volume_long_his + item.volume_long_today;
+            item.volume_long_today = 0;
+            item.volume_long_frozen_today = 0;
+            item.volume_short_his = item.volume_short_his + item.volume_short_today;
+            item.volume_short_today = 0;
+            item.volume_short_frozen_today = 0;
+            item.changed = true;
+        }
     }
-    for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end(); ++it) {
-        Position& item = it->second;
-        item.volume_long_his = item.volume_long_his + item.volume_long_today;
-        item.volume_long_today = 0;
-        item.volume_long_frozen_today = 0;
-        item.volume_short_his = item.volume_short_his + item.volume_short_today;
-        item.volume_short_today = 0;
-        item.volume_short_frozen_today = 0;
-        item.changed = true;
+    for (auto it = m_data.m_orders.begin(); it != m_data.m_orders.end(); ++it){
+        m_alive_order_set.insert(&(it->second));
     }
 }
 
