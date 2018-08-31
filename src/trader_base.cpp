@@ -61,12 +61,6 @@ Account& TraderBase::GetAccount(const std::string account_key)
 Position& TraderBase::GetPosition(const std::string symbol)
 {
     Position& position = m_data.m_positions[symbol];
-    if (!position.ins){
-        position.ins = md_service::GetInstrument(symbol);
-        position.instrument_id = position.ins->ins_id;
-        position.exchange_id = position.ins->exchange_id;
-        position.user_id = m_user_id;
-    }
     return position;
 }
 
@@ -331,6 +325,11 @@ Order::Order()
 }
 
 std::string Order::symbol() const
+{
+    return exchange_id + "." + instrument_id;
+}
+
+std::string Position::symbol() const
 {
     return exchange_id + "." + instrument_id;
 }

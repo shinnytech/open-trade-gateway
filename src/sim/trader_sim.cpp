@@ -145,10 +145,6 @@ void TraderSim::OnClientReqInsertOrder()
 {
     ActionOrder action_insert_order;
     ss.ToVar(action_insert_order);
-    if (action_insert_order.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误");
-        return;
-    }
     std::string symbol = action_insert_order.exchange_id + "." + action_insert_order.ins_id;
     std::string order_key = action_insert_order.order_id;
     auto it = m_data.m_orders.find(order_key);
@@ -157,14 +153,6 @@ void TraderSim::OnClientReqInsertOrder()
         return;
     }
     const md_service::Instrument* ins = md_service::GetInstrument(symbol);
-    if (!ins) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:合约不合法");
-        return;
-    }
-    if (ins->product_class != md_service::kProductClassFutures) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约");
-        return;
-    }
     Order* order = &(m_data.m_orders[order_key]);
     order->user_id = action_insert_order.user_id;
     order->exchange_id = action_insert_order.exchange_id;
@@ -181,36 +169,55 @@ void TraderSim::OnClientReqInsertOrder()
     order->volume_condition = action_insert_order.volume_condition;
     order->time_condition = action_insert_order.time_condition;
     order->insert_date_time = GetLocalEpochNano();
-    double xs = action_insert_order.limit_price / ins->price_tick;
-    double r = xs - int(xs + 0.5);
-    Position* position = GetOrCreatePosition(symbol);
-    if (r >= 0.001) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数");
-        goto fail;
+    order->seqno = m_last_seq_no++;
+    if (action_insert_order.user_id.substr(0, m_user_id.size()) != m_user_id){
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误");
+        order->status = kOrderStatusFinished;
+        return;
+    }
+    if (!ins) {
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:合约不合法");
+        order->status = kOrderStatusFinished;
+        return;
+    }
+    if (ins->product_class != md_service::kProductClassFutures) {
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约");
+        order->status = kOrderStatusFinished;
+        return;
     }
     if (action_insert_order.volume <= 0) {
         OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0");
-        goto fail;
+        order->status = kOrderStatusFinished;
+        return;
     }
+    double xs = action_insert_order.limit_price / ins->price_tick;
+    if (xs - int(xs + 0.5) >= 0.001) {
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数");
+        order->status = kOrderStatusFinished;
+        return;
+    }
+    Position* position = &(m_data.m_positions[symbol]);
+    position->ins = ins;
+    position->instrument_id = ins->ins_id;
+    position->exchange_id = ins->exchange_id;
+    position->user_id = m_user_id;
     if (action_insert_order.offset == kOffsetOpen) {
         if (position->ins->margin * action_insert_order.volume > m_account->available) {
             OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足");
-            goto fail;
+            order->status = kOrderStatusFinished;
+            return;
         }
     } else {
         if ((action_insert_order.direction == kDirectionBuy && position->volume_short < action_insert_order.volume + position->volume_short_frozen_today)
             || (action_insert_order.direction == kDirectionSell && position->volume_long < action_insert_order.volume + position->volume_long_frozen_today)) {
             OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量");
-            goto fail;
+            order->status = kOrderStatusFinished;
+            return;
         }
     }
     m_alive_order_set.insert(order);
     UpdateOrder(order);
     return;
-fail:
-    order->exchange_order_id = "";
-    order->status = kOrderStatusFinished;
-    UpdateOrder(order);
 }
 
 void TraderSim::OnClientReqCancelOrder()
@@ -331,21 +338,6 @@ void TraderSim::TryOrderMatch()
     }
 }
 
-Position* TraderSim::GetOrCreatePosition(const std::string& position_symbol)
-{
-    auto it = m_data.m_positions.find(position_symbol);
-    if (it == m_data.m_positions.end()) {
-        Position* position = &(m_data.m_positions[position_symbol]);
-        position->ins = md_service::GetInstrument(position_symbol);
-        position->instrument_id = position->ins->ins_id;
-        position->exchange_id = position->ins->exchange_id;
-        position->user_id = m_user_id;
-        return position;
-    } else {
-        return &(it->second);
-    }
-}
-
 void TraderSim::CheckOrderTrade(Order* order)
 {
     auto ins = md_service::GetInstrument(order->symbol());
@@ -398,7 +390,7 @@ void TraderSim::DoTrade(Order* order, int volume, double price)
     order->seqno = m_last_seq_no++;
     order->changed = true;
     //调整持仓数据
-    Position* position = GetOrCreatePosition(order->symbol());
+    Position* position = &(m_data.m_positions[order->symbol()]);
     double commission = position->ins->commission * volume;
     trade->commission = commission;
     if (order->offset == kOffsetOpen) {
@@ -437,10 +429,11 @@ void TraderSim::DoTrade(Order* order, int volume, double price)
 
 void TraderSim::UpdateOrder(Order* order)
 {
-    Position* position = GetOrCreatePosition(order->symbol());
     order->seqno = m_last_seq_no++;
     order->changed = true;
-    UpdatePositionVolume(position);
+    Position& position = GetPosition(order->symbol());
+    assert(position.ins);
+    UpdatePositionVolume(&position);
 }
 
 void TraderSim::UpdatePositionVolume(Position* position)
@@ -503,6 +496,15 @@ void TraderSim::LoadUserDataFile()
     SerializerTradeBase nss;
     nss.FromFile(fn.c_str());
     nss.ToVar(m_data);
+    //重建内存中的索引表和指针
+    for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end();) {
+        Position& position = it->second;
+        position.ins = md_service::GetInstrument(position.symbol());
+        if (position.ins)
+            ++it;
+        else
+            it = m_data.m_positions.erase(it);
+    }
     /*如果不是当天的存档文件, 则需要调整
         委托单和成交记录全部清空
         用户权益转为昨权益, 平仓盈亏
@@ -530,9 +532,10 @@ void TraderSim::LoadUserDataFile()
             item.volume_short_frozen_today = 0;
             item.changed = true;
         }
-    }
-    for (auto it = m_data.m_orders.begin(); it != m_data.m_orders.end(); ++it){
-        m_alive_order_set.insert(&(it->second));
+    } else {
+        for (auto it = m_data.m_orders.begin(); it != m_data.m_orders.end(); ++it){
+            m_alive_order_set.insert(&(it->second));
+        }
     }
 }
 

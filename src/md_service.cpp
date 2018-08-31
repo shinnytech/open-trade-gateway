@@ -300,20 +300,17 @@ bool Init()
     md_context.m_need_subscribe_quote = false;
     md_context.m_need_peek_message = false;
     //下载和加载合约表文件
-    bool download_success = true;
     std::string content;
-    bool load_success = false;
     InsFileParser ss;
-    if (0 == HttpGet(ins_file_url, &content)) {
-        if (ss.FromString(content.c_str())) {
-            ss.ToVar(md_context.m_data.quotes);
-            load_success = true;
-        } else {
-            Log(LOG_ERROR, NULL, "md service parse downloaded ins file fail");
-        }
-    } else {
-        Log(LOG_ERROR, NULL, "md service download ins file fail");
+    if (HttpGet(ins_file_url, &content) != 0) {
+        Log(LOG_FATAL, NULL, "md service download ins file fail");
+        exit(-1);
     }
+    if (!ss.FromString(content.c_str())) {
+        Log(LOG_FATAL, NULL, "md service parse downloaded ins file fail");
+        exit(-1);
+    }
+    ss.ToVar(md_context.m_data.quotes);
     //初始化websocket
     struct lws_context_creation_info info;
     memset(&info, 0, sizeof(info));

@@ -7,10 +7,11 @@
 #include "stdafx.h"
 #include "ctp_spi.h"
 
-#include "log.h"
-#include "ctp_define.h"
+#include "../log.h"
 #include "../datetime.h"
 #include "../rapid_serialize.h"
+#include "../md_service.h"
+#include "ctp_define.h"
 #include "trader_ctp.h"
 
 
@@ -310,9 +311,14 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
         return;
     Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, UserID=%s, InstrumentId=%s", m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
-    std::string exchange_id = trader_dll::GuessExchangeId(pRspInvestorPosition->InstrumentID);
-    std::string position_key = exchange_id + "." + pRspInvestorPosition->InstrumentID;
-    Position& position = m_trader->GetPosition(position_key);
+    std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
+    std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
+    auto ins = md_service::GetInstrument(symbol);
+    if (!ins){
+        Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, UserID=%s, symbol=%s", m_trader->m_user_id.c_str(), symbol.c_str());
+        return;
+    }
+    Position& position = m_trader->GetPosition(symbol);
     position.user_id = pRspInvestorPosition->InvestorID;
     position.exchange_id = exchange_id;
     position.instrument_id = pRspInvestorPosition->InstrumentID;

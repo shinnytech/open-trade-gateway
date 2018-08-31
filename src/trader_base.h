@@ -190,6 +190,7 @@ struct Position {
     std::string user_id;
     std::string exchange_id;
     std::string instrument_id;
+    std::string symbol() const;
 
     //持仓手数与冻结手数
     int volume_long_today;
