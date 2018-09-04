@@ -30,7 +30,9 @@ private:
     void OnNetworkConnected(struct lws* wsi);
     void OnNetworkInput(struct lws* wsi, const char* req_json);
     void SendJson(struct lws* wsi, const std::string& utf8_msg);
+    void CallWrite(struct lws* wsi);
     struct lws_context* ws_context;
+    std::mutex m_ws_writable_mutex;
 
     //trader实例表
     std::map<void*, trader_dll::TraderBase*> m_trader_map;

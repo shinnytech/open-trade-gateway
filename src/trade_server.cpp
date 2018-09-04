@@ -104,7 +104,7 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
             if (trader->m_out_queue.try_pop_front(&p)) {
                 SendJson(wsi, p);
                 if (!trader->m_out_queue.empty()) {
-                    lws_callback_on_writable(wsi);
+                    CallWrite(wsi);
                 }
             }
         }
@@ -131,7 +131,7 @@ int TraderServer::OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
 void TraderServer::OnNetworkConnected(struct lws* wsi)
 {
     Log(LOG_INFO, NULL, "ws server got connection, session=%p", wsi);
-    lws_callback_on_writable(wsi);
+    CallWrite(wsi);
 }
 
 void TraderServer::OnNetworkInput(struct lws* wsi, const char* json_str)
@@ -151,10 +151,10 @@ void TraderServer::OnNetworkInput(struct lws* wsi, const char* json_str)
             return;
         req.broker = broker->second;
         if (broker->second.broker_type == "ctp") {
-            m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(lws_callback_on_writable, wsi));
+            m_trader_map[wsi] = new trader_dll::TraderCtp(std::bind(&TraderServer::CallWrite, this, wsi));
             m_trader_map[wsi]->Start(req);
         } else if (broker->second.broker_type == "sim") {
-            m_trader_map[wsi] = new trader_dll::TraderSim(std::bind(lws_callback_on_writable, wsi));
+            m_trader_map[wsi] = new trader_dll::TraderSim(std::bind(&TraderServer::CallWrite, this, wsi));
             m_trader_map[wsi]->Start(req);
         }
         return;
@@ -206,7 +206,7 @@ void TraderServer::InitBrokerList()
 
 int TraderServer::RunOnce()
 {
-    return lws_service(ws_context, 10);
+    lws_service(ws_context, 10);
 }
 
 void TraderServer::CleanUp()
@@ -222,4 +222,10 @@ void TraderServer::CleanUp()
         delete trader;
     }
     lws_context_destroy(ws_context);
+}
+
+void TraderServer::CallWrite(struct lws* wsi)
+{
+    std::lock_guard<std::mutex> lck(m_ws_writable_mutex);
+    lws_callback_on_writable(wsi);
 }
