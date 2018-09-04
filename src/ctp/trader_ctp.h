@@ -37,8 +37,8 @@ private:
     //数据更新发送
     void OnClientPeekMessage();
     void SendUserData();
-    bool m_peeking_message;
-    bool m_something_changed;
+    std::atomic_bool m_peeking_message;
+    std::atomic_bool m_something_changed;
 
     //登录相关
     void SendLoginRequest();
