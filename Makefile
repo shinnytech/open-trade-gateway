@@ -1,23 +1,25 @@
 NAME := open-trade-gateway
 CXX_SRCS := $(wildcard src/*.cpp src/ctp/*.cpp src/sim/*.cpp)
 CXX_OBJS := $(patsubst src/%,obj/%,$(CXX_SRCS:.cpp=.o))
+CXX_DEPS := $(CXX_OBJS:%.o=%.d)
 
 CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ -Isrc/
 LDFLAGS += -Lcontrib/lib
-LDLIBS += -lssl -lcrypto -lwebsockets -l:thosttraderapi.so -lcurl -lstdc++fs 
+LDLIBS += -lssl -lcrypto -lwebsockets -lthosttraderapi -lcurl -lstdc++fs 
 
-all: directories bin/$(NAME)
+.PHONY: all clean install
 
-directories:
-	@mkdir -p bin
-	@mkdir -p obj
+all: bin/$(NAME)
 
 bin/$(NAME): $(CXX_OBJS)
+	@mkdir -p $(@D)
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS)
 
 obj/%.o: src/%.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) -o $@ $(CPPFLAGS) $(CXXFLAGS) -c $<
+	@mkdir -p $(@D)
+	$(CXX) -o $@ -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -c $<
+
+-include $(CXX_DEPS)
 
 clean:
 	@$(RM) -rf bin obj
