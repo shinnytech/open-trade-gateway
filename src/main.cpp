@@ -24,14 +24,15 @@ int main() {
     Log(LOG_INFO, NULL, "server init");
     //加载配置文件
     if (!LoadConfig()) {
-        return 0;
+        return -1;
     }
+    signal(SIGTERM, sigint_handler);
     signal(SIGINT, sigint_handler);
     TraderServer trade_server;
     trade_server.InitBrokerList();
     //加载合约文件, 连接行情服务
     if (!md_service::Init())
-        return 0;
+        return -1;
     //提供交易服务
     int n = 0;
     while (n >= 0 && !interrupted)
@@ -41,6 +42,6 @@ int main() {
     trade_server.CleanUp();
     Log(LOG_INFO, NULL, "server exit");
     LogCleanup();
-    return interrupted != 2;
+    return 0;
 }
 
