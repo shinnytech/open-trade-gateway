@@ -1,0 +1,73 @@
+{
+    "definitions": {
+        "req_login": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["req_login"] },
+                "bid": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "user_name": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "password": { "type": "string", "minLength": 1 , "maxLength": 64 }
+            },
+            "required": ["aid", "bid", "user_name", "password"],
+            "additionalProperties": false
+        },
+        "peek_message": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["peek_message"] }
+            },
+            "required": ["aid"],
+            "additionalProperties": false
+        },
+        "insert_order": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["insert_order"] },
+                "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
+                "instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "direction": { "enum": ["BUY", "SELL"]},
+                "offset": { "enum": ["OPEN", "CLOSE", "CLOSETODAY"]},
+                "limit_price": { "type": "number"},
+                "volume": { "type": "integer"},
+                "price_type": { "enum": ["LIMIT", "ANY", "BEST", "FIVELEVEL"]},
+                "volume_condition": { "enum": ["ANY", "MIN", "ALL"]},
+                "time_condition": { "enum": ["IOC", "GFS", "GFD", "GTD", "GTC", "GFA"]}
+            },
+            "required": ["aid", "user_id", "order_id", "exchange_id", "instrument_id", "direction", "offset", "volume", "price_type", "volume_condition", "time_condition"],
+            "additionalProperties": false
+        },
+        "cancel_order": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["cancel_order"] },
+                "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 }
+            },
+            "required": ["aid", "user_id", "order_id"],
+            "additionalProperties": false
+        },
+        "req_transfer": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["req_transfer"] },
+                "bank_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "future_account": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "future_password": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "bank_password": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "currency": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "amount": { "type": "number"}
+            },
+            "required": ["aid", "bank_id", "future_account", "future_password", "bank_password", "currency", "amount"],
+            "additionalProperties": false
+        }
+    },
+    "anyOf": [
+        { "$ref": "#/definitions/peek_message" },
+        { "$ref": "#/definitions/req_login" },
+        { "$ref": "#/definitions/insert_order" },
+        { "$ref": "#/definitions/cancel_order" },
+        { "$ref": "#/definitions/req_transfer" }
+    ]
+}
