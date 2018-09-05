@@ -93,6 +93,10 @@ void TraderCtp::OnClientReqInsertOrder()
 {
     CtpActionInsertOrder d;
     ss.ToVar(d);
+    if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
+        OutputNotify(1, u8"报单user_id错误，不能下单");
+        return;
+    }
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
     strcpy_x(d.f.UserID, m_user_id.c_str());
     strcpy_x(d.f.InvestorID, m_user_id.c_str());
@@ -110,6 +114,10 @@ void TraderCtp::OnClientReqCancelOrder()
 {
     CtpActionCancelOrder d;
     ss.ToVar(d);
+    if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
+        OutputNotify(1, u8"撤单user_id错误，不能下单");
+        return;
+    }
     RemoteOrderKey rkey;
     OrderIdLocalToRemote(d.local_key, &rkey);
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
