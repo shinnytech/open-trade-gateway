@@ -115,7 +115,7 @@ void TraderCtp::OnClientReqCancelOrder()
     CtpActionCancelOrder d;
     ss.ToVar(d);
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"撤单user_id错误，不能下单");
+        OutputNotify(1, u8"撤单user_id错误，不能撤单");
         return;
     }
     RemoteOrderKey rkey;
@@ -300,7 +300,7 @@ void TraderCtp::SendUserData()
         double last_price = ps.ins->last_price;
         if (!IsValid(last_price))
             last_price = ps.ins->pre_settlement;
-        if (last_price != ps.last_price || ps.changed) {
+        if (IsValid(last_price) && (last_price != ps.last_price || ps.changed)) {
             ps.last_price = last_price;
             ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
             ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
