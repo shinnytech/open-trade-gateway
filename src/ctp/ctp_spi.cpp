@@ -338,13 +338,13 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
     if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long) {
         if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today) {
             position.volume_long_today = pRspInvestorPosition->Position;
-            position.volume_long_frozen_today = pRspInvestorPosition->LongFrozen;
+            position.volume_long_frozen_today = pRspInvestorPosition->ShortFrozen;
             position.position_cost_long_today = pRspInvestorPosition->PositionCost;
             position.open_cost_long_today = pRspInvestorPosition->OpenCost;
             position.margin_long_today = pRspInvestorPosition->UseMargin;
         } else {
             position.volume_long_his = pRspInvestorPosition->Position;
-            position.volume_long_frozen_his = pRspInvestorPosition->LongFrozen;
+            position.volume_long_frozen_his = pRspInvestorPosition->ShortFrozen;
             position.position_cost_long_his = pRspInvestorPosition->PositionCost;
             position.open_cost_long_his = pRspInvestorPosition->OpenCost;
             position.margin_long_his = pRspInvestorPosition->UseMargin;
@@ -355,13 +355,13 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
     } else {
         if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today) {
             position.volume_short_today = pRspInvestorPosition->Position;
-            position.volume_short_frozen_today = pRspInvestorPosition->ShortFrozen;
+            position.volume_short_frozen_today = pRspInvestorPosition->LongFrozen;
             position.position_cost_short_today = pRspInvestorPosition->PositionCost;
             position.open_cost_short_today = pRspInvestorPosition->OpenCost;
             position.margin_short_today = pRspInvestorPosition->UseMargin;
         } else {
             position.volume_short_his = pRspInvestorPosition->Position;
-            position.volume_short_frozen_his = pRspInvestorPosition->ShortFrozen;
+            position.volume_short_frozen_his = pRspInvestorPosition->LongFrozen;
             position.position_cost_short_his = pRspInvestorPosition->PositionCost;
             position.open_cost_short_his = pRspInvestorPosition->OpenCost;
             position.margin_short_his = pRspInvestorPosition->UseMargin;
