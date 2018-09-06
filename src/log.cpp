@@ -48,15 +48,15 @@ void Log(LogLevel level, const char* pack_str, const char* message_fmt, ...)
     std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
     const char* level_str = Level2String(level);
     const char* datetime_str = CurrentDateTimeStr();
-    char msg[8192];
+    fprintf(log_context.m_log_file, "{\"time\": \"%s\", \"level\": \"%s\", \"msg\": \"", datetime_str, level_str);
     va_list arglist;
     va_start(arglist, message_fmt);
-    vsnprintf(msg, sizeof(msg), message_fmt, arglist);
+    vfprintf(log_context.m_log_file, message_fmt, arglist);
     va_end(arglist);
     if (pack_str){
-        fprintf(log_context.m_log_file, "{\"time\": \"%s\", \"level\": \"%s\", \"msg\": \"%s\", \"pack\": %s}\n", datetime_str, level_str, msg, pack_str);
+        fprintf(log_context.m_log_file, "\", \"pack\": %s}\n", pack_str);
     } else {
-        fprintf(log_context.m_log_file, "{\"time\": \"%s\", \"level\": \"%s\", \"msg\": \"%s\"}\n", datetime_str, level_str, msg);
+        fprintf(log_context.m_log_file, "\"}\n");
     }
     fflush(log_context.m_log_file);
 }
