@@ -78,7 +78,6 @@ private:
     void DoTrade(Order* order, int volume, double price);
     void UpdateOrder(Order* order);
     void UpdatePositionVolume(Position* position);
-    Position* GetOrCreatePosition(const std::string& position_symbol);
     std::set<Order*> m_alive_order_set;
     int m_last_seq_no;
 
