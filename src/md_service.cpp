@@ -269,8 +269,14 @@ void RunOnce()
         conn_info.client_exts = exts;
         conn_info.protocol = "md";
         md_context.m_ws_md = lws_client_connect_via_info(&conn_info);
+        if(!md_context.m_ws_md){
+            Log(LOG_ERROR, NULL, "md service lws_client_connect_via_info fail");
+        }
     }
-    lws_service(md_context.m_ws_context, 10);
+    int r = lws_service(md_context.m_ws_context, 10);
+    if (r < 0){
+        Log(LOG_ERROR, NULL, "md service lws_service fail, retcode=%d", r);
+    }
 }
 
 void Run()
@@ -324,6 +330,10 @@ bool Init()
     info.ka_probes = 5;
     info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     md_context.m_ws_context = lws_create_context(&info);
+    if (!md_context.m_ws_context){
+        Log(LOG_FATAL, NULL, "md service lws_create_context fail");
+        exit(-1);
+    }
     md_context.m_running_flag = false;
     md_context.m_send_buf = new char[LWS_PRE + 524228];
     md_context.m_recv_buf = new char[8 * 1024 * 1024];
