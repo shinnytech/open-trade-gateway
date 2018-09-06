@@ -26,7 +26,7 @@ clean:
 
 install: all
 	install -d /etc/$(NAME)
-	install -m 777 -d /var/local/$(NAME)
+	install -m 777 -d /var/local/lib/$(NAME)
 	install -m 777 -d /var/log/$(NAME)
 	install -m 755 bin/$(NAME) /usr/local/bin/
 	install -m 755 contrib/lib/*.so /usr/local/lib/

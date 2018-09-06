@@ -1,4 +1,4 @@
 {
   "port": 7988,
-  "user_file_path": "/var/local/open-trade-gateway"
+  "user_file_path": "/var/local/lib/open-trade-gateway"
 }
