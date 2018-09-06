@@ -44,10 +44,10 @@ public:
         m_items.pop_front();
         return true;
     }
-    bool pop_front(std::string* out_str) {
-        //尝试从队列头部提取一个元素, 如果队列为空则阻塞等待最多100ms, 如果一直为空则返回false
+    bool pop_front(std::string* out_str, const std::chrono::time_point<std::chrono::system_clock> dead_line) {
+        //尝试从队列头部提取一个元素, 如果队列为空则阻塞等待到dead_line为止, 如果一直为空则返回false
         std::unique_lock<std::mutex> lk(m_mutex);
-        if (!m_cv.wait_for(lk, 100ms, [=] {return !m_items.empty(); })) {
+        if (!m_cv.wait_until(lk, dead_line, [=] {return !m_items.empty(); })) {
             return false;
         }
         *out_str = m_items.front();

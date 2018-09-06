@@ -44,7 +44,8 @@ void TraderBase::Run()
     OnInit();
     while (m_running) {
         std::string input_str;
-        while(m_in_queue.pop_front(&input_str)){
+        auto dead_line = std::chrono::system_clock::now() + 100ms;
+        while(m_in_queue.pop_front(&input_str, dead_line)){
             ProcessInput(input_str.c_str());
         }
         OnIdle();
