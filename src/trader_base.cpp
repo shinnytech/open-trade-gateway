@@ -330,6 +330,11 @@ std::string Order::symbol() const
     return exchange_id + "." + instrument_id;
 }
 
+std::string Trade::symbol() const
+{
+    return exchange_id + "." + instrument_id;
+}
+
 std::string Position::symbol() const
 {
     return exchange_id + "." + instrument_id;

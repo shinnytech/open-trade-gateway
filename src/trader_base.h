@@ -168,6 +168,7 @@ struct Trade {
     std::string trade_id;
     std::string exchange_id;
     std::string instrument_id;
+    std::string symbol() const;
     std::string order_id;
     std::string exchange_trade_id;
 
