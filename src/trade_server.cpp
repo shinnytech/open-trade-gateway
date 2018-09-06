@@ -219,7 +219,6 @@ void TraderServer::CleanUp()
         auto trader = it->second;
         trader->m_worker_thread.join();
         assert(trader->m_finished);
-        delete trader;
     }
     lws_context_destroy(ws_context);
 }
