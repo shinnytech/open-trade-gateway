@@ -1,4 +1,5 @@
 {
+  "host": "0.0.0.0",
   "port": 7988,
   "user_file_path": "/var/local/lib/open-trade-gateway"
 }

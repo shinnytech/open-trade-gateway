@@ -43,8 +43,9 @@ Config
 /etc/open-trade-gateway/config.json 用于服务进程的一些配置项::
 
     {
+      "host": "0.0.0.0",                                      //提供服务的IP地址  
       "port": 7788,                                           //提供服务的端口号
-      "user_file_path": "/var/local/open-trade-gateway"       //存放用户文件的目录，必须事先创建好
+      "user_file_path": "/var/local/lib/open-trade-gateway"   //存放用户文件的目录，必须事先创建好
     }
 
 

@@ -158,7 +158,7 @@ void Run()
         // Set logging settings
         trade_server_context.m_trade_server.clear_access_channels(websocketpp::log::alevel::all);
         trade_server_context.m_trade_server.clear_error_channels(websocketpp::log::alevel::all);
-        
+
         // Initialize Asio
         trade_server_context.m_trade_server.init_asio();
 
@@ -169,7 +169,12 @@ void Run()
         trade_server_context.m_trade_server.set_max_message_size(4 * 1024 * 1024);
 
         // Listen on port 9002
-        trade_server_context.m_trade_server.listen(g_config.port);
+        websocketpp::lib::error_code ec;
+        asio::ip::tcp::endpoint ep2(asio::ip::address::from_string(g_config.host), g_config.port);
+        trade_server_context.m_trade_server.listen(ep2, ec);
+        if (ec) {
+            Log(LOG_ERROR, NULL, "trade server websocketpp listen fail, ec=%s", ec.message().c_str());
+        }        
 
         // Start the server accept loop
         trade_server_context.m_trade_server.start_accept();
@@ -180,7 +185,7 @@ void Run()
         Log(LOG_ERROR, NULL, "trade server websocketpp exception, what=%s", e.what());
     } catch (...) {
         Log(LOG_ERROR, NULL, "trade server other exception");
-    }    
+    }
 }
 
 void Stop()
