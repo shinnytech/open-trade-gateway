@@ -8,17 +8,27 @@
 #include "md_service.h"
 
 #include <libwebsockets.h>
+#include <iostream>
+
+#define ASIO_STANDALONE
+#include "websocketpp/config/asio_no_tls_client.hpp"
+#include "websocketpp/client.hpp"
+
 #include "log.h"
 #include "config.h"
 #include "rapid_serialize.h"
 #include "http.h"
 #include "version.h"
 
+typedef websocketpp::client<websocketpp::config::asio_client> client;
+using websocketpp::lib::placeholders::_1;
+using websocketpp::lib::placeholders::_2;
+using websocketpp::lib::bind;
+typedef websocketpp::config::asio_client::message_type::ptr message_ptr;
+
 namespace md_service{
 
-const char* md_host = "openmd.shinnytech.com";
-const char* md_path = "/t/md/front/mobile";
-const char* ins_file_url = "https://openmd.shinnytech.com/t/md/symbols/latest.json";
+const char* ins_file_url = "http://openmd.shinnytech.com/t/md/symbols/latest.json";
 
 Instrument::Instrument()
 {
@@ -94,40 +104,11 @@ static struct MdServiceContext
     //发送包管理
     std::string m_req_subscribe_quote;
     std::string m_req_peek_message;
-    bool m_need_subscribe_quote;
-    bool m_need_peek_message;
 
     //工作线程
+    client m_ws_client;
     std::thread m_worker_thread;
-    bool m_running_flag;
-
-    //websocket client
-    struct lws* m_ws_md;
-    struct lws_context* m_ws_context;
-    char* m_send_buf;
-    char* m_recv_buf;
-    int m_recv_len;
-    long long m_rate_limit_connect;
 } md_context;
-
-static struct lws_extension exts[] = {
-    {
-        "permessage-deflate",
-        lws_extension_callback_pm_deflate,
-        "permessage-deflate; client_max_window_bits"
-    },
-    { NULL, NULL, NULL /* terminator */ }
-};
-
-void CleanUp()
-{
-    md_context.m_running_flag = false;
-    md_context.m_worker_thread.join();
-    if (md_context.m_send_buf)
-        delete[] md_context.m_send_buf;
-    if (md_context.m_recv_buf)
-        delete[] md_context.m_recv_buf;
-}
 
 Instrument* GetInstrument(const std::string& symbol)
 {
@@ -138,15 +119,6 @@ Instrument* GetInstrument(const std::string& symbol)
 }
 
 using namespace std::chrono;
-
-int Ratelimit(long long* last, long long millsecs)
-{
-    long long d = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
-    if (d - (*last) < millsecs)
-        return 0;
-    *last = d;
-    return 1;
-}
 
 void OnWsMdData(const char* in)
 {
@@ -159,152 +131,84 @@ void OnWsMdData(const char* in)
     }
 }
 
-static int OnWsMessage(struct lws* wsi, enum lws_callback_reasons reason,
-    void* user, void* in, size_t len)
-{
-    if (wsi != md_context.m_ws_md)
-        return 0;
-    switch (reason) {
-    case LWS_CALLBACK_CLIENT_ESTABLISHED:{
-        Log(LOG_INFO, NULL, "md service got connection, session=%p", wsi);
-        md_context.m_need_subscribe_quote = true;
-        break;
-    }
-    case LWS_CALLBACK_CLOSED:{
-        Log(LOG_ERROR, NULL, "md service connection closed, session=%p", wsi);
-        md_context.m_ws_md = NULL;
-        break;
-    }
-    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:{
-        Log(LOG_ERROR, NULL, "md service connection error, session=%p", wsi);
-        md_context.m_ws_md = NULL;
-        break;
-    }
-    case LWS_CALLBACK_WSI_DESTROY:{
-        Log(LOG_ERROR, NULL, "md service connection destroy, session=%p", wsi);
-        md_context.m_ws_md = NULL;
-        break;
-    }
-    case LWS_CALLBACK_CLIENT_RECEIVE: {
-        memcpy(md_context.m_recv_buf + md_context.m_recv_len, in, len);
-        md_context.m_recv_len += len;
-        int final = lws_is_final_fragment(wsi);
-        if (final) {
-            Log(LOG_INFO, NULL, "md service received package, length=%d", md_context.m_recv_len);
-            *(md_context.m_recv_buf + md_context.m_recv_len) = '\0';
-            assert(md_context.m_recv_len > 0);
-            md_context.m_recv_len = 0;
-            OnWsMdData(md_context.m_recv_buf);
-            md_context.m_need_peek_message = true;
-        }
-        assert(md_context.m_recv_len < 8 * 1024 * 1024);
-        lws_callback_on_writable(md_context.m_ws_md);
-        break;
-    }
-    case LWS_CALLBACK_CLIENT_RECEIVE_PONG: {
-        lws_callback_on_writable(md_context.m_ws_md);
-        break;
-    }
-    case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER: {
-        char** p = (char**)in;
-        if (len < 100)
-            return 1;
-        *p += sprintf(*p, "Accept: application/v1+json\r\nUser-Agent: OTG-%s\r\n"
-            , VERSION_STR
-        );
-        break;
-    }
-    case LWS_CALLBACK_CLIENT_CONFIRM_EXTENSION_SUPPORTED:
-        break;
-    case LWS_CALLBACK_CLIENT_WRITEABLE: {
-        std::string* p = NULL;
-        if (md_context.m_need_subscribe_quote) {
-            p = &md_context.m_req_subscribe_quote;
-            md_context.m_need_subscribe_quote = false;
-        } else if (md_context.m_need_peek_message) {
-            p = &md_context.m_req_peek_message;
-            md_context.m_need_peek_message = false;
-        }
-        if (p) {
-            int length = p->size();
-            if (length > 0 && length < 524228) {
-                Log(LOG_INFO, NULL, "md service send package, length=%d", p->size());
-                memcpy(md_context.m_send_buf + LWS_PRE, p->c_str(), p->size());
-                int c = lws_write(md_context.m_ws_md, (unsigned char*)(&md_context.m_send_buf[LWS_PRE]), p->size(), LWS_WRITE_TEXT);
-            } else {
-                Log(LOG_FATAL, NULL, "md service send pack size(%d) should less than 524228", length);
-            }
-            lws_callback_on_writable(wsi);
-        }
-        break;
-    }
-    default:
-        break;
-    }
-    return 0;
-}
-
-static struct lws_protocols protocols[] = {
-    {
-        "md",
-        OnWsMessage,
-        0,
-        40000,
-    },
-    { NULL, NULL, 0, 0 } /* end */
-};
-
-void RunOnce()
-{
-    if (!md_context.m_ws_md && Ratelimit(&md_context.m_rate_limit_connect, 10000u)) {
-        struct lws_client_connect_info conn_info;
-        memset(&conn_info, 0, sizeof(conn_info));
-        conn_info.address = md_host;
-        conn_info.path = md_path;
-        conn_info.context = md_context.m_ws_context;
-        conn_info.port = 80;
-        conn_info.host = "openmd.shinnytech.com";
-        conn_info.origin = "openmd.shinnytech.com";
-        conn_info.ietf_version_or_minus_one = -1;
-        conn_info.client_exts = exts;
-        conn_info.protocol = "md";
-        md_context.m_ws_md = lws_client_connect_via_info(&conn_info);
-        if(!md_context.m_ws_md){
-            Log(LOG_ERROR, NULL, "md service lws_client_connect_via_info fail");
-        }
-    }
-    int r = lws_service(md_context.m_ws_context, 10);
-    if (r < 0){
-        Log(LOG_ERROR, NULL, "md service lws_service fail, retcode=%d", r);
+void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg){
+    websocketpp::lib::error_code ec;
+    md_context.m_ws_client.send(hdl, msg, websocketpp::frame::opcode::value::TEXT, ec);
+    if (ec) {
+        Log(LOG_ERROR, NULL, "md service send message fail, ec=%s, message=%s", ec.message().c_str(), msg.c_str());
+    }else{
+        Log(LOG_INFO, NULL, "md service send message success, len=%d", msg.size());
     }
 }
+
+void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
+    Log(LOG_INFO, NULL, "md service received message, len=%d", msg->get_payload().size());
+    SendTextMsg(hdl, md_context.m_req_peek_message);
+    OnWsMdData(msg->get_payload().c_str());
+}
+
+void OnOpenConnection(websocketpp::connection_hdl hdl)
+{
+    Log(LOG_INFO, NULL, "md service got connection, session=%p", hdl);
+    SendTextMsg(hdl, md_context.m_req_subscribe_quote);
+    SendTextMsg(hdl, md_context.m_req_peek_message);
+}
+
+void OnFailConnection(websocketpp::connection_hdl hdl)
+{
+    Log(LOG_ERROR, NULL, "md service connection error, session=%p", hdl);
+}
+
+void OnCloseConnection(websocketpp::connection_hdl hdl)
+{
+    Log(LOG_ERROR, NULL, "md service connection closed, session=%p", hdl);
+}
+
 
 void Run()
 {
-    while (md_context.m_running_flag)
-        RunOnce();
-}
+    std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
+    try {
+        // // Set logging to be pretty verbose (everything except message payloads)
+        // md_context.m_ws_client.set_access_channels(websocketpp::log::alevel::all);
+        // md_context.m_ws_client.clear_access_channels(websocketpp::log::alevel::frame_payload);
+        // Initialize ASIO
+        md_context.m_ws_client.init_asio();
+        // Register our message handler
+        md_context.m_ws_client.set_open_handler(bind(&OnOpenConnection, ::_1));
+        md_context.m_ws_client.set_fail_handler(bind(&OnFailConnection, ::_1));
+        md_context.m_ws_client.set_close_handler(bind(&OnCloseConnection, ::_1));
+        md_context.m_ws_client.set_message_handler(bind(&OnMessage, ::_1, ::_2));
+    } catch (websocketpp::exception const & e) {
+        Log(LOG_ERROR, NULL, "md service websocket exception, what=%s", e.what());
+    }
+    while(true){
+        try {
+            websocketpp::lib::error_code ec;
+            client::connection_ptr con = md_context.m_ws_client.get_connection(uri, ec);
+            con->append_header("Accept", "application/v1+json");
+            con->append_header("User-Agent", "OTG-" VERSION_STR);
+            if (ec) {
+                Log(LOG_ERROR, NULL, "md service create connection fail, reason=%s", ec.message().c_str());
+                sleep(10000);
+                continue;
+            }
+            // Note that connect here only requests a connection. No network messages are
+            // exchanged until the event loop starts running in the next line.
+            md_context.m_ws_client.connect(con);
 
-bool WriteWholeFile(const char* filename, const char* content, long length)
-{
-    FILE* pf = fopen(filename, "wb");
-    if (!pf){
-        Log(LOG_ERROR, NULL, "open file (%s) for write fail", filename);
-        return false;
+            // Start the ASIO io_service run loop
+            // this will cause a single connection to be made to the server. c.run()
+            // will exit when this connection is closed.
+            md_context.m_ws_client.run();
+        } catch (websocketpp::exception const & e) {
+            Log(LOG_ERROR, NULL, "md service websocket exception, what=%s", e.what());
+        }
     }
-    if (fwrite(content, length, 1, pf) != length){
-        Log(LOG_ERROR, NULL, "write (%d) bytes to file (%s) fail", length, filename);
-        return false;
-    }
-    fclose(pf);
-    return true;
 }
 
 bool Init()
 {
-    //初始化context
-    md_context.m_need_subscribe_quote = false;
-    md_context.m_need_peek_message = false;
     //下载和加载合约表文件
     std::string content;
     InsFileParser ss;
@@ -317,29 +221,6 @@ bool Init()
         exit(-1);
     }
     ss.ToVar(md_context.m_data.quotes);
-    //初始化websocket
-    struct lws_context_creation_info info;
-    memset(&info, 0, sizeof(info));
-    info.port = CONTEXT_PORT_NO_LISTEN;
-    info.protocols = protocols;
-    info.gid = -1;
-    info.uid = -1;
-    info.extensions = exts;
-    info.ka_time = 15;
-    info.ka_interval = 3;
-    info.ka_probes = 5;
-    info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-    md_context.m_ws_context = lws_create_context(&info);
-    if (!md_context.m_ws_context){
-        Log(LOG_FATAL, NULL, "md service lws_create_context fail");
-        exit(-1);
-    }
-    md_context.m_running_flag = false;
-    md_context.m_send_buf = new char[LWS_PRE + 524228];
-    md_context.m_recv_buf = new char[8 * 1024 * 1024];
-    md_context.m_recv_len = 0;
-    md_context.m_rate_limit_connect = 0;
-    md_context.m_ws_md = NULL;
     //订阅全行情
     std::string ins_list;
     for (auto it = md_context.m_data.quotes.begin(); it != md_context.m_data.quotes.end(); ++it) {
@@ -355,9 +236,16 @@ bool Init()
     }
     md_context.m_req_peek_message = "{\"aid\":\"peek_message\"}";
     md_context.m_req_subscribe_quote = "{\"aid\": \"subscribe_quote\", \"ins_list\": \"" + ins_list + "\"}";
-    md_context.m_need_subscribe_quote = true;
-    md_context.m_running_flag = true;
     md_context.m_worker_thread = std::thread(Run);
     return true;
 }
+
+void Stop()
+{
+}
+
+void CleanUp()
+{
+}
+
 }

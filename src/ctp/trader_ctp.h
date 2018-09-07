@@ -18,7 +18,7 @@ class TraderCtp
     : public TraderBase
 {
 public:
-    TraderCtp(std::function<void()> callback);
+    TraderCtp(std::function<void(const std::string&)> callback);
     virtual void ProcessInput(const char* json_str) override;
 
 private:

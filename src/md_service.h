@@ -78,6 +78,8 @@ Example:
 //初始化 MdService 实例, 初始化失败则返回 false
 bool Init();
 //要求 MdService 实例停止运行
+void Stop();
+//
 void CleanUp();
 //获取指定代码的合约/行情信息
 Instrument* GetInstrument(const std::string& symbol);

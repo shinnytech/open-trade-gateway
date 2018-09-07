@@ -11,8 +11,8 @@
 namespace trader_dll
 {
 
-TraderBase::TraderBase(std::function<void()> callback)
-    : m_notify_send_callback(callback)
+TraderBase::TraderBase(std::function<void(const std::string&)> callback)
+    : m_send_callback(callback)
 {
     m_running = true;
     m_finished = false;
@@ -26,14 +26,8 @@ TraderBase::~TraderBase()
 
 void TraderBase::Output(const std::string& json)
 {
-    //static FILE* f = NULL;
-    //if (!f)
-    //	f = fopen("c:\\tmp\\out.json", "wt");
-    //fprintf(f, "%s\n", json.c_str());
-    //fflush(f);
     if (m_running) {
-        m_out_queue.push_back(json);
-        m_notify_send_callback();
+        m_send_callback(json);
     }
 }
 

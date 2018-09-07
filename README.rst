@@ -15,43 +15,12 @@ Install
 -------------------------------------------------
 本服务必须在Linux环境下安装运行。下面的安装步骤以 Debian 9 为例，其它 linux 发行版可能需要相应调整.
 
-安装 zlib, openssl, libcurl, libwebsockets等依赖库
+安装 zlib, openssl, libcurl, libasio 等依赖库
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-方案1：用apt命令安装::
+用apt命令安装::
 
-    sudo apt install libcurl4-openssl-dev libwebsockets-dev
-
-
-方案2：自行编译依赖库::
-
-    //OpenSSL 1.1.0
-    wget https://www.openssl.org/source/openssl-1.1.0i.tar.gz
-    tar zxvf openssl-1.1.0i.tar.gz
-    cd openssl-1.1.0i
-    ./config
-    make
-    make test
-    sudo make install
-
-    //libcurl 7.61.0
-    wget https://curl.haxx.se/download/curl-7.61.0.tar.gz
-    tar zxvf curl-7.61.0.tar.gz
-    cd curl-7.61.0
-    ./configure
-    make
-    make test
-    make install
-
-    //libwebsockets
-    wget https://github.com/warmcat/libwebsockets/archive/v3.0.0.zip
-    unzip v3.0.0.zip
-    cd libwebsockets-3.0.0
-    mkdir build
-    cd build
-    cmake .. -DLWS_WITH_PLUGINS
-    make
-    make install
+    sudo apt install libasio-dev libcurl4-openssl-dev zlib1g-dev
 
 
 安装 open-trade-gateway

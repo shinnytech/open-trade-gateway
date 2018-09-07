@@ -414,18 +414,16 @@ public:
 class TraderBase
 {
 public:
-    TraderBase(std::function<void()> callback);
+    TraderBase(std::function<void(const std::string&)> callback);
     virtual ~TraderBase();
     virtual void Start(const ReqLogin& req_login);
     virtual void Stop();
     //输入TraderBase的数据包队列
     StringChannel m_in_queue;
-    //TraderBase要求输出的数据包队列
-    StringChannel m_out_queue;
     
     //工作线程
     std::thread m_worker_thread;
-    std::function<void()> m_notify_send_callback;
+    std::function<void(const std::string&)> m_send_callback;
     std::atomic_bool m_running; //需要工作线程运行
     bool m_finished; //工作线程已完
 

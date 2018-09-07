@@ -49,7 +49,7 @@ class TraderSim
     : public TraderBase
 {
 public:
-    TraderSim(std::function<void()> callback);
+    TraderSim(std::function<void(const std::string&)> callback);
     virtual void ProcessInput(const char* json_str) override;
 
 private:

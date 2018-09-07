@@ -60,7 +60,7 @@ void SerializerSim::DefineStruct(ActionOrder& d)
     AddItem(d.limit_price, "limit_price");
 }
 
-TraderSim::TraderSim(std::function<void()> callback)
+TraderSim::TraderSim(std::function<void(const std::string&)> callback)
     : TraderBase(callback)
 {
     m_next_send_dt = 0;

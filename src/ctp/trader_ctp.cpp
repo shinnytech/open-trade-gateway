@@ -18,7 +18,7 @@
 
 namespace trader_dll
 {
-TraderCtp::TraderCtp(std::function<void()> callback)
+TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     : TraderBase(callback)
     , m_spi(NULL)
     , m_api(NULL)
