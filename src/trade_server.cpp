@@ -91,6 +91,7 @@ void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg){
 void OnOpenConnection(websocketpp::connection_hdl hdl)
 {
     trade_server_context.m_trader_map[hdl] = TradeSession();
+    SendTextMsg(hdl, trade_server_context.m_broker_list_str);
     Log(LOG_INFO, NULL, "ws server got connection, session=%p", hdl);
 }
 
