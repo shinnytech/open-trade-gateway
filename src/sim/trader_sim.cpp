@@ -65,6 +65,7 @@ TraderSim::TraderSim(std::function<void(const std::string&)> callback)
 {
     m_next_send_dt = 0;
     m_last_seq_no = 0;
+    m_peeking_message = false;
     m_account = NULL;
 }
 
@@ -109,6 +110,7 @@ void TraderSim::OnInit()
 
 void TraderSim::ProcessInput(const char* json_str)
 {
+    SerializerSim ss;
     if (!ss.FromString(json_str))
         return;
     rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ss.m_doc));
@@ -116,9 +118,13 @@ void TraderSim::ProcessInput(const char* json_str)
         return;
     std::string aid = dt->GetString();
     if (aid == "insert_order") {
-        OnClientReqInsertOrder();
+        ActionOrder action_insert_order;
+        ss.ToVar(action_insert_order);
+        OnClientReqInsertOrder(action_insert_order);
     } else if (aid == "cancel_order") {
-        OnClientReqCancelOrder();
+        ActionOrder action_cancel_order;
+        ss.ToVar(action_cancel_order);
+        OnClientReqCancelOrder(action_cancel_order);
     // } else if (aid == "req_transfer") {
     //     OnClientReqTransfer();
     } else if (aid == "peek_message") {
@@ -128,6 +134,7 @@ void TraderSim::ProcessInput(const char* json_str)
 
 void TraderSim::OnFinish()
 {
+    Log(LOG_INFO, NULL, "TraderSim::OnFinish %p", this);
     SaveUserDataFile();
 }
 
@@ -141,10 +148,8 @@ void TraderSim::OnIdle()
     }
 }
 
-void TraderSim::OnClientReqInsertOrder()
+void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 {
-    ActionOrder action_insert_order;
-    ss.ToVar(action_insert_order);
     std::string symbol = action_insert_order.exchange_id + "." + action_insert_order.ins_id;
     std::string order_key = action_insert_order.order_id;
     auto it = m_data.m_orders.find(order_key);
@@ -220,10 +225,8 @@ void TraderSim::OnClientReqInsertOrder()
     return;
 }
 
-void TraderSim::OnClientReqCancelOrder()
+void TraderSim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 {
-    ActionOrder action_cancel_order;
-    ss.ToVar(action_cancel_order);
     if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id) {
         OutputNotify(1, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误");
         return;

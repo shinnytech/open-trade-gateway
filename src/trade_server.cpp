@@ -82,9 +82,9 @@ void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg){
     websocketpp::lib::error_code ec;
     trade_server_context.m_trade_server.send(hdl, msg, websocketpp::frame::opcode::value::TEXT, ec);
     if (ec) {
-        Log(LOG_ERROR, NULL, "md service send message fail, ec=%s, message=%s", ec.message().c_str(), msg.c_str());
+        Log(LOG_ERROR, msg.c_str(), "trade server send message fail, ec=%s, message=%s", ec.message().c_str(), msg.c_str());
     }else{
-        Log(LOG_INFO, NULL, "md service send message success, len=%d", msg.size());
+        Log(LOG_INFO, msg.c_str(), "trade server send message success, len=%d", msg.size());
     }
 }
 
@@ -92,30 +92,31 @@ void OnOpenConnection(websocketpp::connection_hdl hdl)
 {
     trade_server_context.m_trader_map[hdl] = TradeSession();
     SendTextMsg(hdl, trade_server_context.m_broker_list_str);
-    Log(LOG_INFO, NULL, "ws server got connection, session=%p", hdl);
+    Log(LOG_INFO, NULL, "trade server got connection, session=%p", hdl);
 }
 
 void OnCloseConnection(websocketpp::connection_hdl hdl)
 {
-    Log(LOG_INFO, NULL, "ws server loss connection, session=%p", hdl);
+    Log(LOG_INFO, NULL, "trade server loss connection, session=%p", hdl);
     TradeSession& session = trade_server_context.m_trader_map[hdl];
     if (session.m_trader_instance){
         DeleteTraderInstance(session.m_trader_instance);
         session.m_trader_instance = NULL;
     }
+    trade_server_context.m_trader_map.erase(hdl);
 }
 
 void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
     if (msg->get_opcode() != websocketpp::frame::opcode::TEXT){
-        Log(LOG_ERROR, NULL, "TraderServer OnMessage received wrong opcode, session=%p", hdl);
+        Log(LOG_ERROR, NULL, "trade server OnMessage received wrong opcode, session=%p", hdl);
     }
     auto& json_str = msg->get_payload();
     trader_dll::SerializerTradeBase ss;
     if (!ss.FromString(json_str.c_str())){
-        Log(LOG_WARNING, NULL, "ws server parse json(%s) fail, session=%p", json_str.c_str(), hdl);
+        Log(LOG_WARNING, NULL, "trade server parse json(%s) fail, session=%p", json_str.c_str(), hdl);
         return;
     }
-    Log(LOG_INFO, json_str.c_str(), "ws server received package, session=%p", hdl);
+    Log(LOG_INFO, json_str.c_str(), "trade server received package, session=%p", hdl);
     trader_dll::ReqLogin req;
     ss.ToVar(req);
     TradeSession& session = trade_server_context.m_trader_map[hdl];
@@ -126,7 +127,7 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
         }
         auto broker = g_config.brokers.find(req.bid);
         if (broker == g_config.brokers.end()){
-            Log(LOG_WARNING, json_str.c_str(), "ws server req_login invalid bid=%s", req.bid.c_str());
+            Log(LOG_WARNING, json_str.c_str(), "trade server req_login invalid bid=%s", req.bid.c_str());
             return;
         }
         req.broker = broker->second;
@@ -137,8 +138,9 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
             trade_server_context.m_trader_map[hdl].m_trader_instance = new trader_dll::TraderSim(std::bind(SendTextMsg, hdl, std::placeholders::_1));
             trade_server_context.m_trader_map[hdl].m_trader_instance->Start(req);
         } else {
-            Log(LOG_ERROR, json_str.c_str(), "ws server req_login invalid broker_type=%s", broker->second.broker_type.c_str());
+            Log(LOG_ERROR, json_str.c_str(), "trade server req_login invalid broker_type=%s", broker->second.broker_type.c_str());
         }
+        Log(LOG_INFO, NULL, "create-trader-instance");
         return;
     }
     if (session.m_trader_instance){

@@ -29,10 +29,9 @@ private:
     virtual void OnFinish() override;
 
     //用户请求处理
-    SerializerCtp ss;
-    void OnClientReqInsertOrder();
-    void OnClientReqCancelOrder();
-    void OnClientReqTransfer();
+    void OnClientReqInsertOrder(CtpActionInsertOrder d);
+    void OnClientReqCancelOrder(CtpActionCancelOrder d);
+    void OnClientReqTransfer(CThostFtdcReqTransferField f);
 
     //数据更新发送
     void OnClientPeekMessage();

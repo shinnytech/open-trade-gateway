@@ -41,6 +41,7 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
 
 void TraderCtp::ProcessInput(const char* json_str)
 {
+    SerializerCtp ss;
     if (!ss.FromString(json_str))
         return;
     rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ss.m_doc));
@@ -48,11 +49,18 @@ void TraderCtp::ProcessInput(const char* json_str)
         return;
     std::string aid = dt->GetString();
     if (aid == "insert_order") {
-        OnClientReqInsertOrder();
+        CtpActionInsertOrder d;
+        ss.ToVar(d);
+        OnClientReqInsertOrder(d);
     } else if (aid == "cancel_order") {
-        OnClientReqCancelOrder();
+        CtpActionCancelOrder d;
+        ss.ToVar(d);
+        OnClientReqCancelOrder(d);
     } else if (aid == "req_transfer") {
-        OnClientReqTransfer();
+        CThostFtdcReqTransferField f;
+        memset(&f, 0, sizeof(f));
+        ss.ToVar(f);
+        OnClientReqTransfer(f);
     } else if (aid == "peek_message") {
         OnClientPeekMessage();
     }
@@ -89,10 +97,8 @@ void TraderCtp::SendLoginRequest()
     Log(LOG_INFO, NULL, "ctp ReqUserLogin, UserID=%s, ret=%d", field.UserID, ret);
 }
 
-void TraderCtp::OnClientReqInsertOrder()
+void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
-    CtpActionInsertOrder d;
-    ss.ToVar(d);
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
         OutputNotify(1, u8"报单user_id错误，不能下单");
         return;
@@ -110,10 +116,8 @@ void TraderCtp::OnClientReqInsertOrder()
     SaveToFile();
 }
 
-void TraderCtp::OnClientReqCancelOrder()
+void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 {
-    CtpActionCancelOrder d;
-    ss.ToVar(d);
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
         OutputNotify(1, u8"撤单user_id错误，不能撤单");
         return;
@@ -135,11 +139,8 @@ void TraderCtp::OnClientReqCancelOrder()
     Log(LOG_INFO, NULL, "ctp ReqOrderAction, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }
 
-void TraderCtp::OnClientReqTransfer()
+void TraderCtp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 {
-    CThostFtdcReqTransferField f;
-    memset(&f, 0, sizeof(f));
-    ss.ToVar(f);
     strcpy_x(f.BrokerID, m_broker_id.c_str());
     strcpy_x(f.UserID, m_user_id.c_str());
     strcpy_x(f.AccountID, m_user_id.c_str());

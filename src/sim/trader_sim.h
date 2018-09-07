@@ -59,9 +59,8 @@ private:
     virtual void OnFinish() override;
 
     //用户请求处理
-    SerializerSim ss;
-    void OnClientReqInsertOrder();
-    void OnClientReqCancelOrder();
+    void OnClientReqInsertOrder(ActionOrder action_insert_order);
+    void OnClientReqCancelOrder(ActionOrder action_cancel_order);
     void OnClientReqTransfer();
 
     //数据更新发送
