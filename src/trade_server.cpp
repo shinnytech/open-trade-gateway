@@ -155,10 +155,10 @@ bool Init()
 void Run()
 {
     try {
-        // // Set logging settings
-        // trade_server_context.m_trade_server.set_access_channels(websocketpp::log::alevel::all);
-        // trade_server_context.m_trade_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
-
+        // Set logging settings
+        trade_server_context.m_trade_server.clear_access_channels(websocketpp::log::alevel::all);
+        trade_server_context.m_trade_server.clear_error_channels(websocketpp::log::alevel::all);
+        
         // Initialize Asio
         trade_server_context.m_trade_server.init_asio();
 

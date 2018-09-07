@@ -169,9 +169,9 @@ void Run()
 {
     std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
     try {
-        // // Set logging to be pretty verbose (everything except message payloads)
-        // md_context.m_ws_client.set_access_channels(websocketpp::log::alevel::all);
-        // md_context.m_ws_client.clear_access_channels(websocketpp::log::alevel::frame_payload);
+        // Set logging to be pretty verbose (everything except message payloads)
+        md_context.m_ws_client.clear_access_channels(websocketpp::log::alevel::all);
+        md_context.m_ws_client.clear_access_channels(websocketpp::log::alevel::all);
         // Initialize ASIO
         md_context.m_ws_client.init_asio();
         // Register our message handler
