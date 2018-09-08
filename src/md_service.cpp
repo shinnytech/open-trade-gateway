@@ -106,7 +106,6 @@ static struct MdServiceContext
     std::string m_req_peek_message;
 
     //工作线程
-    client m_ws_client;
     std::thread m_worker_thread;
 } md_context;
 
@@ -131,9 +130,9 @@ void OnWsMdData(const char* in)
     }
 }
 
-void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg){
+void SendTextMsg(client* c, websocketpp::connection_hdl hdl, const std::string& msg){
     websocketpp::lib::error_code ec;
-    md_context.m_ws_client.send(hdl, msg, websocketpp::frame::opcode::value::TEXT, ec);
+    c->send(hdl, msg, websocketpp::frame::opcode::value::TEXT, ec);
     if (ec) {
         Log(LOG_ERROR, NULL, "md service send message fail, ec=%s, message=%s", ec.message().c_str(), msg.c_str());
     }else{
@@ -141,25 +140,25 @@ void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg){
     }
 }
 
-void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
+void OnMessage(client* c, websocketpp::connection_hdl hdl, message_ptr msg) {
     Log(LOG_INFO, NULL, "md service received message, len=%d", msg->get_payload().size());
-    SendTextMsg(hdl, md_context.m_req_peek_message);
+    SendTextMsg(c, hdl, md_context.m_req_peek_message);
     OnWsMdData(msg->get_payload().c_str());
 }
 
-void OnOpenConnection(websocketpp::connection_hdl hdl)
+void OnOpenConnection(client* c, websocketpp::connection_hdl hdl)
 {
     Log(LOG_INFO, NULL, "md service got connection, session=%p", hdl);
-    SendTextMsg(hdl, md_context.m_req_subscribe_quote);
-    SendTextMsg(hdl, md_context.m_req_peek_message);
+    SendTextMsg(c, hdl, md_context.m_req_subscribe_quote);
+    SendTextMsg(c, hdl, md_context.m_req_peek_message);
 }
 
-void OnFailConnection(websocketpp::connection_hdl hdl)
+void OnFailConnection(client* c, websocketpp::connection_hdl hdl)
 {
     Log(LOG_ERROR, NULL, "md service connection error, session=%p", hdl);
 }
 
-void OnCloseConnection(websocketpp::connection_hdl hdl)
+void OnCloseConnection(client* c, websocketpp::connection_hdl hdl)
 {
     Log(LOG_ERROR, NULL, "md service connection closed, session=%p", hdl);
 }
@@ -168,39 +167,37 @@ void OnCloseConnection(websocketpp::connection_hdl hdl)
 void Run()
 {
     std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
-    try {
-        // Set logging to be pretty verbose (everything except message payloads)
-        md_context.m_ws_client.clear_access_channels(websocketpp::log::alevel::all);
-        md_context.m_ws_client.clear_access_channels(websocketpp::log::alevel::all);
-        // Initialize ASIO
-        md_context.m_ws_client.init_asio();
-        // Register our message handler
-        md_context.m_ws_client.set_open_handler(bind(&OnOpenConnection, ::_1));
-        md_context.m_ws_client.set_fail_handler(bind(&OnFailConnection, ::_1));
-        md_context.m_ws_client.set_close_handler(bind(&OnCloseConnection, ::_1));
-        md_context.m_ws_client.set_message_handler(bind(&OnMessage, ::_1, ::_2));
-    } catch (websocketpp::exception const & e) {
-        Log(LOG_ERROR, NULL, "md service websocket exception, what=%s", e.what());
-    }
     while(true){
         try {
+            client c;
+            // Set logging to be pretty verbose (everything except message payloads)
+            c.clear_access_channels(websocketpp::log::alevel::all);
+            c.clear_access_channels(websocketpp::log::alevel::all);
+            // Initialize ASIO
+            c.init_asio();
+            // Register our message handler
+            c.set_open_handler(bind(&OnOpenConnection, &c, ::_1));
+            c.set_fail_handler(bind(&OnFailConnection, &c, ::_1));
+            c.set_close_handler(bind(&OnCloseConnection, &c, ::_1));
+            c.set_message_handler(bind(&OnMessage, &c, ::_1, ::_2));
             websocketpp::lib::error_code ec;
-            client::connection_ptr con = md_context.m_ws_client.get_connection(uri, ec);
+            client::connection_ptr con = c.get_connection(uri, ec);
             con->append_header("Accept", "application/v1+json");
             con->append_header("User-Agent", "OTG-" VERSION_STR);
             if (ec) {
                 Log(LOG_ERROR, NULL, "md service create connection fail, reason=%s", ec.message().c_str());
-                sleep(10000);
+                sleep(60000);
                 continue;
             }
             // Note that connect here only requests a connection. No network messages are
             // exchanged until the event loop starts running in the next line.
-            md_context.m_ws_client.connect(con);
+            c.connect(con);
 
             // Start the ASIO io_service run loop
             // this will cause a single connection to be made to the server. c.run()
             // will exit when this connection is closed.
-            md_context.m_ws_client.run();
+            c.run();
+            sleep(60000);
         } catch (websocketpp::exception const & e) {
             Log(LOG_ERROR, NULL, "md service websocket exception, what=%s", e.what());
         }
