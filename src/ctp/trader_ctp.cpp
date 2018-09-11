@@ -109,7 +109,10 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
     RemoteOrderKey rkey;
     rkey.exchange_id = d.f.ExchangeID;
     rkey.instrument_id = d.f.InstrumentID;
-    OrderIdLocalToRemote(d.local_key, &rkey);
+    if(OrderIdLocalToRemote(d.local_key, &rkey)){
+        OutputNotify(1, u8"报单order_id重复，不能下单");
+        return;
+    }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
     int r = m_api->ReqOrderInsert(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderInsert, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
@@ -123,7 +126,10 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
         return;
     }
     RemoteOrderKey rkey;
-    OrderIdLocalToRemote(d.local_key, &rkey);
+    if (!OrderIdLocalToRemote(d.local_key, &rkey)){
+        OutputNotify(1, u8"撤单指定的order_id不存在，不能撤单");
+        return;
+    }
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
     strcpy_x(d.f.UserID, m_user_id.c_str());
     strcpy_x(d.f.InvestorID, m_user_id.c_str());
@@ -391,7 +397,7 @@ void TraderCtp::LoadFromFile()
     }
 }
 
-void TraderCtp::OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key)
+bool TraderCtp::OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key)
 {
     std::unique_lock<std::mutex> lck(m_ordermap_mtx);
     auto it = m_ordermap_local_remote.find(local_order_key);
@@ -401,8 +407,10 @@ void TraderCtp::OrderIdLocalToRemote(const LocalOrderKey& local_order_key, Remot
         remote_order_key->order_ref = std::to_string(m_order_ref++);
         m_ordermap_local_remote[local_order_key] = *remote_order_key;
         m_ordermap_remote_local[*remote_order_key] = local_order_key;
+        return false;
     } else {
         *remote_order_key = it->second;
+        return true;
     }
 }
 
@@ -438,8 +446,10 @@ void TraderCtp::FindLocalOrderId(const std::string& exchange_id, const std::stri
     }
 }
 
-void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id, int order_ref)
+void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref)
 {
+    Log(LOG_INFO, NULL, "ctp SetSession, TradingDay=%s, FrontId=%d, SessionId=%d, MaxOrderRef=%d"
+        , trading_day.c_str(), front_id, session_id, max_order_ref);
     std::unique_lock<std::mutex> lck(m_ordermap_mtx);
     if(m_trading_day != trading_day){
         m_ordermap_local_remote.clear();
@@ -448,7 +458,7 @@ void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id
     m_trading_day = trading_day;
     m_front_id = front_id;
     m_session_id = session_id;
-    m_order_ref = order_ref + 1;
+    m_order_ref = max_order_ref + 1;
 }
 
 void TraderCtp::OnFinish()

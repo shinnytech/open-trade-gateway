@@ -112,7 +112,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
 
 void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
 {
-    Log(LOG_INFO, NULL, "ctp OnRtnOrder, UserID=%s, InstrumentId=%s, OrderRef=%s", m_trader->m_user_id.c_str(), pOrder->InstrumentID, pOrder->OrderRef);
+    Log(LOG_INFO, NULL, "ctp OnRtnOrder, UserID=%s, InstrumentId=%s, OrderRef=%s, Session=%d", m_trader->m_user_id.c_str(), pOrder->InstrumentID, pOrder->OrderRef, pOrder->SessionID);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     //找到委托单
     trader_dll::RemoteOrderKey remote_key;

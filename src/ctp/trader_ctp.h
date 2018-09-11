@@ -44,7 +44,7 @@ private:
     void ReqConfirmSettlement();
     void ReqQryBank();
     void ReqQryAccountRegister();
-    void SetSession(std::string trading_day, int front_id, int session_id, int order_ref);
+    void SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref);
     std::string m_broker_id;
     int m_session_id;
     int m_front_id;
@@ -56,7 +56,7 @@ private:
     std::string m_trading_day;
     std::mutex m_ordermap_mtx;
     std::string m_user_file_name;
-    void OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key);
+    bool OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key);
     void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, LocalOrderKey* local_order_key);
     void FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, LocalOrderKey* local_order_key);
     void LoadFromFile();
