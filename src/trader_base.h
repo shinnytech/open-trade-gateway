@@ -418,6 +418,8 @@ public:
     virtual ~TraderBase();
     virtual void Start(const ReqLogin& req_login);
     virtual void Stop();
+    virtual bool NeedReset() {return false;};
+
     //输入TraderBase的数据包队列
     StringChannel m_in_queue;
     
@@ -426,6 +428,7 @@ public:
     std::function<void(const std::string&)> m_send_callback;
     std::atomic_bool m_running; //需要工作线程运行
     bool m_finished; //工作线程已完
+    ReqLogin m_req_login;   //登录请求, 保存以备断线重连时使用
 
 protected:
     void Run();
@@ -440,7 +443,6 @@ protected:
     std::string m_user_id; //交易账号
     User m_data;   //交易账户全信息
     std::mutex m_data_mtx; //m_data访问的mutex
-    ReqLogin m_req_login;   //登录请求, 保存以备断线重连时使用
     int m_notify_seq;
     int m_data_seq;
     Account& GetAccount(const std::string account_key);

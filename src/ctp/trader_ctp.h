@@ -27,6 +27,7 @@ private:
     virtual void OnInit() override;
     virtual void OnIdle() override;
     virtual void OnFinish() override;
+    virtual bool NeedReset() override;
 
     //用户请求处理
     void OnClientReqInsertOrder(CtpActionInsertOrder d);
@@ -71,10 +72,10 @@ private:
     int ReqQryPosition();
     long long m_next_qry_dt;
     long long m_next_send_dt;
-    std::atomic_bool m_need_login;
     std::atomic_bool m_need_query_positions;
     std::atomic_bool m_need_query_account;
     std::atomic_bool m_need_query_bank;
     std::atomic_bool m_need_query_register;
+    std::atomic_llong m_req_login_dt;
 };
 }

@@ -106,6 +106,31 @@ void OnCloseConnection(websocketpp::connection_hdl hdl)
     trade_server_context.m_trader_map.erase(hdl);
 }
 
+void TryResetExpiredTrader()
+{
+    static long long prev_dt = 0;
+    long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    if (now - prev_dt < 3600)
+        return;
+    prev_dt = now;
+    for(auto it = trade_server_context.m_trader_map.begin(); it != trade_server_context.m_trader_map.end(); ++it){
+        auto hdl = it->first;
+        TradeSession& session = it->second;
+        if (session.m_trader_instance && session.m_trader_instance->NeedReset()){
+            trader_dll::ReqLogin req = session.m_trader_instance->m_req_login;
+            DeleteTraderInstance(session.m_trader_instance);
+            session.m_trader_instance = NULL;
+            if (req.broker.broker_type == "ctp") {
+                session.m_trader_instance = new trader_dll::TraderCtp(std::bind(SendTextMsg, hdl, std::placeholders::_1));
+                session.m_trader_instance->Start(req);
+            } else if (req.broker.broker_type == "sim") {
+                session.m_trader_instance = new trader_dll::TraderSim(std::bind(SendTextMsg, hdl, std::placeholders::_1));
+                session.m_trader_instance->Start(req);
+            }
+        }
+    }
+}
+
 void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
     if (msg->get_opcode() != websocketpp::frame::opcode::TEXT){
         Log(LOG_ERROR, NULL, "trade server OnMessage received wrong opcode, session=%p", hdl);
@@ -146,6 +171,7 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
     if (session.m_trader_instance){
         session.m_trader_instance->m_in_queue.push_back(json_str);
     }
+    TryResetExpiredTrader();
 }
 
 bool Init()

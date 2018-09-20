@@ -28,8 +28,8 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     m_order_ref = 0;
     m_next_qry_dt = 0;
     m_next_send_dt = 0;
+    m_req_login_dt = 0;
 
-    m_need_login.store(false);
     m_need_query_positions.store(false);
     m_need_query_account.store(false);
     m_need_query_bank.store(false);
@@ -87,6 +87,8 @@ void TraderCtp::OnInit()
 
 void TraderCtp::SendLoginRequest()
 {
+    long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    m_req_login_dt.store(now);
     CThostFtdcReqUserLoginField field;
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_req_login.broker.ctp_broker_id.c_str());
@@ -243,11 +245,6 @@ void TraderCtp::OnIdle()
     }
     if (m_next_qry_dt >= now)
         return;
-    if (m_need_login){
-        SendLoginRequest();
-        m_next_qry_dt = now + 1100;
-        return;
-    }
     if (m_need_query_positions.exchange(false)) {
         if (ReqQryPosition() != 0) {
             m_need_query_positions.store(true);
@@ -466,5 +463,15 @@ void TraderCtp::OnFinish()
     m_api->Release();
     delete m_spi;
 }
+
+bool TraderCtp::NeedReset() 
+{
+    if (m_req_login_dt == 0)
+        return false;
+    long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    if (now > m_req_login_dt + 60)
+        return true;
+    return false;
+};
 
 }

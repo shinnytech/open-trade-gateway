@@ -64,7 +64,7 @@ static std::string GuessExchangeId(std::string instrument_id)
 void CCtpSpiHandler::OnFrontConnected()
 {
     Log(LOG_INFO, NULL, "ctp OnFrontConnected, UserID=%s", m_trader->m_user_id.c_str());
-    m_trader->m_need_login.store(true);
+    m_trader->SendLoginRequest();
     m_trader->OutputNotify(0, u8"已经连接到交易前置");
 }
 
@@ -84,7 +84,7 @@ void CCtpSpiHandler::OnRspError(CThostFtdcRspInfoField* pRspInfo, int nRequestID
 void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
     Log(LOG_INFO, NULL, "ctp OnRspUserLogin, UserID=%s, ErrMsg=%s", m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
-    m_trader->m_need_login.store(false);
+    m_trader->m_req_login_dt.store(0);
     if (pRspInfo->ErrorID == 0) {
         m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
         m_trader->OutputNotify(0, u8"登录成功");
