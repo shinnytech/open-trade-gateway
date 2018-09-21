@@ -7,9 +7,6 @@
 #pragma once
 #include <thread>
 
-struct lws;
-struct lws_context;
-
 namespace md_service {
 const int kOptionClassCall = 1;
 const int kOptionClassPut = 2;

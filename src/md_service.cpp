@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include "md_service.h"
 
-#include <libwebsockets.h>
 #include <iostream>
 
 #define ASIO_STANDALONE
