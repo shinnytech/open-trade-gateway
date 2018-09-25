@@ -25,6 +25,8 @@ struct Config
     std::string ca_file;
     //user配置
     std::string user_file_path;
+    //是否要求用户确认结算单
+    bool auto_confirm_settlement;
     //broker配置
     std::map<std::string, BrokerConfig> brokers;
     //当前交易日

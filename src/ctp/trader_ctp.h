@@ -44,6 +44,7 @@ private:
     void SendLoginRequest();
     void ReqAuthenticate();
     void ReqConfirmSettlement();
+    void ReqQrySettlementInfo();
     void ReqQryBank();
     void ReqQryAccountRegister();
     void SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref);

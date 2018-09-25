@@ -51,7 +51,9 @@ void TraderCtp::ProcessInput(const char* json_str)
     if (!dt || !dt->IsString())
         return;
     std::string aid = dt->GetString();
-    if (aid == "insert_order") {
+    if (aid == "peek_message") {
+        OnClientPeekMessage();
+    } else if (aid == "insert_order") {
         CtpActionInsertOrder d;
         ss.ToVar(d);
         OnClientReqInsertOrder(d);
@@ -64,8 +66,8 @@ void TraderCtp::ProcessInput(const char* json_str)
         memset(&f, 0, sizeof(f));
         ss.ToVar(f);
         OnClientReqTransfer(f);
-    } else if (aid == "peek_message") {
-        OnClientPeekMessage();
+    } else if (aid == "confirm_settlement") {
+        ReqConfirmSettlement();
     }
 }
 
@@ -230,6 +232,17 @@ void TraderCtp::ReqConfirmSettlement()
     strcpy_x(field.InvestorID, m_user_id.c_str());
     int r = m_api->ReqSettlementInfoConfirm(&field, 0);
     Log(LOG_INFO, NULL, "ctp ReqSettlementInfoConfirm, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
+}
+
+void TraderCtp::ReqQrySettlementInfo()
+{
+    CThostFtdcQrySettlementInfoField field;
+    memset(&field, 0, sizeof(field));
+    strcpy_x(field.BrokerID, m_broker_id.c_str());
+    strcpy_x(field.InvestorID, m_user_id.c_str());
+    strcpy_x(field.AccountID, m_user_id.c_str());
+    int r = m_api->ReqQrySettlementInfo(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQrySettlementInfo, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
 }
 
 void TraderCtp::ReqQryBank()

@@ -66,4 +66,5 @@ Config::Config()
 {
     //配置参数默认值
     port = 7788;
+    auto_confirm_settlement = false;
 }

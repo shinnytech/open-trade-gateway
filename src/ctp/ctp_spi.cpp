@@ -101,30 +101,43 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
         , pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, pRspUserLogin->MaxOrderRef
         );
     m_trader->m_req_login_dt.store(0);
-    if (pRspInfo->ErrorID == 0) {
-        m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
-        m_trader->m_logined.store(true);
-        m_trader->OutputNotify(0, u8"登录成功");
-        char json_str[1024];
-        sprintf(json_str, (u8"{"\
-                           "\"aid\": \"rtn_data\","\
-                           "\"data\" : [{\"trade\":{\"%s\":{\"session\":{"\
-                           "\"user_id\" : \"%s\","\
-                           "\"trading_day\" : \"%s\""
-                           "}}}}]}")
-                , pRspUserLogin->UserID
-                , pRspUserLogin->UserID
-                , pRspUserLogin->TradingDay
-                );
-        m_trader->Output(json_str);
-        m_trader->ReqConfirmSettlement();
-        m_trader->m_req_position_id++;
-        m_trader->m_req_account_id++;
-        m_trader->m_need_query_bank.store(true);
-        m_trader->m_need_query_register.store(true);
-    } else {
+    if (pRspInfo->ErrorID != 0){
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"交易服务器登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+        return;
     }
+    m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
+    m_trader->m_logined.store(true);
+    m_trader->OutputNotify(0, u8"登录成功");
+    char json_str[1024];
+    sprintf(json_str, (u8"{"\
+                        "\"aid\": \"rtn_data\","\
+                        "\"data\" : [{\"trade\":{\"%s\":{\"session\":{"\
+                        "\"user_id\" : \"%s\","\
+                        "\"trading_day\" : \"%s\""
+                        "}}}}]}")
+            , pRspUserLogin->UserID
+            , pRspUserLogin->UserID
+            , pRspUserLogin->TradingDay
+            );
+    m_trader->Output(json_str);
+    if(g_config.auto_confirm_settlement)
+        m_trader->ReqConfirmSettlement();
+    else if (m_settlement_info.empty())
+        m_trader->ReqQrySettlementInfo();
+    m_trader->m_req_position_id++;
+    m_trader->m_req_account_id++;
+    m_trader->m_need_query_bank.store(true);
+    m_trader->m_need_query_register.store(true);
+}
+
+void CCtpSpiHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    if(!pSettlementInfo)
+        return;
+    Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfo, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
+    m_settlement_info += pSettlementInfo->Content;
+    if(bIsLast)
+        m_trader->OutputNotify(0, GBKToUTF8(m_settlement_info.c_str()), "INFO", "SETTLEMENT");
 }
 
 void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
