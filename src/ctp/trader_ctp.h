@@ -68,12 +68,15 @@ private:
     CThostFtdcTraderApi* m_api;
 
     //查询请求
-    int ReqQryAccount();
-    int ReqQryPosition();
+    int ReqQryAccount(int reqid);
+    int ReqQryPosition(int reqid);
     long long m_next_qry_dt;
     long long m_next_send_dt;
-    std::atomic_bool m_need_query_positions;
-    std::atomic_bool m_need_query_account;
+    std::atomic_bool m_logined;
+    std::atomic_int m_req_position_id;
+    std::atomic_int m_rsp_position_id;
+    std::atomic_int m_req_account_id;
+    std::atomic_int m_rsp_account_id;
     std::atomic_bool m_need_query_bank;
     std::atomic_bool m_need_query_register;
     std::atomic_llong m_req_login_dt;

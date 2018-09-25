@@ -30,8 +30,11 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     m_next_send_dt = 0;
     m_req_login_dt = 0;
 
-    m_need_query_positions.store(false);
-    m_need_query_account.store(false);
+    m_logined.store(false);
+    m_req_account_id.store(0);
+    m_rsp_account_id.store(0);
+    m_req_position_id.store(0);
+    m_rsp_position_id.store(0);
     m_need_query_bank.store(false);
     m_need_query_register.store(false);
 
@@ -182,24 +185,24 @@ void TraderCtp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 //    }
 //}
 
-int TraderCtp::ReqQryAccount()
+int TraderCtp::ReqQryAccount(int reqid)
 {
     CThostFtdcQryTradingAccountField field;
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
-    int r = m_api->ReqQryTradingAccount(&field, 0);
+    int r = m_api->ReqQryTradingAccount(&field, reqid);
     Log(LOG_INFO, NULL, "ctp ReqQryTradingAccount, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
     return r;
 }
 
-int TraderCtp::ReqQryPosition()
+int TraderCtp::ReqQryPosition(int reqid)
 {
     CThostFtdcQryInvestorPositionField field;
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
-    int r = m_api->ReqQryInvestorPosition(&field, 0);
+    int r = m_api->ReqQryInvestorPosition(&field, reqid);
     Log(LOG_INFO, NULL, "ctp ReqQryInvestorPosition, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
     return r;
 }
@@ -247,18 +250,15 @@ void TraderCtp::OnIdle()
     }
     if (m_next_qry_dt >= now)
         return;
-    if (m_need_query_positions.exchange(false)) {
-        if (ReqQryPosition() != 0) {
-            m_need_query_positions.store(true);
-        }
-        m_need_query_account.store(true);
+    if (!m_logined)
+        return;
+    if (m_req_position_id > m_rsp_position_id) {
+        ReqQryPosition(m_req_position_id);
         m_next_qry_dt = now + 1100;
         return;
     }
-    if (m_need_query_account.exchange(false)) {
-        if (ReqQryAccount() != 0) {
-            m_need_query_account.store(true);
-        }
+    if (m_req_account_id > m_rsp_account_id) {
+        ReqQryAccount(m_req_account_id);
         m_next_qry_dt = now + 1100;
         return;
     }
@@ -447,8 +447,6 @@ void TraderCtp::FindLocalOrderId(const std::string& exchange_id, const std::stri
 
 void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref)
 {
-    Log(LOG_INFO, NULL, "ctp SetSession, instance=%p, TradingDay=%s, FrontId=%d, SessionId=%d, MaxOrderRef=%d"
-        , this, trading_day.c_str(), front_id, session_id, max_order_ref);
     std::unique_lock<std::mutex> lck(m_ordermap_mtx);
     if(m_trading_day != trading_day){
         m_ordermap_local_remote.clear();
@@ -462,7 +460,7 @@ void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id
 
 void TraderCtp::OnFinish()
 {
-    Log(LOG_INFO, NULL, "ctp OnFinish, instance=%p", this);
+    Log(LOG_INFO, NULL, "ctp OnFinish, instance=%p, UserId=%s", this, m_user_id.c_str());
     m_api->Release();
     delete m_spi;
 }
