@@ -71,7 +71,7 @@ void CCtpSpiHandler::OnFrontConnected()
 void CCtpSpiHandler::OnFrontDisconnected(int nReason)
 {
     Log(LOG_WARNING, NULL, "ctp OnFrontDisconnected, instance=%p, nReason=%d, UserID=%s", m_trader, nReason, m_trader->m_user_id.c_str());
-    m_trader->m_req_login_dt.store(false);
+    m_trader->m_logined.store(false);
     m_trader->OutputNotify(1, u8"已经断开与交易前置的连接");
 }
 
