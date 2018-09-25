@@ -63,27 +63,27 @@ static std::string GuessExchangeId(std::string instrument_id)
 
 void CCtpSpiHandler::OnFrontConnected()
 {
-    Log(LOG_INFO, NULL, "ctp OnFrontConnected, UserID=%s", m_trader->m_user_id.c_str());
+    Log(LOG_INFO, NULL, "ctp OnFrontConnected, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
     m_trader->SendLoginRequest();
     m_trader->OutputNotify(0, u8"已经连接到交易前置");
 }
 
 void CCtpSpiHandler::OnFrontDisconnected(int nReason)
 {
-    Log(LOG_WARNING, NULL, "ctp OnFrontDisconnected, nReason=%d, UserID=%s", nReason, m_trader->m_user_id.c_str());
+    Log(LOG_WARNING, NULL, "ctp OnFrontDisconnected, instance=%p, nReason=%d, UserID=%s", m_trader, nReason, m_trader->m_user_id.c_str());
     m_trader->OutputNotify(1, u8"已经断开与交易前置的连接");
 }
 
 void CCtpSpiHandler::OnRspError(CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
     if(pRspInfo){
-        Log(LOG_INFO, NULL, "ctp OnRspError, UserID=%s, ErrMsg=%s", m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
+        Log(LOG_INFO, NULL, "ctp OnRspError, instance=%p, UserID=%s, ErrMsg=%s", m_trader, m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
     }
 }
 
 void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspUserLogin, UserID=%s, ErrMsg=%s", m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
+    Log(LOG_INFO, NULL, "ctp OnRspUserLogin, instance=%p, UserID=%s, ErrMsg=%s", m_trader, m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str());
     m_trader->m_req_login_dt.store(0);
     if (pRspInfo->ErrorID == 0) {
         m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
@@ -112,7 +112,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
 
 void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
 {
-    Log(LOG_INFO, NULL, "ctp OnRtnOrder, UserID=%s, InstrumentId=%s, OrderRef=%s, Session=%d", m_trader->m_user_id.c_str(), pOrder->InstrumentID, pOrder->OrderRef, pOrder->SessionID);
+    Log(LOG_INFO, NULL, "ctp OnRtnOrder, instance=%p, UserID=%s, InstrumentId=%s, OrderRef=%s, Session=%d", m_trader, m_trader->m_user_id.c_str(), pOrder->InstrumentID, pOrder->OrderRef, pOrder->SessionID);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     //找到委托单
     trader_dll::RemoteOrderKey remote_key;
@@ -133,7 +133,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     order.instrument_id = pOrder->InstrumentID;
     auto ins = md_service::GetInstrument(order.symbol());
     if (!ins){
-        Log(LOG_ERROR, NULL, "ctp OnRtnOrder, instrument not exist, UserID=%s, symbol=%s", m_trader->m_user_id.c_str(), order.symbol().c_str());
+        Log(LOG_ERROR, NULL, "ctp OnRtnOrder, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), order.symbol().c_str());
         m_trader->OutputNotify(1, u8"交易账户中的合约" + order.symbol() + u8"不在合约表中");
         return;
     }
@@ -256,7 +256,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
 
 void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
 {
-    Log(LOG_INFO, NULL, "ctp OnRtnTrade, UserID=%s, InstrumentId=%s, OrderRef=%s", m_trader->m_user_id.c_str(), pTrade->InstrumentID, pTrade->OrderRef);
+    Log(LOG_INFO, NULL, "ctp OnRtnTrade, instance=%p, UserID=%s, InstrumentId=%s, OrderRef=%s", m_trader, m_trader->m_user_id.c_str(), pTrade->InstrumentID, pTrade->OrderRef);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     LocalOrderKey local_key;
     m_trader->FindLocalOrderId(pTrade->ExchangeID, pTrade->OrderSysID, &local_key);
@@ -271,7 +271,7 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
     trade.exchange_trade_id = pTrade->TradeID;
     auto ins = md_service::GetInstrument(trade.symbol());
     if (!ins){
-        Log(LOG_ERROR, NULL, "ctp OnRtnTrade, instrument not exist, UserID=%s, symbol=%s", m_trader->m_user_id.c_str(), trade.symbol().c_str());
+        Log(LOG_ERROR, NULL, "ctp OnRtnTrade, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), trade.symbol().c_str());
         m_trader->OutputNotify(1, u8"交易账户中的合约" + trade.symbol() + u8"不在合约表中");
         return;
     }
@@ -321,13 +321,13 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
 {
     if (!pRspInvestorPosition)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, UserID=%s, InstrumentId=%s", m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID);
+    Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, instance=%p, UserID=%s, InstrumentId=%s", m_trader, m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
     std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
     auto ins = md_service::GetInstrument(symbol);
     if (!ins){
-        Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, UserID=%s, symbol=%s", m_trader->m_user_id.c_str(), symbol.c_str());
+        Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), symbol.c_str());
         m_trader->OutputNotify(1, u8"交易账户中的合约" + std::string(symbol) + u8"不在合约表中");
         return;
     }
@@ -379,7 +379,7 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
 
 void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvestorAccount, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspQryTradingAccount, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
+    Log(LOG_INFO, NULL, "ctp OnRspQryTradingAccount, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pRspInvestorAccount)
         return;
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
@@ -417,7 +417,7 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
 
 void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspQryContractBank, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
+    Log(LOG_INFO, NULL, "ctp OnRspQryContractBank, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pContractBank){
         m_trader->m_need_query_bank.store(false);
         return;
@@ -434,7 +434,7 @@ void CCtpSpiHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContract
 
 void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccountregister, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspQryAccountregister, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
+    Log(LOG_INFO, NULL, "ctp OnRspQryAccountregister, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pAccountregister){
         m_trader->m_need_query_register.store(false);
 	return;
@@ -451,7 +451,7 @@ void CCtpSpiHandler::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAc
 
 void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspOrderInsert, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
+    Log(LOG_INFO, NULL, "ctp OnRspOrderInsert, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (pRspInfo && pRspInfo->ErrorID != 0) {
         std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
         //找到委托单
@@ -567,7 +567,7 @@ void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CT
 
 void CCtpSpiHandler::OnRspOrderAction(CThostFtdcInputOrderActionField* pOrderAction, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspOrderAction, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
+    Log(LOG_INFO, NULL, "ctp OnRspOrderAction, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (pRspInfo->ErrorID != 0)
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
 }
@@ -584,7 +584,7 @@ void CCtpSpiHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderActio
 
 void CCtpSpiHandler::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferSerial, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_INFO, NULL, "ctp OnRspQryTransferSerial, UserID=%s, ErrorID=%d", m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
+    Log(LOG_INFO, NULL, "ctp OnRspQryTransferSerial, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (!pTransferSerial)
         return;
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
@@ -610,7 +610,7 @@ void CCtpSpiHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *p
 {
     if (!pRspTransfer)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRtnFromBankToFutureByFuture, UserID=%s", m_trader->m_user_id.c_str());
+    Log(LOG_INFO, NULL, "ctp OnRtnFromBankToFutureByFuture, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
     if(pRspTransfer->ErrorID == 0){
         std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
         TransferLog& d = m_trader->GetTransferLog(std::to_string(pRspTransfer->PlateSerial));

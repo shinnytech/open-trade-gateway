@@ -82,7 +82,7 @@ void TraderCtp::OnInit()
     m_user_file_name = m_user_file_path + "/" + m_user_id;
     LoadFromFile();
     m_api->Init();
-    Log(LOG_INFO, NULL, "ctp Init, UserID=%s", m_user_id.c_str());
+    Log(LOG_INFO, NULL, "ctp Init, instance=%p, UserID=%s", this, m_user_id.c_str());
 }
 
 void TraderCtp::SendLoginRequest()
@@ -96,7 +96,7 @@ void TraderCtp::SendLoginRequest()
     strcpy_x(field.Password, m_req_login.password.c_str());
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
     int ret = m_api->ReqUserLogin(&field, 1);
-    Log(LOG_INFO, NULL, "ctp ReqUserLogin, UserID=%s, ret=%d", field.UserID, ret);
+    Log(LOG_INFO, NULL, "ctp ReqUserLogin, instance=%p, UserID=%s, ret=%d", this, field.UserID, ret);
 }
 
 void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
@@ -117,7 +117,7 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
     }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
     int r = m_api->ReqOrderInsert(&d.f, 0);
-    Log(LOG_INFO, NULL, "ctp ReqOrderInsert, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
+    Log(LOG_INFO, NULL, "ctp ReqOrderInsert, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
     SaveToFile();
 }
 
@@ -144,7 +144,7 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
     d.f.LimitPrice = 0;
     d.f.VolumeChange = 0;
     int r = m_api->ReqOrderAction(&d.f, 0);
-    Log(LOG_INFO, NULL, "ctp ReqOrderAction, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
+    Log(LOG_INFO, NULL, "ctp ReqOrderAction, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }
 
 void TraderCtp::OnClientReqTransfer(CThostFtdcReqTransferField f)
@@ -159,12 +159,14 @@ void TraderCtp::OnClientReqTransfer(CThostFtdcReqTransferField f)
     if (f.TradeAmount >= 0) {
         strcpy_x(f.TradeCode, "202001");
         int r = m_api->ReqFromBankToFutureByFuture(&f, 0);
-        Log(LOG_INFO, NULL, "ctp ReqFromBankToFutureByFuture, UserID=%s, TradeAmount=%f, ret=%d", f.UserID, f.TradeAmount, r);
+        Log(LOG_INFO, NULL, "ctp ReqFromBankToFutureByFuture, instance=%p, UserID=%s, TradeAmount=%f, ret=%d"
+            , this, f.UserID, f.TradeAmount, r);
     } else {
         strcpy_x(f.TradeCode, "202002");
         f.TradeAmount = -f.TradeAmount;
         int r = m_api->ReqFromFutureToBankByFuture(&f, 0);
-        Log(LOG_INFO, NULL, "ctp ReqFromFutureToBankByFuture, UserID=%s, TradeAmount=%f, ret=%d", f.UserID, f.TradeAmount, r);
+        Log(LOG_INFO, NULL, "ctp ReqFromFutureToBankByFuture, instance=%p, UserID=%s, TradeAmount=%f, ret=%d"
+            , this, f.UserID, f.TradeAmount, r);
     }
 }
 
@@ -187,7 +189,7 @@ int TraderCtp::ReqQryAccount()
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
     int r = m_api->ReqQryTradingAccount(&field, 0);
-    Log(LOG_INFO, NULL, "ctp ReqQryTradingAccount, InvestorID=%s, ret=%d", field.InvestorID, r);
+    Log(LOG_INFO, NULL, "ctp ReqQryTradingAccount, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
     return r;
 }
 
@@ -198,7 +200,7 @@ int TraderCtp::ReqQryPosition()
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
     int r = m_api->ReqQryInvestorPosition(&field, 0);
-    Log(LOG_INFO, NULL, "ctp ReqQryInvestorPosition, InvestorID=%s, ret=%d", field.InvestorID, r);
+    Log(LOG_INFO, NULL, "ctp ReqQryInvestorPosition, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
     return r;
 }
 
@@ -209,7 +211,7 @@ void TraderCtp::ReqConfirmSettlement()
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.InvestorID, m_user_id.c_str());
     int r = m_api->ReqSettlementInfoConfirm(&field, 0);
-    Log(LOG_INFO, NULL, "ctp ReqSettlementInfoConfirm, InvestorID=%s, ret=%d", field.InvestorID, r);
+    Log(LOG_INFO, NULL, "ctp ReqSettlementInfoConfirm, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
 }
 
 void TraderCtp::ReqQryBank()
@@ -219,7 +221,7 @@ void TraderCtp::ReqQryBank()
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     m_api->ReqQryContractBank(&field, 0);
     int r = m_api->ReqQryContractBank(&field, 0);
-    Log(LOG_INFO, NULL, "ctp ReqQryContractBank, ret=%d", r);
+    Log(LOG_INFO, NULL, "ctp ReqQryContractBank, instance=%p, ret=%d", this, r);
 }
 
 void TraderCtp::ReqQryAccountRegister()
@@ -229,7 +231,7 @@ void TraderCtp::ReqQryAccountRegister()
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     m_api->ReqQryAccountregister(&field, 0);
     int r = m_api->ReqQryAccountregister(&field, 0);
-    Log(LOG_INFO, NULL, "ctp ReqQryAccountregister, ret=%d", r);
+    Log(LOG_INFO, NULL, "ctp ReqQryAccountregister, instance=%p, ret=%d", this, r);
 }
 
 using namespace std::chrono;
@@ -295,7 +297,7 @@ void TraderCtp::SendUserData()
         if (!ps.ins)
             ps.ins = md_service::GetInstrument(symbol);
         if (!ps.ins){
-            Log(LOG_ERROR, NULL, "miss symbol %s when processing position", symbol);
+            Log(LOG_ERROR, NULL, "ctp miss symbol %s when processing position, instance=%p", symbol, this);
             continue;
         }
         ps.volume_long = ps.volume_long_his + ps.volume_long_today;
@@ -445,8 +447,8 @@ void TraderCtp::FindLocalOrderId(const std::string& exchange_id, const std::stri
 
 void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref)
 {
-    Log(LOG_INFO, NULL, "ctp SetSession, TradingDay=%s, FrontId=%d, SessionId=%d, MaxOrderRef=%d"
-        , trading_day.c_str(), front_id, session_id, max_order_ref);
+    Log(LOG_INFO, NULL, "ctp SetSession, instance=%p, TradingDay=%s, FrontId=%d, SessionId=%d, MaxOrderRef=%d"
+        , this, trading_day.c_str(), front_id, session_id, max_order_ref);
     std::unique_lock<std::mutex> lck(m_ordermap_mtx);
     if(m_trading_day != trading_day){
         m_ordermap_local_remote.clear();
@@ -460,6 +462,7 @@ void TraderCtp::SetSession(std::string trading_day, int front_id, int session_id
 
 void TraderCtp::OnFinish()
 {
+    Log(LOG_INFO, NULL, "ctp OnFinish, instance=%p", this);
     m_api->Release();
     delete m_spi;
 }

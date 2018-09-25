@@ -77,14 +77,15 @@ void InitBrokerList()
     ss.ToString(&trade_server_context.m_broker_list_str);
 }
 
-
-void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg){
+void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg)
+{
     websocketpp::lib::error_code ec;
     trade_server_context.m_trade_server.send(hdl, msg, websocketpp::frame::opcode::value::TEXT, ec);
+    auto con = hdl.lock().get();
     if (ec) {
-        Log(LOG_ERROR, msg.c_str(), "trade server send message fail, ec=%s, message=%s", ec.message().c_str(), msg.c_str());
+        Log(LOG_ERROR, msg.c_str(), "trade server send message fail, session=%p, ec=%s, message=%s", con, ec.message().c_str(), msg.c_str());
     }else{
-        Log(LOG_INFO, msg.c_str(), "trade server send message success, len=%d", msg.size());
+        Log(LOG_INFO, msg.c_str(), "trade server send message success, session=%p, len=%d", con, msg.size());
     }
 }
 
@@ -92,12 +93,14 @@ void OnOpenConnection(websocketpp::connection_hdl hdl)
 {
     trade_server_context.m_trader_map[hdl] = TradeSession();
     SendTextMsg(hdl, trade_server_context.m_broker_list_str);
-    Log(LOG_INFO, NULL, "trade server got connection, session=%p", hdl);
+    auto con = hdl.lock().get();
+    Log(LOG_INFO, NULL, "trade server got connection, session=%p", con);
 }
 
 void OnCloseConnection(websocketpp::connection_hdl hdl)
 {
-    Log(LOG_INFO, NULL, "trade server loss connection, session=%p", hdl);
+    auto con = hdl.lock().get();
+    Log(LOG_INFO, NULL, "trade server loss connection, session=%p", con);
     TradeSession& session = trade_server_context.m_trader_map[hdl];
     if (session.m_trader_instance){
         DeleteTraderInstance(session.m_trader_instance);
@@ -132,16 +135,17 @@ void TryResetExpiredTrader()
 }
 
 void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
+    auto con = hdl.lock().get();
     if (msg->get_opcode() != websocketpp::frame::opcode::TEXT){
-        Log(LOG_ERROR, NULL, "trade server OnMessage received wrong opcode, session=%p", hdl);
+        Log(LOG_ERROR, NULL, "trade server OnMessage received wrong opcode, session=%p", con);
     }
     auto& json_str = msg->get_payload();
     trader_dll::SerializerTradeBase ss;
     if (!ss.FromString(json_str.c_str())){
-        Log(LOG_WARNING, NULL, "trade server parse json(%s) fail, session=%p", json_str.c_str(), hdl);
+        Log(LOG_WARNING, NULL, "trade server parse json(%s) fail, session=%p", json_str.c_str(), con);
         return;
     }
-    Log(LOG_INFO, json_str.c_str(), "trade server received package, session=%p", hdl);
+    Log(LOG_INFO, json_str.c_str(), "trade server received package, session=%p", con);
     trader_dll::ReqLogin req;
     ss.ToVar(req);
     TradeSession& session = trade_server_context.m_trader_map[hdl];
@@ -152,7 +156,7 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
         }
         auto broker = g_config.brokers.find(req.bid);
         if (broker == g_config.brokers.end()){
-            Log(LOG_WARNING, json_str.c_str(), "trade server req_login invalid bid=%s", req.bid.c_str());
+            Log(LOG_WARNING, json_str.c_str(), "trade server req_login invalid bid, session=%p, bid=%s", con, req.bid.c_str());
             return;
         }
         req.broker = broker->second;
@@ -163,9 +167,9 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
             trade_server_context.m_trader_map[hdl].m_trader_instance = new trader_dll::TraderSim(std::bind(SendTextMsg, hdl, std::placeholders::_1));
             trade_server_context.m_trader_map[hdl].m_trader_instance->Start(req);
         } else {
-            Log(LOG_ERROR, json_str.c_str(), "trade server req_login invalid broker_type=%s", broker->second.broker_type.c_str());
+            Log(LOG_ERROR, json_str.c_str(), "trade server req_login invalid broker_type=%s, session=%p", broker->second.broker_type.c_str(), con);
         }
-        Log(LOG_INFO, NULL, "create-trader-instance");
+        Log(LOG_INFO, NULL, "create-trader-instance, session=%p", con);
         return;
     }
     if (session.m_trader_instance){
