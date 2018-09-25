@@ -36,6 +36,9 @@ public:
     ///        0x2003 收到错误报文
     virtual void OnFrontDisconnected(int nReason);
 
+	///客户端认证响应
+	virtual void OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+
     ///登录请求响应
     virtual void OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 

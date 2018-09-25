@@ -42,6 +42,7 @@ private:
 
     //登录相关
     void SendLoginRequest();
+    void ReqAuthenticate();
     void ReqConfirmSettlement();
     void ReqQryBank();
     void ReqQryAccountRegister();

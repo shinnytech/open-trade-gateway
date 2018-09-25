@@ -12,6 +12,7 @@ struct BrokerConfig
     std::string ctp_broker_id;
     std::vector<std::string> trading_fronts;
     std::string product_info;
+    std::string auth_code;
 };
 
 struct Config

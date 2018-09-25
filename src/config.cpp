@@ -33,6 +33,7 @@ public:
         AddItem(d.ctp_broker_id, "broker_id");
         AddItem(d.trading_fronts, "trading_fronts");
         AddItem(d.product_info, "product_info");
+        AddItem(d.auth_code, "auth_code");
     }
 };
 

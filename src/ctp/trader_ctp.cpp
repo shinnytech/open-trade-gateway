@@ -102,6 +102,22 @@ void TraderCtp::SendLoginRequest()
     Log(LOG_INFO, NULL, "ctp ReqUserLogin, instance=%p, UserID=%s, ret=%d", this, field.UserID, ret);
 }
 
+void TraderCtp::ReqAuthenticate()
+{
+    if(m_req_login.broker.auth_code.empty()){
+        SendLoginRequest();
+        return;
+    }
+    CThostFtdcReqAuthenticateField field;
+    memset(&field, 0, sizeof(field));
+    strcpy_x(field.BrokerID, m_broker_id.c_str());
+    strcpy_x(field.UserID, m_user_id.c_str());
+    strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
+    strcpy_x(field.AuthCode, m_req_login.broker.auth_code.c_str());
+    int r = m_api->ReqAuthenticate(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqAuthenticate, instance=%p, ret=%d", this, r);
+}
+
 void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
