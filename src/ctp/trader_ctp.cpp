@@ -415,6 +415,12 @@ void TraderCtp::LoadFromFile()
 bool TraderCtp::OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key)
 {
     std::unique_lock<std::mutex> lck(m_ordermap_mtx);
+    if(local_order_key.order_id.empty()){
+        remote_order_key->session_id = m_session_id;
+        remote_order_key->front_id = m_front_id;
+        remote_order_key->order_ref = std::to_string(m_order_ref++);
+        return false;
+    }
     auto it = m_ordermap_local_remote.find(local_order_key);
     if (it == m_ordermap_local_remote.end()){
         remote_order_key->session_id = m_session_id;
@@ -435,7 +441,7 @@ void TraderCtp::OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, Loc
     auto it = m_ordermap_remote_local.find(remote_order_key);
     if (it == m_ordermap_remote_local.end()) {
         char buf[1024];
-        sprintf(buf, "UNKNOWN.%s.%08x.%d", remote_order_key.order_ref.c_str(), remote_order_key.session_id, remote_order_key.front_id);
+        sprintf(buf, "SERVER.%s.%08x.%d", remote_order_key.order_ref.c_str(), remote_order_key.session_id, remote_order_key.front_id);
         local_order_key->order_id = buf;
         local_order_key->user_id = m_user_id;
         m_ordermap_local_remote[*local_order_key] = remote_order_key;

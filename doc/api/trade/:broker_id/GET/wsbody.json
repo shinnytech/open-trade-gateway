@@ -24,7 +24,7 @@
             "properties": {
                 "aid": { "enum": ["insert_order"] },
                 "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "order_id": { "type": "string", "minLength": 0 , "maxLength": 256 },
                 "exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
                 "instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
                 "direction": { "enum": ["BUY", "SELL"]},
