@@ -82,7 +82,6 @@ void TraderCtp::OnInit()
     }
     m_api->SubscribePrivateTopic(THOST_TERT_RESUME);
     m_api->SubscribePublicTopic(THOST_TERT_RESUME);
-    m_user_file_name = m_user_file_path + "/" + m_user_id;
     LoadFromFile();
     m_api->Init();
     Log(LOG_INFO, NULL, "ctp Init, instance=%p, UserID=%s", this, m_user_id.c_str());
@@ -385,6 +384,8 @@ void TraderCtp::SendUserData()
 
 void TraderCtp::SaveToFile()
 {
+    if(m_user_file_path.empty())
+        return;
     SerializerCtp s;
     OrderKeyFile kf;
     kf.trading_day = m_trading_day;
@@ -395,13 +396,17 @@ void TraderCtp::SaveToFile()
         kf.items.push_back(item);
     }
     s.FromVar(kf);
-    s.ToFile(m_user_file_name.c_str());
+    std::string fn = m_user_file_path + "/" + m_user_id;
+    s.ToFile(fn.c_str());
 }
 
 void TraderCtp::LoadFromFile()
 {
+    if(m_user_file_path.empty())
+        return;
+    std::string fn = m_user_file_path + "/" + m_user_id;
     SerializerCtp s;
-    if(s.FromFile(m_user_file_name.c_str())){
+    if(s.FromFile(fn.c_str())){
         OrderKeyFile kf;
         s.ToVar(kf);
         for (auto it = kf.items.begin(); it != kf.items.end(); ++it) {

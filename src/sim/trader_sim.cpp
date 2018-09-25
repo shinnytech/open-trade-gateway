@@ -479,6 +479,8 @@ void TraderSim::UpdatePositionVolume(Position* position)
 
 void TraderSim::LoadUserDataFile()
 {
+    if (m_user_file_path.empty())
+        return;
     //选出最新的一个存档文件
     std::regex my_filter(m_user_id + "\\..+");
     std::vector<std::string> saved_files;
@@ -544,6 +546,8 @@ void TraderSim::LoadUserDataFile()
 
 void TraderSim::SaveUserDataFile()
 {
+    if (m_user_file_path.empty())
+        return;
     std::string fn = m_user_file_path + "/" + m_user_id + "." + g_config.trading_day;
     SerializerTradeBase nss;
     nss.dump_all = true;

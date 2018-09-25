@@ -57,7 +57,6 @@ private:
     std::map<RemoteOrderKey, LocalOrderKey> m_ordermap_remote_local;
     std::string m_trading_day;
     std::mutex m_ordermap_mtx;
-    std::string m_user_file_name;
     bool OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key);
     void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, LocalOrderKey* local_order_key);
     void FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, LocalOrderKey* local_order_key);
