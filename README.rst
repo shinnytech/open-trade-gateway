@@ -49,10 +49,11 @@ Config
     }
 
 
-/etc/open-trade-gateway/brokers.json 中可以设置一组或多组期货公司前置机::
+/etc/open-trade-gateway/broker_list.json 中可以设置一组或多组期货公司前置机::
 
-    {
-      "simnow": {
+    [
+      {
+        "name": "simnow",
         "type": "ctp",                              //交易系统类型
         "broker_id": "9999",                        //broker_id, 必须与交易系统中的设置一致
         "product_info": "abcd",
@@ -60,7 +61,7 @@ Config
           "tcp://218.202.237.33:10002"
         ]
       }
-    }
+    ]
 
 
 Run

@@ -1,14 +1,16 @@
-{
-  "simnow": {
+[
+  {
+    "name": "simnow",
     "type": "ctp",
     "broker_id": "9999",
     "product_info": "abcd",
     "trading_fronts": ["tcp://218.202.237.33:10002"]
   },
-  "simnow724": {
+  {
+    "name": "simnow724",
     "type": "ctp",
     "broker_id": "9999",
     "product_info": "abcd",
     "trading_fronts": ["tcp://180.168.146.187:10030"]
   }
-}
+]

@@ -10,6 +10,7 @@
 #include <experimental/filesystem>
 #include "log.h"
 #include "utility.h"
+#include "trader_base.h"
 #include "rapid_serialize.h"
 
 class SerializerConfig
@@ -29,6 +30,7 @@ public:
 
     void DefineStruct(BrokerConfig& d)
     {
+        AddItem(d.broker_name, "name");
         AddItem(d.broker_type, "type");
         AddItem(d.ctp_broker_id, "broker_id");
         AddItem(d.trading_fronts, "trading_fronts");
@@ -49,16 +51,23 @@ bool LoadConfig()
     }
     ss.ToVar(g_config);
     SerializerConfig ss_broker;
-    if (!ss_broker.FromFile("/etc/open-trade-gateway/brokers.json")){
-        Log(LOG_FATAL, NULL, "load /etc/open-trade-gateway/brokers.json file fail");
+    if (!ss_broker.FromFile("/etc/open-trade-gateway/broker_list.json")){
+        Log(LOG_FATAL, NULL, "load /etc/open-trade-gateway/broker_list.json file fail");
         return false;
     }
-    ss_broker.ToVar(g_config.brokers);
+
+    std::vector<BrokerConfig> broker_list;
+    ss_broker.ToVar(broker_list);
+    trader_dll::SerializerTradeBase ss_broker_list_str;
+    rapidjson::Pointer("/aid").Set(*ss_broker_list_str.m_doc, "rtn_brokers");
     std::experimental::filesystem::v1::path ufpath(g_config.user_file_path);
-    for (auto it = g_config.brokers.begin(); it != g_config.brokers.end(); ++it) {
-        std::string bid = it->first;
-        std::experimental::filesystem::v1::create_directories(ufpath / bid);
+    for (long long i = 0; i < broker_list.size(); ++i) {
+        BrokerConfig& broker = broker_list[i];
+        g_config.brokers[broker.broker_name] = broker;
+        std::experimental::filesystem::v1::create_directories(ufpath / broker.broker_name);
+        rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc, broker.broker_name);
     }
+    ss_broker_list_str.ToString(&g_config.broker_list_str);
     return true;
 }
 

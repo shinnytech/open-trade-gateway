@@ -39,8 +39,6 @@ struct TradeSession
 struct TradeServerContext
 {
     server m_trade_server;
-    //期货公司列表
-    std::string m_broker_list_str;
     //trader实例表
     std::map<websocketpp::connection_hdl, TradeSession, std::owner_less<websocketpp::connection_hdl>> m_trader_map;
     int m_next_sessionid;
@@ -64,19 +62,6 @@ void DeleteTraderInstance(trader_dll::TraderBase* trader)
     }
 }
 
-void InitBrokerList()
-{
-    trader_dll::SerializerTradeBase ss;
-    rapidjson::Pointer("/aid").Set(*ss.m_doc, "rtn_brokers");
-    long long n = 0LL;
-    for (auto it = g_config.brokers.begin(); it != g_config.brokers.end(); ++it) {
-        std::string bid = it->first;
-        rapidjson::Pointer("/brokers/" + std::to_string(n)).Set(*ss.m_doc, bid);
-        n++;
-    }
-    ss.ToString(&trade_server_context.m_broker_list_str);
-}
-
 void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg)
 {
     websocketpp::lib::error_code ec;
@@ -92,7 +77,7 @@ void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg)
 void OnOpenConnection(websocketpp::connection_hdl hdl)
 {
     trade_server_context.m_trader_map[hdl] = TradeSession();
-    SendTextMsg(hdl, trade_server_context.m_broker_list_str);
+    SendTextMsg(hdl, g_config.broker_list_str);
     auto con = hdl.lock().get();
     Log(LOG_INFO, NULL, "trade server got connection, session=%p", con);
 }
@@ -180,7 +165,6 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
 
 bool Init()
 {
-    InitBrokerList();
     return true;
 }
 
