@@ -19,6 +19,14 @@
             "required": ["aid"],
             "additionalProperties": false
         },
+        "confirm_settlement": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["confirm_settlement"] }
+            },
+            "required": ["aid"],
+            "additionalProperties": false
+        },
         "insert_order": {
             "type": "object",
             "properties": {
