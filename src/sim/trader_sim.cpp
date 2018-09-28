@@ -152,6 +152,8 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 {
     std::string symbol = action_insert_order.exchange_id + "." + action_insert_order.ins_id;
     std::string order_key = action_insert_order.order_id;
+    if(order_key.empty())
+        order_key = std::to_string(duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
     auto it = m_data.m_orders.find(order_key);
     if (it != m_data.m_orders.end()) {
         OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:单号重复");
