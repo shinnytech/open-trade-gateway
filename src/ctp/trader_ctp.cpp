@@ -132,7 +132,7 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
     rkey.exchange_id = d.f.ExchangeID;
     rkey.instrument_id = d.f.InstrumentID;
     if(OrderIdLocalToRemote(d.local_key, &rkey)){
-        OutputNotify(1, u8"报单order_id重复，不能下单");
+        OutputNotify(1, u8"报单单号重复，不能下单");
         return;
     }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
@@ -502,7 +502,6 @@ void TraderCtp::OnFinish()
 {
     Log(LOG_INFO, NULL, "ctp OnFinish, instance=%p, UserId=%s", this, m_user_id.c_str());
     m_api->Release();
-    delete m_spi;
 }
 
 bool TraderCtp::NeedReset() 

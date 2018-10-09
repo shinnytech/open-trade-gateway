@@ -150,6 +150,7 @@ public:
             Log(LOG_ERROR, NULL, "json file (%s) parse fail", json_file);
             return false;
         }
+        fclose(fp);
         return true;
     }
 
