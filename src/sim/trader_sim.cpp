@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include "trader_sim.h"
 
-#include <regex>
 #include <experimental/filesystem>
 #include "../log.h"
 #include "../rapid_serialize.h"
@@ -484,14 +483,12 @@ void TraderSim::LoadUserDataFile()
     if (m_user_file_path.empty())
         return;
     //选出最新的一个存档文件
-    std::regex my_filter(m_user_id + "\\..+");
     std::vector<std::string> saved_files;
     for (auto& p : std::experimental::filesystem::v1::directory_iterator(m_user_file_path)) {
         if (!std::experimental::filesystem::v1::is_regular_file(p.status()))
             continue;
-        std::smatch what;
-        std::string file_name = p.path().filename().c_str();
-        if (!std::regex_match(file_name.cbegin(), file_name.cend(), what, my_filter))
+        std::string file_name_stem = p.path().stem().u8string();
+        if (file_name_stem != m_user_id)
             continue;
         saved_files.push_back(p.path().c_str());
     }
