@@ -219,18 +219,6 @@ void Stop()
 
 void CleanUp()
 {
-    for (auto it = trade_server_context.m_removing_trader_set.begin(); it != trade_server_context.m_removing_trader_set.end(); ) {
-        (*it)->m_worker_thread.join();
-    }
-    // for (auto it = m_trader_map.begin(); it != m_trader_map.end(); ++it){
-    //     auto trader = it->second;
-    //     trader->Stop();
-    // }
-    // for (auto it = m_trader_map.begin(); it != m_trader_map.end(); ++it){
-    //     auto trader = it->second;
-    //     trader->m_worker_thread.join();
-    //     assert(trader->m_finished);
-    // }
 }
 
 }
