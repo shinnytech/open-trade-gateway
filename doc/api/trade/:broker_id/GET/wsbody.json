@@ -51,7 +51,7 @@
             "properties": {
                 "aid": { "enum": ["cancel_order"] },
                 "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 }
+                "order_id": { "type": "string", "minLength": 0 , "maxLength": 256 }
             },
             "required": ["aid", "user_id", "order_id"],
             "additionalProperties": false
