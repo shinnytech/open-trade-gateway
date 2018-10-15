@@ -665,6 +665,7 @@ void CCtpSpiHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *p
         d.error_msg = GBKToUTF8(pRspTransfer->ErrorMsg);
         m_trader->m_something_changed = true;
         m_trader->SendUserData();
+        m_trader->m_req_account_id++;
     } else {
         m_trader->OutputNotify(pRspTransfer->ErrorID, u8"银期错误, " + GBKToUTF8(pRspTransfer->ErrorMsg));
     }
