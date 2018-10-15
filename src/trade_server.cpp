@@ -184,7 +184,8 @@ void Run()
         trade_server_context.m_trade_server.set_close_handler(bind(&OnCloseConnection, ::_1));
         trade_server_context.m_trade_server.set_max_message_size(4 * 1024 * 1024);
 
-        // Listen on port 9002
+        // Listen on port
+        trade_server_context.m_trade_server.set_reuse_addr(true);
         websocketpp::lib::error_code ec;
         asio::ip::tcp::endpoint ep2(asio::ip::address::from_string(g_config.host), g_config.port);
         trade_server_context.m_trade_server.listen(ep2, ec);
