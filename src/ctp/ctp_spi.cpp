@@ -283,6 +283,28 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     m_trader->m_req_account_id++;
     m_trader->m_something_changed = true;
     m_trader->SendUserData();
+    //发送下单成功通知
+    if (pOrder->OrderStatus != THOST_FTDC_OST_Canceled 
+     && pOrder->OrderStatus != THOST_FTDC_OST_Unknown 
+     && pOrder->OrderStatus != THOST_FTDC_OST_NoTradeNotQueueing 
+     && pOrder->OrderStatus != THOST_FTDC_OST_PartTradedNotQueueing 
+    ){
+        std::unique_lock<std::mutex> lck(m_trader->m_order_action_mtx);
+        auto it = m_trader->m_insert_order_set.find(order.order_id);
+        if (it != m_trader->m_insert_order_set.end()){
+            m_trader->m_insert_order_set.erase(it);
+            m_trader->OutputNotify(1, u8"下单成功");
+        }
+    }
+    if (pOrder->OrderStatus == THOST_FTDC_OST_Canceled
+     && pOrder->VolumeTotal > 0){
+        std::unique_lock<std::mutex> lck(m_trader->m_order_action_mtx);
+        auto it = m_trader->m_cancel_order_set.find(order.order_id);
+        if (it != m_trader->m_cancel_order_set.end()){
+            m_trader->m_cancel_order_set.erase(it);
+            m_trader->OutputNotify(1, u8"撤单成功");
+        }
+    }
 }
 
 void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)

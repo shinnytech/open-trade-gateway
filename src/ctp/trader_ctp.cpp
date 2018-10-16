@@ -136,6 +136,10 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
         return;
     }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
+    {
+        std::unique_lock<std::mutex> lck(m_order_action_mtx);
+        m_insert_order_set.insert(d.local_key.order_id);
+    }
     int r = m_api->ReqOrderInsert(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderInsert, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
     SaveToFile();
@@ -163,6 +167,10 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
     d.f.ActionFlag = THOST_FTDC_AF_Delete;
     d.f.LimitPrice = 0;
     d.f.VolumeChange = 0;
+    {
+        std::unique_lock<std::mutex> lck(m_order_action_mtx);
+        m_cancel_order_set.insert(d.local_key.order_id);
+    }
     int r = m_api->ReqOrderAction(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderAction, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }

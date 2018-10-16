@@ -81,5 +81,10 @@ private:
     std::atomic_bool m_need_query_bank;
     std::atomic_bool m_need_query_register;
     std::atomic_llong m_req_login_dt;
+
+    //用户操作反馈
+    std::set<std::string> m_insert_order_set; //还需要给用户下单反馈的单号集合
+    std::set<std::string> m_cancel_order_set; //还需要给用户撤单反馈的单号集合
+    std::mutex m_order_action_mtx; //m_insert_order_set 和 m_cancel_order_set 的访问控制
 };
 }
