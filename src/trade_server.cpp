@@ -74,12 +74,13 @@ void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg)
     }
 }
 
-void OnOpenConnection(websocketpp::connection_hdl hdl)
+void OnOpenConnection(server* s, websocketpp::connection_hdl hdl)
 {
     trade_server_context.m_trader_map[hdl] = TradeSession();
     SendTextMsg(hdl, g_config.broker_list_str);
-    auto con = hdl.lock().get();
-    Log(LOG_INFO, NULL, "trade server got connection, session=%p", con);
+    // auto con = hdl.lock().get();
+    auto con = s->get_con_from_hdl(hdl);
+    Log(LOG_INFO, NULL, "trade server got connection, session=%p, ip=%s", con.get(), con->get_remote_endpoint().c_str());
 }
 
 void OnCloseConnection(websocketpp::connection_hdl hdl)
@@ -119,7 +120,7 @@ void TryResetExpiredTrader()
     }
 }
 
-void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
+void OnMessage(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     auto con = hdl.lock().get();
     if (msg->get_opcode() != websocketpp::frame::opcode::TEXT){
         Log(LOG_ERROR, NULL, "trade server OnMessage received wrong opcode, session=%p", con);
@@ -145,6 +146,8 @@ void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
             return;
         }
         req.broker = broker->second;
+        auto con = s->get_con_from_hdl(hdl);
+        req.client_addr = con->get_remote_endpoint();
         if (broker->second.broker_type == "ctp") {
             trade_server_context.m_trader_map[hdl].m_trader_instance = new trader_dll::TraderCtp(std::bind(SendTextMsg, hdl, std::placeholders::_1));
             trade_server_context.m_trader_map[hdl].m_trader_instance->Start(req);
@@ -179,8 +182,8 @@ void Run()
         trade_server_context.m_trade_server.init_asio();
 
         // Register our message handler
-        trade_server_context.m_trade_server.set_message_handler(bind(OnMessage, ::_1, ::_2));
-        trade_server_context.m_trade_server.set_open_handler(bind(&OnOpenConnection, ::_1));
+        trade_server_context.m_trade_server.set_message_handler(bind(OnMessage, &trade_server_context.m_trade_server, ::_1, ::_2));
+        trade_server_context.m_trade_server.set_open_handler(bind(&OnOpenConnection, &trade_server_context.m_trade_server, ::_1));
         trade_server_context.m_trade_server.set_close_handler(bind(&OnCloseConnection, ::_1));
         trade_server_context.m_trade_server.set_max_message_size(4 * 1024 * 1024);
 

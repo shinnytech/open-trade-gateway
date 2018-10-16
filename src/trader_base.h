@@ -76,6 +76,7 @@ struct ReqLogin
     std::string user_name;  //用户输入的用户名
     std::string password;   //用户输入的密码
     BrokerConfig broker;    //用户可以强制输入broker信息
+    std::string client_addr;
 };
 
 
