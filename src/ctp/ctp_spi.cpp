@@ -330,7 +330,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
      && pOrder->OrderStatus != THOST_FTDC_OST_PartTradedNotQueueing 
     ){
         std::unique_lock<std::mutex> lck(m_trader->m_order_action_mtx);
-        auto it = m_trader->m_insert_order_set.find(order.order_id);
+        auto it = m_trader->m_insert_order_set.find(pOrder->OrderRef);
         if (it != m_trader->m_insert_order_set.end()){
             m_trader->m_insert_order_set.erase(it);
             m_trader->OutputNotify(1, u8"下单成功");
