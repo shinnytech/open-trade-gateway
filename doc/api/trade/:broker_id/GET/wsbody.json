@@ -62,8 +62,8 @@
                 "aid": { "enum": ["req_transfer"] },
                 "bank_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
                 "future_account": { "type": "string", "minLength": 1 , "maxLength": 256 },
-                "future_password": { "type": "string", "minLength": 1 , "maxLength": 256 },
-                "bank_password": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "future_password": { "type": "string", "minLength": 0 , "maxLength": 256 },
+                "bank_password": { "type": "string", "minLength": 0 , "maxLength": 256 },
                 "currency": { "type": "string", "minLength": 1 , "maxLength": 256 },
                 "amount": { "type": "number"}
             },
