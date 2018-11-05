@@ -96,6 +96,9 @@ public:
     ///成交通知
     virtual void OnRtnTrade(CThostFtdcTradeField* pTrade);
 
+	///交易通知
+	virtual void OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo);
+
 private:
     TraderCtp * m_trader;
     std::string m_settlement_info;

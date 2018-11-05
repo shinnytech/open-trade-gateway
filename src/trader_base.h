@@ -438,7 +438,7 @@ protected:
     virtual void OnFinish() {};
     virtual void ProcessInput(const char* msg) = 0;
     void Output(const std::string& json);
-    void OutputNotify(long notify_class_id, const std::string& ret_msg, const char* level = "INFO", const char* type = "MESSAGE");
+    void OutputNotify(long notify_code, const std::string& ret_msg, const char* level = "INFO", const char* type = "MESSAGE");
 
     //业务信息
     std::string m_user_id; //交易账号

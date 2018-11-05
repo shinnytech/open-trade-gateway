@@ -760,4 +760,9 @@ void CCtpSpiHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pR
     }
 }
 
+void CCtpSpiHandler::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo)
+{
+    m_trader->OutputNotify(0, GBKToUTF8(pTradingNoticeInfo->FieldContent));
+}
+
 }
