@@ -243,6 +243,18 @@ void TraderCtp::ReqConfirmSettlement()
     Log(LOG_INFO, NULL, "ctp ReqSettlementInfoConfirm, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
 }
 
+void TraderCtp::ReqQrySettlementInfoConfirm()
+{
+    CThostFtdcQrySettlementInfoConfirmField field;
+    memset(&field, 0, sizeof(field));
+    strcpy_x(field.BrokerID, m_broker_id.c_str());
+    strcpy_x(field.InvestorID, m_user_id.c_str());
+    strcpy_x(field.AccountID, m_user_id.c_str());
+    strcpy_x(field.CurrencyID, "CNY");
+    int r = m_api->ReqQrySettlementInfoConfirm(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQrySettlementInfoConfirm, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
+}
+
 void TraderCtp::ReqQrySettlementInfo()
 {
     CThostFtdcQrySettlementInfoField field;

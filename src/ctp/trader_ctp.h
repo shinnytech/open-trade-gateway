@@ -43,8 +43,9 @@ private:
     //登录相关
     void SendLoginRequest();
     void ReqAuthenticate();
-    void ReqConfirmSettlement();
+    void ReqQrySettlementInfoConfirm();
     void ReqQrySettlementInfo();
+    void ReqConfirmSettlement();
     void ReqQryBank();
     void ReqQryAccountRegister();
     void SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref);

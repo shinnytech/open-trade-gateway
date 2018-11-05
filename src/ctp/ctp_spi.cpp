@@ -163,11 +163,19 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
     if(g_config.auto_confirm_settlement)
         m_trader->ReqConfirmSettlement();
     else if (m_settlement_info.empty())
-        m_trader->ReqQrySettlementInfo();
+        m_trader->ReqQrySettlementInfoConfirm();
     m_trader->m_req_position_id++;
     m_trader->m_req_account_id++;
     m_trader->m_need_query_bank.store(true);
     m_trader->m_need_query_register.store(true);
+}
+
+void CCtpSpiHandler::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    if (pSettlementInfoConfirm && pRspInfo && pRspInfo->ErrorID == 0
+        && std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trader->m_trading_day)
+        return;
+    m_trader->ReqQrySettlementInfo();
 }
 
 void CCtpSpiHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
