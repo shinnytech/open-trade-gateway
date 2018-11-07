@@ -504,7 +504,9 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
     account.close_profit = pRspInvestorAccount->CloseProfit;
     account.commission = pRspInvestorAccount->Commission;
     account.premium = pRspInvestorAccount->CashIn;
-    account.static_balance = pRspInvestorAccount->Balance - pRspInvestorAccount->PositionProfit;
+    account.static_balance = pRspInvestorAccount->PreBalance - pRspInvestorAccount->PreCredit
+                            -pRspInvestorAccount->PreMortgage + pRspInvestorAccount->Mortgage
+                            -pRspInvestorAccount->Withdraw + pRspInvestorAccount->Deposit;
     //当前持仓盈亏
     account.position_profit = pRspInvestorAccount->PositionProfit;
     account.float_profit = 0;
