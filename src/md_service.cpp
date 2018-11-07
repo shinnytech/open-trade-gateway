@@ -139,6 +139,21 @@ void SendTextMsg(client* c, websocketpp::connection_hdl hdl, const std::string& 
     }
 }
 
+static bool ReqConnect(client* c)
+{
+    std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
+    websocketpp::lib::error_code ec;
+    client::connection_ptr con = c->get_connection(uri, ec);
+    con->append_header("Accept", "application/v1+json");
+    con->append_header("User-Agent", "OTG-" VERSION_STR);
+    if (ec) {
+        Log(LOG_ERROR, NULL, "md service create connection fail, reason=%s", ec.message().c_str());
+        return false;
+    }
+    c->connect(con);
+    return true;
+}
+
 void OnMessage(client* c, websocketpp::connection_hdl hdl, message_ptr msg) {
     Log(LOG_INFO, NULL, "md service received message, len=%d", msg->get_payload().size());
     SendTextMsg(c, hdl, md_context.m_req_peek_message);
@@ -155,17 +170,19 @@ void OnOpenConnection(client* c, websocketpp::connection_hdl hdl)
 void OnFailConnection(client* c, websocketpp::connection_hdl hdl)
 {
     Log(LOG_ERROR, NULL, "md service connection error, session=%p", hdl);
+    sleep(60000);
+    ReqConnect(c);
 }
 
 void OnCloseConnection(client* c, websocketpp::connection_hdl hdl)
 {
     Log(LOG_ERROR, NULL, "md service connection closed, session=%p", hdl);
+    sleep(60000);
+    ReqConnect(c);
 }
-
 
 void Run()
 {
-    std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
     while(true){
         try {
             client c;
@@ -179,19 +196,10 @@ void Run()
             c.set_fail_handler(bind(&OnFailConnection, &c, ::_1));
             c.set_close_handler(bind(&OnCloseConnection, &c, ::_1));
             c.set_message_handler(bind(&OnMessage, &c, ::_1, ::_2));
-            websocketpp::lib::error_code ec;
-            client::connection_ptr con = c.get_connection(uri, ec);
-            con->append_header("Accept", "application/v1+json");
-            con->append_header("User-Agent", "OTG-" VERSION_STR);
-            if (ec) {
-                Log(LOG_ERROR, NULL, "md service create connection fail, reason=%s", ec.message().c_str());
+            if (!ReqConnect(&c)){
                 sleep(60000);
                 continue;
             }
-            // Note that connect here only requests a connection. No network messages are
-            // exchanged until the event loop starts running in the next line.
-            c.connect(con);
-
             // Start the ASIO io_service run loop
             // this will cause a single connection to be made to the server. c.run()
             // will exit when this connection is closed.
