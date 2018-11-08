@@ -37,6 +37,7 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     m_rsp_position_id.store(0);
     m_need_query_bank.store(false);
     m_need_query_register.store(false);
+    m_need_query_settlement.store(false);
 
     m_peeking_message = false;
     m_something_changed = false;
@@ -301,6 +302,11 @@ void TraderCtp::OnIdle()
         return;
     if (!m_logined)
         return;
+    if (m_need_query_settlement.load()) {
+        ReqQrySettlementInfo();
+        m_next_qry_dt = now + 1100;
+        return;
+    }
     if (m_req_position_id > m_rsp_position_id) {
         ReqQryPosition(m_req_position_id);
         m_next_qry_dt = now + 1100;

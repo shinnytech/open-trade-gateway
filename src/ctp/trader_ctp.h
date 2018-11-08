@@ -81,6 +81,7 @@ private:
     std::atomic_int m_rsp_account_id;
     std::atomic_bool m_need_query_bank;
     std::atomic_bool m_need_query_register;
+    std::atomic_bool m_need_query_settlement;
     std::atomic_llong m_req_login_dt;
 
     //用户操作反馈

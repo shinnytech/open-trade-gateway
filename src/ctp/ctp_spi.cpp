@@ -172,10 +172,11 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
 
 void CCtpSpiHandler::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+    Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfoConfirm, instance=%p, UserID=%s, ConfirmDate=%s", m_trader, m_trader->m_user_id.c_str(), pSettlementInfoConfirm?pSettlementInfoConfirm->ConfirmDate:"");
     if (pSettlementInfoConfirm && pRspInfo && pRspInfo->ErrorID == 0
         && std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trader->m_trading_day)
         return;
-    m_trader->ReqQrySettlementInfo();
+    m_trader->m_need_query_settlement.store(true);
 }
 
 void CCtpSpiHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -184,8 +185,10 @@ void CCtpSpiHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSett
         return;
     Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfo, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
     m_settlement_info += pSettlementInfo->Content;
-    if(bIsLast)
+    if(bIsLast){
+        m_trader->m_need_query_settlement.store(false);
         m_trader->OutputNotify(0, GBKToUTF8(m_settlement_info.c_str()), "INFO", "SETTLEMENT");
+    }
 }
 
 void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
@@ -764,7 +767,9 @@ void CCtpSpiHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pR
 
 void CCtpSpiHandler::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo)
 {
-    m_trader->OutputNotify(0, GBKToUTF8(pTradingNoticeInfo->FieldContent));
+    auto s = GBKToUTF8(pTradingNoticeInfo->FieldContent);
+    if (!s.empty())
+        m_trader->OutputNotify(0, s);
 }
 
 }
