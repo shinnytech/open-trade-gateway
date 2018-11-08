@@ -173,8 +173,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
 void CCtpSpiHandler::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfoConfirm, instance=%p, UserID=%s, ConfirmDate=%s", m_trader, m_trader->m_user_id.c_str(), pSettlementInfoConfirm?pSettlementInfoConfirm->ConfirmDate:"");
-    if (pSettlementInfoConfirm && pRspInfo && pRspInfo->ErrorID == 0
-        && std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trader->m_trading_day)
+    if (pSettlementInfoConfirm && std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trader->m_trading_day)
         return;
     m_trader->m_need_query_settlement.store(true);
 }
