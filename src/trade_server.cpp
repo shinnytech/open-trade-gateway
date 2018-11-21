@@ -8,7 +8,6 @@
 #include "trade_server.h"
 
 #include <iostream>
-#define ASIO_STANDALONE
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include "log.h"
@@ -190,7 +189,7 @@ void Run()
     // Listen on port
     trade_server_context.m_trade_server.set_reuse_addr(true);
     websocketpp::lib::error_code ec;
-    asio::ip::tcp::endpoint ep2(asio::ip::address::from_string(g_config.host), g_config.port);
+    boost::asio::ip::tcp::endpoint ep2(boost::asio::ip::address::from_string(g_config.host), g_config.port);
     trade_server_context.m_trade_server.listen(ep2, ec);
     if (ec) {
         Log(LOG_ERROR, NULL, "trade server websocketpp listen fail, ec=%s", ec.message().c_str());
