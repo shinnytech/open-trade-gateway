@@ -1,15 +1,35 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file trade_server.cpp
 ///@brief	交易网关服务器
-///@copyright	上海信易信息科技股份有限公司 版权所有 
+///@copyright	上海信易信息科技股份有限公司 版权所有
 /////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
 #include "trade_server.h"
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/bind_executor.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/signal_set.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+
+#include <algorithm>
+#include <cstdlib>
+#include <functional>
 #include <iostream>
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
+#include <cstdlib>
+#include <iostream>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include "log.h"
 #include "config.h"
 #include "rapid_serialize.h"
@@ -18,205 +38,334 @@
 #include "ctp/trader_ctp.h"
 #include "sim/trader_sim.h"
 
-typedef websocketpp::server<websocketpp::config::asio> server;
-using websocketpp::lib::placeholders::_1;
-using websocketpp::lib::placeholders::_2;
-using websocketpp::lib::bind;
-typedef server::message_ptr message_ptr;
 
 namespace trade_server
 {
-
-struct TradeSession
+class TradeSession
+    : public std::enable_shared_from_this<TradeSession>
 {
-    TradeSession(){
+  public:
+    // Take ownership of the socket
+    explicit TradeSession(boost::asio::ip::tcp::socket socket)
+        : m_ws_socket(std::move(socket)), strand_(m_ws_socket.get_executor())
+    {
         m_trader_instance = NULL;
     }
+    void Run();
+    // Start the asynchronous operation
+    void OnOpenConnection(boost::system::error_code ec);
+    void DoRead();
+    void OnRead(boost::system::error_code ec, std::size_t bytes_transferred);
+    void OnMessage(const std::string &json_str);
+    void SendTextMsg(const std::string &msg);
+    void DoWrite();
+    void OnWrite(boost::system::error_code ec, std::size_t bytes_transferred);
+    void OnCloseConnection();
+
+private:
+    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+    boost::beast::multi_buffer m_input_buffer;
+    boost::beast::multi_buffer m_output_buffer;
     trader_dll::TraderBase* m_trader_instance;
 };
 
-struct TradeServerContext
-{
-    server m_trade_server;
-    //trader实例表
-    std::map<websocketpp::connection_hdl, TradeSession, std::owner_less<websocketpp::connection_hdl>> m_trader_map;
-    int m_next_sessionid;
-    server m_server;
-    std::set<trader_dll::TraderBase*> m_removing_trader_set;
-} trade_server_context;
 
 
-void DeleteTraderInstance(trader_dll::TraderBase* trader)
+// Start the asynchronous operation
+void TradeSession::Run()
 {
-    trade_server_context.m_removing_trader_set.insert(trader);
-    trader->Stop();
-    for (auto it = trade_server_context.m_removing_trader_set.begin(); it != trade_server_context.m_removing_trader_set.end(); ) {
-        if ((*it)->m_finished){
-            (*it)->m_worker_thread.join();
-            delete(*it);
-            it = trade_server_context.m_removing_trader_set.erase(it);
-        }else{
-            ++it;
-        }
-    }
+    // Accept the websocket handshake
+    m_ws_socket.async_accept(
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &TradeSession::OnOpenConnection,
+                shared_from_this(),
+                std::placeholders::_1)));
 }
+// ws.next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_send);
+// ws.close(close_code::normal);
+// ws.auto_fragment(true);
+// ws.write_buffer_size(16384);
 
-void SendTextMsg(websocketpp::connection_hdl hdl, const std::string& msg)
+void TradeSession::OnOpenConnection(boost::system::error_code ec)
 {
-    websocketpp::lib::error_code ec;
-    trade_server_context.m_trade_server.send(hdl, msg, websocketpp::frame::opcode::value::TEXT, ec);
-    auto con = hdl.lock().get();
-    if (ec) {
-        Log(LOG_ERROR, msg.c_str(), "trade server send message fail, session=%p, ec=%s, message=%s", con, ec.message().c_str(), msg.c_str());
-    }else{
-        Log(LOG_INFO, msg.c_str(), "trade server send message success, session=%p, len=%d", con, msg.size());
-    }
-}
-
-void OnOpenConnection(websocketpp::connection_hdl hdl)
-{
-    trade_server_context.m_trader_map[hdl] = TradeSession();
-    SendTextMsg(hdl, g_config.broker_list_str);
-    auto con = hdl.lock().get();
-    Log(LOG_INFO, NULL, "trade server got connection, session=%p", con);
-}
-
-void OnCloseConnection(websocketpp::connection_hdl hdl)
-{
-    auto con = hdl.lock().get();
-    Log(LOG_INFO, NULL, "trade server loss connection, session=%p", con);
-    TradeSession& session = trade_server_context.m_trader_map[hdl];
-    if (session.m_trader_instance){
-        DeleteTraderInstance(session.m_trader_instance);
-        session.m_trader_instance = NULL;
-    }
-    trade_server_context.m_trader_map.erase(hdl);
-}
-
-void TryResetExpiredTrader()
-{
-    static long long prev_dt = 0;
-    long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    if (now - prev_dt < 3600)
+    if (ec)
+    {
+        Log(LOG_WARNING, NULL, "trade session accept fail, session=%p", this);
         return;
-    prev_dt = now;
-    for(auto it = trade_server_context.m_trader_map.begin(); it != trade_server_context.m_trader_map.end(); ++it){
-        auto hdl = it->first;
-        TradeSession& session = it->second;
-        if (session.m_trader_instance && session.m_trader_instance->NeedReset()){
-            trader_dll::ReqLogin req = session.m_trader_instance->m_req_login;
-            DeleteTraderInstance(session.m_trader_instance);
-            session.m_trader_instance = NULL;
-            if (req.broker.broker_type == "ctp") {
-                session.m_trader_instance = new trader_dll::TraderCtp(std::bind(SendTextMsg, hdl, std::placeholders::_1));
-                session.m_trader_instance->Start(req);
-            } else if (req.broker.broker_type == "sim") {
-                session.m_trader_instance = new trader_dll::TraderSim(std::bind(SendTextMsg, hdl, std::placeholders::_1));
-                session.m_trader_instance->Start(req);
-            }
-        }
     }
+    SendTextMsg(g_config.broker_list_str);
+    Log(LOG_INFO, NULL, "trade server got connection, session=%p", this);
+    DoRead();
 }
 
-void OnMessage(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
-    auto con = hdl.lock().get();
-    if (msg->get_opcode() != websocketpp::frame::opcode::TEXT){
-        Log(LOG_ERROR, NULL, "trade server OnMessage received wrong opcode, session=%p", con);
+void TradeSession::DoRead()
+{
+    m_ws_socket.async_read(
+        m_input_buffer,
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &TradeSession::OnRead,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
+}
+
+void TradeSession::OnRead(boost::system::error_code ec, std::size_t bytes_transferred)
+{
+    boost::ignore_unused(bytes_transferred);
+    if (ec)
+    {
+        if (ec != boost::beast::websocket::error::closed)
+        {
+            Log(LOG_WARNING, NULL, "trade session read fail, session=%p", this);
+        }
+        OnCloseConnection();
+        return;
     }
-    auto& json_str = msg->get_payload();
+    OnMessage(boost::beast::buffers_to_string(m_input_buffer.data()));
+    m_input_buffer.consume(m_input_buffer.size());
+    // Do another read
+    DoRead();
+}
+
+void TradeSession::OnMessage(const std::string &json_str)
+{
     trader_dll::SerializerTradeBase ss;
-    if (!ss.FromString(json_str.c_str())){
-        Log(LOG_WARNING, NULL, "trade server parse json(%s) fail, session=%p", json_str.c_str(), con);
+    if (!ss.FromString(json_str.c_str()))
+    {
+        Log(LOG_WARNING, NULL, "trade session parse json(%s) fail, session=%p", json_str.c_str(), this);
         return;
     }
-    Log(LOG_INFO, json_str.c_str(), "trade server received package, session=%p", con);
+    Log(LOG_INFO, json_str.c_str(), "trade session received package, session=%p", this);
     trader_dll::ReqLogin req;
     ss.ToVar(req);
-    TradeSession& session = trade_server_context.m_trader_map[hdl];
-    if (req.aid == "req_login") {
-        if (session.m_trader_instance){
-            DeleteTraderInstance(session.m_trader_instance);
-            session.m_trader_instance = NULL;
+    if (req.aid == "req_login")
+    {
+        if (m_trader_instance)
+        {
+            m_trader_instance->Stop();
+            m_trader_instance = NULL;
         }
         auto broker = g_config.brokers.find(req.bid);
-        if (broker == g_config.brokers.end()){
-            Log(LOG_WARNING, json_str.c_str(), "trade server req_login invalid bid, session=%p, bid=%s", con, req.bid.c_str());
+        if (broker == g_config.brokers.end())
+        {
+            Log(LOG_WARNING, json_str.c_str(), "trade server req_login invalid bid, session=%p, bid=%s", this, req.bid.c_str());
             return;
         }
         req.broker = broker->second;
-        auto con = s->get_con_from_hdl(hdl);
-        req.client_addr = con->get_request_header("X-Real-IP");
-        if (req.client_addr.empty())
-            req.client_addr = con->get_remote_endpoint();
-        if (broker->second.broker_type == "ctp") {
-            trade_server_context.m_trader_map[hdl].m_trader_instance = new trader_dll::TraderCtp(std::bind(SendTextMsg, hdl, std::placeholders::_1));
-            trade_server_context.m_trader_map[hdl].m_trader_instance->Start(req);
-        } else if (broker->second.broker_type == "sim") {
-            trade_server_context.m_trader_map[hdl].m_trader_instance = new trader_dll::TraderSim(std::bind(SendTextMsg, hdl, std::placeholders::_1));
-            trade_server_context.m_trader_map[hdl].m_trader_instance->Start(req);
-        } else {
-            Log(LOG_ERROR, json_str.c_str(), "trade server req_login invalid broker_type=%s, session=%p", broker->second.broker_type.c_str(), con);
+        // req.client_addr = con->get_request_header("X-Real-IP");
+        // if (req.client_addr.empty())
+        //     req.client_addr = con->get_remote_endpoint();
+        if (broker->second.broker_type == "ctp")
+        {
+            m_trader_instance = new trader_dll::TraderCtp(std::bind(&TradeSession::SendTextMsg, shared_from_this(), std::placeholders::_1));
         }
-        Log(LOG_INFO, NULL, "create-trader-instance, session=%p", con);
+        else if (broker->second.broker_type == "sim")
+        {
+            m_trader_instance = new trader_dll::TraderSim(std::bind(&TradeSession::SendTextMsg, shared_from_this(), std::placeholders::_1));
+        }
+        else
+        {
+            Log(LOG_ERROR, json_str.c_str(), "trade server req_login invalid broker_type=%s, session=%p", broker->second.broker_type.c_str(), this);
+            return;
+        }
+        m_trader_instance->Start(req);
+        Log(LOG_INFO, NULL, "create-trader-instance, session=%p", this);
         return;
     }
-    if (session.m_trader_instance){
-        session.m_trader_instance->m_in_queue.push_back(json_str);
+    if (m_trader_instance)
+        m_trader_instance->m_in_queue.push_back(json_str);
+}
+
+void TradeSession::SendTextMsg(const std::string &msg)
+{
+    if(m_output_buffer.size() > 0){
+        size_t n = boost::asio::buffer_copy(m_output_buffer.prepare(msg.size()), boost::asio::buffer(msg));
+        m_output_buffer.commit(n);
+    } else {
+        size_t n = boost::asio::buffer_copy(m_output_buffer.prepare(msg.size()), boost::asio::buffer(msg));
+        m_output_buffer.commit(n);
+        DoWrite();
     }
-    TryResetExpiredTrader();
 }
 
-bool Init()
+void TradeSession::DoWrite()
 {
-    return true;
+    m_ws_socket.text(true);
+    m_ws_socket.async_write(
+        m_output_buffer.data(),
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &TradeSession::OnWrite,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
-void Run()
+void TradeSession::OnWrite(
+    boost::system::error_code ec,
+    std::size_t bytes_transferred)
 {
-    // Set logging settings
-    trade_server_context.m_trade_server.clear_access_channels(websocketpp::log::alevel::all);
-    trade_server_context.m_trade_server.clear_error_channels(websocketpp::log::alevel::all);
+    if (ec)
+        Log(LOG_WARNING, NULL, "trade server send message fail");
+    else
+        Log(LOG_INFO, NULL, "trade server send message success, session=%p, len=%d", this, bytes_transferred);
+    m_output_buffer.consume(bytes_transferred);
+    if(m_output_buffer.size() > 0)
+        DoWrite();
+}
 
-    // Initialize Asio
-    trade_server_context.m_trade_server.init_asio();
+void TradeSession::OnCloseConnection()
+{
+    Log(LOG_INFO, NULL, "trade session loss connection, session=%p", this);
+    m_trader_instance = NULL;
+    exit(0);
+}
 
-    // Register our message handler
-    trade_server_context.m_trade_server.set_message_handler(bind(OnMessage, &trade_server_context.m_trade_server, ::_1, ::_2));
-    trade_server_context.m_trade_server.set_open_handler(bind(&OnOpenConnection, ::_1));
-    trade_server_context.m_trade_server.set_close_handler(bind(&OnCloseConnection, ::_1));
-    trade_server_context.m_trade_server.set_max_message_size(4 * 1024 * 1024);
+struct TradeServerContext
+{
+    boost::asio::io_context* m_ioc;
+    boost::asio::ip::tcp::acceptor* m_acceptor;
+    boost::asio::signal_set* m_signal;
+} trade_server_context;
 
-    // Listen on port
-    trade_server_context.m_trade_server.set_reuse_addr(true);
-    websocketpp::lib::error_code ec;
-    boost::asio::ip::tcp::endpoint ep2(boost::asio::ip::address::from_string(g_config.host), g_config.port);
-    trade_server_context.m_trade_server.listen(ep2, ec);
-    if (ec) {
-        Log(LOG_ERROR, NULL, "trade server websocketpp listen fail, ec=%s", ec.message().c_str());
-    }        
+void WaitForSignal()
+{
+    trade_server_context.m_signal->async_wait(
+        [](boost::system::error_code /*ec*/, int /*signo*/) {
+            // Only the parent process should check for this signal. We can
+            // determine whether we are in the parent by checking if the acceptor
+            // is still open.
+            if (trade_server_context.m_acceptor->is_open())
+            {
+                // Reap completed child processes so that we don't end up with
+                // zombies.
+                int status = 0;
+                while (waitpid(-1, &status, WNOHANG) > 0)
+                {
+                }
 
-    // Start the server accept loop
-    trade_server_context.m_trade_server.start_accept();
+                WaitForSignal();
+            }
+        });
+}
 
-    // Start the ASIO io_service run loop
-    trade_server_context.m_trade_server.run();
+void DoAccept();
+
+void OnAccept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket)
+{
+    if (ec)
+    {
+        Log(LOG_WARNING, NULL, "trade server accept error, ec=%s", ec.message());
+        DoAccept();
+        return;
+    }
+
+    // Inform the io_context that we are about to fork. The io_context
+    // cleans up any internal resources, such as threads, that may
+    // interfere with forking.
+    trade_server_context.m_ioc->notify_fork(boost::asio::io_context::fork_prepare);
+
+    if (fork() == 0)
+    {
+        // In child process
+
+        // Inform the io_context that the fork is finished and that this
+        // is the child process. The io_context uses this opportunity to
+        // create any internal file descriptors that must be private to
+        // the new process.
+        trade_server_context.m_ioc->notify_fork(boost::asio::io_context::fork_child);
+
+        // The child won't be accepting new connections, so we can close
+        // the acceptor. It remains open in the parent.
+        trade_server_context.m_acceptor->close();
+
+        // The child process is not interested in processing the SIGCHLD
+        // signal.
+        trade_server_context.m_signal->cancel();
+
+        std::make_shared<TradeSession>(std::move(socket))->Run();
+    }
+    else
+    {
+        // In parent process
+        // Inform the io_context that the fork is finished (or failed)
+        // and that this is the parent process. The io_context uses this
+        // opportunity to recreate any internal resources that were
+        // cleaned up during preparation for the fork.
+        trade_server_context.m_ioc->notify_fork(boost::asio::io_context::fork_parent);
+
+        // The parent process can now close the newly accepted socket. It
+        // remains open in the child.
+        socket.close();
+
+        DoAccept();
+    }
+}
+
+void DoAccept()
+{
+    if (!trade_server_context.m_acceptor->is_open())
+        return;
+    trade_server_context.m_acceptor->async_accept(
+        std::bind(
+            OnAccept,
+            std::placeholders::_1,
+            std::placeholders::_2));
+}
+
+void Init(boost::asio::io_context &ioc, boost::asio::ip::tcp::endpoint endpoint)
+{
+    trade_server_context.m_ioc = &ioc;
+    trade_server_context.m_signal = new boost::asio::signal_set(ioc, SIGCHLD);
+    trade_server_context.m_acceptor = new boost::asio::ip::tcp::acceptor(ioc);
+
+    WaitForSignal();
+    boost::system::error_code ec;
+
+    // Open the acceptor
+    trade_server_context.m_acceptor->open(endpoint.protocol(), ec);
+    if (ec)
+    {
+        Log(LOG_ERROR, NULL, "trade server acceptor open fail, ec=%s", ec.message().c_str());
+        return;
+    }
+
+    // Allow address reuse
+    trade_server_context.m_acceptor->set_option(boost::asio::socket_base::reuse_address(true), ec);
+    if (ec)
+    {
+        Log(LOG_ERROR, NULL, "trade server acceptor set option fail, ec=%s", ec.message().c_str());
+        return;
+    }
+
+    // Bind to the server address
+    trade_server_context.m_acceptor->bind(endpoint, ec);
+    if (ec)
+    {
+        Log(LOG_ERROR, NULL, "trade server acceptor bind fail, ec=%s", ec.message().c_str());
+        return;
+    }
+
+    // Start listening for connections
+    trade_server_context.m_acceptor->listen(boost::asio::socket_base::max_listen_connections, ec);
+    if (ec)
+    {
+        Log(LOG_ERROR, NULL, "trade server acceptor listen fail, ec=%s", ec.message().c_str());
+        return;
+    }
+
+    DoAccept();
 }
 
 void Stop()
 {
-    trade_server_context.m_trade_server.stop_listening();
-    for(auto it = trade_server_context.m_trader_map.begin(); it != trade_server_context.m_trader_map.end(); ++it){
-        auto hdl = it->first;
-        websocketpp::lib::error_code ec;
-        trade_server_context.m_trade_server.close(hdl, websocketpp::close::status::going_away, "", ec);
-        if (ec) {
-            Log(LOG_ERROR, NULL, "trade server websocketpp close exception, what=%s", ec.message().c_str());
-        }        
-    }
+    trade_server_context.m_acceptor->close();
 }
 
-void CleanUp()
-{
-}
-
-}
+} // namespace trade_server

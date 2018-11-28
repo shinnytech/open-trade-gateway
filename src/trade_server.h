@@ -6,10 +6,11 @@
 
 #pragma once
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
 namespace trade_server
 {
-    bool Init();
-    void Run();
+    void Init(boost::asio::io_context &ioc, boost::asio::ip::tcp::endpoint endpoint);
     void Stop();
-    void CleanUp();
 }

@@ -7,6 +7,9 @@
 #include "stdafx.h"
 
 #include <signal.h>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_context.hpp>
+
 #include "log.h"
 #include "trade_server.h"
 #include "md_service.h"
@@ -17,8 +20,11 @@ static int interrupted = 0;
 void sigint_handler(int sig)
 {
     Log(LOG_INFO, NULL, "server got sig %d", sig);
-	md_service::Stop();
-	trade_server::Stop();
+    Log(LOG_INFO, NULL, "server exit");
+    LogCleanup();
+    exit(0);
+	// md_service::Stop();
+	// trade_server::Stop();
 }
 
 int main() {
@@ -30,18 +36,18 @@ int main() {
     }
     signal(SIGTERM, sigint_handler);
     signal(SIGINT, sigint_handler);
-    //加载合约文件, 连接行情服务
-    if (!md_service::Init())
+    //加载合约信息
+    if (!md_service::LoadInsList())
         return -1;
-    if (!trade_server::Init())
-        return -1;
-    //提供交易服务
-    trade_server::Run();
+    //运行网络服务
+    boost::asio::io_context ioc;
+    md_service::Init(ioc);
+    Log(LOG_INFO, NULL, "md service inited");
+    trade_server::Init(ioc, boost::asio::ip::tcp::endpoint{boost::asio::ip::tcp::v4(), g_config.port});
+    Log(LOG_INFO, NULL, "trade server inited, host=%s, port=%d", g_config.host.c_str(), g_config.port);
+    ioc.run();
     //服务结束
-    md_service::CleanUp();
-    trade_server::CleanUp();
     Log(LOG_INFO, NULL, "server exit");
     LogCleanup();
     return 0;
 }
-
