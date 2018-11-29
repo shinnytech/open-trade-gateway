@@ -140,6 +140,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
         , m_trader, m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str()
         , pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, pRspUserLogin->MaxOrderRef
         );
+    m_trader->m_position_ready = false;
     m_trader->m_req_login_dt.store(0);
     if (pRspInfo->ErrorID != 0){
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"交易服务器登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
@@ -480,6 +481,7 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
     position.changed = true;
     if(bIsLast){
         m_trader->m_something_changed = true;
+        m_trader->m_position_ready = true;
         m_trader->SendUserData();
     }
 }

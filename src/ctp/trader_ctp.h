@@ -39,6 +39,7 @@ private:
     void SendUserData();
     std::atomic_bool m_peeking_message;
     std::atomic_bool m_something_changed;
+    std::atomic_bool m_position_ready;
 
     //登录相关
     void SendLoginRequest();

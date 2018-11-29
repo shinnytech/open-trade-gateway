@@ -343,6 +343,8 @@ void TraderCtp::SendUserData()
         return;
     if (m_data.m_accounts.size() == 0)
         return;
+    if (!m_position_ready)
+        return;
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
     double total_float_profit = 0;
