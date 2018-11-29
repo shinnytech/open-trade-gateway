@@ -139,7 +139,6 @@ void TraderSim::OnFinish()
 
 void TraderSim::OnIdle()
 {
-    //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
     long long now = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
     if (m_peeking_message && (m_next_send_dt < now)){
         m_next_send_dt = now + 100;
@@ -204,8 +203,8 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
     }
     Position* position = &(m_data.m_positions[symbol]);
     position->ins = ins;
-    position->instrument_id = ins->ins_id;
-    position->exchange_id = ins->exchange_id;
+    position->instrument_id = order->instrument_id;
+    position->exchange_id = order->exchange_id;
     position->user_id = m_user_id;
     if (action_insert_order.offset == kOffsetOpen) {
         if (position->ins->margin * action_insert_order.volume > m_account->available) {
@@ -274,7 +273,7 @@ void TraderSim::SendUserData()
         double last_price = ps.ins->last_price;
         if (!IsValid(last_price))
             last_price = ps.ins->pre_settlement;
-        if (last_price != ps.last_price || ps.changed) {
+        if ((IsValid(last_price) && (last_price != ps.last_price)) || ps.changed) {
             ps.last_price = last_price;
             ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
             ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;

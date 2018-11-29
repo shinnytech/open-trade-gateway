@@ -41,11 +41,14 @@ int main() {
         return -1;
     //运行网络服务
     boost::asio::io_context ioc;
-    md_service::Init(ioc);
-    Log(LOG_INFO, NULL, "md service inited");
-    trade_server::Init(ioc, boost::asio::ip::tcp::endpoint{boost::asio::ip::tcp::v4(), g_config.port});
-    Log(LOG_INFO, NULL, "trade server inited, host=%s, port=%d", g_config.host.c_str(), g_config.port);
-    ioc.run();
+    if(md_service::Init(ioc)){
+        Log(LOG_INFO, NULL, "md service inited");
+        ioc.run();
+    }else{
+        trade_server::Init(ioc, boost::asio::ip::tcp::endpoint{boost::asio::ip::tcp::v4(), g_config.port});
+        Log(LOG_INFO, NULL, "trade server inited, host=%s, port=%d", g_config.host.c_str(), g_config.port);
+        ioc.run();
+    }
     //服务结束
     Log(LOG_INFO, NULL, "server exit");
     LogCleanup();

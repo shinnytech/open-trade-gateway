@@ -5,7 +5,7 @@ CXX_DEPS := $(CXX_OBJS:%.o=%.d)
 
 CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ -Isrc/
 LDFLAGS += -Lcontrib/lib
-LDLIBS += -lssl -lcrypto -lthosttraderapi -lcurl -lboost_system -lstdc++fs 
+LDLIBS += -lssl -lcrypto -lthosttraderapi -lcurl -lboost_system -lstdc++fs -lrt
 
 .PHONY: all clean install
 
