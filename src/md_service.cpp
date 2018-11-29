@@ -167,7 +167,12 @@ void OnConnect(boost::system::error_code ec)
         return;
     }
     // Perform the websocket handshake
-    md_context.m_ws_socket->async_handshake(md_host, md_path,
+    md_context.m_ws_socket->async_handshake_ex(md_host, md_path,
+        [](boost::beast::websocket::request_type& m)
+        {
+            m.insert(boost::beast::http::field::accept, "application/v1+json");
+            m.insert(boost::beast::http::field::user_agent, "OTG-" VERSION_STR);
+        },
         std::bind(
             OnHandshake,
             std::placeholders::_1));
@@ -180,8 +185,6 @@ void OnHandshake(boost::system::error_code ec)
         return;
     }
     Log(LOG_INFO, NULL, "md service got connection");
-    // con->append_header("Accept", "application/v1+json");
-    // con->append_header("User-Agent", "OTG-" VERSION_STR);
     SendTextMsg(md_context.m_req_subscribe_quote);
     SendTextMsg(md_context.m_req_peek_message);
     DoRead();
