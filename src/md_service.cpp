@@ -133,16 +133,28 @@ const char* md_host = "openmd.shinnytech.com";
 const char* md_port = "80";
 const char* md_path = "/t/md/front/mobile";
 
+
+void OnResolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results);
 void OnConnect(boost::system::error_code ec);
 void OnHandshake(boost::system::error_code ec);
 void DoRead();
 void OnRead(boost::system::error_code ec, std::size_t bytes_transferred);
 void DoWrite();
 void OnWrite(boost::system::error_code ec, std::size_t bytes_transferred);
-void OnCloseConnection();
 void OnMessage(const std::string &json_str);
 void SendTextMsg(const std::string &msg);
 
+
+void DoResolve()
+{
+    md_context.m_resolver->async_resolve(
+        md_host,
+        md_port,
+        std::bind(
+            OnResolve,
+            std::placeholders::_1,
+            std::placeholders::_2));
+}
 
 void OnResolve(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results) 
 {
@@ -207,7 +219,8 @@ void OnRead(boost::system::error_code ec, std::size_t bytes_transferred)
         if (ec != boost::beast::websocket::error::closed){
             Log(LOG_WARNING, NULL, "md service read fail, ec=%s", ec.message().c_str());
         }
-        OnCloseConnection();
+        Log(LOG_INFO, NULL, "md session loss connection");
+        DoResolve();
         return;
     }
     OnMessage(boost::beast::buffers_to_string(md_context.m_input_buffer.data()));
@@ -266,11 +279,6 @@ void OnWrite(boost::system::error_code ec, std::size_t bytes_transferred)
     md_context.m_output_buffer.consume(bytes_transferred);
     if(md_context.m_output_buffer.size() > 0)
         DoWrite();
-}
-
-void OnCloseConnection()
-{
-    Log(LOG_INFO, NULL, "md session loss connection");
 }
 
 bool LoadInsList()
@@ -349,13 +357,7 @@ bool Init(boost::asio::io_context& ioc)
         md_context.m_resolver = new boost::asio::ip::tcp::resolver(ioc);
 
         // Look up the domain name
-        md_context.m_resolver->async_resolve(
-            md_host,
-            md_port,
-            std::bind(
-                OnResolve,
-                std::placeholders::_1,
-                std::placeholders::_2));
+        DoResolve();
         return true;
     }
     else
