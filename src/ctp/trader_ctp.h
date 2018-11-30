@@ -33,6 +33,8 @@ private:
     void OnClientReqInsertOrder(CtpActionInsertOrder d);
     void OnClientReqCancelOrder(CtpActionCancelOrder d);
     void OnClientReqTransfer(CThostFtdcReqTransferField f);
+    CThostFtdcInputOrderField m_input_order;
+    CThostFtdcOrderActionField m_action_order;
 
     //数据更新发送
     void OnClientPeekMessage();

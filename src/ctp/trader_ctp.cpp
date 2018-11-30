@@ -41,6 +41,9 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
 
     m_peeking_message = false;
     m_something_changed = false;
+
+    memset(&m_input_order, 0, sizeof(m_input_order));
+    memset(&m_action_order, 0, sizeof(m_action_order));
 }
 
 void TraderCtp::ProcessInput(const char* json_str)
@@ -142,6 +145,7 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
         std::unique_lock<std::mutex> lck(m_order_action_mtx);
         m_insert_order_set.insert(d.f.OrderRef);
     }
+    memcpy(&m_input_order, &d.f, sizeof(m_input_order));
     int r = m_api->ReqOrderInsert(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderInsert, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
     SaveToFile();
@@ -173,6 +177,7 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
         std::unique_lock<std::mutex> lck(m_order_action_mtx);
         m_cancel_order_set.insert(d.local_key.order_id);
     }
+    memcpy(&m_action_order, &d.f, sizeof(m_action_order));
     int r = m_api->ReqOrderAction(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderAction, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }

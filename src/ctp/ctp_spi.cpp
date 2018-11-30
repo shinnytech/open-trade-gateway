@@ -354,6 +354,12 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
         if (it != m_trader->m_cancel_order_set.end()){
             m_trader->m_cancel_order_set.erase(it);
             m_trader->OutputNotify(1, u8"撤单成功");
+        } else {
+            auto it2 = m_trader->m_insert_order_set.find(pOrder->OrderRef);
+            if (it2 != m_trader->m_insert_order_set.end()){
+                m_trader->m_insert_order_set.erase(it2);
+                m_trader->OutputNotify(1, u8"下单失败, " + order.last_msg);
+            }
         }
     }
 }
@@ -688,12 +694,26 @@ void CCtpSpiHandler::OnRspOrderAction(CThostFtdcInputOrderActionField* pOrderAct
 
 void CCtpSpiHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
 {
-
+    Log(LOG_INFO, NULL, "ctp OnErrRtnOrderInsert, instance=%p, UserID=%s, ErrorID=%d, ErrorMsg=%s"
+        , m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999
+        , pRspInfo?GBKToUTF8(pRspInfo->ErrorMsg).c_str():""
+        );
+    if (pInputOrder && pRspInfo && pRspInfo->ErrorID != 0){
+        if (memcmp(&m_trader->m_input_order, pInputOrder, sizeof(m_trader->m_input_order)) == 0)
+            m_trader->OutputNotify(pRspInfo->ErrorID, u8"下单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+    }
 }
 
 void CCtpSpiHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)
 {
-
+    Log(LOG_INFO, NULL, "ctp OnErrRtnOrderAction, instance=%p, UserID=%s, ErrorID=%d, ErrorMsg=%s"
+        , m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999
+        , pRspInfo?GBKToUTF8(pRspInfo->ErrorMsg).c_str():""
+        );
+    if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0){
+        if (memcmp(&m_trader->m_action_order, pOrderAction, sizeof(m_trader->m_input_order)) == 0)
+            m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+    }
 }
 
 void CCtpSpiHandler::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferSerial, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
