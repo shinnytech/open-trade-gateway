@@ -15,12 +15,12 @@ Install
 -------------------------------------------------
 本服务必须在Linux环境下安装运行。下面的安装步骤以 Debian 9 为例，其它 linux 发行版可能需要相应调整.
 
-安装 zlib, openssl, libcurl, libasio 等依赖库
+安装 openssl, libcurl, boost 等依赖库
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 用apt命令安装::
 
-    sudo apt install libasio-dev libcurl4-openssl-dev zlib1g-dev
+    sudo apt install libcurl4-openssl-dev libboost-all-dev
 
 
 安装 open-trade-gateway
@@ -45,6 +45,7 @@ Config
     {
       "host": "0.0.0.0",                                      //提供服务的IP地址  
       "port": 7788,                                           //提供服务的端口号
+      "auto_confirm_settlement": false,                       //是否自动确认结算单
       "user_file_path": "/var/local/lib/open-trade-gateway"   //存放用户文件的目录，必须事先创建好
     }
 

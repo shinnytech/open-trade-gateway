@@ -22,8 +22,6 @@ struct Config
     //服务IP及端口号
     std::string host;
     int port;
-    //https证书文件
-    std::string ca_file;
     //user配置
     std::string user_file_path;
     //是否要求用户确认结算单

@@ -23,9 +23,8 @@ public:
     {
         AddItem(d.host, "host");
         AddItem(d.port, "port");
-        AddItem(d.ca_file, "ca_file");
         AddItem(d.user_file_path, "user_file_path");
-        AddItem(d.brokers, "brokers");
+        AddItem(d.auto_confirm_settlement, "auto_confirm_settlement");
     }
 
     void DefineStruct(BrokerConfig& d)
