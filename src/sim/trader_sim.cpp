@@ -157,6 +157,7 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
         OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:单号重复");
         return;
     }
+    m_something_changed = true;
     const md_service::Instrument* ins = md_service::GetInstrument(symbol);
     Order* order = &(m_data.m_orders[order_key]);
     order->user_id = action_insert_order.user_id;
@@ -237,6 +238,7 @@ void TraderSim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
             && order->status == kOrderStatusAlive) {
             order->status = kOrderStatusFinished;
             UpdateOrder(order);
+            m_something_changed = true;
             return;
         }
     }
