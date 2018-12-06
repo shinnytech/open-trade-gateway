@@ -307,11 +307,6 @@ void TraderCtp::OnIdle()
         return;
     if (!m_logined)
         return;
-    if (m_need_query_settlement.load()) {
-        ReqQrySettlementInfo();
-        m_next_qry_dt = now + 1100;
-        return;
-    }
     if (m_req_position_id > m_rsp_position_id) {
         ReqQryPosition(m_req_position_id);
         m_next_qry_dt = now + 1100;
@@ -319,6 +314,11 @@ void TraderCtp::OnIdle()
     }
     if (m_req_account_id > m_rsp_account_id) {
         ReqQryAccount(m_req_account_id);
+        m_next_qry_dt = now + 1100;
+        return;
+    }
+    if (m_need_query_settlement.load()) {
+        ReqQrySettlementInfo();
         m_next_qry_dt = now + 1100;
         return;
     }
@@ -411,6 +411,7 @@ void TraderCtp::SendUserData()
     if (!m_something_changed)
         return;
     //构建数据包
+    m_data.m_trade_more_data = false;
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
     rapidjson::Value node_data;

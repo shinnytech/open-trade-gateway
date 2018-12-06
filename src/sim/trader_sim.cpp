@@ -309,6 +309,7 @@ void TraderSim::SendUserData()
     if (!m_something_changed)
         return;
     //构建数据包
+    m_data.m_trade_more_data = false;
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
     rapidjson::Value node_data;

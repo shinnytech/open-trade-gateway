@@ -314,6 +314,7 @@ struct TransferLog {
 
 struct User {
     std::string user_id;
+    bool m_trade_more_data;
     std::map<std::string, Account> m_accounts;
     std::map<std::string, Position> m_positions;
     std::map<std::string, Order> m_orders;
