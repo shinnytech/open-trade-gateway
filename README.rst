@@ -18,9 +18,11 @@ Install
 安装 openssl, libcurl, boost 等依赖库
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-用apt命令安装::
+用apt命令安装 openssl 和 libcurl::
 
-    sudo apt install libcurl4-openssl-dev libboost-all-dev
+    sudo apt install libcurl4-openssl-dev
+
+安装 boost 1.68.0, 参见 https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html
 
 
 安装 open-trade-gateway
