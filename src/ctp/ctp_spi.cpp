@@ -435,63 +435,61 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
 
 void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pRspInvestorPosition, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
-    if (bIsLast){
-        m_trader->m_rsp_position_id.store(nRequestID);
-    }
-    if (!pRspInvestorPosition)
-        return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, instance=%p, nRequestID=%d, bIsLast=%d, UserID=%s, InstrumentId=%s, ExchangeId=%s"
-        , m_trader, nRequestID, bIsLast, m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID, pRspInvestorPosition->ExchangeID);
-    std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
-    std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
-    std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
-    auto ins = md_service::GetInstrument(symbol);
-    if (!ins){
-        Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), symbol.c_str());
-        m_trader->OutputNotify(1, u8"交易账户中的合约" + std::string(symbol) + u8"不在合约表中");
-        return;
-    }
-    Position& position = m_trader->GetPosition(symbol);
-    position.user_id = pRspInvestorPosition->InvestorID;
-    position.exchange_id = exchange_id;
-    position.instrument_id = pRspInvestorPosition->InstrumentID;
-    if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long) {
-        if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today) {
-            position.volume_long_today = pRspInvestorPosition->Position;
-            position.volume_long_frozen_today = pRspInvestorPosition->ShortFrozen;
-            position.position_cost_long_today = pRspInvestorPosition->PositionCost;
-            position.open_cost_long_today = pRspInvestorPosition->OpenCost;
-            position.margin_long_today = pRspInvestorPosition->UseMargin;
-        } else {
-            position.volume_long_his = pRspInvestorPosition->Position;
-            position.volume_long_frozen_his = pRspInvestorPosition->ShortFrozen;
-            position.position_cost_long_his = pRspInvestorPosition->PositionCost;
-            position.open_cost_long_his = pRspInvestorPosition->OpenCost;
-            position.margin_long_his = pRspInvestorPosition->UseMargin;
+    if (pRspInvestorPosition){
+        Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, instance=%p, nRequestID=%d, bIsLast=%d, UserID=%s, InstrumentId=%s, ExchangeId=%s"
+            , m_trader, nRequestID, bIsLast, m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID, pRspInvestorPosition->ExchangeID);
+        std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
+        std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
+        std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
+        auto ins = md_service::GetInstrument(symbol);
+        if (!ins){
+            Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), symbol.c_str());
+            m_trader->OutputNotify(1, u8"交易账户中的合约" + std::string(symbol) + u8"不在合约表中");
+            return;
         }
-        position.position_cost_long = position.position_cost_long_today + position.position_cost_long_his;
-        position.open_cost_long = position.open_cost_long_today + position.open_cost_long_his;
-        position.margin_long = position.margin_long_today + position.margin_long_his;
-    } else {
-        if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today) {
-            position.volume_short_today = pRspInvestorPosition->Position;
-            position.volume_short_frozen_today = pRspInvestorPosition->LongFrozen;
-            position.position_cost_short_today = pRspInvestorPosition->PositionCost;
-            position.open_cost_short_today = pRspInvestorPosition->OpenCost;
-            position.margin_short_today = pRspInvestorPosition->UseMargin;
+        Position& position = m_trader->GetPosition(symbol);
+        position.user_id = pRspInvestorPosition->InvestorID;
+        position.exchange_id = exchange_id;
+        position.instrument_id = pRspInvestorPosition->InstrumentID;
+        if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long) {
+            if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today) {
+                position.volume_long_today = pRspInvestorPosition->Position;
+                position.volume_long_frozen_today = pRspInvestorPosition->ShortFrozen;
+                position.position_cost_long_today = pRspInvestorPosition->PositionCost;
+                position.open_cost_long_today = pRspInvestorPosition->OpenCost;
+                position.margin_long_today = pRspInvestorPosition->UseMargin;
+            } else {
+                position.volume_long_his = pRspInvestorPosition->Position;
+                position.volume_long_frozen_his = pRspInvestorPosition->ShortFrozen;
+                position.position_cost_long_his = pRspInvestorPosition->PositionCost;
+                position.open_cost_long_his = pRspInvestorPosition->OpenCost;
+                position.margin_long_his = pRspInvestorPosition->UseMargin;
+            }
+            position.position_cost_long = position.position_cost_long_today + position.position_cost_long_his;
+            position.open_cost_long = position.open_cost_long_today + position.open_cost_long_his;
+            position.margin_long = position.margin_long_today + position.margin_long_his;
         } else {
-            position.volume_short_his = pRspInvestorPosition->Position;
-            position.volume_short_frozen_his = pRspInvestorPosition->LongFrozen;
-            position.position_cost_short_his = pRspInvestorPosition->PositionCost;
-            position.open_cost_short_his = pRspInvestorPosition->OpenCost;
-            position.margin_short_his = pRspInvestorPosition->UseMargin;
+            if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today) {
+                position.volume_short_today = pRspInvestorPosition->Position;
+                position.volume_short_frozen_today = pRspInvestorPosition->LongFrozen;
+                position.position_cost_short_today = pRspInvestorPosition->PositionCost;
+                position.open_cost_short_today = pRspInvestorPosition->OpenCost;
+                position.margin_short_today = pRspInvestorPosition->UseMargin;
+            } else {
+                position.volume_short_his = pRspInvestorPosition->Position;
+                position.volume_short_frozen_his = pRspInvestorPosition->LongFrozen;
+                position.position_cost_short_his = pRspInvestorPosition->PositionCost;
+                position.open_cost_short_his = pRspInvestorPosition->OpenCost;
+                position.margin_short_his = pRspInvestorPosition->UseMargin;
+            }
+            position.position_cost_short = position.position_cost_short_today + position.position_cost_short_his;
+            position.open_cost_short = position.open_cost_short_today + position.open_cost_short_his;
+            position.margin_short = position.margin_short_today + position.margin_short_his;
         }
-        position.position_cost_short = position.position_cost_short_today + position.position_cost_short_his;
-        position.open_cost_short = position.open_cost_short_today + position.open_cost_short_his;
-        position.margin_short = position.margin_short_today + position.margin_short_his;
+        position.changed = true;
     }
-    position.changed = true;
     if(bIsLast){
+        m_trader->m_rsp_position_id.store(nRequestID);
         m_trader->m_something_changed = true;
         m_trader->m_position_ready = true;
         m_trader->SendUserData();
