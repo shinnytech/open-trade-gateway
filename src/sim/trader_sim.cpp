@@ -59,6 +59,12 @@ void SerializerSim::DefineStruct(ActionOrder& d)
     AddItem(d.limit_price, "limit_price");
 }
 
+void SerializerSim::DefineStruct(ActionTransfer& d)
+{
+    AddItem(d.currency, "currency");
+    AddItem(d.amount, "amount");
+}
+
 TraderSim::TraderSim(std::function<void(const std::string&)> callback)
     : TraderBase(callback)
 {
@@ -91,6 +97,10 @@ void TraderSim::OnInit()
         m_account->risk_ratio = 0;
         m_account->changed = true;
     }
+    auto bank = &(m_data.m_banks["SIM"]);
+    bank->bank_id="SIM";
+    bank->bank_name = u8"模拟银行";
+    bank->changed = true;
     m_something_changed = true;
     char json_str[1024];
     sprintf(json_str, (u8"{"\
@@ -124,8 +134,10 @@ void TraderSim::ProcessInput(const char* json_str)
         ActionOrder action_cancel_order;
         ss.ToVar(action_cancel_order);
         OnClientReqCancelOrder(action_cancel_order);
-    // } else if (aid == "req_transfer") {
-    //     OnClientReqTransfer();
+    } else if (aid == "req_transfer") {
+        ActionTransfer action_transfer;
+        ss.ToVar(action_transfer);
+        OnClientReqTransfer(action_transfer);
     } else if (aid == "peek_message") {
         OnClientPeekMessage();
     }
@@ -244,6 +256,19 @@ void TraderSim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
     }
     OutputNotify(1, u8"要撤销的单不存在");
     return;
+}
+
+void TraderSim::OnClientReqTransfer(ActionTransfer action_transfer)
+{
+    if(action_transfer.amount > 0){
+        m_account->deposit += action_transfer.amount;
+    } else {
+        m_account->withdraw -= action_transfer.amount;
+    }
+    m_account->static_balance += action_transfer.amount;
+    m_account->changed = true;
+    m_something_changed = true;
+    SendUserData();
 }
 
 void TraderSim::OnClientPeekMessage()

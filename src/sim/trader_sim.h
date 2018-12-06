@@ -36,6 +36,16 @@ struct ActionOrder {
     long hedge_flag;
 };
 
+struct ActionTransfer {
+    ActionTransfer()
+    {
+        currency = "CNY";
+        amount = 0.0;
+    }
+    std::string currency;
+    double amount;
+};
+
 class SerializerSim
     : public RapidSerialize::Serializer<SerializerSim>
 {
@@ -43,6 +53,7 @@ public:
     using RapidSerialize::Serializer<SerializerSim>::Serializer;
 
     void DefineStruct(ActionOrder& d);
+    void DefineStruct(ActionTransfer& d);
 };
 
 class TraderSim
@@ -61,7 +72,7 @@ private:
     //用户请求处理
     void OnClientReqInsertOrder(ActionOrder action_insert_order);
     void OnClientReqCancelOrder(ActionOrder action_cancel_order);
-    void OnClientReqTransfer();
+    void OnClientReqTransfer(ActionTransfer action_transfer);
 
     //数据更新发送
     void OnClientPeekMessage();
