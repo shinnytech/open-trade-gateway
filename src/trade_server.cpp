@@ -223,6 +223,14 @@ void TradeSession::OnWrite(
 void TradeSession::OnCloseConnection()
 {
     Log(LOG_INFO, NULL, "trade session loss connection, session=%p", this);
+    if(m_trader_instance){
+        m_trader_instance->Stop();
+        for(int i=0;i<10;i++){
+            if(m_trader_instance->m_finished)
+                break;
+            sleep(1000);
+        }
+    }
     m_trader_instance = NULL;
     exit(0);
 }
