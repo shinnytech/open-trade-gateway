@@ -124,10 +124,16 @@ void CCtpSpiHandler::OnRspError(CThostFtdcRspInfoField* pRspInfo, int nRequestID
 
 void CCtpSpiHandler::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    if (!pRspInfo)
+    if (!pRspInfo || pRspInfo->ErrorID != 0){
+        Log(LOG_WARNING, NULL, "ctp OnRspAuthenticate, instance=%p, UserID=%s, ErrorID=%d, ErrMsg=%s"
+            , m_trader, m_trader->m_user_id.c_str()
+            , pRspInfo?pRspInfo->ErrorID:-999
+            , pRspInfo?GBKToUTF8(pRspInfo->ErrorMsg).c_str():""
+            );
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspAuthenticate, instance=%p, UserID=%s, ErrMsg=%s"
-        , m_trader, m_trader->m_user_id.c_str(), GBKToUTF8(pRspInfo->ErrorMsg).c_str()
+    }
+    Log(LOG_INFO, NULL, "ctp OnRspAuthenticate, instance=%p, UserID=%s"
+        , m_trader, m_trader->m_user_id.c_str()
         );
     if (pRspInfo->ErrorID == 0){
         m_trader->SendLoginRequest();
