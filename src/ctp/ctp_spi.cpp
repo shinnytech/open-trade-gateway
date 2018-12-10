@@ -92,6 +92,7 @@ static std::string GuessExchangeId(std::string instrument_id)
             || (instrument_id[0] == 'b' && instrument_id[1] == 'b')
             || (instrument_id[0] == 'j' && instrument_id[1] == 'd')
             || (instrument_id[0] == 'p' && instrument_id[1] == 'p')
+            || (instrument_id[0] == 'e' && instrument_id[1] == 'g')
             || (instrument_id[0] == 'j' && instrument_id[1] == 'm'))
             return "DCE";
         if (instrument_id[0] == 's' && instrument_id[1] == 'c')
