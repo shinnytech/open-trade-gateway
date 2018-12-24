@@ -166,7 +166,7 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
     std::string order_key = action_insert_order.order_id;
     auto it = m_data.m_orders.find(order_key);
     if (it != m_data.m_orders.end()) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:单号重复");
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:单号重复", "WARNING");
         return;
     }
     m_something_changed = true;
@@ -189,28 +189,28 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
     order->insert_date_time = GetLocalEpochNano();
     order->seqno = m_last_seq_no++;
     if (action_insert_order.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误");
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误", "WARNING");
         order->status = kOrderStatusFinished;
         return;
     }
     if (!ins) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:合约不合法");
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:合约不合法", "WARNING");
         order->status = kOrderStatusFinished;
         return;
     }
     if (ins->product_class != md_service::kProductClassFutures) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约");
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约", "WARNING");
         order->status = kOrderStatusFinished;
         return;
     }
     if (action_insert_order.volume <= 0) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0");
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0", "WARNING");
         order->status = kOrderStatusFinished;
         return;
     }
     double xs = action_insert_order.limit_price / ins->price_tick;
     if (xs - int(xs + 0.5) >= 0.001) {
-        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数");
+        OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数", "WARNING");
         order->status = kOrderStatusFinished;
         return;
     }
@@ -221,14 +221,14 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
     position->user_id = m_user_id;
     if (action_insert_order.offset == kOffsetOpen) {
         if (position->ins->margin * action_insert_order.volume > m_account->available) {
-            OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足");
+            OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足", "WARNING");
             order->status = kOrderStatusFinished;
             return;
         }
     } else {
         if ((action_insert_order.direction == kDirectionBuy && position->volume_short < action_insert_order.volume + position->volume_short_frozen_today)
             || (action_insert_order.direction == kDirectionSell && position->volume_long < action_insert_order.volume + position->volume_long_frozen_today)) {
-            OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量");
+            OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量", "WARNING");
             order->status = kOrderStatusFinished;
             return;
         }
@@ -241,7 +241,7 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 void TraderSim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 {
     if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id) {
-        OutputNotify(1, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误");
+        OutputNotify(1, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误", "WARNING");
         return;
     }
     for (auto it_order = m_alive_order_set.begin(); it_order != m_alive_order_set.end(); ++it_order) {
@@ -254,7 +254,7 @@ void TraderSim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
             return;
         }
     }
-    OutputNotify(1, u8"要撤销的单不存在");
+    OutputNotify(1, u8"要撤销的单不存在", "WARNING");
     return;
 }
 
@@ -374,13 +374,13 @@ void TraderSim::CheckOrderTrade(Order* order)
     auto ins = md_service::GetInstrument(order->symbol());
     if (order->price_type == kPriceTypeLimit){
         if (order->limit_price - 0.0001 > ins->upper_limit) {
-            OutputNotify(1, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板");
+            OutputNotify(1, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板", "WARNING");
             order->status = kOrderStatusFinished;
             UpdateOrder(order);
             return;
         }
         if (order->limit_price + 0.0001 < ins->lower_limit) {
-            OutputNotify(1, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格跌破跌停板");
+            OutputNotify(1, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格跌破跌停板", "WARNING");
             order->status = kOrderStatusFinished;
             UpdateOrder(order);
             return;

@@ -132,7 +132,7 @@ void TraderCtp::ReqAuthenticate()
 void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"报单user_id错误，不能下单");
+        OutputNotify(1, u8"报单user_id错误，不能下单", "WARNING");
         return;
     }
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
@@ -142,7 +142,7 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
     rkey.exchange_id = d.f.ExchangeID;
     rkey.instrument_id = d.f.InstrumentID;
     if(OrderIdLocalToRemote(d.local_key, &rkey)){
-        OutputNotify(1, u8"报单单号重复，不能下单");
+        OutputNotify(1, u8"报单单号重复，不能下单", "WARNING");
         return;
     }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
@@ -159,12 +159,12 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 {
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"撤单user_id错误，不能撤单");
+        OutputNotify(1, u8"撤单user_id错误，不能撤单", "WARNING");
         return;
     }
     RemoteOrderKey rkey;
     if (!OrderIdLocalToRemote(d.local_key, &rkey)){
-        OutputNotify(1, u8"撤单指定的order_id不存在，不能撤单");
+        OutputNotify(1, u8"撤单指定的order_id不存在，不能撤单", "WARNING");
         return;
     }
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
