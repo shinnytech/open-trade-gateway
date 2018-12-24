@@ -121,4 +121,11 @@ void SerializerCtp::DefineStruct(CtpActionCancelOrder& d)
     AddItem(d.local_key.user_id, ("user_id"));
     AddItem(d.local_key.order_id, ("order_id"));
 }
+
+void SerializerCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
+{
+    AddItem(d.OldPassword, ("old_password"));
+    AddItem(d.NewPassword, ("new_password"));
+}
+
 }

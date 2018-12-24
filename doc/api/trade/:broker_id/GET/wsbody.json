@@ -27,6 +27,16 @@
             "required": ["aid"],
             "additionalProperties": false
         },
+        "change_password": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["change_password"] },
+                "old_password": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "new_password": { "type": "string", "minLength": 1 , "maxLength": 64 }
+            },
+            "required": ["aid"],
+            "additionalProperties": false
+        },
         "insert_order": {
             "type": "object",
             "properties": {
@@ -76,6 +86,8 @@
         { "$ref": "#/definitions/req_login" },
         { "$ref": "#/definitions/insert_order" },
         { "$ref": "#/definitions/cancel_order" },
-        { "$ref": "#/definitions/req_transfer" }
+        { "$ref": "#/definitions/req_transfer" },
+        { "$ref": "#/definitions/confirm_settlement" },
+        { "$ref": "#/definitions/change_password" }
     ]
 }

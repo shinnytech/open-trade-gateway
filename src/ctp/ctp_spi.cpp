@@ -178,6 +178,18 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
     m_trader->m_need_query_register.store(true);
 }
 
+void CCtpSpiHandler::OnRspUserPasswordUpdate(CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Log(LOG_WARNING, NULL, "ctp OnRspUserPasswordUpdate, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
+    if (!pRspInfo)
+        return;
+    if (pRspInfo->ErrorID == 0){
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"修改密码成功");
+    }else{
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"修改密码失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+    }
+}
+
 void CCtpSpiHandler::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfoConfirm, instance=%p, UserID=%s, ConfirmDate=%s", m_trader, m_trader->m_user_id.c_str(), pSettlementInfoConfirm?pSettlementInfoConfirm->ConfirmDate:"");

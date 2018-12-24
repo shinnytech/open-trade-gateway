@@ -33,6 +33,7 @@ private:
     void OnClientReqInsertOrder(CtpActionInsertOrder d);
     void OnClientReqCancelOrder(CtpActionCancelOrder d);
     void OnClientReqTransfer(CThostFtdcReqTransferField f);
+    void OnClientReqChangePassword(CThostFtdcUserPasswordUpdateField f);
     CThostFtdcInputOrderField m_input_order;
     CThostFtdcOrderActionField m_action_order;
 

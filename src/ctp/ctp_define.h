@@ -75,7 +75,6 @@ struct CtpActionCancelOrder
     CThostFtdcInputOrderActionField f;
 };
 
-
 class SerializerCtp
     : public RapidSerialize::Serializer<SerializerCtp>
 {
@@ -88,6 +87,7 @@ public:
     void DefineStruct(RemoteOrderKey& d);
     void DefineStruct(CtpActionInsertOrder& d);
     void DefineStruct(CtpActionCancelOrder& d);
+    void DefineStruct(CThostFtdcUserPasswordUpdateField& d);
     void DefineStruct(CThostFtdcReqTransferField& d);
     void DefineStruct(CThostFtdcTransferSerialField& d);
 };
