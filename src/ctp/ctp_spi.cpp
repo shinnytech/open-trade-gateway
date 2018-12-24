@@ -234,7 +234,6 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     auto ins = md_service::GetInstrument(order.symbol());
     if (!ins){
         Log(LOG_ERROR, NULL, "ctp OnRtnOrder, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), order.symbol().c_str());
-        m_trader->OutputNotify(1, u8"交易账户中的合约" + order.symbol() + u8"不在合约表中");
         return;
     }
     switch (pOrder->Direction)
@@ -401,7 +400,6 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
     auto ins = md_service::GetInstrument(trade.symbol());
     if (!ins){
         Log(LOG_ERROR, NULL, "ctp OnRtnTrade, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), trade.symbol().c_str());
-        m_trader->OutputNotify(1, u8"交易账户中的合约" + trade.symbol() + u8"不在合约表中");
         return;
     }
     switch (pTrade->Direction)
@@ -457,7 +455,6 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
         auto ins = md_service::GetInstrument(symbol);
         if (!ins){
             Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), symbol.c_str());
-            m_trader->OutputNotify(1, u8"交易账户中的合约" + std::string(symbol) + u8"不在合约表中");
             return;
         }
         Position& position = m_trader->GetPosition(symbol);
