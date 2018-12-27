@@ -180,7 +180,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
 
 void CCtpSpiHandler::OnRspUserPasswordUpdate(CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    Log(LOG_WARNING, NULL, "ctp OnRspUserPasswordUpdate, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
+    Log(LOG_INFO, NULL, "ctp OnRspUserPasswordUpdate, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
     if (!pRspInfo)
         return;
     if (pRspInfo->ErrorID == 0){
