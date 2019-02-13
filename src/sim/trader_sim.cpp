@@ -510,19 +510,7 @@ void TraderSim::LoadUserDataFile()
     if (m_user_file_path.empty())
         return;
     //选出最新的一个存档文件
-    std::vector<std::string> saved_files;
-    for (auto& p : std::experimental::filesystem::v1::directory_iterator(m_user_file_path)) {
-        if (!std::experimental::filesystem::v1::is_regular_file(p.status()))
-            continue;
-        std::string file_name_stem = p.path().stem().u8string();
-        if (file_name_stem != m_user_id)
-            continue;
-        saved_files.push_back(p.path().c_str());
-    }
-    if (saved_files.empty())
-        return;
-    std::sort(saved_files.begin(), saved_files.end());
-    auto fn = saved_files.back();
+    std::string fn = m_user_file_path + "/" + m_user_id;
     //加载存档文件
     SerializerTradeBase nss;
     nss.FromFile(fn.c_str());
@@ -531,7 +519,7 @@ void TraderSim::LoadUserDataFile()
     for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end();) {
         Position& position = it->second;
         position.ins = md_service::GetInstrument(position.symbol());
-        if (position.ins)
+        if (position.ins && !position.ins->expired)
             ++it;
         else
             it = m_data.m_positions.erase(it);
@@ -541,7 +529,7 @@ void TraderSim::LoadUserDataFile()
         用户权益转为昨权益, 平仓盈亏
         持仓手数全部移动到昨仓, 持仓均价调整到昨结算价
     */
-    if (fn.substr(fn.size()-8, 8) != g_config.trading_day){
+    if (m_data.trading_day != g_config.trading_day){
         m_data.m_orders.clear();
         m_data.m_trades.clear();
         for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it) {
@@ -563,6 +551,7 @@ void TraderSim::LoadUserDataFile()
             item.volume_short_frozen_today = 0;
             item.changed = true;
         }
+        m_data.trading_day = g_config.trading_day;
     } else {
         for (auto it = m_data.m_orders.begin(); it != m_data.m_orders.end(); ++it){
             m_alive_order_set.insert(&(it->second));
@@ -574,9 +563,10 @@ void TraderSim::SaveUserDataFile()
 {
     if (m_user_file_path.empty())
         return;
-    std::string fn = m_user_file_path + "/" + m_user_id + "." + g_config.trading_day;
+    std::string fn = m_user_file_path + "/" + m_user_id;
     SerializerTradeBase nss;
     nss.dump_all = true;
+    m_data.trading_day = g_config.trading_day;
     nss.FromVar(m_data);
     nss.ToFile(fn.c_str());
 }

@@ -141,6 +141,7 @@ void SerializerTradeBase::DefineStruct(TransferLog& d)
 void SerializerTradeBase::DefineStruct(User& d)
 {
     AddItem(d.user_id, ("user_id"));
+    AddItem(d.trading_day, ("trading_day"));
     AddItem(d.m_trade_more_data, ("trade_more_data"));
     AddItem(d.m_accounts, ("accounts"));
     AddItem(d.m_positions, ("positions"));
