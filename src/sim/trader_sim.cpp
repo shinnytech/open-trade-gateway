@@ -235,6 +235,7 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
     }
     m_alive_order_set.insert(order);
     UpdateOrder(order);
+    SaveUserDataFile();
     return;
 }
 
@@ -509,9 +510,8 @@ void TraderSim::LoadUserDataFile()
 {
     if (m_user_file_path.empty())
         return;
-    //选出最新的一个存档文件
-    std::string fn = m_user_file_path + "/" + m_user_id;
     //加载存档文件
+    std::string fn = m_user_file_path + "/" + m_user_id;
     SerializerTradeBase nss;
     nss.FromFile(fn.c_str());
     nss.ToVar(m_data);
@@ -535,6 +535,7 @@ void TraderSim::LoadUserDataFile()
         for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it) {
             Account& item = it->second;
             item.pre_balance += (item.close_profit - item.commission + item.deposit - item.withdraw);
+            item.static_balance = item.pre_balance;
             item.close_profit = 0;
             item.commission = 0;
             item.withdraw = 0;
