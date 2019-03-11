@@ -30,19 +30,37 @@ long long GetLocalEpochNano()
 
 std::string GuessTradingDay()
 {
-    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    std::tm* t = std::localtime(&now);
-    if (t->tm_hour >= 16) {
-        //Friday, Saturday, Sunday
-        if(t->tm_wday == 5)
-            now += 3600 * 24 * 3;
-        else if(t->tm_wday == 6)
-            now += 3600 * 24 * 2;
-        else 
-            now += 3600 * 24 * 1;
-        t = std::localtime(&now);
-    }
-    char buf[16];
-    snprintf(buf, 16, "%04d%02d%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
-    return std::string(buf);
+      std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	std::tm* t = std::localtime(&now);
+	if (t->tm_hour >= 16) 
+	{
+		//Friday, Saturday, Sunday
+		if (t->tm_wday == 5)
+		{
+			now += 3600 * 24 * 3;
+		}
+		else if (t->tm_wday == 6)
+		{
+			now += 3600 * 24 * 2;
+		}
+		else
+		{
+			now += 3600 * 24 * 1;
+		}					
+	}
+	else
+	{
+		if (t->tm_wday == 6)
+		{
+			now += 3600 * 24 * 2;
+		}
+		else if (t->tm_wday == 0)
+		{
+			now += 3600 * 24 * 1;
+		}		
+	}
+	t = std::localtime(&now);
+	char buf[16];
+	snprintf(buf, 16, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+	return std::string(buf);
 }
