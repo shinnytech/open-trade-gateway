@@ -725,7 +725,7 @@ void CCtpSpiHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderActio
         , pRspInfo?GBKToUTF8(pRspInfo->ErrorMsg).c_str():""
         );
     if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0){
-        if (memcmp(&m_trader->m_action_order, pOrderAction, sizeof(m_trader->m_input_order)) == 0)
+        if (strcmp(m_trader->m_action_order.OrderRef, pOrderAction->OrderRef) == 0)
             m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
     }
 }
