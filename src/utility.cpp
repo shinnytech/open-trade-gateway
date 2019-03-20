@@ -17,7 +17,7 @@ std::string GenerateUniqFileName()
     static char base[] = "/tmp/myfileXXXXXX";
     char fname[1024];
     strcpy(fname, base);
-    mktemp(fname);
+    mkstemp(fname);
     return fname;
 }
 
