@@ -179,15 +179,15 @@ void OnConnect(boost::system::error_code ec)
         return;
     }
     // Perform the websocket handshake
-    md_context.m_ws_socket->async_handshake_ex(md_host, md_path,
+    md_context.m_ws_socket->set_option(boost::beast::websocket::stream_base::decorator(
         [](boost::beast::websocket::request_type& m)
         {
             m.insert(boost::beast::http::field::accept, "application/v1+json");
             m.insert(boost::beast::http::field::user_agent, "OTG-" VERSION_STR);
-        },
-        std::bind(
-            OnHandshake,
-            std::placeholders::_1));
+        }));
+    md_context.m_ws_socket->async_handshake(md_host, md_path,
+        boost::beast::bind_front_handler(OnHandshake)
+    );
 }
 
 void OnHandshake(boost::system::error_code ec)

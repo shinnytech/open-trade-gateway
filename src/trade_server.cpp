@@ -41,13 +41,21 @@
 
 namespace trade_server
 {
+
+struct TradeServerContext
+{
+    boost::asio::io_context* m_ioc;
+    boost::asio::ip::tcp::acceptor* m_acceptor;
+    boost::asio::signal_set* m_signal;
+} trade_server_context;
+
 class TradeSession
     : public std::enable_shared_from_this<TradeSession>
 {
   public:
     // Take ownership of the socket
     explicit TradeSession(boost::asio::ip::tcp::socket socket)
-        : m_ws_socket(std::move(socket)), strand_(m_ws_socket.get_executor())
+        : m_ws_socket(std::move(socket))
     {
         m_trader_instance = NULL;
     }
@@ -58,36 +66,26 @@ class TradeSession
     void OnRead(boost::system::error_code ec, std::size_t bytes_transferred);
     void OnMessage(const std::string &json_str);
     void SendTextMsg(const std::string &msg);
+    void SendTextMsgi(std::string msg);
     void DoWrite();
     void OnWrite(boost::system::error_code ec, std::size_t bytes_transferred);
     void OnCloseConnection();
 
 private:
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer m_input_buffer;
-    boost::beast::multi_buffer m_output_buffer;
+    std::list<std::string> m_output_buffer;
     trader_dll::TraderBase* m_trader_instance;
 };
 
-
-
-// Start the asynchronous operation
 void TradeSession::Run()
 {
     // Accept the websocket handshake
     m_ws_socket.async_accept(
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &TradeSession::OnOpenConnection,
-                shared_from_this(),
-                std::placeholders::_1)));
+        boost::beast::bind_front_handler(
+            &TradeSession::OnOpenConnection,
+            shared_from_this()));    
 }
-// ws.next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_send);
-// ws.close(close_code::normal);
-// ws.auto_fragment(true);
-// ws.write_buffer_size(16384);
 
 void TradeSession::OnOpenConnection(boost::system::error_code ec)
 {
@@ -105,13 +103,9 @@ void TradeSession::DoRead()
 {
     m_ws_socket.async_read(
         m_input_buffer,
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &TradeSession::OnRead,
-                shared_from_this(),
-                std::placeholders::_1,
-                std::placeholders::_2)));
+        boost::beast::bind_front_handler(
+            &TradeSession::OnRead,
+            shared_from_this()));
 }
 
 void TradeSession::OnRead(boost::system::error_code ec, std::size_t bytes_transferred)
@@ -183,28 +177,29 @@ void TradeSession::OnMessage(const std::string &json_str)
 
 void TradeSession::SendTextMsg(const std::string &msg)
 {
+    trade_server_context.m_ioc->post(std::bind(&TradeSession::SendTextMsgi, this, msg));
+}
+
+void TradeSession::SendTextMsgi(std::string msg)
+{
     if(m_output_buffer.size() > 0){
-        size_t n = boost::asio::buffer_copy(m_output_buffer.prepare(msg.size()), boost::asio::buffer(msg));
-        m_output_buffer.commit(n);
+        m_output_buffer.push_back(msg);
     } else {
-        size_t n = boost::asio::buffer_copy(m_output_buffer.prepare(msg.size()), boost::asio::buffer(msg));
-        m_output_buffer.commit(n);
+        m_output_buffer.push_back(msg);
         DoWrite();
     }
 }
 
 void TradeSession::DoWrite()
 {
+    auto s = *(m_output_buffer.begin());
+    auto write_buf = boost::asio::buffer(s);
     m_ws_socket.text(true);
     m_ws_socket.async_write(
-        m_output_buffer.data(),
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &TradeSession::OnWrite,
-                shared_from_this(),
-                std::placeholders::_1,
-                std::placeholders::_2)));
+        write_buf,
+        boost::beast::bind_front_handler(
+            &TradeSession::OnWrite,
+            shared_from_this()));
 }
 
 void TradeSession::OnWrite(
@@ -215,9 +210,11 @@ void TradeSession::OnWrite(
         Log(LOG_WARNING, NULL, "trade server send message fail");
     else
         Log(LOG_INFO, NULL, "trade server send message success, session=%p, len=%d", this, bytes_transferred);
-    m_output_buffer.consume(bytes_transferred);
-    if(m_output_buffer.size() > 0)
+    auto s = *(m_output_buffer.begin());
+    m_output_buffer.pop_front();
+    if(m_output_buffer.size() > 0){
         DoWrite();
+    }
 }
 
 void TradeSession::OnCloseConnection()
@@ -234,13 +231,6 @@ void TradeSession::OnCloseConnection()
     m_trader_instance = NULL;
     exit(0);
 }
-
-struct TradeServerContext
-{
-    boost::asio::io_context* m_ioc;
-    boost::asio::ip::tcp::acceptor* m_acceptor;
-    boost::asio::signal_set* m_signal;
-} trade_server_context;
 
 void WaitForSignal()
 {
