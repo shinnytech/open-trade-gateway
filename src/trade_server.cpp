@@ -192,8 +192,7 @@ void TradeSession::SendTextMsgi(std::string msg)
 
 void TradeSession::DoWrite()
 {
-    auto s = *(m_output_buffer.begin());
-    auto write_buf = boost::asio::buffer(s);
+    auto write_buf = boost::asio::buffer(m_output_buffer.front());
     m_ws_socket.text(true);
     m_ws_socket.async_write(
         write_buf,
@@ -210,7 +209,6 @@ void TradeSession::OnWrite(
         Log(LOG_WARNING, NULL, "trade server send message fail");
     else
         Log(LOG_INFO, NULL, "trade server send message success, session=%p, len=%d", this, bytes_transferred);
-    auto s = *(m_output_buffer.begin());
     m_output_buffer.pop_front();
     if(m_output_buffer.size() > 0){
         DoWrite();
