@@ -22,8 +22,9 @@ Install
 
     sudo apt install libcurl4-openssl-dev
 
-2019-03-22前clone的版本需要安装 boost 1.68.0, 参见 https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html
-2019-03-22前clone的版本需要安装 boost 1.70.0, 参见 https://www.boost.org/users/history/version_1_70_0.html
+2019-03-21前的版本需要安装 boost 1.68.0, 参见 https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html
+
+2019-03-21后的版本需要安装 boost 1.70.0, 参见 https://www.boost.org/users/history/version_1_70_0.html
 
 安装 open-trade-gateway
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
