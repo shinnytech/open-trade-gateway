@@ -22,8 +22,9 @@ Install
 
     sudo apt install libcurl4-openssl-dev
 
-安装 boost 1.68.0, 参见 https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html
+2019-03-21前的版本需要安装 boost 1.68.0, 参见 https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html
 
+2019-03-21后的版本需要安装 boost 1.70.0, 参见 https://www.boost.org/users/history/version_1_70_0.html
 
 安装 open-trade-gateway
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,3 +87,10 @@ Test
     }
 
 表示服务器主程序启动正常
+
+
+Q&A
+-------------------------------------------------
+1、执行open_trade_gateway后，未启动重新返回命令行
+
+解决：基本出现在编译完成后的首次运行，请检查是否对broker_list.json 、config.json重命名并配置。出现该问题时，一般/var/log/open-trade-gateway/log中的提示信息是找不到config.json文件
