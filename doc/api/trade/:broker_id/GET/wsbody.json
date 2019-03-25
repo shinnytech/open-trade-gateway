@@ -6,7 +6,9 @@
                 "aid": { "enum": ["req_login"] },
                 "bid": { "type": "string", "minLength": 1 , "maxLength": 64 },
                 "user_name": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "password": { "type": "string", "minLength": 1 , "maxLength": 64 }
+                "password": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "client_app_id": { "type": "string", "minLength": 1 , "maxLength": 64 }, 
+                "client_system_info": { "type": "string", "minLength": 1 , "maxLength": 1024 }
             },
             "required": ["aid", "bid", "user_name", "password"],
             "additionalProperties": false
