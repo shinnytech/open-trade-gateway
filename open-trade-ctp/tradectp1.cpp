@@ -236,6 +236,16 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 			,_req_login.user_name.c_str()
 			,pRspInfo ? pRspInfo->ErrorID : -999
 			,pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+
+		//如果是未初始化
+		if (7 == pRspInfo->ErrorID)
+		{
+			Log(LOG_INFO, NULL, "ctp ProcessOnRspAuthenticate,instance=%p,bid=%s,UserID=%s need ReinitCtp"
+				, this
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str());
+			_ios.post(boost::bind(&traderctp::ReinitCtp, this));
+		}
 		return;
 	}
 	else
