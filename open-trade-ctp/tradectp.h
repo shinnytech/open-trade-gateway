@@ -140,12 +140,6 @@ private:
 
 	boost::shared_ptr<boost::thread> _thread_ptr;
 
-	boost::asio::io_context _ios_out;
-
-	boost::asio::io_context::work _woker_out;
-
-	boost::thread _thread_out;
-
 	int m_notify_seq;
 
 	int m_data_seq;

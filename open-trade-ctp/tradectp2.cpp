@@ -32,9 +32,6 @@ traderctp::traderctp(boost::asio::io_context& ios
 	,_in_mq_ptr()
 	,_in_mq_name(logFileName + "_msg_in")
 	,_thread_ptr()
-	,_ios_out()
-	,_woker_out(_ios_out)
-	,_thread_out(boost::bind(&boost::asio::io_context::run,&_ios_out))
 	,m_notify_seq(0)
 	,m_data_seq(0)
 	,_req_login()
@@ -167,8 +164,6 @@ void traderctp::Stop()
 	}
 	
 	StopTdApi();
-
-	_ios_out.stop();
 }
 
 bool traderctp::IsConnectionLogin(int nId)
@@ -597,7 +592,7 @@ void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 			);
 
 			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-			_ios_out.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
+			_ios.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
 						
 			//发送用户数据
 			SendUserDataImd(connId);	
@@ -661,7 +656,7 @@ void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 				,m_trading_day.c_str()
 			);
 			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-			_ios_out.post(boost::bind(&traderctp::SendMsg,this,connId, msg_ptr));			
+			_ios.post(boost::bind(&traderctp::SendMsg,this,connId, msg_ptr));
 		}
 		else
 		{
@@ -740,7 +735,7 @@ void traderctp::OutputNotifyAsych(int connId, long notify_code, const std::strin
 	std::string json_str;
 	nss.ToString(&json_str);
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios_out.post(boost::bind(&traderctp::SendMsg,this,connId, msg_ptr));
+	_ios.post(boost::bind(&traderctp::SendMsg,this,connId, msg_ptr));
 }
 
 void traderctp::OutputNotifySycn(int connId, long notify_code
@@ -760,7 +755,7 @@ void traderctp::OutputNotifySycn(int connId, long notify_code
 	std::string json_str;
 	nss.ToString(&json_str);	
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios_out.post(boost::bind(&traderctp::SendMsg, this,connId, msg_ptr));
+	_ios.post(boost::bind(&traderctp::SendMsg, this,connId, msg_ptr));
 }
 
 void traderctp::OutputNotifyAllAsych(long notify_code
@@ -784,7 +779,7 @@ void traderctp::OutputNotifyAllAsych(long notify_code
 	{
 		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 		std::shared_ptr<std::string> conn_ptr(new std::string(str));
-		_ios_out.post(boost::bind(&traderctp::SendMsgAll,this,conn_ptr,msg_ptr));
+		_ios.post(boost::bind(&traderctp::SendMsgAll,this,conn_ptr,msg_ptr));
 	}	
 }
 
@@ -809,7 +804,7 @@ void traderctp::OutputNotifyAllSycn(long notify_code
 	{
 		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 		std::shared_ptr<std::string> conn_ptr(new std::string(str));
-		_ios_out.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
 	}
 }
 

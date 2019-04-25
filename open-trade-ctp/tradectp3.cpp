@@ -419,7 +419,7 @@ void traderctp::SendUserDataImd(int connectId)
 
 	//发送	
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios_out.post(boost::bind(&traderctp::SendMsg,this,connectId,msg_ptr));		
+	_ios.post(boost::bind(&traderctp::SendMsg,this,connectId,msg_ptr));
 }
 
 void traderctp::SendUserData()
@@ -568,7 +568,7 @@ void traderctp::SendUserData()
 	{
 		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 		std::shared_ptr<std::string> conn_ptr(new std::string(str));
-		_ios_out.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
 	}	
 	m_something_changed = false;
 	m_peeking_message = false;
