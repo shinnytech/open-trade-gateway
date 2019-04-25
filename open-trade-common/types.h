@@ -48,6 +48,14 @@ const std::string END_OF_PACKAGE = "#END_OF_PACKAGE#";
 
 const std::string CLOSE_CONNECTION_MSG = "#CLOSE_CONNECTION_MSG#";
 
+const int MAX_MSG_NUMS_GATEWAY = 500;
+
+const int MAX_MSG_LENTH_GATEWAY = 1024*10;
+
+const std::string GATE_WAY_MSG_QUEUE_NAME = "OPEN_TRADE_GATE_WAY_MSG_QUEUE";
+
+const std::string USER_PRODUCT_INFO_NAME = "SHINNY_OTG";
+
 struct Instrument
 {
 	Instrument()

@@ -201,6 +201,7 @@ int traderctp::ReqAuthenticate()
 	memset(&field, 0, sizeof(field));
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	strcpy_x(field.UserID, _req_login.user_name.c_str());
+	strcpy_x(field.UserProductInfo,USER_PRODUCT_INFO_NAME.c_str());
 	strcpy_x(field.AppID,_req_login.broker.product_info.c_str());
 	strcpy_x(field.AuthCode,_req_login.broker.auth_code.c_str());
 	int ret = m_pTdApi->ReqAuthenticate(&field,++_requestID);
