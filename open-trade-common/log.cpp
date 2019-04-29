@@ -10,12 +10,15 @@
 #include <ctime>
 #include <sstream>
 #include <iostream>
+#include <vector>
 
 #include <memory.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <boost/algorithm/string.hpp>
 
 struct LogContext
 {
@@ -53,58 +56,67 @@ const char* CurrentDateTimeStr()
     std::chrono::seconds s = std::chrono::duration_cast<std::chrono::seconds>(ns);
     std::time_t t = s.count();
     std::tm* tm = std::localtime(&t);
-    sprintf(dtstr, "%04d-%02d-%02dT%02d:%02d:%02d.%09lld+08:00"
+    sprintf(dtstr, "%04d-%02d-%02dT%02d:%02d:%02d.%09lu+08:00"
     , tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday
     , tm->tm_hour, tm->tm_min, tm->tm_sec
     , fractional_seconds);
     return dtstr;
 }
 
-void Log(LogLevel level, const char* pack_str, const char* message_fmt, ...)
+
+void Log(LogLevel level, const char* message_fmt, ...)
 {
 	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
-	
-	
-    const char* level_str = Level2String(level);
-    const char* datetime_str = CurrentDateTimeStr();	
+
+	const char* level_str = Level2String(level);
+
+	const char* datetime_str = CurrentDateTimeStr();
 
 	std::stringstream ss;
 	ss << "{\"time\": \"" << datetime_str
-		<< "\", \"level\": \"" << level_str
-		<< "\", \"msg\": \"";
+		<< "\", \"level\": \"" << level_str << "\"";
 
-	va_list arglist;
 	char buf[1024 * 5];
 	memset(buf, 0, sizeof(buf));
+	va_list arglist;
 	va_start(arglist, message_fmt);
-	vsnprintf(buf,1024*5,message_fmt,arglist);
+	vsnprintf(buf, 1024 * 5, message_fmt, arglist);
 	va_end(arglist);
-	if (pack_str)
+
+	std::vector<std::string> kvs;
+	boost::algorithm::split(kvs, buf, boost::algorithm::is_any_of(";"));
+	if (kvs.empty())
 	{
-		ss << buf << "\", \"pack\":"
-			<< pack_str << "}\n";		
+		ss << ",\"msg\": \"" << buf << "\"";
 	}
 	else
 	{
-		ss << buf << "\"}\n";
-	}
-	std::string str = ss.str();
-	write(log_context.m_log_file_fd,str.c_str(),str.length());
-}
+		for (int i=0;i< kvs.size();++i)
+		{
+			std::string& kv = kvs[i];
+			std::vector<std::string> kvp;
+			boost::algorithm::split(kvp,kv,boost::algorithm::is_any_of("="));
+			if (kvp.size() != 2)
+			{
+				if (0 == i)
+				{
+					ss << ",\"msg\": \"" << kv << "\"";
+				}
+				continue;
+			}
+			ss << ",\"" << kvp[0] << "\": \"" << kvp[1] << "\"";
+		}
+	}	
+	ss << "}\n";
 
-bool LogInit()
-{
+	std::string str = ss.str();
 	std::string logFileName = "/var/log/open-trade-gateway/open-trade-gateway.log";
-    log_context.m_log_file_fd = open(logFileName.c_str(),O_WRONLY|O_APPEND| O_CREAT,S_IRUSR|S_IWUSR);
+	log_context.m_log_file_fd = open(logFileName.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 	if (log_context.m_log_file_fd == -1)
 	{
-        printf("can't open log file:%s",logFileName.c_str());
-        return false;
-    }
-    return true;
-}
-
-void LogCleanup()
-{
-    close(log_context.m_log_file_fd);
+		printf("can't open log file:%s",logFileName.c_str());
+		return;
+	}
+	write(log_context.m_log_file_fd,str.c_str(),str.length());
+	close(log_context.m_log_file_fd);
 }

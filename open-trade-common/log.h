@@ -17,8 +17,4 @@ typedef enum
     LOG_DEBUG
 } LogLevel;
 
-bool LogInit();
-
-void Log(LogLevel level, const char* pack_str, const char* message_fmt, ...);
-
-void LogCleanup();
+void Log(LogLevel level, const char* message_fmt, ...);

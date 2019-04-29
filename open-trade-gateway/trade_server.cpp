@@ -49,8 +49,7 @@ bool trade_server::init()
 	acceptor_.open(_endpoint.protocol(), ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, NULL, 
-			"trade server acceptor open fail, ec=%s"
+		Log(LOG_ERROR,"msg=trade server acceptor open fail,%s"
 			, ec.message().c_str());
 		return false;
 	}
@@ -59,8 +58,7 @@ bool trade_server::init()
 	acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, NULL
-			, "trade server acceptor set option fail, ec=%s"
+		Log(LOG_ERROR,"msg=trade server acceptor set option fail,%s"
 			, ec.message().c_str());
 		return false;
 	}
@@ -69,8 +67,7 @@ bool trade_server::init()
 	acceptor_.bind(_endpoint, ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, NULL
-			, "trade server acceptor bind fail, ec=%s"
+		Log(LOG_ERROR,"msg=trade server acceptor bind fail,%s"
 			, ec.message().c_str());
 		return false;
 	}
@@ -80,8 +77,7 @@ bool trade_server::init()
 		, ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, NULL
-			, "trade server acceptor listen fail, ec=%s"
+		Log(LOG_ERROR,"msg=trade server acceptor listen fail,%s"
 			, ec.message().c_str());
 		return false;
 	}
@@ -110,8 +106,7 @@ void trade_server::OnAccept(boost::system::error_code ec
 
 	if (ec)
 	{
-		Log(LOG_WARNING, NULL
-			, "trade_server accept error, ec=%s"
+		Log(LOG_WARNING,"msg=trade_server accept error,%s"
 			, ec.message().c_str());
 		do_accept();
 		return;

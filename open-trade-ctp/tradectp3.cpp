@@ -158,8 +158,8 @@ int traderctp::ReqQryBrokerTradingParams()
 	int r = m_pTdApi->ReqQryBrokerTradingParams(&field,0);
 	if (0 != r)
 	{
-		Log(LOG_INFO, NULL
-			, "ctp ReqQryBrokerTradingParams,instance=%p,bid=%s,UserID=%s, ret=%d"
+		Log(LOG_INFO
+			, "msg=ctp ReqQryBrokerTradingParams;instance=%p;bid=%s;UserID=%s;ret=%d"
 			, this
 			,_req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -177,8 +177,8 @@ int traderctp::ReqQryAccount(int reqid)
 	int r = m_pTdApi->ReqQryTradingAccount(&field, reqid);
 	if (0 != r)
 	{
-		Log(LOG_INFO, NULL
-			, "ctp ReqQryTradingAccount,instance=%p,bid=%s,UserID=%s,ret=%d"
+		Log(LOG_INFO
+			, "msg=ctp ReqQryTradingAccount;instance=%p;bid=%s;UserID=%s;ret=%d"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -194,7 +194,7 @@ int traderctp::ReqQryPosition(int reqid)
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQryInvestorPosition(&field, reqid);
-	Log(LOG_INFO, NULL, "ctp ReqQryInvestorPosition,instance=%p,bid=%s,UserID=%s, ret=%d"
+	Log(LOG_INFO,"msg=ctp ReqQryInvestorPosition;instance=%p;bid=%s;UserID=%s;ret=%d"
 		,this
 		,_req_login.bid.c_str()
 		,_req_login.user_name.c_str()
@@ -209,7 +209,7 @@ void traderctp::ReqQryBank()
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	m_pTdApi->ReqQryContractBank(&field, 0);
 	int r = m_pTdApi->ReqQryContractBank(&field, 0);
-	Log(LOG_INFO, NULL, "ctp ReqQryContractBank,instance=%p,bid=%s,UserID=%s, ret=%d"
+	Log(LOG_INFO,"msg=ctp ReqQryContractBank;instance=%p;bid=%s;UserID=%s;ret=%d"
 		,this
 		,_req_login.bid.c_str()
 		,_req_login.user_name.c_str()
@@ -223,7 +223,7 @@ void traderctp::ReqQryAccountRegister()
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	m_pTdApi->ReqQryAccountregister(&field, 0);
 	int r = m_pTdApi->ReqQryAccountregister(&field, 0);
-	Log(LOG_INFO, NULL, "ctp ReqQryAccountregister,instance=%p,bid=%s,UserID=%s, ret=%d"
+	Log(LOG_INFO,"msg=ctp ReqQryAccountregister;instance=%p;bid=%s;UserID=%s;ret=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -238,7 +238,7 @@ void traderctp::ReqQrySettlementInfo()
 	strcpy_x(field.InvestorID,_req_login.user_name.c_str());
 	strcpy_x(field.AccountID,_req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQrySettlementInfo(&field, 0);
-	Log(LOG_INFO, NULL, "ctp ReqQrySettlementInfo,instance=%p,bid=%s,UserID=%s,ret=%d"
+	Log(LOG_INFO,"msg=ctp ReqQrySettlementInfo;instance=%p;bid=%s;UserID=%s;ret=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -303,8 +303,7 @@ void traderctp::SendUserDataImd(int connectId)
 		}
 		if (nullptr == ps.ins)
 		{
-			Log(LOG_ERROR, NULL, "ctp miss symbol %s when processing position,\
-			 instance=%p,bid=%s,UserID=%s"
+			Log(LOG_ERROR,"msg=ctp miss symbol %s when processing position;instance=%p;bid=%s;UserID=%s"
 				,symbol.c_str()
 				,this
 				,_req_login.bid.c_str()
@@ -449,8 +448,7 @@ void traderctp::SendUserData()
 		}			
 		if (nullptr == ps.ins)
 		{
-			Log(LOG_ERROR, NULL, "ctp miss symbol %s when processing position \
-				, instance=%p,bid=%s,UserID=%s"
+			Log(LOG_ERROR,"msg=ctp miss symbol %s when processing position;instance=%p;bid=%s;UserID=%s"
 				, symbol.c_str()
 				, this
 				, _req_login.bid.c_str()
@@ -561,7 +559,6 @@ void traderctp::SendUserData()
 	rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);	
 	std::string json_str;
 	nss.ToString(&json_str);
-	//Log(LOG_ERROR, NULL, "SendUserData:%s", json_str.c_str());
 	//发送		
 	std::string str = GetConnectionStr();
 	if (!str.empty())

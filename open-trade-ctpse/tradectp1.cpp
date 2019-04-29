@@ -101,8 +101,7 @@ static std::string GuessExchangeId(std::string instrument_id)
 
 void traderctp::ProcessOnFrontDisconnected(int nReason)
 {
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessOnFrontDisconnected,instance=%p,bid=%s,UserID=%s,nReason=%d"
+	Log(LOG_INFO,"msg=ctpse ProcessOnFrontDisconnected;instance=%p;bid=%s;UserID=%s;nReason=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -115,8 +114,7 @@ void traderctp::OnFrontDisconnected(int nReason)
 	//还在等待登录阶段
 	if (!m_b_login.load())
 	{
-		Log(LOG_INFO, NULL
-			, "ctpse OnFrontDisconnected,instance=%p,bid=%s,UserID=%s,nReason=%d"
+		Log(LOG_INFO,"msg=ctpse OnFrontDisconnected;instance=%p;bid=%s,UserID=%s;nReason=%d"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -133,7 +131,7 @@ void traderctp::OnFrontDisconnected(int nReason)
 
 void traderctp::ProcessOnFrontConnected()
 {	
-	Log(LOG_INFO, NULL, "ctpse ProcessOnFrontConnected, instance=%p,bid=%s,UserID=%s"
+	Log(LOG_INFO,"msg=ctpse ProcessOnFrontConnected;instance=%p;bid=%s;UserID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -157,7 +155,7 @@ void traderctp::OnFrontConnected()
 	if (!m_b_login.load())
 	{
 		//这时是安全的
-		Log(LOG_INFO, NULL, "ctpse OnFrontConnected, instance=%p,bid=%s,UserID=%s"
+		Log(LOG_INFO,"msg=ctpse OnFrontConnected;instance=%p;bid=%s;UserID=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
@@ -165,9 +163,7 @@ void traderctp::OnFrontConnected()
 		int ret=ReqAuthenticate();
 		if (0 != ret)
 		{
-			Log(LOG_WARNING
-				, NULL
-				, "ctpse OnFrontConnected, instance=%p,bid=%s,UserID=%s,ReqAuthenticate ret=%d"
+			Log(LOG_WARNING,"msg=ctpse OnFrontConnected;instance=%p;bid=%s;UserID=%s;ReqAuthenticate ret=%d"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -189,8 +185,7 @@ int traderctp::ReqAuthenticate()
 {
 	if (_req_login.broker.auth_code.empty())
 	{
-		Log(LOG_INFO, NULL
-			, "_req_login.broker.auth_code.empty(), instance=%p,bid=%s,UserID=%s"
+		Log(LOG_INFO,"msg=_req_login.broker.auth_code.empty();instance=%p;bid=%s;UserID=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
@@ -205,9 +200,7 @@ int traderctp::ReqAuthenticate()
 	strcpy_x(field.AppID,_req_login.broker.product_info.c_str());
 	strcpy_x(field.AuthCode,_req_login.broker.auth_code.c_str());
 	int ret = m_pTdApi->ReqAuthenticate(&field,++_requestID);
-	Log(LOG_INFO, NULL, "ctpse ReqAuthenticate fail,instance=%p,bid=%s,UserID=%s \
-			,UserProductInfo=%s ,AuthCode=%s\
-			,ret=%d"
+	Log(LOG_INFO,"msg=ctpse ReqAuthenticate fail;instance=%p;bid=%s;UserID=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -242,7 +235,7 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 {
 	if ((nullptr != pRspInfo) && (pRspInfo->ErrorID != 0))
 	{
-		Log(LOG_WARNING, NULL, "ctpse ProcessOnRspAuthenticate,instance=%p,bid=%s,UserID=%s,ErrorID=%d,ErrMsg=%s"
+		Log(LOG_WARNING,"msg=ctpse ProcessOnRspAuthenticate;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -251,7 +244,7 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 		//如果是未初始化
 		if (7 == pRspInfo->ErrorID)
 		{
-			Log(LOG_INFO, NULL, "ctpse ProcessOnRspAuthenticate,instance=%p,bid=%s,UserID=%s need ReinitCtp"
+			Log(LOG_INFO,"msg=ctpse ProcessOnRspAuthenticate,need ReinitCtp;instance=%p;bid=%s;UserID=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str());
@@ -273,7 +266,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 	{
 		if ((nullptr != pRspInfo) && (pRspInfo->ErrorID != 0))
 		{
-			Log(LOG_WARNING, NULL, "ctpse OnRspAuthenticate 1,instance=%p,bid=%s,UserID=%s,ErrorID=%d,ErrMsg=%s"
+			Log(LOG_WARNING,"msg=ctpse OnRspAuthenticate 1;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -291,7 +284,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 		}
 		else
 		{
-			Log(LOG_WARNING, NULL, "ctpse OnRspAuthenticate 2,instance=%p,bid=%s,UserID=%s,ErrorID=%d,ErrMsg=%s"
+			Log(LOG_WARNING,"msg=ctpse OnRspAuthenticate 2;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -331,8 +324,7 @@ int traderctp::RegSystemInfo()
 
 	int ret = m_pTdApi->RegisterUserSystemInfo(&f);
 	Log(LOG_INFO
-		, NULL
-		, "ctpse RegisterUserSystemInfo, instance=%p,bid=%s,UserID=%s,ClientLoginTime=%s,ClientPublicIP=%s,ClientIPPort=%d,ClientAppID=%s,ClientSystemInfoLen=%d, ret=%d"
+		, "msg=ctpse RegisterUserSystemInfo;instance=%p;bid=%s;UserID=%s;ClientLoginTime=%s;ClientPublicIP=%s;ClientIPPort=%d;ClientAppID=%s;ClientSystemInfoLen=%d;ret=%d"
 		, this
 		, _req_login.bid.c_str()
 		, f.UserID
@@ -347,8 +339,7 @@ int traderctp::RegSystemInfo()
 
 void traderctp::SendLoginRequest()
 {
-	Log(LOG_INFO, NULL
-		, "ctpse SendLoginRequest,instance=%p,bid=%s,UserID=%s, client_system_info=%s, client_app_id=%s"
+	Log(LOG_INFO,"msg=ctpse SendLoginRequest;instance=%p;bid=%s;UserID=%s;client_system_info=%s;client_app_id=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -377,8 +368,7 @@ void traderctp::SendLoginRequest()
 			int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
 			if (0 != ret)
 			{
-				Log(LOG_INFO, NULL,
-					"ctpse ReqUserLogin fail, instance=%p,bid=%s,UserID=%s,ret=%d"
+				Log(LOG_INFO,"msg=ctpse ReqUserLogin fail;instance=%p;bid=%s;UserID=%s;ret=%d"
 					, this
 					, _req_login.bid.c_str()
 					, field.UserID
@@ -399,8 +389,7 @@ void traderctp::SendLoginRequest()
 		int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
 		if (0 != ret)
 		{
-			Log(LOG_INFO, NULL,
-				"ctpse ReqUserLogin fail,instance=%p,bid=%s,UserID=%s,ret=%d"
+			Log(LOG_INFO,"msg=ctpse ReqUserLogin fail;instance=%p;bid=%s;UserID=%s;ret=%d"
 				, this
 				, _req_login.bid.c_str()
 				, field.UserID
@@ -422,7 +411,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 	//还在等待登录阶段
 	if (!m_b_login.load())
 	{
-		Log(LOG_INFO, NULL, "ctpse OnRspUserLogin, instance=%p,bid=%s,UserID=%s, ErrMsg=%s, TradingDay=%s, FrontId=%d, SessionId=%d, MaxOrderRef=%s"
+		Log(LOG_INFO,"msg=ctpse OnRspUserLogin;instance=%p;bid=%s;UserID=%s;ErrMsg=%s;TradingDay=%s;FrontId=%d;SessionId=%d;MaxOrderRef=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -434,7 +423,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 		m_req_login_dt.store(0);		
 		if (pRspInfo->ErrorID != 0)
 		{
-			Log(LOG_WARNING, NULL, "ctpse OnRspUserLogin,instance=%p,bid=%s,UserID=%s, ErrorID=%d, ErrMsg=%s"
+			Log(LOG_WARNING,"msg=ctpse OnRspUserLogin;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -480,7 +469,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 
 void traderctp::ReinitCtp()
 {
-	Log(LOG_INFO, NULL, "ctpse ReinitCtp begin,instance=%p,bid=%s,UserID=%s"
+	Log(LOG_INFO,"msg=ctpse ReinitCtp begin;instance=%p;bid=%s;UserID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -494,7 +483,7 @@ void traderctp::ReinitCtp()
 	{
 		m_pTdApi->Init();
 	}
-	Log(LOG_INFO, NULL, "ctpse ReinitCtp end,instance=%p,bid=%s,UserID=%s"
+	Log(LOG_INFO,"msg=ctpse ReinitCtp end;instance=%p;bid=%s;UserID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -503,8 +492,7 @@ void traderctp::ReinitCtp()
 void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginField> pRspUserLogin
 	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO, NULL, "ctpse ProcessOnRspUserLogin, instance=%p,bid=%s,UserID=%s,\
-		 ErrMsg=%s, TradingDay=%s, FrontId=%d, SessionId=%d, MaxOrderRef=%s"
+	Log(LOG_INFO,"msg=ctpse ProcessOnRspUserLogin;instance=%p;bid=%s;UserID=%s;ErrMsg=%s;TradingDay=%s;FrontId=%d;SessionId=%d;MaxOrderRef=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -518,8 +506,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 	m_req_login_dt.store(0);
 	if (nullptr!=pRspInfo && pRspInfo->ErrorID != 0)
 	{
-		Log(LOG_WARNING, NULL, "ctpse OnRspUserLogin, instance=%p,bid=%s,\
-			UserID=%s, ErrorID=%d, ErrMsg=%s"
+		Log(LOG_WARNING,"msg=ctpse OnRspUserLogin;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -541,7 +528,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 		if (m_trading_day != trading_day)
 		{
 			//一个新交易日的重新连接,需要重新初始化所有变量
-			Log(LOG_INFO, NULL, "ctpse reinit in new trading day,instance=%p,bid=%s,UserID=%s,oldday=%s,newday=%s"
+			Log(LOG_INFO,"msg=ctpse reinit in new trading day;instance=%p;bid=%s;UserID=%s;oldday=%s;newday=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -613,7 +600,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 		else
 		{
 			//正常的断开重连成功
-			Log(LOG_INFO, NULL, "ctpse reconnect success,instance=%p,bid=%s,UserID=%s,trading_day=%s"
+			Log(LOG_INFO,"msg=ctpse reconnect success;instance=%p;bid=%s;UserID=%s;trading_day=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -638,8 +625,7 @@ void traderctp::ReqConfirmSettlement()
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	strcpy_x(field.InvestorID,_req_login.user_name.c_str());
 	int r = m_pTdApi->ReqSettlementInfoConfirm(&field,0);
-	Log(LOG_INFO, NULL,
-		"ctpse ReqConfirmSettlement, instance=%p,bid=%s,InvestorID=%s,ret=%d"
+	Log(LOG_INFO,"msg=ctpse ReqConfirmSettlement;instance=%p;bid=%s;InvestorID=%s;ret=%d"
 		, this
 		, _req_login.bid.c_str()
 		, field.InvestorID
@@ -655,8 +641,7 @@ void traderctp::ReqQrySettlementInfoConfirm()
 	strcpy_x(field.AccountID, _req_login.user_name.c_str());
 	strcpy_x(field.CurrencyID, "CNY");
 	int r = m_pTdApi->ReqQrySettlementInfoConfirm(&field, 0);
-	Log(LOG_INFO, NULL,
-		"ctpse ReqQrySettlementInfoConfirm,instance=%p,bid=%s,InvestorID=%s, ret=%d"
+	Log(LOG_INFO,"msg=ctpse ReqQrySettlementInfoConfirm;instance=%p;bid=%s;InvestorID=%s;ret=%d"
 		, this
 		, _req_login.bid.c_str()
 		, field.InvestorID
@@ -665,7 +650,7 @@ void traderctp::ReqQrySettlementInfoConfirm()
 
 void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm)
 {	
-	Log(LOG_INFO, NULL, "ctpse ProcessQrySettlementInfoConfirm,instance=%p,bid=%s,UserID=%s,ConfirmDate=%s"
+	Log(LOG_INFO,"msg=ctpse ProcessQrySettlementInfoConfirm;instance=%p;bid=%s;UserID=%s;ConfirmDate=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -673,7 +658,7 @@ void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettle
 	if ((nullptr != pSettlementInfoConfirm)
 		&& (std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trading_day))
 	{
-		Log(LOG_INFO, NULL, "已经确认过结算单, instance=%p,bid=%s,UserID=%s, ConfirmDate=%s"
+		Log(LOG_INFO,u8"msg=已经确认过结算单;instance=%p;bid=%s;UserID=%s;ConfirmDate=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -683,7 +668,7 @@ void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettle
 		return;
 	}
 	//还没有确认过结算单
-	Log(LOG_INFO, NULL, "还没有确认过结算单, instance=%p,bid=%s,UserID=%s, ConfirmDate=%s"
+	Log(LOG_INFO,u8"msg=还没有确认过结算单;instance=%p;bid=%s;UserID=%s;ConfirmDate=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -726,7 +711,7 @@ void  traderctp::ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementIn
 
 void traderctp::ProcessEmptySettlementInfo()
 {
-	Log(LOG_INFO, NULL, "ctpse OnRspQrySettlementInfo,SettlementInfo is empty,instance=%p,bid=%s,UserID=%s"
+	Log(LOG_INFO,"msg=ctpse OnRspQrySettlementInfo,SettlementInfo is empty;instance=%p;bid=%s;UserID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -764,8 +749,8 @@ void traderctp::ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlemen
 		return;
 	}
 
-	Log(LOG_INFO, NULL,
-		"ctpse ProcessSettlementInfoConfirm,instance=%p,bid=%s,UserID=%s,bIsLast=%s,InvestorID=%s,ConfirmDate=%s,ConfirmTime=%s"
+	Log(LOG_INFO, 
+		"msg=ctpse ProcessSettlementInfoConfirm;instance=%p;bid=%s;UserID=%s;bIsLast=%s;InvestorID=%s;ConfirmDate=%s;ConfirmTime=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -797,7 +782,7 @@ void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField 
 void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPasswordUpdateField> pUserPasswordUpdate,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO, NULL, "ctpse OnRspUserPasswordUpdate,instance=%p,bid=%s, UserID=%s"
+	Log(LOG_INFO,"msg=ctpse OnRspUserPasswordUpdate;instance=%p;bid=%s;UserID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -920,7 +905,7 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 {
 	if (nullptr == pInputOrder)
 	{
-		Log(LOG_INFO, NULL, "ctpse OnRspOrderInsert, instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+		Log(LOG_INFO,"msg=ctpse OnRspOrderInsert;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -928,10 +913,7 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 	}
 	else
 	{
-		Log(LOG_INFO, NULL
-			, "ctpse OnRspOrderInsert,instance=%p,bid=%s,UserID=%s,InstrumentID=%s \
-		,OrderRef=%s,OrderPriceType=%c,Direction=%c,CombOffsetFlag=%c\
-		,LimitPrice=%f,VolumeTotalOriginal=%d,VolumeCondition=%c,TimeCondition=%c"
+		Log(LOG_INFO,"msg=ctpse OnRspOrderInsert;instance=%p;bid=%s;UserID=%s;InstrumentID=%s;OrderRef=%s;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -1092,7 +1074,7 @@ void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 void traderctp::ProcessOrderAction(std::shared_ptr<CThostFtdcInputOrderActionField> pInputOrderAction,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO, NULL, "ctpse OnRspOrderAction,instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+	Log(LOG_INFO,"msg=ctpse OnRspOrderAction;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1125,17 +1107,14 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 {
 	if (nullptr == pInputOrder)
 	{
-		Log(LOG_INFO, NULL, "ctpse ProcessErrRtnOrderInsert, instance=%p, UserID=%s, ErrorID=%d"
+		Log(LOG_INFO,"msg=ctpse ProcessErrRtnOrderInsert;instance=%p;UserID=%s;ErrorID=%d"
 			, this
 			, _req_login.user_name.c_str()
 			, pRspInfo ? pRspInfo->ErrorID : -999);
 	}
 	else
 	{
-		Log(LOG_INFO, NULL
-			, "ctpse ProcessErrRtnOrderInsert,instance=%p,bid=%s,UserID=%s,InstrumentID=%s \
-		,OrderRef=%s,OrderPriceType=%c,Direction=%c,CombOffsetFlag=%c\
-		,LimitPrice=%f,VolumeTotalOriginal=%d,VolumeCondition=%c,TimeCondition=%c"
+		Log(LOG_INFO,"msg=ctpse ProcessErrRtnOrderInsert;instance=%p;bid=%s;UserID=%s;InstrumentID=%s;OrderRef=%s;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -1305,7 +1284,7 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 void traderctp::ProcessErrRtnOrderAction(std::shared_ptr<CThostFtdcOrderActionField> pOrderAction,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO, NULL, "ctpse OnErrRtnOrderAction,instance=%p,bid=%s,UserID=%s, ErrorID=%d, ErrorMsg=%s"
+	Log(LOG_INFO,"msg=ctpse OnErrRtnOrderAction;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrorMsg=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1351,9 +1330,7 @@ void traderctp::ProcessQryInvestorPosition(
 {
 	if (pRspInvestorPosition)
 	{
-		Log(LOG_INFO, NULL
-			, "ctpse ProcessQryInvestorPosition, instance=%p, nRequestID=%d,\
-				 bIsLast=%d,bid=%s,UserID=%s, InstrumentId=%s, ExchangeId=%s"
+		Log(LOG_INFO,"msg=ctpse ProcessQryInvestorPosition;instance=%p;nRequestID=%d;bIsLast=%d;bid=%s;UserID=%s;InstrumentId=%s;ExchangeId=%s"
 			, this
 			, nRequestID
 			, bIsLast
@@ -1366,9 +1343,7 @@ void traderctp::ProcessQryInvestorPosition(
 		auto ins = GetInstrument(symbol);
 		if (!ins)
 		{
-			Log(LOG_WARNING, NULL
-				, "ctpse OnRspQryInvestorPosition, instrument not exist, instance=%p,\
-				bid=%s, UserID=%s, symbol=%s"
+			Log(LOG_WARNING,"msg=ctpse OnRspQryInvestorPosition, instrument not exist;instance=%p;bid=%s;UserID=%s;symbol=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -1464,8 +1439,7 @@ void traderctp::ProcessQryBrokerTradingParams(std::shared_ptr<CThostFtdcBrokerTr
 		m_need_query_broker_trading_params.store(false);
 	}
 
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessQryBrokerTradingParams, instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+	Log(LOG_INFO,"msg=ctpse ProcessQryBrokerTradingParams;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1476,8 +1450,7 @@ void traderctp::ProcessQryBrokerTradingParams(std::shared_ptr<CThostFtdcBrokerTr
 		return;
 	}
 
-	Log(LOG_INFO, NULL
-		, "ctpse BrokerTradingParams,instance=%p,bid=%s,UserID=%s,Algorithm=%d"
+	Log(LOG_INFO,"msg=ctpse BrokerTradingParams;instance=%p;bid=%s;UserID=%s;Algorithm=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1515,8 +1488,7 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 		m_rsp_account_id.store(nRequestID);
 	}
 
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessQryTradingAccount, instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+	Log(LOG_INFO,"msg=ctpse ProcessQryTradingAccount;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1557,8 +1529,7 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 	account.frozen_commission = pRspInvestorAccount->FrozenCommission;
 	account.frozen_premium = pRspInvestorAccount->FrozenCash;
 	account.available = pRspInvestorAccount->Available;
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessQryTradingAccount instance=%p,bid=%s,UserID=%s,available ctp return=%f"
+	Log(LOG_INFO,"msg=ctpse ProcessQryTradingAccount;instance=%p;bid=%s;UserID=%s;available ctp return=%f"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1594,8 +1565,7 @@ void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvest
 void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankField> pContractBank,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessQryContractBank,instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+	Log(LOG_INFO,"msg=ctpse ProcessQryContractBank;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1610,8 +1580,7 @@ void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankFie
 	Bank& bank = GetBank(pContractBank->BankID);
 	bank.bank_id = pContractBank->BankID;
 	bank.bank_name = GBKToUTF8(pContractBank->BankName);
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessQryContractBank,instance=%p,bid=%s,UserID=%s,bank_id=%s,bank_name=%s"
+	Log(LOG_INFO,"msg=ctpse ProcessQryContractBank;instance=%p;bid=%s;UserID=%s;bank_id=%s;bank_name=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1648,8 +1617,7 @@ void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 void traderctp::ProcessQryAccountregister(std::shared_ptr<CThostFtdcAccountregisterField> pAccountregister,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO, NULL
-		, "ctpse ProcessQryAccountregister, instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+	Log(LOG_INFO,"msg=ctpse ProcessQryAccountregister;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1706,8 +1674,7 @@ void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccount
 void traderctp::ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSerialField> pTransferSerial,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO, NULL
-		, "ctpse OnRspQryTransferSerial, instance=%p,bid=%s,UserID=%s, ErrorID=%d"
+	Log(LOG_INFO,"msg=ctpse OnRspQryTransferSerial;instance=%p;bid=%s;UserID=%s;ErrorID=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1766,8 +1733,7 @@ void traderctp::ProcessFromBankToFutureByFuture(
 		return;
 	}		
 
-	Log(LOG_INFO, NULL
-		, "ctpse OnRtnFromBankToFutureByFuture, instance=%p,bid=%s,UserID=%s"
+	Log(LOG_INFO,"msg=ctpse OnRtnFromBankToFutureByFuture;instance=%p;bid=%s;UserID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -1880,14 +1846,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		return;
 	}
 
-	Log(LOG_INFO, NULL
-		, "ctpse OnRtnOrder,instance=%p,bid=%s,UserID=%s,InstrumentId=%s \
-		,OrderRef=%s,Session=%d,OrderPriceType=%c,Direction=%c\
-		,CombOffsetFlag=%c,LimitPrice=%f,VolumeTotalOriginal=%d\
-		,TimeCondition=%c,VolumeCondition=%c,OrderLocalID=%s \
-		,OrderSubmitStatus=%c,OrderSysID=%s,OrderStatus=%c \
-		,VolumeTraded=%d,VolumeTotal=%d,InsertTime=%s \
-		,ZCETotalTradedVolume=%d"
+	Log(LOG_INFO,"msg=ctpse OnRtnOrder;instance=%p;bid=%s;UserID=%s;InstrumentId=%s;OrderRef=%s;Session=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;TimeCondition=%c;VolumeCondition=%c;OrderLocalID=%s;OrderSubmitStatus=%c;OrderSysID=%s;OrderStatus=%c;VolumeTraded=%d;VolumeTotal=%d;InsertTime=%s;ZCETotalTradedVolume=%d"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -1934,8 +1893,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	auto ins = GetInstrument(order.symbol());
 	if (!ins)
 	{
-		Log(LOG_ERROR, NULL
-			, "ctpse OnRtnOrder, instrument not exist, instance=%p,bid=%s,UserID=%s, symbol=%s"
+		Log(LOG_ERROR,"msg=ctpse OnRtnOrder, instrument not exist;instance=%p;bid=%s;UserID=%s;symbol=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -2131,11 +2089,7 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 
 void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 {
-	Log(LOG_INFO, NULL
-		, "ctpse OnRtnTrade,instance=%p,bid=%s,UserID=%s,InstrumentId=%s \
-		, OrderRef=%s,Direction=%c,OrderSysID=%s,OffsetFlag=%c,HedgeFlag=%c \
-		,Price=%f,Volume=%d,TradeDate=%s,TradeTime=%s \
-		,OrderLocalID=%s"
+	Log(LOG_INFO,"msg=ctpse OnRtnTrade;instance=%p;bid=%s;UserID=%s;InstrumentId=%s;OrderRef=%s;Direction=%c;OrderSysID=%s;OffsetFlag=%c;HedgeFlag=%c;Price=%f;Volume=%d;TradeDate=%s;TradeTime=%s;OrderLocalID=%s"
 		, this
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2190,9 +2144,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	auto ins = GetInstrument(trade.symbol());
 	if (!ins) 
 	{
-		Log(LOG_ERROR, NULL,
-			"ctpse OnRtnTrade,instrument not exist,instance=%p,bid=%s\
-			,UserID=%s, symbol=%s"
+		Log(LOG_ERROR,"msg=ctpse OnRtnTrade,instrument not exist;instance=%p;bid=%s;UserID=%s;symbol=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -2264,9 +2216,7 @@ void traderctp::ProcessOnRtnTradingNotice(std::shared_ptr<CThostFtdcTradingNotic
 	auto s = GBKToUTF8(pTradingNoticeInfo->FieldContent);
 	if (!s.empty())
 	{
-		Log(LOG_INFO
-			, NULL
-			, "ctpse OnRtnTradingNotice,instance=%p,bid=%s,UserID=%s, TradingNoticeInfo=%s"
+		Log(LOG_INFO,"msg=ctpse OnRtnTradingNotice;instance=%p;bid=%s;UserID=%s;TradingNoticeInfo=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -2305,8 +2255,7 @@ void traderctp::ProcessRspError(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo
 {
 	if (nullptr != pRspInfo)
 	{
-		Log(LOG_INFO, NULL
-			, "ctpse OnRspError, instance=%p,bid=%s,UserID=%s, ErrMsg=%s"
+		Log(LOG_INFO,"msg=ctpse OnRspError;instance=%p;bid=%s;UserID=%s;ErrMsg=%s"
 			, this
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()

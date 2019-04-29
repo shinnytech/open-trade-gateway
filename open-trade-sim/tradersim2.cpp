@@ -311,7 +311,7 @@ void tradersim::SendUserData()
 			ps.ins = GetInstrument(symbol);
 		if (!ps.ins) 
 		{
-			Log(LOG_ERROR, NULL, "miss symbol %s when processing position", symbol);
+			Log(LOG_ERROR,"msg=miss symbol %s when processing position", symbol);
 			continue;
 		}
 		double last_price = ps.ins->last_price;

@@ -17,19 +17,13 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		if (!LogInit())
-		{			
-			return -1;
-		}
-
-		Log(LOG_INFO,NULL,"trade_server init");
+		Log(LOG_INFO,"msg=trade_server init");
 
 		//加载配置文件
 		if (!LoadConfig())
 
 		{
-			Log(LOG_WARNING,NULL,"trade_server load config failed!");
-			LogCleanup();
+			Log(LOG_WARNING,"msg=trade_server load config failed!");			
 			return -1;
 		}
 
@@ -42,8 +36,7 @@ int main(int argc, char* argv[])
 		if (!s.init())
 		{
 			md_child.terminate();
-			Log(LOG_INFO, NULL, "trade_server init fail!");
-			LogCleanup();
+			Log(LOG_INFO,"msg=trade_server init fail!");
 			return -1;
 		}
 		
@@ -63,9 +56,8 @@ int main(int argc, char* argv[])
 			s.stop();	
 			flag.store(false);
 			ios.stop();
-			Log(LOG_INFO, NULL, "trade_server got sig %d", sig);
-			Log(LOG_INFO, NULL, "trade_server exit");
-			LogCleanup();
+			Log(LOG_INFO,"msg=trade_server got sig %d", sig);
+			Log(LOG_INFO,"msg=trade_server exit");
 		});
 		
 		while (flag.load())
@@ -77,7 +69,7 @@ int main(int argc, char* argv[])
 			}
 			catch(std::exception& ex)
 			{
-				Log(LOG_ERROR, NULL, "ios run exception:%s"
+				Log(LOG_ERROR,"msg=ios run exception,%s"
 					,ex.what());
 			}
 		}

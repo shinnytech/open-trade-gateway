@@ -58,7 +58,7 @@ void tradersim::Start()
 	}
 	catch (const std::exception& ex)
 	{
-		Log(LOG_ERROR, NULL, "Open message_queue Erro:%s,mq_name:%s"
+		Log(LOG_ERROR,"msg=Open message_queue Erro,%s,mq_name,%s"
 			,ex.what(),_out_mq_name.c_str());
 	}
 
@@ -105,9 +105,7 @@ void tradersim::ReceiveMsg()
 			int nPos = line.find_first_of('|');
 			if ((nPos <= 0) || (nPos+1 >= line.length()))
 			{
-				Log(LOG_WARNING
-					, NULL
-					, "tradersim ReceiveMsg:%s is invalid!"
+				Log(LOG_WARNING,"msg=tradersim ReceiveMsg,%s is invalid!"
 					, line.c_str());
 				continue;
 			}
@@ -123,7 +121,7 @@ void tradersim::ReceiveMsg()
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_ERROR, NULL, "ReceiveMsg_i Erro:%s", ex.what());
+			Log(LOG_ERROR,"msg=ReceiveMsg_i Erro,%s", ex.what());
 		}
 	}
 }
@@ -254,7 +252,7 @@ void tradersim::OnInit()
 	bank->bank_name = u8"模拟银行";
 	bank->changed = true;
 	m_something_changed = true;	
-	Log(LOG_INFO, NULL,"sim OnInit, UserID=%s",m_user_id.c_str());
+	Log(LOG_INFO,"msg=sim OnInit;UserID=%s",m_user_id.c_str());
 }
 
 void tradersim::LoadUserDataFile()
@@ -337,7 +335,7 @@ void tradersim::SaveUserDataFile()
 
 void tradersim::CloseConnection(int nId)
 {
-	Log(LOG_INFO, NULL, "tradersim CloseConnection,instance=%p,UserID=%s,conn id:%d"
+	Log(LOG_INFO,"msg=tradersim CloseConnection;instance=%p;UserID=%s;conn id=%d"
 		, this
 		, _req_login.user_name.c_str()
 		, nId);
@@ -384,7 +382,7 @@ void tradersim::ProcessInMsg(int connId,std::shared_ptr<std::string> msg_ptr)
 	SerializerTradeBase ss;
 	if (!ss.FromString(msg.c_str()))
 	{
-		Log(LOG_WARNING, NULL, "tradersim parse json(%s) fail,instance=%p,UserID=%s,conn id:%d"
+		Log(LOG_WARNING,"msg=tradersim parse json(%s) fail;instance=%p;UserID=%s;conn id=%d"
 			, msg.c_str()
 			, this
 			, _req_login.user_name.c_str()
@@ -402,7 +400,7 @@ void tradersim::ProcessInMsg(int connId,std::shared_ptr<std::string> msg_ptr)
 	{
 		if (!m_b_login)
 		{
-			Log(LOG_WARNING, NULL, "trade sim receive other msg before login,instance=%p,UserID=%s,conn id:%d"
+			Log(LOG_WARNING,"msg=trade sim receive other msg before login;instance=%p;UserID=%s;conn id=%d"
 				, this
 				, _req_login.user_name.c_str()
 				, connId);
@@ -411,7 +409,7 @@ void tradersim::ProcessInMsg(int connId,std::shared_ptr<std::string> msg_ptr)
 
 		if (!IsConnectionLogin(connId))
 		{
-			Log(LOG_WARNING, NULL, "trade sim receive other msg which from not login connecion:%s,instance=%p,UserID=%s,conn id:%d"
+			Log(LOG_WARNING,"msg=trade sim receive other msg which from not login connecion,%s;instance=%p;UserID=%s;conn id=%d"
 				, msg.c_str()
 				, this
 				, _req_login.user_name.c_str()
@@ -600,7 +598,7 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR, NULL, "SendMsg Erro:%s,length:%d"
+			Log(LOG_ERROR,"msg=SendMsg Erro,%s,length,%d"
 				, ex.what(), msg.length());
 		}
 	}
@@ -612,7 +610,7 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR, NULL, "SendMsg Erro:%s,msg:%s,length:%d"
+			Log(LOG_ERROR,"msg=SendMsg Erro,%s,msg,%s;length=%d"
 				, ex.what(), msg.c_str(), totalLength);
 		}
 	}	
@@ -660,7 +658,7 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR, NULL, "SendMsg Erro:%s,length:%d"
+			Log(LOG_ERROR,"msg=SendMsg Erro,%s;length=%d"
 				, ex.what(), msg.length());
 		}
 	}
@@ -672,7 +670,7 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR, NULL, "SendMsg Erro:%s,msg:%s,length:%d"
+			Log(LOG_ERROR,"msg=SendMsg Erro,%s,msg,%s;length=%d"
 				, ex.what(), msg.c_str(), totalLength);
 		}
 	}

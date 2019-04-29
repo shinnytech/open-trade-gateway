@@ -59,15 +59,14 @@ bool UserProcessInfo::StartProcess()
 		}
 		else
 		{
-			Log(LOG_ERROR,NULL,"trade server req_login invalid broker_type=%s"
+			Log(LOG_ERROR,"msg=trade server req_login invalid broker_type,%s"
 				, _reqLogin.broker.broker_type.c_str());			
 			return false;
 		}		
 	}
 	catch (const std::exception& ex)
 	{
-		Log(LOG_WARNING, NULL
-			,"UserProcessInfo::StartProcess() fail:%s!",ex.what());
+		Log(LOG_WARNING,"msg=UserProcessInfo::StartProcess() fail,%s!",ex.what());
 		return false;
 	}	
 }
@@ -122,7 +121,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 {	
 	if (nullptr == _in_mq_ptr)
 	{
-		Log(LOG_WARNING, NULL, "UserProcessInfo::SendMsg,nullptr == _in_mq_ptr");
+		Log(LOG_WARNING,"msg=UserProcessInfo::SendMsg,nullptr is _in_mq_ptr");
 		return;
 	}
 
@@ -135,8 +134,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, NULL
-			, "UserProcessInfo::SendMsg Erro:%s,msg:%s,length:%d"
+		Log(LOG_ERROR,"msg=UserProcessInfo::SendMsg Erro,%s;msgdata=%s;length=%d"
 			, ex.what(), str.c_str(), str.length());
 	}	
 }
@@ -145,7 +143,7 @@ void UserProcessInfo::NotifyClose(int connid)
 {
 	if (nullptr == _in_mq_ptr)
 	{
-		Log(LOG_WARNING, NULL, "UserProcessInfo::NotifyClose,nullptr == _in_mq_ptr");
+		Log(LOG_WARNING,"msg=UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr");
 		return;
 	}
 
@@ -158,8 +156,7 @@ void UserProcessInfo::NotifyClose(int connid)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, NULL
-			, "UserProcessInfo::SendMsg Erro:%s,msg:%s,length:%d"
+		Log(LOG_ERROR,"msg=UserProcessInfo::SendMsg Erro:%s;msgdata=%s;length=%d"
 			, ex.what(), str.c_str(), str.length());
 	}
 }
@@ -168,15 +165,12 @@ void UserProcessInfo::Child_Exit_handle(boost::system::error_code ec, int code)
 {
 	if (ec)
 	{
-		Log(LOG_WARNING,NULL
-			, "UserProcessInfo Child_Exit_handle Erorr,msg=%s"
+		Log(LOG_WARNING,"msg=UserProcessInfo Child_Exit_handle Erorr,%s"
 			,ec.message().c_str());		
 	}
 	else
 	{
-		Log(LOG_WARNING
-			, NULL
-			, "UserProcessInfo Child_Exit_handle,code=%d"
+		Log(LOG_WARNING,"msg=UserProcessInfo Child_Exit_handle,code=%d"
 			, code);
 	}
 }
@@ -271,7 +265,7 @@ void UserProcessInfo::ReceiveMsg_i()
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_ERROR, NULL, "ReceiveMsg_i Erro:%s", ex.what());
+			Log(LOG_ERROR,"msg=ReceiveMsg_i Erro,%s", ex.what());
 		}
 	}
 }

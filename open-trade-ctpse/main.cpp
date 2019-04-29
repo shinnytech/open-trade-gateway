@@ -25,28 +25,20 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 		std::string logFileName = argv[1];
-		if (!LogInit())
-		{
-			return -1;
-		}
-
-		Log(LOG_INFO, NULL
-			, "trade ctpse %s init"
+		
+		Log(LOG_INFO,"msg=trade ctpse %s init"
 			, logFileName.c_str());
 
-		Log(LOG_INFO
-			, NULL
-			, "trade ctpse %s,ctp version:%s"
+		Log(LOG_INFO,"msg=trade ctpse %s,ctp version,%s"
 			, logFileName.c_str()
 			, CThostFtdcTraderApi::GetApiVersion());
 
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING, NULL
-				, "trade ctpse %s load config failed!"
+			Log(LOG_WARNING,"msg=trade ctpse %s load config failed!"
 				, logFileName.c_str());
-			LogCleanup();
+		
 			return -1;
 		}
 
@@ -72,9 +64,8 @@ int main(int argc, char* argv[])
 			tradeCtp.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO, NULL, "trade ctpse %s got sig %d", logFileName.c_str(), sig);
-			Log(LOG_INFO, NULL, "trade ctpse %s exit", logFileName.c_str());
-			LogCleanup();
+			Log(LOG_INFO,"msg=trade ctpse %s got sig %d", logFileName.c_str(), sig);
+			Log(LOG_INFO,"msg=trade ctpse %s exit",logFileName.c_str());
 		});
 		
 		while (flag.load())
@@ -86,7 +77,7 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR, NULL, "trade ctpse %s ioc run exception:%s"
+				Log(LOG_ERROR,"msg=trade ctpse %s ioc run exception,%s"
 					,logFileName.c_str()
 					,ex.what());
 			}
