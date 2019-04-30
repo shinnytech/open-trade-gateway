@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
 		std::string logFileName = argv[1];
 		
-		Log(LOG_INFO,"msg=trade sim %s init", logFileName.c_str());
+		Log(LOG_INFO,"msg=trade sim %s init",logFileName.c_str());
 
 		//加载配置文件
 		if (!LoadConfig())
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 		signals_.add(SIGQUIT);
 #endif
 
-		tradersim tradeSim(ioc, logFileName);
+		tradersim tradeSim(ioc,logFileName);
 		tradeSim.Start();
 		signals_.async_wait(
 			[&ioc, &tradeSim, &logFileName, &flag](boost::system::error_code, int sig)
@@ -59,8 +59,8 @@ int main(int argc, char* argv[])
 			tradeSim.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO,"trade sim %s got sig %d", logFileName.c_str(), sig);
-			Log(LOG_INFO,"trade sim %s exit", logFileName.c_str());
+			Log(LOG_INFO,"msg=trade sim %s got sig %d", logFileName.c_str(), sig);
+			Log(LOG_INFO,"msg=trade sim %s exit", logFileName.c_str());
 		});
 		
 		while (flag.load())

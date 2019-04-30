@@ -41,6 +41,7 @@ tradersim::tradersim(boost::asio::io_context& ios
 ,m_last_seq_no(0)
 ,m_peeking_message(false)
 ,m_next_send_dt(0)
+,m_transfer_seq(0)
 {
 }
 

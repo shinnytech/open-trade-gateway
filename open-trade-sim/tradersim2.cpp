@@ -13,6 +13,7 @@
 #include "config.h"
 #include "types.h"
 #include "ins_list.h"
+#include "datetime.h"
 #include "SerializerTradeBase.h"
 
 using namespace std::chrono;
@@ -165,6 +166,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 	m_alive_order_set.insert(order);
 	UpdateOrder(order);
 	SaveUserDataFile();
+	OutputNotifyAllSycn(1, u8"下单成功");
 	return;
 }
 
@@ -246,11 +248,17 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 			order->status = kOrderStatusFinished;
 			UpdateOrder(order);
 			m_something_changed = true;
+			OutputNotifyAllSycn(1, u8"撤单成功");
 			return;
 		}
 	}
 	OutputNotifyAllSycn(1,u8"要撤销的单不存在","WARNING");
 	return;
+}
+
+TransferLog& tradersim::GetTransferLog(const std::string& seq_id)
+{
+	return m_data.m_transfers[seq_id];
 }
 
 void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
@@ -265,8 +273,27 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	}
 	m_account->static_balance += action_transfer.amount;
 	m_account->changed = true;
+
+	m_transfer_seq++;
+	TransferLog& d = GetTransferLog(std::to_string(m_transfer_seq));
+	d.currency = action_transfer.currency;
+	d.amount = action_transfer.amount;
+	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+	DateTime dt;
+	dt.date.year = now.date().year();
+	dt.date.month = now.date().month();
+	dt.date.day = now.date().day();
+	dt.time.hour = now.time_of_day().hours();
+	dt.time.minute = now.time_of_day().minutes();
+	dt.time.second = now.time_of_day().seconds();
+	dt.time.microsecond = 0;
+	d.datetime = DateTimeToEpochNano(&dt);
+	d.error_id = 0;
+	d.error_msg = u8"正确";
+
 	m_something_changed = true;
 	OutputNotifyAllSycn(0, u8"转账成功");
+
 	SendUserData();
 }
 
@@ -440,6 +467,13 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 	trade->volume = volume;
 	trade->price = price;
 	trade->trade_date_time = GetLocalEpochNano();
+
+	std::stringstream ss;
+	ss << u8"成交通知,合约:" << trade->exchange_id
+		<< u8"." << trade->instrument_id << u8",手数:" << trade->volume
+		<< u8",价格:" << trade->price << "!";
+	OutputNotifyAllSycn(1,ss.str().c_str());
+
 	//调整委托单数据
 	assert(volume <= order->volume_left);
 	assert(order->status == kOrderStatusAlive);

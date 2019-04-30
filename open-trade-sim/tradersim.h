@@ -128,6 +128,8 @@ private:
 
 	long long m_next_send_dt;
 
+	int m_transfer_seq;
+
 	void ReceiveMsg();
 
 	void CloseConnection(int nId);
@@ -193,4 +195,6 @@ private:
 	void DoTrade(Order* order, int volume, double price);
 
 	void OnClientPeekMessage();
+
+	TransferLog& GetTransferLog(const std::string& seq_id);
 };
