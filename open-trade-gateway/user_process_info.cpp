@@ -177,31 +177,66 @@ void UserProcessInfo::Child_Exit_handle(boost::system::error_code ec, int code)
 
 bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string& cmd)
 {	
-	_out_mq_name = cmd + "_msg_out";
-	_in_mq_name = cmd + "_msg_in";
-	boost::interprocess::message_queue::remove(_out_mq_name.c_str());
-	boost::interprocess::message_queue::remove(_in_mq_name.c_str());
-
-	_out_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
-		(new boost::interprocess::message_queue(boost::interprocess::create_only
-			, _out_mq_name.c_str(), MAX_MSG_NUMS, MAX_MSG_LENTH));
-	_thread_ptr.reset();
-
-	_thread_ptr = std::shared_ptr<boost::thread>(
-		new boost::thread(boost::bind(&UserProcessInfo::ReceiveMsg_i,shared_from_this())));
-
-	_in_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
-		(new boost::interprocess::message_queue(boost::interprocess::create_only
-			, _in_mq_name.c_str(), MAX_MSG_NUMS, MAX_MSG_LENTH));
-	
-	_process_ptr = std::make_shared<boost::process::child>(boost::process::child(
-		boost::process::search_path(name)
-		,cmd.c_str()));
-	if (nullptr == _process_ptr)
+	try
 	{
+		_out_mq_name = cmd + "_msg_out";
+		boost::interprocess::message_queue::remove(_out_mq_name.c_str());
+		_out_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
+			(new boost::interprocess::message_queue(boost::interprocess::create_only
+				, _out_mq_name.c_str(), MAX_MSG_NUMS, MAX_MSG_LENTH));
+	}
+	catch (std::exception& ex)
+	{
+		Log(LOG_ERROR, "msg=StartProcess_i,create out message queue;user key name=%s;errmsg=%s"
+			,_key.c_str(), ex.what());
 		return false;
 	}
-	return _process_ptr->running();
+
+	try
+	{
+		_thread_ptr.reset();
+		_thread_ptr = std::shared_ptr<boost::thread>(
+			new boost::thread(boost::bind(&UserProcessInfo::ReceiveMsg_i, shared_from_this())));
+	}
+	catch (std::exception& ex)
+	{
+		Log(LOG_ERROR, "msg=StartProcess_i,start ReceiveMsg_i thread;user key name=%s;errmsg=%s"
+			, _key.c_str(),ex.what());
+		return false;
+	}
+
+	try
+	{
+		_in_mq_name = cmd + "_msg_in";
+		boost::interprocess::message_queue::remove(_in_mq_name.c_str());
+		_in_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
+			(new boost::interprocess::message_queue(boost::interprocess::create_only
+				, _in_mq_name.c_str(), MAX_MSG_NUMS, MAX_MSG_LENTH));
+	}
+	catch (std::exception& ex)
+	{
+		Log(LOG_ERROR, "msg=StartProcess_i,create in message queue;user key name=%s;errmsg=%s"
+			, _key.c_str(),ex.what());
+		return false;
+	}
+	
+	try
+	{
+		_process_ptr = std::make_shared<boost::process::child>(boost::process::child(
+			boost::process::search_path(name)
+			, cmd.c_str()));
+		if (nullptr == _process_ptr)
+		{
+			return false;
+		}
+		return _process_ptr->running();
+	}
+	catch (std::exception& ex)
+	{
+		Log(LOG_ERROR, "msg=StartProcess_i,start user process;user key name=%s;errmsg=%s"
+			, _key.c_str(),ex.what());
+		return false;
+	}
 }
 
 void UserProcessInfo::ReceiveMsg_i()
