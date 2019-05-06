@@ -130,7 +130,7 @@ public:
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
         if (m_doc->HasParseError())
         {
-            Log(LOG_ERROR,"msg=json string (%s) parse fail", json_utf8_string);
+			Log2(LOG_ERROR,"json string (%s) parse fail", json_utf8_string);
             return false;
         }
         return true;
@@ -148,7 +148,7 @@ public:
         m_doc->ParseStream<rapidjson::kParseNanAndInfFlag, rapidjson::UTF8<> >(os);
         delete[] readBuffer;
         if (m_doc->HasParseError()){
-            Log(LOG_ERROR,"msg=json file (%s) parse fail", json_file);
+            Log2(LOG_ERROR,"json file (%s) parse fail", json_file);
             return false;
         }
         fclose(fp);
@@ -159,7 +159,7 @@ public:
     {
         FILE* fp = fopen(json_file, "wb"); // 非 Windows 平台使用 "w"
         if (!fp){
-            Log(LOG_ERROR,"msg=open json file (%s) for write fail", json_file);
+            Log2(LOG_ERROR,"open json file (%s) for write fail", json_file);
             return false;
         }
         char* writeBuffer = new char[65536];

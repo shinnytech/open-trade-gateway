@@ -18,3 +18,5 @@ typedef enum
 } LogLevel;
 
 void Log(LogLevel level, const char* message_fmt, ...);
+
+void Log2(LogLevel level, const char* message_fmt, ...);

@@ -63,7 +63,7 @@ void connection::stop()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_INFO,"msg=connection stop exception,%s"
+		Log2(LOG_INFO,"connection stop exception,%s"
 			, ex.what());
 	}
 }
@@ -104,7 +104,7 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_INFO,"msg=connection OnOpenConnection exception,%s"
+		Log2(LOG_INFO,"connection OnOpenConnection exception,%s"
 			, ex.what());
 	}	
 }
@@ -316,13 +316,13 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		 UserProcessInfo_ptr userProcessInfoPtr = std::make_shared<UserProcessInfo>(m_ios,_user_broker_key,_reqLogin);
 		 if (nullptr == userProcessInfoPtr)
 		 {
-			 Log(LOG_ERROR,"msg=new user process fail,%s"
+			 Log2(LOG_ERROR,"new user process fail,%s"
 				 ,_user_broker_key.c_str());			
 			 return;
 		 }
 		 if (!userProcessInfoPtr->StartProcess())
 		 {
-			 Log(LOG_ERROR,"msg=can not start up user process,%s"
+			 Log2(LOG_ERROR,"can not start up user process,%s"
 				 , _user_broker_key.c_str());			
 			 return;
 		 }
@@ -353,7 +353,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			flag = userProcessInfoPtr->StartProcess();
 			if (!flag)
 			{
-				Log(LOG_ERROR,"msg=can not start up user process,%s"
+				Log2(LOG_ERROR,"can not start up user process,%s"
 					, _user_broker_key.c_str());				
 				return;
 			}
@@ -371,7 +371,7 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
 	if (userIt == g_userProcessInfoMap.end())
 	{
-		Log(LOG_INFO,"msg=send msg before user process start up,msg droped,%s"
+		Log2(LOG_INFO,"send msg before user process start up,msg droped,%s"
 			,json_str.c_str());
 		return;
 	}
@@ -380,7 +380,7 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	bool flag = userProcessInfoPtr->ProcessIsRunning();
 	if (!flag)
 	{
-		Log(LOG_ERROR,"msg=user process is down,msg can not send to user process,%s"
+		Log2(LOG_ERROR,"user process is down,msg can not send to user process,%s"
 			,json_str.c_str());
 		return;
 	}

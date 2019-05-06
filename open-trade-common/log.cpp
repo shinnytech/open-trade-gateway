@@ -120,3 +120,36 @@ void Log(LogLevel level, const char* message_fmt, ...)
 	write(log_context.m_log_file_fd,str.c_str(),str.length());
 	close(log_context.m_log_file_fd);
 }
+
+void Log2(LogLevel level, const char* message_fmt, ...)
+{
+	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
+
+	const char* level_str = Level2String(level);
+
+	const char* datetime_str = CurrentDateTimeStr();
+
+	std::stringstream ss;
+	ss << "{\"time\": \"" << datetime_str
+		<< "\", \"level\": \"" << level_str << "\"";
+
+	char buf[1024];
+	memset(buf, 0, sizeof(buf));
+	va_list arglist;
+	va_start(arglist, message_fmt);
+	vsnprintf(buf,1024, message_fmt, arglist);
+	va_end(arglist);
+	ss << ",\"msg\": \"" << buf << "\"";	
+	ss << "}\n";
+
+	std::string str = ss.str();
+	std::string logFileName = "/var/log/open-trade-gateway/open-trade-gateway.log";
+	log_context.m_log_file_fd = open(logFileName.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+	if (log_context.m_log_file_fd == -1)
+	{
+		printf("can't open log file:%s", logFileName.c_str());
+		return;
+	}
+	write(log_context.m_log_file_fd, str.c_str(), str.length());
+	close(log_context.m_log_file_fd);
+}

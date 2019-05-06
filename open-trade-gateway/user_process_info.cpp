@@ -59,14 +59,14 @@ bool UserProcessInfo::StartProcess()
 		}
 		else
 		{
-			Log(LOG_ERROR,"msg=trade server req_login invalid broker_type,%s"
+			Log2(LOG_ERROR,"trade server req_login invalid broker_type,%s"
 				, _reqLogin.broker.broker_type.c_str());			
 			return false;
 		}		
 	}
 	catch (const std::exception& ex)
 	{
-		Log(LOG_WARNING,"msg=UserProcessInfo::StartProcess() fail,%s!",ex.what());
+		Log2(LOG_WARNING,"UserProcessInfo::StartProcess() fail,%s!",ex.what());
 		return false;
 	}	
 }
@@ -121,7 +121,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 {	
 	if (nullptr == _in_mq_ptr)
 	{
-		Log(LOG_WARNING,"msg=UserProcessInfo::SendMsg,nullptr is _in_mq_ptr");
+		Log2(LOG_WARNING,"UserProcessInfo::SendMsg,nullptr is _in_mq_ptr");
 		return;
 	}
 
@@ -143,7 +143,7 @@ void UserProcessInfo::NotifyClose(int connid)
 {
 	if (nullptr == _in_mq_ptr)
 	{
-		Log(LOG_WARNING,"msg=UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr");
+		Log2(LOG_WARNING,"UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr");
 		return;
 	}
 
@@ -165,12 +165,12 @@ void UserProcessInfo::Child_Exit_handle(boost::system::error_code ec, int code)
 {
 	if (ec)
 	{
-		Log(LOG_WARNING,"msg=UserProcessInfo Child_Exit_handle Erorr,%s"
+		Log2(LOG_WARNING,"UserProcessInfo Child_Exit_handle Erorr,%s"
 			,ec.message().c_str());		
 	}
 	else
 	{
-		Log(LOG_WARNING,"msg=UserProcessInfo Child_Exit_handle,code=%d"
+		Log2(LOG_WARNING,"UserProcessInfo Child_Exit_handle,code,%d"
 			, code);
 	}
 }
@@ -300,7 +300,7 @@ void UserProcessInfo::ReceiveMsg_i()
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_ERROR,"msg=ReceiveMsg_i Erro,%s", ex.what());
+			Log2(LOG_ERROR,"ReceiveMsg_i Erro,%s", ex.what());
 		}
 	}
 }

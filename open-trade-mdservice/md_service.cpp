@@ -108,20 +108,20 @@ namespace md_service
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_FATAL,"msg=construct m_ins_map fail,%s",ex.what());
+			Log2(LOG_FATAL,"construct m_ins_map fail,%s",ex.what());
 		}
 
 		//下载和加载合约表文件
 		std::string content;
 		if (HttpGet(ins_file_url,&content) != 0) 
 		{
-			Log(LOG_FATAL,"msg=md service download ins file fail");
+			Log2(LOG_FATAL,"md service download ins file fail");
 			return false;
 		}
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str())) 
 		{
-			Log(LOG_FATAL,"msg=md service parse downloaded ins file fail");
+			Log2(LOG_FATAL,"md service parse downloaded ins file fail");
 			return false;
 		}
 		for (auto& m : ss.m_doc->GetObject()) 
@@ -203,7 +203,7 @@ namespace md_service
 		}
 		catch (...)
 		{
-			Log(LOG_INFO,"msg=mdservice Init exception");
+			Log2(LOG_INFO,"mdservice Init exception");
 			return false;
 		}				
 	}
@@ -223,7 +223,7 @@ namespace md_service
 	{
 		if (ec)
 		{
-			Log(LOG_WARNING,"msg=md service resolve fail,%s"
+			Log2(LOG_WARNING,"md service resolve fail,%s"
 				,ec.message().c_str());
 			return;
 		}
@@ -241,7 +241,7 @@ namespace md_service
 	{
 		if (ec) 
 		{
-			Log(LOG_WARNING,"msg=md session connect fail,%s", ec.message().c_str());
+			Log2(LOG_WARNING,"md session connect fail,%s", ec.message().c_str());
 			return;
 		}
 		// Perform the websocket handshake
@@ -260,11 +260,11 @@ namespace md_service
 	{
 		if (ec)
 		{
-			Log(LOG_WARNING,"msg=md session handshake fail,%s", ec.message().c_str());
+			Log2(LOG_WARNING,"md session handshake fail,%s", ec.message().c_str());
 			return;
 		}
 
-		Log(LOG_INFO,"msg=md service got connection");
+		Log2(LOG_INFO,"md service got connection");
 
 		SendTextMsg(md_context.m_req_subscribe_quote);
 
@@ -290,10 +290,10 @@ namespace md_service
 		{
 			if (ec != boost::beast::websocket::error::closed)
 			{
-				Log(LOG_WARNING,"msg=md service read fail,%s"
+				Log2(LOG_WARNING,"md service read fail,%s"
 					, ec.message().c_str());
 			}
-			Log(LOG_INFO,"msg=md session loss connection");
+			Log2(LOG_INFO,"md session loss connection");
 			DoResolve();
 			return;
 		}
@@ -305,7 +305,7 @@ namespace md_service
 
 	void OnMessage(const std::string &json_str)
 	{
-		//Log(LOG_INFO, NULL, "md service received message, len=%d", json_str.size());
+		Log2(LOG_INFO,"md service received message,len=%d",json_str.size());
 		
 		SendTextMsg(md_context.m_req_peek_message);
 
@@ -355,7 +355,7 @@ namespace md_service
 	{
 		if (ec)
 		{
-			Log(LOG_WARNING,"msg=md session send message fail");
+			Log2(LOG_WARNING,"md session send message fail");
 		}
 		md_context.m_output_buffer.consume(bytes_transferred);
 		if (md_context.m_output_buffer.size() > 0)

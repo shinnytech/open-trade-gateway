@@ -53,7 +53,7 @@ bool LoadConfig()
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json"))
     {
-        Log(LOG_FATAL,"msg=load /etc/open-trade-gateway/config.json file fail");
+        Log2(LOG_FATAL,"load /etc/open-trade-gateway/config.json file fail");
         return false;
     }
     ss.ToVar(g_config);
@@ -61,7 +61,7 @@ bool LoadConfig()
     SerializerConfig ss_broker;
     if (!ss_broker.FromFile("/etc/open-trade-gateway/broker_list.json"))
     {
-        Log(LOG_FATAL,"msg=load /etc/open-trade-gateway/broker_list.json file fail");
+        Log2(LOG_FATAL,"load /etc/open-trade-gateway/broker_list.json file fail");
         return false;
     }
     std::vector<BrokerConfig> broker_list;
