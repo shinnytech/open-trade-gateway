@@ -32,7 +32,8 @@ connection::connection(boost::asio::io_context& ios
 	flat_buffer_(),
 	req_(),
 	_X_Real_IP(""),
-	_X_Real_Port(0)
+	_X_Real_Port(0),
+	_msg_cache()
 {		
 }
 
@@ -332,6 +333,20 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		 g_userProcessInfoMap.insert(TUserProcessInfoMap::value_type(
 			 _user_broker_key,userProcessInfoPtr));		
 		 userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
+
+		 if (!_msg_cache.empty())
+		 {
+			 for (int i = 0; i < _msg_cache.size(); ++i)
+			 {
+				 userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
+				 Log(LOG_INFO, "msg=connection send cache msg,%s;connectionid=%d;userkey=%s",
+					 _msg_cache[i].c_str(),
+					 _connection_id,
+					 _user_broker_key.c_str());
+			 }
+			 _msg_cache.clear();
+		 }
+		 
 		 return;
 	}
 	//如果用户进程已经启动,直接利用
@@ -346,6 +361,18 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				std::map<int, connection_ptr>::value_type(
 					_connection_id, shared_from_this()));
 			userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
+			if (!_msg_cache.empty())
+			{
+				for (int i = 0; i < _msg_cache.size(); ++i)
+				{
+					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
+					Log(LOG_INFO, "msg=connection send cache msg,%s;connectionid=%d;userkey=%s",
+						_msg_cache[i].c_str(),
+						_connection_id,
+						_user_broker_key.c_str());
+				}
+				_msg_cache.clear();
+			}
 			return;
 		}
 		else
@@ -361,6 +388,18 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				std::map<int, connection_ptr>::value_type(
 					_connection_id, shared_from_this()));			
 			userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
+			if (!_msg_cache.empty())
+			{
+				for (int i = 0; i < _msg_cache.size(); ++i)
+				{
+					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
+					Log(LOG_INFO, "msg=connection send cache msg,%s;connectionid=%d;userkey=%s",
+						_msg_cache[i].c_str(),
+						_connection_id,
+						_user_broker_key.c_str());
+				}
+				_msg_cache.clear();
+			}
 			return;
 		}
 	}
@@ -371,8 +410,9 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
 	if (userIt == g_userProcessInfoMap.end())
 	{
-		Log2(LOG_INFO,"send msg before user process start up,msg droped,%s"
+		Log2(LOG_INFO,"send msg before user process start up,cache msg,%s"
 			,json_str.c_str());
+		_msg_cache.push_back(json_str);
 		return;
 	}
 
@@ -380,8 +420,9 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	bool flag = userProcessInfoPtr->ProcessIsRunning();
 	if (!flag)
 	{
-		Log2(LOG_ERROR,"user process is down,msg can not send to user process,%s"
+		Log2(LOG_ERROR,"user process is down,close connection,%s"
 			,json_str.c_str());
+		OnCloseConnection();
 		return;
 	}
 		

@@ -161,20 +161,6 @@ void UserProcessInfo::NotifyClose(int connid)
 	}
 }
 
-void UserProcessInfo::Child_Exit_handle(boost::system::error_code ec, int code)
-{
-	if (ec)
-	{
-		Log2(LOG_WARNING,"UserProcessInfo Child_Exit_handle Erorr,%s"
-			,ec.message().c_str());		
-	}
-	else
-	{
-		Log2(LOG_WARNING,"UserProcessInfo Child_Exit_handle,code,%d"
-			, code);
-	}
-}
-
 bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string& cmd)
 {	
 	try

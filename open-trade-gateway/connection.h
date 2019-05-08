@@ -97,6 +97,8 @@ private:
 	std::string _X_Real_IP;
 
 	int _X_Real_Port;
+
+	std::vector<std::string> _msg_cache;
 };
 
 typedef std::shared_ptr<connection> connection_ptr;

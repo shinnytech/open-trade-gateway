@@ -40,8 +40,6 @@ private:
 	void ReceiveMsg_i();
 
 	void ProcessMsg(std::shared_ptr<std::string> msg_ptr);
-
-	void Child_Exit_handle(boost::system::error_code, int);
 private:
 	boost::asio::io_context& io_context_;
 
@@ -61,7 +59,7 @@ private:
 
 	std::string _in_mq_name;
 
-	std::shared_ptr<boost::process::child> _process_ptr;
+	std::shared_ptr<boost::process::child> _process_ptr;	
 public:
 	std::map<int, connection_ptr> user_connections_;	
 };

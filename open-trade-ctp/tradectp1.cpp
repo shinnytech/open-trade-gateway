@@ -260,7 +260,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 	{
 		if ((nullptr != pRspInfo) && (pRspInfo->ErrorID != 0))
 		{
-			Log(LOG_WARNING,"msg=ctp OnRspAuthenticate 1;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
+			Log(LOG_WARNING,"msg=ctp OnRspAuthenticate;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -278,7 +278,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 		}
 		else
 		{
-			Log(LOG_WARNING,"msg=ctp OnRspAuthenticate 2;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
+			Log(LOG_WARNING,"msg=ctp OnRspAuthenticate;instance=%p;bid=%s;UserID=%s;ErrorID=%d;ErrMsg=%s"
 				, this
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
