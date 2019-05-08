@@ -54,6 +54,8 @@ traderctp::traderctp(boost::asio::io_context& ios
 	,m_data()
 	,m_Algorithm_Type(THOST_FTDC_AG_None)
 	,m_banks()
+	,m_try_req_authenticate_times(0)
+	,m_try_req_login_times(0)
 {
 	_requestID.store(0);
 
@@ -672,6 +674,8 @@ bool traderctp::WaitLogIn()
 
 void traderctp::InitTdApi()
 {
+	m_try_req_authenticate_times = 0;
+	m_try_req_login_times = 0;
 	std::string flow_file_name = GenerateUniqFileName();		
 	m_pTdApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flow_file_name.c_str());
 	m_pTdApi->RegisterSpi(this);

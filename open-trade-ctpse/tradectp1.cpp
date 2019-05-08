@@ -183,6 +183,16 @@ void traderctp::OnFrontConnected()
 
 int traderctp::ReqAuthenticate()
 {
+	if (m_try_req_authenticate_times > 0)
+	{
+		int nSeconds = 10 + m_try_req_authenticate_times * 1;
+		if (nSeconds > 60)
+		{
+			nSeconds = 60;
+		}
+		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
+	}
+	m_try_req_authenticate_times++;
 	if (_req_login.broker.auth_code.empty())
 	{
 		Log(LOG_INFO,"msg=_req_login.broker.auth_code.empty();instance=%p;bid=%s;UserID=%s"
@@ -254,6 +264,7 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 	}
 	else
 	{
+		m_try_req_authenticate_times = 0;
 		SendLoginRequest();
 	}
 }
@@ -291,6 +302,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 				, pRspInfo ? pRspInfo->ErrorID : -999
 				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
 			);
+			m_try_req_authenticate_times = 0;
 			SendLoginRequest();
 		}
 	}
@@ -339,6 +351,16 @@ int traderctp::RegSystemInfo()
 
 void traderctp::SendLoginRequest()
 {
+	if (m_try_req_login_times > 0)
+	{
+		int nSeconds = 10 + m_try_req_login_times * 1;
+		if (nSeconds > 60)
+		{
+			nSeconds = 60;
+		}
+		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
+	}
+	m_try_req_login_times++;
 	Log(LOG_INFO,"msg=ctpse SendLoginRequest;instance=%p;bid=%s;UserID=%s;client_system_info=%s;client_app_id=%s"
 		, this
 		, _req_login.bid.c_str()
@@ -440,6 +462,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 		}
 		else
 		{
+			m_try_req_login_times = 0;
 			std::string trading_day = pRspUserLogin->TradingDay;
 			if (m_trading_day != trading_day)
 			{
@@ -524,6 +547,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 	}
 	else
 	{
+		m_try_req_login_times = 0;
 		std::string trading_day = pRspUserLogin->TradingDay;
 		if (m_trading_day != trading_day)
 		{

@@ -133,6 +133,16 @@ void traderctp::OnFrontConnected()
 
 void traderctp::ReqAuthenticate()
 {
+	if (m_try_req_authenticate_times > 0)
+	{
+		int nSeconds = 10+m_try_req_authenticate_times * 1;
+		if (nSeconds > 60)
+		{
+			nSeconds = 60;
+		}
+		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
+	}
+	m_try_req_authenticate_times++;
 	if (_req_login.broker.auth_code.empty())
 	{
 		Log(LOG_INFO
@@ -167,6 +177,16 @@ void traderctp::ReqAuthenticate()
 
 void traderctp::SendLoginRequest()
 {
+	if (m_try_req_login_times > 0)
+	{
+		int nSeconds = 10 + m_try_req_login_times * 1;
+		if (nSeconds > 60)
+		{
+			nSeconds = 60;
+		}
+		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
+	}
+	m_try_req_login_times++;
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
 	CThostFtdcReqUserLoginField field;
@@ -248,6 +268,7 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 	}
 	else
 	{
+		m_try_req_authenticate_times = 0;
 		SendLoginRequest();
 	}	
 }
@@ -285,6 +306,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 				, pRspInfo ? pRspInfo->ErrorID : -999
 				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
 			);
+			m_try_req_authenticate_times = 0;
 			SendLoginRequest();
 		}		
 	}
@@ -331,6 +353,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 		}
 		else
 		{
+			m_try_req_login_times = 0;
 			std::string trading_day = pRspUserLogin->TradingDay;
 			if (m_trading_day != trading_day)
 			{
@@ -419,6 +442,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 	}
 	else
 	{		
+		m_try_req_login_times = 0;
 		std::string trading_day = pRspUserLogin->TradingDay;		
 		if (m_trading_day != trading_day)
 		{

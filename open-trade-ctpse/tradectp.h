@@ -228,6 +228,10 @@ private:
 
 	std::map<std::string, Bank> m_banks;
 
+	int m_try_req_authenticate_times;
+
+	int m_try_req_login_times;
+
 	void InitTdApi();
 
 	void StopTdApi();
