@@ -32,13 +32,15 @@ Install
 
     git clone https://github.com/shinnytech/open-trade-gateway.git
 
-编译::
-
+编译与安装::
     cd open-trade-gateway
-    make
+    sudo make
     sudo make install
-
-
+	安装后将如下两个路径加入/etc/ld.so.conf文件中:
+	/usr/local/bin/
+	/usr/local/lib/
+	然后执行命令:ldconfig
+  
 Config
 -------------------------------------------------
 本系统运行需要两个配置文件:
@@ -58,8 +60,9 @@ Config
     [
       {
         "name": "simnow",
-        "type": "ctp",                              //交易系统类型
-        "broker_id": "9999",                        //broker_id, 必须与交易系统中的设置一致
+        "type": "ctp",                              //交易系统类型,目前支持ctp、ctpse(穿管版ctp)、sim(快期模拟)三种
+		"IsFens":false,								//前置地址是否是Fens地址
+        "broker_id": "9999",                        //broker_id,必须与交易系统中的设置一致
         "product_info": "abcd",
         "trading_fronts": [                         //交易前置机地址
           "tcp://218.202.237.33:10002"
@@ -74,7 +77,7 @@ Run
 
   open_trade_gateway
 
-系统运行日志将输出到 /var/log/open-trade-gateway
+系统运行日志将输出到文件 /var/log/open-trade-gateway/open-trade-gateway.log 中
 
 
 Test
@@ -93,4 +96,4 @@ Q&A
 -------------------------------------------------
 1、执行open_trade_gateway后，未启动重新返回命令行
 
-解决：基本出现在编译完成后的首次运行，请检查是否对broker_list.json 、config.json重命名并配置。出现该问题时，一般/var/log/open-trade-gateway/log中的提示信息是找不到config.json文件
+解决：基本出现在编译完成后的首次运行，请检查是否对broker_list.json 、config.json重命名并配置。出现该问题时，一般/var/log/open-trade-gateway//open-trade-gateway.log中的提示信息是找不到config.json文件
