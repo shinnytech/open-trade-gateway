@@ -162,7 +162,7 @@ private:
 
 	std::atomic_int _requestID;;
 
-	bool _logIn;
+	int _logIn_status;
 
 	boost::mutex _logInmutex;
 
@@ -268,7 +268,7 @@ private:
 
 	std::string GetConnectionStr();
 
-	bool WaitLogIn();
+	int WaitLogIn();
 
 	int ReqAuthenticate();
 

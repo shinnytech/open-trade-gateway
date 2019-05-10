@@ -169,7 +169,7 @@ void traderctp::OnFrontConnected()
 				, _req_login.user_name.c_str()
 				, ret);
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn = false;
+			_logIn_status = 0;
 			_logInCondition.notify_all();
 		}		
 	}
@@ -289,7 +289,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 				u8"交易服务器认证失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
 
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn = false;
+			_logIn_status = 0;
 			_logInCondition.notify_all();
 			return;
 		}
@@ -376,7 +376,7 @@ void traderctp::SendLoginRequest()
 		if (0 != ret)
 		{
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn = false;
+			_logIn_status = 0;
 			_logInCondition.notify_all();
 			return;
 		}
@@ -396,7 +396,7 @@ void traderctp::SendLoginRequest()
 					, field.UserID
 					,ret);
 				boost::unique_lock<boost::mutex> lock(_logInmutex);
-				_logIn = false;
+				_logIn_status = 0;
 				_logInCondition.notify_all();
 			}
 		}
@@ -417,7 +417,7 @@ void traderctp::SendLoginRequest()
 				, field.UserID
 				, ret);
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn = false;
+			_logIn_status = 0;
 			_logInCondition.notify_all();
 		}
 	}
@@ -456,7 +456,16 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 				,pRspInfo->ErrorID,
 				u8"交易服务器登录失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");			
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn = false;
+			if ((pRspInfo->ErrorID == 140)
+				|| (pRspInfo->ErrorID == 131)
+				|| (pRspInfo->ErrorID == 141))
+			{
+				_logIn_status = 1;
+			}
+			else
+			{
+				_logIn_status = 0;
+			}
 			_logInCondition.notify_all();
 			return;
 		}
@@ -476,7 +485,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
 			AfterLogin();
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn = true;
+			_logIn_status = 2;
 			_logInCondition.notify_all();
 		}		
 	}

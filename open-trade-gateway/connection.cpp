@@ -262,16 +262,30 @@ void connection::OnMessage(const std::string &json_str)
 
 void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &json_str)
 {
+	_login_msg = json_str;	
+	_reqLogin = req;
+	auto it = g_config.brokers.find(_reqLogin.bid);
+	if (it == g_config.brokers.end())
+	{
+		Log(LOG_WARNING,"msg=trade server req_login invalid bid;connection=%d;bid=%s"
+			, _connection_id,req.bid.c_str());
+		std::stringstream ss;
+		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
+		OutputNotifySycn(1, ss.str(), "WARNING");
+		return;
+	}
+
+	_reqLogin.broker = it->second;
 	bool flag = false;
-	if (req.broker.broker_type == "ctp")
+	if (_reqLogin.broker.broker_type == "ctp")
 	{
 		flag = true;
 	}
-	else if (req.broker.broker_type == "ctpse")
+	else if (_reqLogin.broker.broker_type == "ctpse")
 	{
 		flag = true;
 	}
-	else if (req.broker.broker_type == "sim")
+	else if (_reqLogin.broker.broker_type == "sim")
 	{
 		flag = true;
 	}
@@ -288,21 +302,10 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	{
 		std::stringstream ss;
 		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(1,ss.str(),"WARNING");
+		OutputNotifySycn(1, ss.str(), "WARNING");
 		return;
 	}
 
-	_login_msg = json_str;	
-	_reqLogin = req;
-	auto it = g_config.brokers.find(_reqLogin.bid);
-	if (it == g_config.brokers.end())
-	{
-		Log(LOG_WARNING,"msg=trade server req_login invalid bid;connection=%d;bid=%s"
-			, _connection_id,req.bid.c_str());
-		return;
-	}
-
-	_reqLogin.broker = it->second;
 	_reqLogin.client_ip = _X_Real_IP;
 	_reqLogin.client_port = _X_Real_Port;
 	SerializerTradeBase nss;

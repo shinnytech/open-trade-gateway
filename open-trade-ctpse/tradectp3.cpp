@@ -73,6 +73,11 @@ bool traderctp::NeedReset()
 
 void traderctp::OnIdle()
 {
+	if (!m_b_login)
+	{
+		return;
+	}
+
 	if (m_need_save_file.load())
 	{
 		this->SaveToFile();
@@ -91,12 +96,7 @@ void traderctp::OnIdle()
 	{
 		return;
 	}
-
-	if (!m_b_login)
-	{
-		return;
-	}
-		
+			
 	if (m_req_position_id > m_rsp_position_id) 
 	{
 		ReqQryPosition(m_req_position_id);

@@ -41,7 +41,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	,m_order_ref(0)	
 	,m_input_order_key_map()
 	,m_action_order_map()
-	,_logIn(false)
+	, _logIn_status(0)
 	,_logInmutex()
 	,_logInCondition()
 	,m_loging_connectId(-1)
@@ -228,6 +228,70 @@ void traderctp::CloseConnection(int nId)
 			m_logined_connIds.erase(it);
 			break;
 		}
+	}
+
+	//如果已经没有客户端连接,将来要考虑条件单的情况
+	if (m_logined_connIds.empty())
+	{
+		StopTdApi();
+		m_b_login.store(false);
+		_logIn_status = 0;
+		m_try_req_authenticate_times = 0;
+		m_try_req_login_times = 0;
+		m_ordermap_local_remote.clear();
+		m_ordermap_remote_local.clear();
+
+		//m_input_order_key_map.clear();
+		//m_action_order_map.clear();
+		//m_insert_order_set.clear();
+		//m_cancel_order_set.clear();
+
+		m_data.m_accounts.clear();
+		m_data.m_banks.clear();
+		m_data.m_orders.clear();
+		m_data.m_positions.clear();
+		m_data.m_trades.clear();
+		m_data.m_transfers.clear();
+		m_data.m_trade_more_data = false;
+		//m_data.trading_day = trading_day;
+
+		m_banks.clear();
+
+		m_settlement_info = "";
+
+		m_notify_seq = 0;
+		m_data_seq = 0;
+		_requestID.store(0);
+
+		m_trading_day = "";
+		m_front_id = 0;
+		m_session_id = 0;
+		m_order_ref = 0;
+
+		m_req_login_dt = 0;
+		m_next_qry_dt = 0;
+		m_next_send_dt = 0;
+
+		m_need_query_settlement.store(false);
+		m_confirm_settlement_status.store(0);
+
+		m_req_account_id.store(0);
+		m_rsp_account_id.store(0);
+
+		m_req_position_id.store(0);
+		m_rsp_position_id.store(0);
+		m_position_ready.store(false);
+
+		m_need_query_bank.store(false);
+		m_need_query_register.store(false);
+
+		m_something_changed = false;
+		m_peeking_message = false;
+
+		m_need_save_file.store(false);
+
+		m_need_query_broker_trading_params.store(false);
+		m_Algorithm_Type = THOST_FTDC_AG_None;
 	}
 }
 
@@ -631,8 +695,20 @@ void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 			StopTdApi();
 		}
 		InitTdApi();	
-		bool login = WaitLogIn();
-		m_b_login.store(login);
+		int login_status = WaitLogIn();
+		if (0 == login_status)
+		{
+			m_b_login.store(false);
+			StopTdApi();
+		}
+		else if (1 == login_status)
+		{
+			m_b_login.store(false);
+		}
+		else if (2 == login_status)
+		{
+			m_b_login.store(true);
+		}
 		if (m_b_login.load())
 		{
 			//加入登录客户端列表
@@ -659,13 +735,13 @@ void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 	}	
 }
 
-bool traderctp::WaitLogIn()
+int traderctp::WaitLogIn()
 {
 	boost::unique_lock<boost::mutex> lock(_logInmutex);
-	_logIn = false;
+	_logIn_status = 0;
 	m_pTdApi->Init();
 	bool notify = _logInCondition.timed_wait(lock, boost::posix_time::seconds(15));
-	if (!_logIn)
+	if (0 == _logIn_status)
 	{
 		if (!notify)
 		{
@@ -675,7 +751,7 @@ bool traderctp::WaitLogIn()
 				, _req_login.user_name.c_str());
 		}
 	}
-	return _logIn;
+	return _logIn_status;
 }
 
 void traderctp::InitTdApi()
