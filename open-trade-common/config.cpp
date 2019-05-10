@@ -35,6 +35,7 @@ public:
     {
         AddItem(d.broker_name, "name");
         AddItem(d.broker_type, "type");
+		AddItem(d.is_fens, "IsFens");
         AddItem(d.ctp_broker_id, "broker_id");
         AddItem(d.trading_fronts, "trading_fronts");
         AddItem(d.product_info, "product_info");

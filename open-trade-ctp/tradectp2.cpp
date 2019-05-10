@@ -101,8 +101,17 @@ void traderctp::Start()
 			, ex.what(),_out_mq_name.c_str());
 	}
 
-	_thread_ptr = boost::make_shared<boost::thread>(
-		boost::bind(&traderctp::ReceiveMsg, this));
+	try
+	{
+
+		_thread_ptr = boost::make_shared<boost::thread>(
+			boost::bind(&traderctp::ReceiveMsg, this));
+	}
+	catch (const std::exception& ex)
+	{
+		Log(LOG_ERROR, "msg=trade ctp start ReceiveMsg thread fail;errmsg=%s"
+			, ex.what());
+	}
 }
 
 void traderctp::ReceiveMsg()
@@ -151,7 +160,8 @@ void traderctp::ReceiveMsg()
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_ERROR,"msg=ReceiveMsg_i Erro;err=%s", ex.what());
+			Log(LOG_ERROR,"msg=ReceiveMsg_i Erro;errmsg=%s", ex.what());
+			break;
 		}
 	}	
 }
@@ -430,14 +440,14 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 {
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(1,GBKToUTF8("撤单user_id错误，不能撤单"), "WARNING");
+		OutputNotifyAllSycn(1,u8"撤单user_id错误，不能撤单", "WARNING");
 		return;
 	}
 
 	RemoteOrderKey rkey;
 	if (!OrderIdLocalToRemote(d.local_key, &rkey)) 
 	{
-		OutputNotifyAllSycn(1,GBKToUTF8("撤单指定的order_id不存在，不能撤单"), "WARNING");
+		OutputNotifyAllSycn(1,u8"撤单指定的order_id不存在，不能撤单", "WARNING");
 		return;
 	}
 	strcpy_x(d.f.BrokerID, m_broker_id.c_str());
@@ -476,7 +486,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
 	if (d.local_key.user_id.substr(0,_req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(1,GBKToUTF8("报单user_id错误，不能下单"), "WARNING");
+		OutputNotifyAllSycn(1,u8"报单user_id错误，不能下单", "WARNING");
 		return;
 	}
 
@@ -488,7 +498,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	rkey.instrument_id = d.f.InstrumentID;
 	if (OrderIdLocalToRemote(d.local_key, &rkey)) 
 	{
-		OutputNotifyAllSycn(1,GBKToUTF8("报单单号重复，不能下单"),"WARNING");
+		OutputNotifyAllSycn(1,u8"报单单号重复，不能下单","WARNING");
 		return;
 	}
 	
@@ -679,15 +689,41 @@ void traderctp::InitTdApi()
 	std::string flow_file_name = GenerateUniqFileName();		
 	m_pTdApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flow_file_name.c_str());
 	m_pTdApi->RegisterSpi(this);
-	m_broker_id = _req_login.broker.ctp_broker_id;
-	for (auto it = _req_login.broker.trading_fronts.begin()
-		; it != _req_login.broker.trading_fronts.end(); ++it)
-	{
-		std::string& f = *it;		
-		m_pTdApi->RegisterFront((char*)(f.c_str()));
-	}	
 	m_pTdApi->SubscribePrivateTopic(THOST_TERT_RESUME);
-	m_pTdApi->SubscribePublicTopic(THOST_TERT_RESUME);		
+	m_pTdApi->SubscribePublicTopic(THOST_TERT_RESUME);
+	m_broker_id = _req_login.broker.ctp_broker_id;
+
+	if (_req_login.broker.is_fens)
+	{
+		Log(LOG_INFO
+			, "msg=fens address is used;instance=%p;bid=%s;UserID=%s"
+			, this
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str());
+
+		CThostFtdcFensUserInfoField field;
+		memset(&field, 0, sizeof(field));
+		strcpy_x(field.BrokerID, _req_login.broker.ctp_broker_id.c_str());
+		strcpy_x(field.UserID, _req_login.user_name.c_str());		
+		field.LoginMode = THOST_FTDC_LM_Trade;
+		m_pTdApi->RegisterFensUserInfo(&field);
+
+		for (auto it = _req_login.broker.trading_fronts.begin()
+			; it != _req_login.broker.trading_fronts.end(); ++it)
+		{
+			std::string& f = *it;
+			m_pTdApi->RegisterNameServer((char*)(f.c_str()));
+		}
+	}
+	else
+	{
+		for (auto it = _req_login.broker.trading_fronts.begin()
+			; it != _req_login.broker.trading_fronts.end(); ++it)
+		{
+			std::string& f = *it;
+			m_pTdApi->RegisterFront((char*)(f.c_str()));
+		}
+	}			
 }
 
 void traderctp::StopTdApi()

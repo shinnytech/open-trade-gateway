@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,"msg=trade ctp %s load config failed!"
+			Log2(LOG_WARNING,"trade ctp %s load config failed!"
 				, logFileName.c_str());
 			return -1;
 		}
@@ -55,8 +55,8 @@ int main(int argc, char* argv[])
 			tradeCtp.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO,"msg=trade ctp %s got sig %d", logFileName.c_str(), sig);
-			Log(LOG_INFO,"msg=trade ctp %s exit", logFileName.c_str());
+			Log2(LOG_INFO,"trade ctp %s got sig %d", logFileName.c_str(), sig);
+			Log2(LOG_INFO,"trade ctp %s exit", logFileName.c_str());
 		});
 
 		while (flag.load())
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR,"msg=trade ctp %s ioc run exception,%s"
+				Log2(LOG_ERROR,"trade ctp %s ioc run exception,%s"
 					, logFileName.c_str()
 					, ex.what());
 			}

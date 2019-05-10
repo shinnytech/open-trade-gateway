@@ -135,8 +135,14 @@ const int kHedgeFlagMarketMaker = 4;
 
 struct BrokerConfig
 {
+	BrokerConfig()
+		:is_fens(false)
+	{
+	}
+
 	std::string broker_name;
 	std::string broker_type;
+	bool is_fens;
 	std::string ctp_broker_id;
 	std::vector<std::string> trading_fronts;
 	std::string product_info;
