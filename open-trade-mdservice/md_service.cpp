@@ -305,7 +305,7 @@ namespace md_service
 
 	void OnMessage(const std::string &json_str)
 	{
-		Log2(LOG_INFO,"md service received message,len=%d",json_str.size());
+		Log(LOG_INFO,"msg=md service received message;len=%d",json_str.size());
 		
 		SendTextMsg(md_context.m_req_peek_message);
 
