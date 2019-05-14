@@ -237,7 +237,7 @@ void connection::OnMessage(const std::string &json_str)
 	SerializerTradeBase ss;
 	if (!ss.FromString(json_str.c_str()))
 	{
-		Log(LOG_INFO,"msg=connection recieve invalid diff data package,%s;connection=%d;fd=%d"
+		Log(LOG_INFO,"msg=%s;connection=%d;fd=%d"
 			, json_str.c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -372,8 +372,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			 for (int i = 0; i < _msg_cache.size(); ++i)
 			 {
 				 userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-				 Log(LOG_INFO, "msg=connection send cache msg,%s;connectionid=%d;userkey=%s",
-					 _msg_cache[i].c_str(),
+				 Log(LOG_INFO, "msg=connection send cache msg;connectionid=%d;userkey=%s",
 					 _connection_id,
 					 _user_broker_key.c_str());
 			 }
@@ -399,8 +398,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				for (int i = 0; i < _msg_cache.size(); ++i)
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log(LOG_INFO, "msg=connection send cache msg,%s;connectionid=%d;userkey=%s",
-						_msg_cache[i].c_str(),
+					Log(LOG_INFO, "msg=connection send cache msg;connectionid=%d;userkey=%s",
 						_connection_id,
 						_user_broker_key.c_str());
 				}
@@ -426,8 +424,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				for (int i = 0; i < _msg_cache.size(); ++i)
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log(LOG_INFO, "msg=connection send cache msg,%s;connectionid=%d;userkey=%s",
-						_msg_cache[i].c_str(),
+					Log(LOG_INFO, "msg=connection send cache;connectionid=%d;userkey=%s",
 						_connection_id,
 						_user_broker_key.c_str());
 				}
@@ -443,8 +440,6 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
 	if (userIt == g_userProcessInfoMap.end())
 	{
-		Log2(LOG_INFO,"send msg before user process start up,cache msg,%s"
-			,json_str.c_str());
 		_msg_cache.push_back(json_str);
 		return;
 	}
@@ -453,8 +448,6 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	bool flag = userProcessInfoPtr->ProcessIsRunning();
 	if (!flag)
 	{
-		Log2(LOG_ERROR,"user process is down,close connection,%s"
-			,json_str.c_str());
 		OnCloseConnection();
 		return;
 	}

@@ -287,6 +287,7 @@ void tradersim::LoadUserDataFile()
 	{
 		m_data.m_orders.clear();
 		m_data.m_trades.clear();
+		m_data.m_transfers.clear();
 		for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it) 
 		{
 			Account& item = it->second;
