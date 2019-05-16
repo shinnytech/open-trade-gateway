@@ -47,6 +47,11 @@ bool UserProcessInfo::StartProcess()
 			std::string cmd = "ctpse_" + _reqLogin.bid + "_" + _reqLogin.user_name;			
 			return StartProcess_i("open-trade-ctpse", cmd);
 		}
+		else if (_reqLogin.broker.broker_type == "ctpse15")
+		{
+			std::string cmd = "ctpse15_" + _reqLogin.bid + "_" + _reqLogin.user_name;
+			return StartProcess_i("open-trade-ctpse15", cmd);
+		}
 		else if (_reqLogin.broker.broker_type == "sim")
 		{
 			std::string cmd = "sim_" + _reqLogin.bid + "_" + _reqLogin.user_name;

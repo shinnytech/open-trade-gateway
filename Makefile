@@ -1,6 +1,7 @@
 COMMON_NAME := libopen-trade-common.so
 CTP_NAME := open-trade-ctp
 CTPSE_NAME := open-trade-ctpse
+CTPSE15_NAME := open-trade-ctpse15
 SIM_NAME := open-trade-sim
 MD_NAME := open-trade-mdservice
 GATEWAY_NAME := open-trade-gateway
@@ -8,6 +9,7 @@ GATEWAY_NAME := open-trade-gateway
 COMMON_SRCS := $(wildcard open-trade-common/*.cpp)
 CTP_SRCS:= $(wildcard open-trade-ctp/*.cpp)
 CTPSE_SRCS:= $(wildcard open-trade-ctpse/*.cpp)
+CTPSE15_SRCS:= $(wildcard open-trade-ctpse15/*.cpp)
 SIM_SRCS:= $(wildcard open-trade-sim/*.cpp)
 MD_SRCS:= $(wildcard open-trade-mdservice/*.cpp)
 GATEWAY_SRCS:= $(wildcard open-trade-gateway/*.cpp)
@@ -15,6 +17,7 @@ GATEWAY_SRCS:= $(wildcard open-trade-gateway/*.cpp)
 COMMON_OBJS := $(patsubst open-trade-common/%,obj/common/%,$(COMMON_SRCS:.cpp=.o))
 CTP_OBJS := $(patsubst open-trade-ctp/%,obj/ctp/%,$(CTP_SRCS:.cpp=.o))
 CTPSE_OBJS := $(patsubst open-trade-ctpse/%,obj/ctpse/%,$(CTPSE_SRCS:.cpp=.o))
+CTPSE15_OBJS := $(patsubst open-trade-ctpse15/%,obj/ctpse15/%,$(CTPSE15_SRCS:.cpp=.o))
 SIM_OBJS := $(patsubst open-trade-sim/%,obj/sim/%,$(SIM_SRCS:.cpp=.o))
 MD_OBJS := $(patsubst open-trade-mdservice/%,obj/md/%,$(MD_SRCS:.cpp=.o))
 GATEWAY_OBJS := $(patsubst open-trade-gateway/%,obj/gateway/%,$(GATEWAY_SRCS:.cpp=.o))
@@ -22,6 +25,7 @@ GATEWAY_OBJS := $(patsubst open-trade-gateway/%,obj/gateway/%,$(GATEWAY_SRCS:.cp
 COMMON_DEPS := $(COMMON_OBJS:%.o=%.d)
 CTP_DEPS := $(CTP_OBJS:%.o=%.d)
 CTPSE_DEPS := $(CTPSE_OBJS:%.o=%.d)
+CTPSE15_DEPS := $(CTPSE15_OBJS:%.o=%.d)
 SIM_DEPS := $(SIM_OBJS:%.o=%.d)
 MD_DEPS := $(MD_OBJS:%.o=%.d)
 GATEWAY_DEPS := $(GATEWAY_OBJS:%.o=%.d)
@@ -33,7 +37,7 @@ LDLIBS += -lssl -lcrypto -lcurl -lboost_system -lstdc++fs -lrt
 
 .PHONY: all clean install
 
-all: bin/$(COMMON_NAME) bin/$(CTP_NAME) bin/$(CTPSE_NAME) bin/$(SIM_NAME) bin/$(MD_NAME) bin/$(GATEWAY_NAME)
+all: bin/$(COMMON_NAME) bin/$(CTP_NAME) bin/$(CTPSE_NAME) bin/$(CTPSE15_NAME) bin/$(SIM_NAME) bin/$(MD_NAME) bin/$(GATEWAY_NAME) 
 
 bin/$(COMMON_NAME): $(COMMON_OBJS)
 	@mkdir -p $(@D)
@@ -55,6 +59,8 @@ LDLIBS_CTP = $(LDLIBS) -lthosttraderapi
 
 LDLIBS_CTPSE = $(LDLIBS) -lthosttraderapise 
 
+LDLIBS_CTPSE15 = $(LDLIBS) -lthosttraderapise15
+
 bin/$(CTP_NAME):$(CTP_OBJS)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS_CTP) 
@@ -74,6 +80,16 @@ obj/ctpse/%.o: open-trade-ctpse/%.cpp
 	$(CXX) -o $@ -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 -include $(CTPSE_DEPS)
+
+bin/$(CTPSE15_NAME):$(CTPSE15_OBJS)
+	@mkdir -p $(@D)
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS_CTPSE15) 
+
+obj/ctpse15/%.o: open-trade-ctpse15/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) -o $@ -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -c $<
+
+-include $(CTPSE15_DEPS)
 
 bin/$(SIM_NAME):$(SIM_OBJS)
 	@mkdir -p $(@D)
@@ -115,6 +131,7 @@ install: all
 	install -m 755 bin/$(COMMON_NAME) /usr/local/bin/
 	install -m 755 bin/$(CTP_NAME) /usr/local/bin/
 	install -m 755 bin/$(CTPSE_NAME) /usr/local/bin/
+	install -m 755 bin/$(CTPSE15_NAME) /usr/local/bin/
 	install -m 755 bin/$(SIM_NAME) /usr/local/bin/
 	install -m 755 bin/$(MD_NAME) /usr/local/bin/	
 	install -m 755 bin/$(GATEWAY_NAME) /usr/local/bin/
