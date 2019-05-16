@@ -33,9 +33,9 @@ Install
     git clone https://github.com/shinnytech/open-trade-gateway.git
 
 编译与安装::
-    cd open-trade-gateway
-    sudo make
-    sudo make install
+  cd open-trade-gateway
+  sudo make
+  sudo make install
 	安装后将如下两个路径加入/etc/ld.so.conf文件中:
 	/usr/local/bin/
 	/usr/local/lib/
@@ -60,12 +60,13 @@ Config
     [
       {
         "name": "simnow",
-        "type": "ctp",                              //交易系统类型,目前支持ctp、ctpse(穿管版ctp)、sim(快期模拟)三种
-		"IsFens":false,								//前置地址是否是Fens地址
-        "broker_id": "9999",                        //broker_id,必须与交易系统中的设置一致
-        "product_info": "abcd",
-        "trading_fronts": [                         //交易前置机地址
-          "tcp://218.202.237.33:10002"
+        "type": "ctp",//交易系统类型,目前支持ctp(ctp非穿管版)、ctpse(ctp穿管版6.3.13版)、ctpse15(ctp穿管版6.3.15)、sim(快期模拟)三种
+        "is_fens":false,//前置地址是否是Fens地址,只对type=ctp,ctpse或者ctpse15有效,type=sim时忽略
+        "broker_id": "9999",//broker_id,必须与交易系统中的设置一致
+        "product_info": "abcd",//如果type=ctp,这里填写期货公司发给终端产品的UserProductInfo;如果type=ctpse或者、ctpse15,这里填写期货公司发给中继产品的RelayAppID;type=sim时忽略
+        "auth_code":"VUZMGH==",//如果type=ctp,这里填写期货公司发给终端产品的AuthCode(由对应的UserProductInfo生成);如果type=ctpse或者、ctpse15,这里填写期货公司发给中继产品的AuthCode(由对应的RelayAppId生成);type=sim时忽略
+        "trading_fronts": [//如果is_fens=false，这里填写ctp的交易前置机地址,如果is_fens=true,则这里填写ctp的命名服务地址,type=sim时忽略
+        "tcp://218.202.237.33:10002"
         ]
       }
     ]
