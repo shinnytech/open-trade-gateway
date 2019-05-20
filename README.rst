@@ -75,16 +75,17 @@ Config
 /etc/open-trade-gateway/broker_list.json中的一组配置也可以用/etc/open-trade-gateway/broker_list/目录下的一个文件来代替::
    
 如可以用文件/etc/open-trade-gateway/broker_list/simnow.json代替上面的配置,如下:   
-{
-  "name": "simnow",
-  "type": "ctp",
-  "is_fens":false,
-  "broker_id": "9999",
-  "product_info": "abcd",
-	"auth_code":"VUZMGH==",
-  "trading_fronts": [ "tcp://218.202.237.33:10002" ]
-}
-
+      {
+        "name": "simnow",
+        "type": "ctp",
+        "is_fens":false,
+        "broker_id": "9999",
+        "product_info": "abcd",
+        "auth_code":"VUZMGH==",
+        "trading_fronts": [
+        "tcp://218.202.237.33:10002"
+        ]
+      }
 
 Run
 -------------------------------------------------
