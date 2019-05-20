@@ -61,7 +61,7 @@ Config
     [
       {
         "name": "simnow",//一个系统中要保证唯一性
-        "type": "ctp",//交易系统类型,目前支持ctp(ctp非穿管版)、ctpse(ctp穿管版6.3.13版)、ctpse15(ctp穿管版6.3.15)、sim(快期模拟)四种
+        "type": "ctp",//交易系统类型,目前支持ctp(ctp非穿管版)、ctpse13(ctp穿管版6.3.13版)、ctpse(ctp穿管版6.3.15)、sim(快期模拟)四种
         "is_fens":false,//前置地址是否是Fens地址,只对type=ctp,ctpse或者ctpse15时有效,type=sim时忽略
         "broker_id": "9999",//broker_id,必须与交易系统中的设置一致
         "product_info": "abcd",//如果type=ctp,这里填写从期货公司申请的产品UserProductInfo;如果type=ctpse、或者ctpse15,这里填写从期货公司审请的中继产品RelayAppID;type=sim时忽略
