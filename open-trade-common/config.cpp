@@ -47,7 +47,7 @@ bool LoadConfig()
 {
     g_config.trading_day = GuessTradingDay();
 
-    Log(LOG_INFO,"msg=LoadConfig;trading_day=%s", g_config.trading_day.c_str());
+	Log(LOG_INFO,"msg=LoadConfig;trading_day=%s", g_config.trading_day.c_str());
 
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json"))
@@ -56,34 +56,97 @@ bool LoadConfig()
         return false;
     }
     ss.ToVar(g_config);
+		
+	std::map<std::string, BrokerConfig> brokerConfigMap;
+	std::string strFileName = "/etc/open-trade-gateway/broker_list.json";
+	
+	if (boost::filesystem::exists(strFileName))
+	{
+		SerializerConfig ss_broker;
+		if (!ss_broker.FromFile(strFileName.c_str()))
+		{
+			Log2(LOG_WARNING,"load %s file fail",strFileName.c_str());
+		}
+		else
+		{
+			std::vector<BrokerConfig> broker_list;
+			ss_broker.ToVar(broker_list);
+			for (auto b : broker_list)
+			{
+				brokerConfigMap[b.broker_name] = b;
+			}
+		}		
+	}
 
-    SerializerConfig ss_broker;
-    if (!ss_broker.FromFile("/etc/open-trade-gateway/broker_list.json"))
-    {
-        Log2(LOG_FATAL,"load /etc/open-trade-gateway/broker_list.json file fail");
-        return false;
-    }
-    std::vector<BrokerConfig> broker_list;
-    ss_broker.ToVar(broker_list);
+	std::vector<std::string> brokerFileList;
+	boost::filesystem::path brokerPath = "/etc/open-trade-gateway/broker_list/";
+	if (boost::filesystem::exists(brokerPath))
+	{
+		boost::filesystem::directory_iterator item_begin(brokerPath);
+		boost::filesystem::directory_iterator item_end;
+		for (; item_begin != item_end; item_begin++)
+		{
+			if (boost::filesystem::is_directory(*item_begin))
+			{
+				continue;
+			}
+			boost::filesystem::path brokerFilePath = item_begin->path();			
+			brokerFilePath=boost::filesystem::system_complete(brokerFilePath);
 
-    SerializerTradeBase ss_broker_list_str;
-    rapidjson::Pointer("/aid").Set(*ss_broker_list_str.m_doc,"rtn_brokers");
+			std::string strExt = boost::filesystem::extension(brokerFilePath);
 
+			if (strExt != ".json")
+			{
+				continue;
+			}
+
+			brokerFileList.push_back(brokerFilePath.string());
+		}
+	}
+
+	for (auto fileName : brokerFileList)
+	{
+		SerializerConfig ss_broker;
+		if (!ss_broker.FromFile(fileName.c_str()))
+		{
+			Log2(LOG_WARNING, "load %s file fail", fileName.c_str());
+			continue;
+		}
+
+		BrokerConfig bc;
+		ss_broker.ToVar(bc);
+
+		brokerConfigMap[bc.broker_name] = bc;
+	}
+   
+	if (brokerConfigMap.empty())
+	{
+		Log2(LOG_FATAL,"load broker list fail!");
+		return false;
+	}
+
+	g_config.brokers = brokerConfigMap;	
     boost::filesystem::path ufpath(g_config.user_file_path);
-    for (long long i = 0; i < broker_list.size(); ++i) 
-    {
-        BrokerConfig& broker = broker_list[i];
-
-        g_config.brokers[broker.broker_name] = broker;
-
+	std::vector<std::string> brokerList;
+	for (auto it : g_config.brokers)
+	{
+		BrokerConfig& broker = it.second;
 		if (!boost::filesystem::exists(ufpath/broker.broker_name))
 		{
-			boost::filesystem::create_directory(ufpath / broker.broker_name);
-		}		
+			boost::filesystem::create_directory(ufpath/broker.broker_name);
+		}
+		brokerList.push_back(broker.broker_name);
+	}
 
-        rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc,broker.broker_name);
-    }
+	std::sort(brokerList.begin(),brokerList.end());
+	SerializerTradeBase ss_broker_list_str;
+	rapidjson::Pointer("/aid").Set(*ss_broker_list_str.m_doc,"rtn_brokers");
+	for (int i = 0; i < brokerList.size();i++)
+	{
+		rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc,brokerList[i]);
+	}
     ss_broker_list_str.ToString(&g_config.broker_list_str);
+
     return true;
 }
 
