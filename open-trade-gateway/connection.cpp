@@ -285,7 +285,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	{
 		flag = true;
 	}
-	else if (_reqLogin.broker.broker_type == "ctpse15")
+	else if (_reqLogin.broker.broker_type == "ctpse13")
 	{
 		flag = true;
 	}
