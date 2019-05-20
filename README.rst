@@ -62,10 +62,10 @@ Config
       {
         "name": "simnow",//一个系统中要保证唯一性
         "type": "ctp",//交易系统类型,目前支持ctp(ctp非穿管版)、ctpse13(ctp穿管版6.3.13版)、ctpse(ctp穿管版6.3.15)、sim(快期模拟)四种
-        "is_fens":false,//前置地址是否是Fens地址,只对type=ctp,ctpse或者ctpse15时有效,type=sim时忽略
+        "is_fens":false,//前置地址是否是Fens地址,只对type=ctp,ctpse或者ctpse13时有效,type=sim时忽略
         "broker_id": "9999",//broker_id,必须与交易系统中的设置一致
-        "product_info": "abcd",//如果type=ctp,这里填写从期货公司申请的产品UserProductInfo;如果type=ctpse、或者ctpse15,这里填写从期货公司审请的中继产品RelayAppID;type=sim时忽略
-        "auth_code":"VUZMGH==",//如果type=ctp,这里填写从期货公司申请的产品AuthCode(由对应的UserProductInfo生成);如果type=ctpse、或者ctpse15,这里填写从期货公司申请的中继产品AuthCode(由对应的RelayAppId生成);type=sim时忽略
+        "product_info": "abcd",//如果type=ctp,这里填写从期货公司申请的产品UserProductInfo;如果type=ctpse、或者ctpse13,这里填写从期货公司审请的中继产品RelayAppID;type=sim时忽略
+        "auth_code":"VUZMGH==",//如果type=ctp,这里填写从期货公司申请的产品AuthCode(由对应的UserProductInfo生成);如果type=ctpse、或者ctpse13,这里填写从期货公司申请的中继产品AuthCode(由对应的RelayAppId生成);type=sim时忽略
         "trading_fronts": [//如果is_fens=false，这里填写ctp的交易前置机地址,如果is_fens=true,则这里填写ctp的命名服务地址,type=sim时忽略
         "tcp://218.202.237.33:10002"
         ]
