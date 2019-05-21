@@ -468,10 +468,10 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 	trade->price = price;
 	trade->trade_date_time = GetLocalEpochNano();
 
+	//生成成交通知
 	std::stringstream ss;
 	ss << u8"成交通知,合约:" << trade->exchange_id
-		<< u8"." << trade->instrument_id << u8",手数:" << trade->volume
-		<< u8",价格:" << trade->price << "!";
+		<< u8"." << trade->instrument_id << u8",手数:" << trade->volume<< "!";
 	OutputNotifyAllSycn(1,ss.str().c_str());
 
 	//调整委托单数据

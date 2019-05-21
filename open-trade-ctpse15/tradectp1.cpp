@@ -2151,8 +2151,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 
 			std::stringstream ss;
 			ss << u8"成交通知,合约:" << serverOrderInfo.ExchangeId
-				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume
-				<< u8",价格:" << pTrade->Price << "!";
+				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume<< "!";
 			OutputNotifyAllSycn(0, ss.str().c_str());
 
 			if (serverOrderInfo.VolumeLeft <= 0)
