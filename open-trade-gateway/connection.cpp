@@ -237,21 +237,28 @@ void connection::OnMessage(const std::string &json_str)
 	SerializerTradeBase ss;
 	if (!ss.FromString(json_str.c_str()))
 	{
-		Log(LOG_INFO,"msg=%s;connection=%d;fd=%d"
+		Log(LOG_WARNING,"msg=%s;connection=%d;fd=%d"
 			, json_str.c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
 		return;
 	}
-
+		
 	ReqLogin req;
 	ss.ToVar(req);
 
 	if (req.aid == "req_login")
 	{
-		Log(LOG_INFO,"msg=req_login;client_system_info=%s;client_app_id=%s"
-			, req.client_system_info.c_str()
-		, req.client_app_id.c_str());
+		Log(LOG_INFO,"aid=req_login;bid=%s;user_name=%s;client_app_id=%s;client_system_info=%s;client_ip=%s;client_port=%d;broker_id=%s;front=%s"
+			,req.bid.c_str()
+			,req.user_name.c_str()
+			,req.client_app_id.c_str()
+			,req.client_system_info.c_str()
+			,req.client_ip.c_str()
+			,req.client_port
+			,req.broker_id.c_str()
+			,req.front.c_str()
+		);
 		ProcessLogInMessage(req, json_str);
 	}
 	else
