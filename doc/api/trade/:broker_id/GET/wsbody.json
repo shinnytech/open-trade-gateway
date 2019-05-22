@@ -12,7 +12,7 @@
 				"client_ip": { "type": "string", "minLength": 1 , "maxLength": 64 },
 				"client_port": { "type": "integer"},
 				"broker_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-				"front": { "type": "string", "minLength": 1 , "maxLength": 64 }
+				"front": { "type": "string", "minLength": 1 , "maxLength": 256 }
             },
             "required": ["aid", "bid", "user_name", "password"],
             "additionalProperties": false
