@@ -611,6 +611,17 @@ void traderctp::OnClientPeekMessage()
 
 void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 {
+	Log(LOG_INFO
+		, "msg=traderctp ProcessReqLogIn;bid=%s;user_name=%s;client_ip=%s;client_port=%d;client_app_id=%s;client_system_info=%s;front=%s;broker_id=%s"
+		, req.bid.c_str()
+		, req.user_name.c_str()
+		, req.client_ip.c_str()
+		, req.client_port
+		, req.client_app_id.c_str()
+		, req.client_system_info.c_str()
+		, req.front.c_str()
+		, req.broker_id.c_str());
+
 	//如果CTP已经登录成功
 	if (m_b_login.load())
 	{

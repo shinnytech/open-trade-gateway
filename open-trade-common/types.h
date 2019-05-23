@@ -151,6 +151,11 @@ struct BrokerConfig
 
 struct ReqLogin
 {
+	ReqLogin()
+		:client_port(0)
+	{
+	}
+
 	std::string aid;
 	std::string bid;        //对应服务器brokers配置文件中的id号
 	std::string user_name;  //用户输入的用户名
