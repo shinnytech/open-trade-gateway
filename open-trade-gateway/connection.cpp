@@ -288,10 +288,11 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	if (it == g_config.brokers.end())
 	{
 		Log(LOG_WARNING,"msg=trade server req_login invalid bid;connection=%d;bid=%s"
-			, _connection_id,req.bid.c_str());
+			,_connection_id
+			,req.bid.c_str());
 		std::stringstream ss;
 		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(1, ss.str(), "WARNING");
+		OutputNotifySycn(1,ss.str(),"WARNING");
 		return;
 	}
 
@@ -370,7 +371,11 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			new_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_"
 				+ _reqLogin.user_name + "_" + _reqLogin.broker_id + "_" + strFront;
 		}
-		Log(LOG_INFO,"old key=%s;new key=%s", _user_broker_key.c_str(), new_user_broker_key.c_str());
+		
+		Log(LOG_INFO,"old key=%s;new key=%s"
+			, _user_broker_key.c_str()
+			, new_user_broker_key.c_str());
+
 		if (new_user_broker_key != _user_broker_key)
 		{
 			auto userIt = g_userProcessInfoMap.find(_user_broker_key);
@@ -389,6 +394,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				}
 			}
 		}
+
 		_user_broker_key = new_user_broker_key;
 	}
 	

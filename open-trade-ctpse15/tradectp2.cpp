@@ -20,15 +20,15 @@
 using namespace trader_dll;
 
 traderctp::traderctp(boost::asio::io_context& ios
-	,const std::string& logFileName)
+	,const std::string& key)
 	:m_b_login(false)
-	,_logFileName(logFileName)
+	, _key(key)
 	,m_settlement_info("")
 	,_ios(ios)
 	,_out_mq_ptr()
-	,_out_mq_name(logFileName+"_msg_out")
+	,_out_mq_name(_key +"_msg_out")
 	,_in_mq_ptr()
-	,_in_mq_name(logFileName + "_msg_in")
+	,_in_mq_name(_key + "_msg_in")
 	,_thread_ptr()
 	,m_notify_seq(0)
 	,m_data_seq(0)
@@ -675,9 +675,13 @@ void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 		if ((!_req_login.broker_id.empty()) &&
 			(!_req_login.front.empty()))
 		{
-			Log(LOG_INFO,"msg=ctpse;broker_id=%s;front=%s"
+			Log(LOG_INFO
+				, "msg=ctpse login from custom front and broker_id;broker_id=%s;front=%s;user_name=%s;bid=%s"
 				, req.broker_id.c_str()
-				, req.front.c_str());
+				, req.front.c_str()
+				, req.user_name.c_str()
+				, req.bid.c_str());
+
 			_req_login.broker.ctp_broker_id = _req_login.broker_id;
 			_req_login.broker.trading_fronts.clear();
 			_req_login.broker.trading_fronts.push_back(_req_login.front);

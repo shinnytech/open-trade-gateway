@@ -24,7 +24,7 @@ void traderctp::LoadFromFile()
 	{
 		return;
 	}		
-	std::string fn = m_user_file_path + "/" + _req_login.broker.ctp_broker_id+"_"+_req_login.user_name;
+	std::string fn = m_user_file_path + "/" + _key;
 	SerializerCtp s;
 	if (s.FromFile(fn.c_str())) 
 	{
@@ -59,7 +59,7 @@ void traderctp::SaveToFile()
 		kf.items.push_back(item);
 	}
 	s.FromVar(kf);	
-	std::string fn = m_user_file_path + "/"  +_req_login.broker.ctp_broker_id + "_" + _req_login.user_name;
+	std::string fn = m_user_file_path + "/" + _key;
 	s.ToFile(fn.c_str());	
 }
 

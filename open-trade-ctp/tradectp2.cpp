@@ -22,15 +22,15 @@ using namespace trader_dll;
 using namespace std::chrono;
 
 traderctp::traderctp(boost::asio::io_context& ios
-	,const std::string& logFileName)
+	,const std::string& key)
 	:m_b_login(false)
-	,_logFileName(logFileName)
+	,_key(key)
 	,m_settlement_info("")
 	,_ios(ios)
 	,_out_mq_ptr()
-	,_out_mq_name(logFileName+"_msg_out")
+	,_out_mq_name(_key +"_msg_out")
 	,_in_mq_ptr()
-	,_in_mq_name(logFileName + "_msg_in")
+	,_in_mq_name(_key + "_msg_in")
 	,_thread_ptr()
 	,m_notify_seq(0)
 	,m_data_seq(0)
@@ -584,8 +584,9 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
 	Log(LOG_INFO
-		,"msg=ctp ReqOrderInsert;instance=%p;bid=%s;UserID=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
+		,"msg=ctp ReqOrderInsert;instance=%p;orderid=%s;bid=%s;UserID=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
 		,this
+		,d.local_key.order_id.c_str()
 		,_req_login.bid.c_str()
 		,_req_login.user_name.c_str()
 		,d.f.InstrumentID
@@ -687,9 +688,11 @@ void traderctp::ProcessReqLogIn(int connId,ReqLogin& req)
 			(!_req_login.front.empty()))
 		{
 			Log(LOG_INFO
-				, "msg=ctp;broker_id=%s;front=%s"
+				, "msg=ctp login from custom front and broker_id;broker_id=%s;front=%s;user_name=%s;bid=%s"
 				, req.broker_id.c_str()
-				, req.front.c_str());
+				, req.front.c_str()
+				, req.user_name.c_str()
+				, req.bid.c_str());
 
 			_req_login.broker.ctp_broker_id = _req_login.broker_id;
 			_req_login.broker.trading_fronts.clear();

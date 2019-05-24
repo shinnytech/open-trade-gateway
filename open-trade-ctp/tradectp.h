@@ -31,7 +31,7 @@ class traderctp : public CThostFtdcTraderSpi
 {
 public:
 	traderctp(boost::asio::io_context& ios
-		,const std::string& logFileName);
+		,const std::string& key);
 	
 	void Start();
 
@@ -124,7 +124,7 @@ public:
 private:
 	std::atomic_bool m_b_login;
 
-	std::string _logFileName;
+	std::string _key;
 
 	std::string m_settlement_info;
 
