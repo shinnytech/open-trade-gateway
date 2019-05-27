@@ -233,6 +233,11 @@ void traderctp::CloseConnection(int nId)
 	//如果已经没有客户端连接,将来要考虑条件单的情况
 	if (m_logined_connIds.empty())
 	{
+		if (m_need_save_file.load())
+		{
+			SaveToFile();
+		}
+
 		StopTdApi();
 		m_b_login.store(false);
 		_logIn_status = 0;
