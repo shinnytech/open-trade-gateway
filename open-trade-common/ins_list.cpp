@@ -23,7 +23,9 @@ Instrument* GetInstrument(const std::string& symbol)
 		}
 		catch (const std::exception& ex)
 		{
-			Log2(LOG_FATAL,"GetInstrument open InsMapSharedMemory fail,%s",ex.what());
+			Log(LOG_FATAL,nullptr
+				,"msg=GetInstrument open InsMapSharedMemory fail;errmsg=%s"
+				,ex.what());
 			return nullptr;
 		}		
 	}	

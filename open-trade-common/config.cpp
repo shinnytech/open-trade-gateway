@@ -47,12 +47,15 @@ bool LoadConfig()
 {
     g_config.trading_day = GuessTradingDay();
 
-	Log(LOG_INFO,"msg=LoadConfig;trading_day=%s", g_config.trading_day.c_str());
+	Log(LOG_INFO,nullptr
+		,"msg=LoadConfig;trading_day=%s"
+		,g_config.trading_day.c_str());
 
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json"))
     {
-        Log2(LOG_FATAL,"load /etc/open-trade-gateway/config.json file fail");
+		Log(LOG_FATAL,nullptr
+			,"msg=load /etc/open-trade-gateway/config.json file fail");
         return false;
     }
     ss.ToVar(g_config);
@@ -65,7 +68,9 @@ bool LoadConfig()
 		SerializerConfig ss_broker;
 		if (!ss_broker.FromFile(strFileName.c_str()))
 		{
-			Log2(LOG_WARNING,"load %s file fail",strFileName.c_str());
+			Log(LOG_WARNING,nullptr
+				,"msg=load %s file fail"
+				,strFileName.c_str());
 		}
 		else
 		{
@@ -109,7 +114,9 @@ bool LoadConfig()
 		SerializerConfig ss_broker;
 		if (!ss_broker.FromFile(fileName.c_str()))
 		{
-			Log2(LOG_WARNING, "load %s file fail", fileName.c_str());
+			Log(LOG_WARNING,nullptr
+				,"msg=load %s file fail"
+				,fileName.c_str());
 			continue;
 		}
 
@@ -121,7 +128,8 @@ bool LoadConfig()
    
 	if (brokerConfigMap.empty())
 	{
-		Log2(LOG_FATAL,"load broker list fail!");
+		Log(LOG_FATAL,nullptr
+			,"msg=load broker list fail!");
 		return false;
 	}
 

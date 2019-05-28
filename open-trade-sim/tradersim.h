@@ -82,7 +82,7 @@ public:
 private:
 	std::atomic_bool m_b_login;
 
-	std::string _logFileName;
+	std::string _key;
 	
 	boost::asio::io_context& _ios;
 
@@ -130,7 +130,7 @@ private:
 
 	int m_transfer_seq;
 
-	void ReceiveMsg();
+	void ReceiveMsg(const std::string& key);
 
 	void CloseConnection(int nId);
 

@@ -64,7 +64,7 @@ const char* CurrentDateTimeStr()
 }
 
 
-void Log(LogLevel level, const char* message_fmt, ...)
+void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...)
 {
 	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
 
@@ -75,6 +75,11 @@ void Log(LogLevel level, const char* message_fmt, ...)
 	std::stringstream ss;
 	ss << "{\"time\": \"" << datetime_str
 		<< "\", \"level\": \"" << level_str << "\"";
+	
+	if (nullptr!=pack_str) 
+	{
+		ss << ",\"pack\":"<< pack_str;
+	}
 
 	char buf[1024 * 5];
 	memset(buf, 0, sizeof(buf));
@@ -121,7 +126,7 @@ void Log(LogLevel level, const char* message_fmt, ...)
 	close(log_context.m_log_file_fd);
 }
 
-void Log2(LogLevel level, const char* message_fmt, ...)
+void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...)
 {
 	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
 
@@ -133,17 +138,46 @@ void Log2(LogLevel level, const char* message_fmt, ...)
 	ss << "{\"time\": \"" << datetime_str
 		<< "\", \"level\": \"" << level_str << "\"";
 
-	char buf[1024];
+	if (nullptr != pack_str)
+	{
+		ss << ",\"pack\":" << pack_str;
+	}
+
+	char buf[1024 * 5];
 	memset(buf, 0, sizeof(buf));
 	va_list arglist;
 	va_start(arglist, message_fmt);
-	vsnprintf(buf,1024, message_fmt, arglist);
+	vsnprintf(buf, 1024 * 5, message_fmt, arglist);
 	va_end(arglist);
-	ss << ",\"msg\": \"" << buf << "\"";	
+
+	std::vector<std::string> kvs;
+	boost::algorithm::split(kvs, buf, boost::algorithm::is_any_of(";"));
+	if (kvs.empty())
+	{
+		ss << ",\"msg\": \"" << buf << "\"";
+	}
+	else
+	{
+		for (int i = 0; i < kvs.size(); ++i)
+		{
+			std::string& kv = kvs[i];
+			std::vector<std::string> kvp;
+			boost::algorithm::split(kvp, kv, boost::algorithm::is_any_of("="));
+			if (kvp.size() != 2)
+			{
+				if (0 == i)
+				{
+					ss << ",\"msg\": \"" << kv << "\"";
+				}
+				continue;
+			}
+			ss << ",\"" << kvp[0] << "\": \"" << kvp[1] << "\"";
+		}
+	}
 	ss << "}\n";
 
 	std::string str = ss.str();
-	std::string logFileName = "/var/log/open-trade-gateway/open-trade-gateway.log";
+	std::string logFileName = "/var/log/open-trade-gateway/open-trade-gateway-ms.log";
 	log_context.m_log_file_fd = open(logFileName.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 	if (log_context.m_log_file_fd == -1)
 	{

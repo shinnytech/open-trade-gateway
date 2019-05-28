@@ -17,13 +17,14 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		Log2(LOG_INFO,"trade_server init");
+		Log(LOG_INFO,nullptr
+			,"msg=trade server init;key=gateway");
 
 		//加载配置文件
 		if (!LoadConfig())
-
 		{
-			Log2(LOG_WARNING,"trade_server load config failed!");			
+			Log(LOG_WARNING,nullptr
+				,"msg=trade_server load config failed!;key=gateway");
 			return -1;
 		}
 
@@ -36,7 +37,8 @@ int main(int argc, char* argv[])
 		if (!s.init())
 		{
 			md_child.terminate();
-			Log2(LOG_INFO,"trade_server init fail!");
+			Log(LOG_INFO, nullptr
+				,"msg=trade_server init fail!;key=gateway");
 			return -1;
 		}
 		
@@ -56,8 +58,10 @@ int main(int argc, char* argv[])
 			s.stop();	
 			flag.store(false);
 			ios.stop();
-			Log2(LOG_INFO,"trade_server got sig %d", sig);
-			Log2(LOG_INFO,"trade_server exit");
+			Log(LOG_INFO, nullptr
+				,"msg=trade_server got sig %d;key=gateway", sig);
+			Log(LOG_INFO, nullptr
+				,"msg=trade_server exit;key=gateway");
 		});
 		
 		while (flag.load())
@@ -69,7 +73,8 @@ int main(int argc, char* argv[])
 			}
 			catch(std::exception& ex)
 			{
-				Log2(LOG_ERROR,"ios run exception,%s"
+				Log(LOG_ERROR,nullptr
+					,"msg=ios run exception;errmsg=%s;key=gateway"
 					,ex.what());
 			}
 		}

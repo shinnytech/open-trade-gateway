@@ -57,15 +57,17 @@ void connection::stop()
 {
 	try
 	{
-		Log(LOG_INFO,"msg=trade connection stop;connectionid=%d;fd=%d"
+		Log(LOG_INFO,nullptr
+			,"msg=trade connection stop;connectionid=%d;fd=%d;key=gateway"
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
 		m_ws_socket.next_layer().close();
 	}
 	catch (std::exception& ex)
 	{
-		Log2(LOG_INFO,"connection stop exception,%s"
-			, ex.what());
+		Log(LOG_INFO,nullptr
+			,"msg=connection stop exception;errmsg=%s;key=gateway"
+			,ex.what());
 	}
 }
 
@@ -73,10 +75,11 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		Log(LOG_WARNING	,"msg=trade connection accept fail,%s;connectionid=%d;fd=%d"
+		Log(LOG_WARNING,nullptr
+			,"msg=trade connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
 			,ec.message().c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+			,_connection_id
+			,m_ws_socket.next_layer().native_handle());
 		OnCloseConnection();
 		return;
 	}
@@ -106,7 +109,8 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 	}
 	catch (std::exception& ex)
 	{
-		Log2(LOG_INFO,"connection OnOpenConnection exception,%s"
+		Log(LOG_INFO,nullptr
+			,"msg=connection OnOpenConnection exception;errmsg=%s;key=gateway"
 			, ex.what());
 	}	
 }
@@ -118,8 +122,8 @@ void connection::on_read_header(boost::beast::error_code ec
 
 	if (ec == boost::beast::http::error::end_of_stream)
 	{
-		Log(LOG_INFO			
-			, "msg=connection on_read_header fail,%s;connectionid=%d;fd=%d"
+		Log(LOG_INFO,nullptr			
+			, "msg=connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
 			, ec.message().c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -149,7 +153,8 @@ void connection::SendTextMsg(const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,"msg=connection SendTextMsg exception,%s;connectionid=%d;fd=%d"
+		Log(LOG_ERROR, nullptr
+			,"msg=connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -174,7 +179,8 @@ void connection::DoWrite()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,"msg=connection DoWrite exception,%s;connectionid=%d;fd=%d"
+		Log(LOG_ERROR, nullptr
+			,"msg=connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
 			,ex.what()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -196,9 +202,10 @@ void connection::OnRead(boost::system::error_code ec, std::size_t bytes_transfer
 	{
 		if (ec != boost::beast::websocket::error::closed)
 		{
-			Log(LOG_INFO,"msg=trade connection read fail;connection=%d;fd=%d;errmsg=%s"
-				, _connection_id
-				, m_ws_socket.next_layer().native_handle()
+			Log(LOG_INFO, nullptr
+				,"msg=trade connection read fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
+				,_connection_id
+				,m_ws_socket.next_layer().native_handle()
 				,ec.message().c_str());
 		}
 		OnCloseConnection();
@@ -215,7 +222,8 @@ void connection::OnWrite(boost::system::error_code ec,std::size_t bytes_transfer
 {
 	if (ec)
 	{
-		Log(LOG_INFO,"msg=trade server send message fail;connection=%d;fd=%d;errmsg=%s"
+		Log(LOG_INFO, nullptr
+			,"msg=trade server send message fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle()
 			,ec.message().c_str());
@@ -238,8 +246,9 @@ void connection::OnMessage(const std::string &json_str)
 	SerializerTradeBase ss;
 	if (!ss.FromString(json_str.c_str()))
 	{
-		Log(LOG_WARNING,"msg=%s;connection=%d;fd=%d"
-			, json_str.c_str()
+		Log(LOG_WARNING, nullptr
+			,"msg=invalid json str;msgcontent=%s;connection=%d;fd=%d;key=gateway"
+			,json_str.c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
 		return;
@@ -250,7 +259,8 @@ void connection::OnMessage(const std::string &json_str)
 
 	if (req.aid == "req_login")
 	{
-		Log(LOG_INFO,"msg=connection::OnMessage;aid=req_login;bid=%s;user_name=%s;client_app_id=%s;client_system_info=%s;client_ip=%s;client_port=%d;broker_id=%s;front=%s"
+		Log(LOG_INFO, nullptr
+			,"msg=connection::OnMessage;aid=req_login;key=gateway;bid=%s;user_name=%s;client_app_id=%s;client_system_info=%s;client_ip=%s;client_port=%d;broker_id=%s;front=%s"
 			,req.bid.c_str()
 			,req.user_name.c_str()
 			,req.client_app_id.c_str()
@@ -260,7 +270,7 @@ void connection::OnMessage(const std::string &json_str)
 			,req.broker_id.c_str()
 			,req.front.c_str()
 		);
-		ProcessLogInMessage(req, json_str);
+		ProcessLogInMessage(req,json_str);
 	}
 	else
 	{
@@ -287,7 +297,8 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	auto it = g_config.brokers.find(_reqLogin.bid);
 	if (it == g_config.brokers.end())
 	{
-		Log(LOG_WARNING,"msg=trade server req_login invalid bid;connection=%d;bid=%s"
+		Log(LOG_WARNING,nullptr
+			,"msg=trade server req_login invalid bid;key=gateway;connection=%d;bid=%s"
 			,_connection_id
 			,req.bid.c_str());
 		std::stringstream ss;
@@ -372,7 +383,8 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				+ _reqLogin.user_name + "_" + _reqLogin.broker_id + "_" + strFront;
 		}
 		
-		Log(LOG_INFO,"old key=%s;new key=%s"
+		Log(LOG_INFO,nullptr
+			,"msg=get user broker key;oldkey=%s;newkey=%s;key=gateway"
 			, _user_broker_key.c_str()
 			, new_user_broker_key.c_str());
 
@@ -405,16 +417,20 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		 UserProcessInfo_ptr userProcessInfoPtr = std::make_shared<UserProcessInfo>(m_ios,_user_broker_key,_reqLogin);
 		 if (nullptr == userProcessInfoPtr)
 		 {
-			 Log2(LOG_ERROR,"new user process fail,%s"
+			 Log(LOG_ERROR, nullptr
+				 ,"msg=new user process fail;key=%s"
 				 ,_user_broker_key.c_str());			
 			 return;
 		 }
+
 		 if (!userProcessInfoPtr->StartProcess())
 		 {
-			 Log2(LOG_ERROR,"can not start up user process,%s"
+			 Log(LOG_ERROR,nullptr
+				 ,"msg=can not start up user process;key=%s"
 				 , _user_broker_key.c_str());			
 			 return;
 		 }
+
 		 userProcessInfoPtr->user_connections_.insert(
 			 std::map<int,connection_ptr>::value_type(
 				 _connection_id,shared_from_this()));
@@ -427,7 +443,8 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			 for (int i = 0; i < _msg_cache.size(); ++i)
 			 {
 				 userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-				 Log(LOG_INFO, "msg=connection send cache msg;connectionid=%d;userkey=%s",
+				 Log(LOG_INFO, nullptr
+					 , "msg=connection send cache msg;connectionid=%d;key=%s",
 					 _connection_id,
 					 _user_broker_key.c_str());
 			 }
@@ -453,7 +470,8 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				for (int i = 0; i < _msg_cache.size(); ++i)
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log(LOG_INFO, "msg=connection send cache msg;connectionid=%d;userkey=%s",
+					Log(LOG_INFO,nullptr
+						, "msg=connection send cache msg;connectionid=%d;key=%s",
 						_connection_id,
 						_user_broker_key.c_str());
 				}
@@ -466,7 +484,8 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			flag = userProcessInfoPtr->StartProcess();
 			if (!flag)
 			{
-				Log2(LOG_ERROR,"can not start up user process,%s"
+				Log(LOG_ERROR, nullptr
+					,"msg=can not start up user process;key=%s"
 					, _user_broker_key.c_str());				
 				return;
 			}
@@ -479,7 +498,8 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				for (int i = 0; i < _msg_cache.size(); ++i)
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log(LOG_INFO, "msg=connection send cache;connectionid=%d;userkey=%s",
+					Log(LOG_INFO, nullptr
+						, "msg=connection send cache;connectionid=%d;key=%s",
 						_connection_id,
 						_user_broker_key.c_str());
 				}
@@ -528,7 +548,8 @@ void connection::OnCloseConnection()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,"msg=connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d"
+		Log(LOG_ERROR,nullptr
+			,"msg=connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gateway"
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());

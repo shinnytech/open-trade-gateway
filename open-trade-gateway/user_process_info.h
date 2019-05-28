@@ -37,7 +37,7 @@ public:
 private:
 	bool StartProcess_i(const std::string& name, const std::string& cmd);
 
-	void ReceiveMsg_i();
+	void ReceiveMsg_i(const std::string& key);
 
 	void ProcessMsg(std::shared_ptr<std::string> msg_ptr);
 private:

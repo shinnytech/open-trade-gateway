@@ -58,14 +58,19 @@ bool UserProcessInfo::StartProcess()
 		}
 		else
 		{
-			Log2(LOG_ERROR,"trade server req_login invalid broker_type,%s"
-				, _reqLogin.broker.broker_type.c_str());			
+			Log(LOG_ERROR,nullptr
+				,"msg=trade server req_login invalid broker_type;type=%s;key=%s"
+				,_reqLogin.broker.broker_type.c_str()
+				, _key.c_str());
 			return false;
 		}		
 	}
 	catch (const std::exception& ex)
 	{
-		Log2(LOG_WARNING,"UserProcessInfo::StartProcess() fail,%s!",ex.what());
+		Log(LOG_WARNING,nullptr
+			,"msg=UserProcessInfo::StartProcess() fail!;errmsg=%s;key=%s"
+			,ex.what()
+			,_key.c_str());
 		return false;
 	}	
 }
@@ -120,7 +125,9 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 {	
 	if (nullptr == _in_mq_ptr)
 	{
-		Log2(LOG_WARNING,"UserProcessInfo::SendMsg,nullptr is _in_mq_ptr");
+		Log(LOG_WARNING,nullptr
+			,"msg=UserProcessInfo::SendMsg,nullptr is _in_mq_ptr;key=%s"
+			, _key.c_str());
 		return;
 	}
 
@@ -133,8 +140,11 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,"msg=UserProcessInfo::SendMsg Erro,%s;msgdata=%s;length=%d"
-			, ex.what(), str.c_str(), str.length());
+		Log(LOG_ERROR,msg.c_str()
+			,"msg=UserProcessInfo::SendMsg exception;errmsg=%s;length=%d;key=%s"
+			, ex.what()
+			, str.length()
+			, _key.c_str());
 	}	
 }
 
@@ -142,7 +152,9 @@ void UserProcessInfo::NotifyClose(int connid)
 {
 	if (nullptr == _in_mq_ptr)
 	{
-		Log2(LOG_WARNING,"UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr");
+		Log(LOG_WARNING, nullptr
+			,"UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr;key=%s"
+			, _key.c_str());
 		return;
 	}
 
@@ -155,8 +167,12 @@ void UserProcessInfo::NotifyClose(int connid)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,"msg=UserProcessInfo::SendMsg Erro:%s;msgdata=%s;length=%d"
-			, ex.what(), str.c_str(), str.length());
+		Log(LOG_ERROR, nullptr
+			,"msg=UserProcessInfo::SendMsg exception;errmsg=%s;msgcontent=%s;length=%d;key=%s"
+			, ex.what()
+			, str.c_str()
+			, str.length()
+			, _key.c_str());
 	}
 }
 
@@ -172,8 +188,10 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, "msg=StartProcess_i,create out message queue;user key name=%s;errmsg=%s"
-			,_key.c_str(), ex.what());
+		Log(LOG_ERROR, nullptr
+			,"msg=StartProcess_i,create out message queue;key=%s;errmsg=%s"
+			,_key.c_str()
+			,ex.what());
 		return false;
 	}
 
@@ -181,12 +199,14 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	{
 		_thread_ptr.reset();
 		_thread_ptr = std::shared_ptr<boost::thread>(
-			new boost::thread(boost::bind(&UserProcessInfo::ReceiveMsg_i, shared_from_this())));
+			new boost::thread(boost::bind(&UserProcessInfo::ReceiveMsg_i,shared_from_this(),_key)));
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, "msg=StartProcess_i,start ReceiveMsg_i thread;user key name=%s;errmsg=%s"
-			, _key.c_str(),ex.what());
+		Log(LOG_ERROR, nullptr
+			, "msg=StartProcess_i,start ReceiveMsg_i thread;key=%s;errmsg=%s"
+			, _key.c_str()
+			, ex.what());
 		return false;
 	}
 
@@ -200,8 +220,10 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, "msg=StartProcess_i,create in message queue;user key name=%s;errmsg=%s"
-			, _key.c_str(),ex.what());
+		Log(LOG_ERROR, nullptr
+			, "msg=StartProcess_i,create in message queue;key=%s;errmsg=%s"
+			, _key.c_str()
+			, ex.what());
 		return false;
 	}
 	
@@ -218,14 +240,17 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, "msg=StartProcess_i,start user process;user key name=%s;errmsg=%s"
-			, _key.c_str(),ex.what());
+		Log(LOG_ERROR, nullptr
+			, "msg=StartProcess_i,start user process;key=%s;errmsg=%s"
+			, _key.c_str()
+			, ex.what());
 		return false;
 	}
 }
 
-void UserProcessInfo::ReceiveMsg_i()
+void UserProcessInfo::ReceiveMsg_i(const std::string& key)
 {
+	std::string strKey = key;
 	std::string _str_packge_splited = "";
 	bool _packge_is_begin = false;
 	char buf[MAX_MSG_LENTH+1];
@@ -285,7 +310,10 @@ void UserProcessInfo::ReceiveMsg_i()
 		}
 		catch (const std::exception& ex)
 		{
-			Log2(LOG_ERROR,"ReceiveMsg_i Erro,%s", ex.what());
+			Log(LOG_ERROR,nullptr
+				,"msg=ReceiveMsg_i Erro;errmsg=%s;key=%s"
+				,ex.what()
+				,strKey.c_str());
 		}
 	}
 }

@@ -25,15 +25,18 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 
-		std::string logFileName = argv[1];
+		std::string key = argv[1];
 		
-		Log(LOG_INFO,"msg=trade sim %s init",logFileName.c_str());
+		Log(LOG_INFO,nullptr
+			,"msg=trade sim init;key=%s"
+			,key.c_str());
 
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,"msg=trade sim %s load config failed!"
-				, logFileName.c_str());
+			Log(LOG_WARNING, nullptr
+				,"msg=trade sim load config failed!;key=%s"
+				, key.c_str());
 			
 			return -1;
 		}
@@ -51,16 +54,23 @@ int main(int argc, char* argv[])
 		signals_.add(SIGQUIT);
 #endif
 
-		tradersim tradeSim(ioc,logFileName);
+		tradersim tradeSim(ioc,key);
 		tradeSim.Start();
 		signals_.async_wait(
-			[&ioc, &tradeSim, &logFileName, &flag](boost::system::error_code, int sig)
+			[&ioc, &tradeSim, &key, &flag](boost::system::error_code, int sig)
 		{
 			tradeSim.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO,"msg=trade sim %s got sig %d", logFileName.c_str(), sig);
-			Log(LOG_INFO,"msg=trade sim %s exit", logFileName.c_str());
+			
+			Log(LOG_INFO,nullptr
+				,"msg=trade sim got sig %d;key=%s"
+				, sig
+				, key.c_str());
+
+			Log(LOG_INFO, nullptr
+				,"msg=trade sim exit;key=%s"
+				,key.c_str());
 		});
 		
 		while (flag.load())
@@ -72,8 +82,10 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR,"msg=trade sim ioc run exception,%s"
-					, ex.what());
+				Log(LOG_ERROR, nullptr
+					,"msg=trade sim ioc run exception;errmsg=%s;key=%s"
+					, ex.what()
+					, key.c_str());
 			}
 		}
 	}

@@ -17,6 +17,6 @@ typedef enum
     LOG_DEBUG
 } LogLevel;
 
-void Log(LogLevel level, const char* message_fmt, ...);
+void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...);
 
-void Log2(LogLevel level, const char* message_fmt, ...);
+void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...);

@@ -17,15 +17,18 @@
 
 int main(int argc, char* argv[])
 {
-	Log2(LOG_INFO,"mdservice init");
+	Log(LOG_INFO,nullptr
+		,"msg=mdservice init;key=mdservice");
 
 	if (!md_service::LoadInsList())
 	{
-		Log2(LOG_ERROR,"mdservice LoadInsList failed");
+		Log(LOG_ERROR, nullptr
+			,"mdservice LoadInsList failed;key=mdservice");
 		return -1;
 	}
 	
-	Log2(LOG_INFO,"mdservice LoadInsList success");
+	Log(LOG_INFO, nullptr
+		,"mdservice LoadInsList success;key=mdservice");
 			
 	boost::asio::io_context ioc;
 	boost::asio::signal_set signals_(ioc);
@@ -40,17 +43,22 @@ int main(int argc, char* argv[])
 			[&ioc](boost::system::error_code, int sig)
 		{
 			ioc.stop();
-			Log2(LOG_INFO,"mdservice got sig %d",sig);
-			Log2(LOG_INFO,"mdservice exit");
+			Log(LOG_INFO, nullptr
+				,"mdservice got sig %d;key=mdservice",sig);
+
+			Log(LOG_INFO, nullptr
+				,"mdservice exit;key=mdservice");
 		});
 		
 	if (!md_service::Init(ioc))
 	{
-		Log2(LOG_INFO,"mdservice inited fail");
+		Log(LOG_INFO,nullptr
+			,"mdservice inited fail;key=mdservice");
 		return -1;
 	}
 	
-	Log2(LOG_INFO,"mdservice inited succss");
+	Log(LOG_INFO,nullptr
+		,"mdservice inited succss;key=mdservice");
 
 	ioc.run();	
 
