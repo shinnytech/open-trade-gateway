@@ -5,6 +5,7 @@ CTPSE15_NAME := open-trade-ctpse15
 SIM_NAME := open-trade-sim
 MD_NAME := open-trade-mdservice
 GATEWAY_NAME := open-trade-gateway
+GATEWAYMS_NAME := open-trade-gateway-ms
 
 COMMON_SRCS := $(wildcard open-trade-common/*.cpp)
 CTP_SRCS:= $(wildcard open-trade-ctp/*.cpp)
@@ -13,6 +14,7 @@ CTPSE15_SRCS:= $(wildcard open-trade-ctpse15/*.cpp)
 SIM_SRCS:= $(wildcard open-trade-sim/*.cpp)
 MD_SRCS:= $(wildcard open-trade-mdservice/*.cpp)
 GATEWAY_SRCS:= $(wildcard open-trade-gateway/*.cpp)
+GATEWAYMS_SRCS:= $(wildcard open-trade-gateway-ms/*.cpp)
 
 COMMON_OBJS := $(patsubst open-trade-common/%,obj/common/%,$(COMMON_SRCS:.cpp=.o))
 CTP_OBJS := $(patsubst open-trade-ctp/%,obj/ctp/%,$(CTP_SRCS:.cpp=.o))
@@ -21,6 +23,7 @@ CTPSE15_OBJS := $(patsubst open-trade-ctpse15/%,obj/ctpse15/%,$(CTPSE15_SRCS:.cp
 SIM_OBJS := $(patsubst open-trade-sim/%,obj/sim/%,$(SIM_SRCS:.cpp=.o))
 MD_OBJS := $(patsubst open-trade-mdservice/%,obj/md/%,$(MD_SRCS:.cpp=.o))
 GATEWAY_OBJS := $(patsubst open-trade-gateway/%,obj/gateway/%,$(GATEWAY_SRCS:.cpp=.o))
+GATEWAYMS_OBJS := $(patsubst open-trade-gateway-ms/%,obj/gatewayms/%,$(GATEWAYMS_SRCS:.cpp=.o))
 
 COMMON_DEPS := $(COMMON_OBJS:%.o=%.d)
 CTP_DEPS := $(CTP_OBJS:%.o=%.d)
@@ -29,6 +32,7 @@ CTPSE15_DEPS := $(CTPSE15_OBJS:%.o=%.d)
 SIM_DEPS := $(SIM_OBJS:%.o=%.d)
 MD_DEPS := $(MD_OBJS:%.o=%.d)
 GATEWAY_DEPS := $(GATEWAY_OBJS:%.o=%.d)
+GATEWAYMS_DEPS := $(GATEWAYMS_OBJS:%.o=%.d)
 
 CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ \
 -Iopen-trade-common/
@@ -37,7 +41,7 @@ LDLIBS += -lssl -lcrypto -lcurl -lboost_system -lstdc++fs -lrt
 
 .PHONY: all clean install
 
-all: bin/$(COMMON_NAME) bin/$(CTP_NAME) bin/$(CTPSE_NAME) bin/$(CTPSE15_NAME) bin/$(SIM_NAME) bin/$(MD_NAME) bin/$(GATEWAY_NAME) 
+all: bin/$(COMMON_NAME) bin/$(CTP_NAME) bin/$(CTPSE_NAME) bin/$(CTPSE15_NAME) bin/$(SIM_NAME) bin/$(MD_NAME) bin/$(GATEWAY_NAME) bin/$(GATEWAYMS_NAME)
 
 bin/$(COMMON_NAME): $(COMMON_OBJS)
 	@mkdir -p $(@D)
@@ -121,6 +125,16 @@ obj/gateway/%.o: open-trade-gateway/%.cpp
 
 -include $(GATEWAY_DEPS)
 
+bin/$(GATEWAYMS_NAME):$(GATEWAYMS_OBJS)
+	@mkdir -p $(@D)
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS)
+
+obj/gatewayms/%.o: open-trade-gateway-ms/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) -o $@ -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -c $<
+
+-include $(GATEWAYMS_DEPS)
+
 clean:
 	@$(RM) -rf bin obj
 
@@ -135,5 +149,6 @@ install: all
 	install -m 755 bin/$(SIM_NAME) /usr/local/bin/
 	install -m 755 bin/$(MD_NAME) /usr/local/bin/	
 	install -m 755 bin/$(GATEWAY_NAME) /usr/local/bin/
+	install -m 755 bin/$(GATEWAYMS_NAME) /usr/local/bin/
 	install -m 755 contrib/lib/*.so /usr/local/lib/
 	install -m 644 conf/* /etc/$(GATEWAY_NAME)/

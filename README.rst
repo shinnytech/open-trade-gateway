@@ -106,6 +106,62 @@ Test
 
 表示服务器主程序启动正常
 
+负载均衡服务配置
+-------------------------------------------------
+
+1、首先按上述配置步骤在一台或者多台服务器上配置一个或者多个open_trade_gateway实例 
+
+2、按下面的配置文件(文件名config-ms.json,需要安装在/etc/open-trade-gateway/下)的说明配置负载均衡服务器
+	{
+		"host":"0.0.0.0",//提供负载均衡服务的IP地址
+
+		"port":5566,//负载均衡服务的端口号
+
+		"slaveNodeList":[//在第1步中已经配好的open_trade_gateway实例列表    
+
+		{
+			"name":"135",//结点名称,不能重复
+
+			"host":"192.168.1.35",//open_trade_gateway实例的IP地址
+
+			"port":"7788", //open_trade_gateway实例的端口号(注意:这里是字符串)
+
+			"path":"/" //open_trade_gateway实例的路径,默认为"/"
+
+		},
+
+		{
+			"name":"136",
+
+			"host":"192.168.1.36",
+
+			"port":"7788",
+
+			"path":"/"
+
+		},
+
+		{
+			"name":"137",
+
+			"host":"192.168.1.37",
+
+			"port":"7788",
+
+			"path":"/",
+
+		}
+
+		]
+
+	}
+
+3、上述多个open_trade_gateway实例的broker list的bid配置不可重复,如果重复,按步骤2中结点配置的顺序,先出现的有效,后出现的忽略
+
+4、首先正确启动上述结点上的open_trade_gateway实例，最后启动负载均衡服务器open-trade-gateway-ms
+
+5、采用DIFF协议的客户端应用连接open-trade-gateway-ms的服务端口(上例中的5566)发送请求,open-trade-gateway-ms会根据请求的bid自动将请求转发到不同的open-trade-gateway结点进行处理,实现负载均衡
+
 
 Q&A
 -------------------------------------------------
