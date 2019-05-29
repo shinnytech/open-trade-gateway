@@ -57,7 +57,9 @@
                 "volume": { "type": "integer"},
                 "price_type": { "enum": ["LIMIT", "ANY", "BEST", "FIVELEVEL"]},
                 "volume_condition": { "enum": ["ANY", "MIN", "ALL"]},
-                "time_condition": { "enum": ["IOC", "GFS", "GFD", "GTD", "GTC", "GFA"]}
+                "time_condition": { "enum": ["IOC", "GFS", "GFD", "GTD", "GTC", "GFA"]},
+                "hedge_flag": { "enum": ["SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER"]},
+                "contingent_condition": { "enum": ["IMMEDIATELY", "TOUCH", "TOUCHPROFIT"]}
             },
             "required": ["aid", "user_id", "order_id", "exchange_id", "instrument_id", "direction", "offset", "volume", "price_type", "volume_condition", "time_condition"],
             "additionalProperties": false

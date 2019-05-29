@@ -103,15 +103,20 @@ namespace trader_dll
 			{ THOST_FTDC_TC_GTC, ("GTC") },
 			{ THOST_FTDC_TC_GFA, ("GFA") },
 			});
-		//AddItemEnum(d.f.CombHedgeFlag[0], ("hedge_flag"), {
-		//    { THOST_FTDC_HF_Speculation, ("SPECULATION") },
-		//    { THOST_FTDC_HF_Arbitrage, ("ARBITRAGE") },
-		//    { THOST_FTDC_HF_Hedge, ("HEDGE") },
-		//    { THOST_FTDC_HF_MarketMaker, ("MARKETMAKER") },
-		//    });
 		d.f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
-		d.f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+		AddItemEnum(d.f.CombHedgeFlag[0], ("hedge_flag"), {
+		   { THOST_FTDC_HF_Speculation, ("SPECULATION") },
+		   { THOST_FTDC_HF_Arbitrage, ("ARBITRAGE") },
+		   { THOST_FTDC_HF_Hedge, ("HEDGE") },
+		   { THOST_FTDC_HF_MarketMaker, ("MARKETMAKER") },
+		   });
 		d.f.ContingentCondition = THOST_FTDC_CC_Immediately;
+		AddItemEnum(d.f.ContingentCondition, ("contingent_condition"), {
+			{ THOST_FTDC_CC_Immediately, ("IMMEDIATELY") },
+			{ THOST_FTDC_CC_Touch, ("TOUCH") },
+			{ THOST_FTDC_CC_TouchProfit, ("TOUCHPROFIT") },
+			});
+		d.f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 	}
 
 	void SerializerCtp::DefineStruct(CtpActionCancelOrder& d)
