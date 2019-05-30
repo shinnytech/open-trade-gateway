@@ -66,13 +66,23 @@ void tradersim::Start()
 	catch (const std::exception& ex)
 	{
 		Log(LOG_ERROR,nullptr
-			, "msg=open message queue exception;errmsg=%s;key=%s"
+			, "msg=tradersim open message queue exception;errmsg=%s;key=%s"
 			, ex.what()
 			,_key.c_str());
 	}
 
-	_thread_ptr = boost::make_shared<boost::thread>(
-		boost::bind(&tradersim::ReceiveMsg, this,_key));
+	try
+	{
+		_thread_ptr = boost::make_shared<boost::thread>(
+			boost::bind(&tradersim::ReceiveMsg, this, _key));
+	}
+	catch (const std::exception& ex)
+	{
+		Log(LOG_ERROR,nullptr
+			, "msg=tradersim start ReceiveMsg thread;errmsg=%s;key=%s"
+			, ex.what()
+			, _key.c_str());
+	}
 }
 
 void tradersim::Stop()
@@ -177,8 +187,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				"}}}}]}")
 				, _req_login.user_name.c_str()
 				, _req_login.user_name.c_str()
-				, g_config.trading_day.c_str()
-			);
+				, g_config.trading_day.c_str());
+
 			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 			SendMsg(connId, msg_ptr);
 
@@ -220,8 +230,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				"}}}}]}")
 				, m_user_id.c_str()
 				, m_user_id.c_str()
-				, g_config.trading_day.c_str()
-			);
+				, g_config.trading_day.c_str());
+
 			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 			SendMsg(connId, msg_ptr);
 			//加入登录客户端列表

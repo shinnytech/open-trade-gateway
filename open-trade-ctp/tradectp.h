@@ -272,6 +272,8 @@ private:
 
 	void ReqAuthenticate();
 
+	int ReqUserLogin();
+
 	void SendLoginRequest();
 
 	void LoadFromFile();

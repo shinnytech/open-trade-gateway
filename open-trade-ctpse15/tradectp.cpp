@@ -296,11 +296,12 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
 				, pRspInfo ? pRspInfo->ErrorID : -999
-				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-			);
+				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+
 			OutputNotifySycn(m_loging_connectId
-				, pRspInfo->ErrorID,
-				u8"交易服务器认证失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
+				, pRspInfo->ErrorID
+				, u8"交易服务器认证失败," + GBKToUTF8(pRspInfo->ErrorMsg)
+				, "WARNING");
 
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
 			_logIn_status = 0;
@@ -341,9 +342,11 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
 			, GBKToUTF8(pRspInfo->ErrorMsg).c_str()
-			, pRspUserLogin->TradingDay, pRspUserLogin->FrontID
-			, pRspUserLogin->SessionID, pRspUserLogin->MaxOrderRef
-		);
+			, pRspUserLogin->TradingDay
+			, pRspUserLogin->FrontID
+			, pRspUserLogin->SessionID
+			, pRspUserLogin->MaxOrderRef);
+
 		m_position_ready = false;
 		m_req_login_dt.store(0);
 		if (pRspInfo->ErrorID != 0)
@@ -357,8 +360,9 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
 
 			OutputNotifySycn(m_loging_connectId
-				, pRspInfo->ErrorID,
-				u8"交易服务器登录失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
+				, pRspInfo->ErrorID
+				, u8"交易服务器登录失败," + GBKToUTF8(pRspInfo->ErrorMsg)
+				, "WARNING");
 
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
 			if ((pRspInfo->ErrorID == 140)
@@ -386,7 +390,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			m_trading_day = trading_day;
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef) + 1;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
 			AfterLogin();
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
@@ -418,6 +422,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 		, pRspUserLogin->SessionID
 		, pRspUserLogin->MaxOrderRef
 	);
+
 	m_position_ready = false;
 	m_req_login_dt.store(0);
 	if (nullptr != pRspInfo && pRspInfo->ErrorID != 0)
@@ -428,10 +433,12 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
 			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-		);
-		OutputNotifyAllSycn(pRspInfo->ErrorID,
-			u8"交易服务器重登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+
+		OutputNotifyAllSycn(pRspInfo->ErrorID
+			, u8"交易服务器重登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg)
+			, "WARNING");
+
 		//如果是未初始化
 		if (7 == pRspInfo->ErrorID)
 		{
@@ -447,7 +454,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 		{
 			//一个新交易日的重新连接,需要重新初始化所有变量
 			Log(LOG_INFO, nullptr
-				, "msg=ctpse reinit in new trading day;key=%s;bid=%s;user_name=%s;oldday=%s;newday=%s"
+				, "msg=ctpse reinit in new trading day;key=%s;bid=%s;user_name=%s;tradingday_old=%s;tradingday_new=%s"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -512,7 +519,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_trading_day = trading_day;
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef) + 1;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 
 			AfterLogin();
 		}
@@ -528,7 +535,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef) + 1;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 			OutputNotifyAllSycn(0, u8"交易服务器重登录成功");
 
 			m_req_position_id++;
@@ -545,6 +552,7 @@ void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettle
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
 		, (nullptr != pSettlementInfoConfirm) ? pSettlementInfoConfirm->ConfirmDate : "");
+
 	if ((nullptr != pSettlementInfoConfirm)
 		&& (std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trading_day))
 	{
@@ -554,10 +562,12 @@ void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettle
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
 			, (nullptr != pSettlementInfoConfirm) ? pSettlementInfoConfirm->ConfirmDate : "");
+
 		//已经确认过结算单
 		m_confirm_settlement_status.store(2);
 		return;
 	}
+
 	//还没有确认过结算单
 	Log(LOG_INFO, nullptr
 		, u8"msg=还没有确认过结算单;key=%s;bid=%s;user_name=%s;ConfirmDate=%s"
@@ -565,6 +575,7 @@ void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettle
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
 		, (nullptr != pSettlementInfoConfirm) ? pSettlementInfoConfirm->ConfirmDate : "");
+
 	m_need_query_settlement.store(true);
 	m_confirm_settlement_status.store(0);
 }
@@ -754,7 +765,8 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 	if (pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		ss << m_front_id << m_session_id << pInputOrder->OrderRef;
+		int n_order_ref = atoi(pInputOrder->OrderRef);
+		ss << m_front_id << m_session_id << n_order_ref;
 		std::string strKey = ss.str();
 		auto it = m_input_order_key_map.find(strKey);
 		if (it != m_input_order_key_map.end())
@@ -765,7 +777,8 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 			remote_key.instrument_id = pInputOrder->InstrumentID;
 			remote_key.front_id = m_front_id;
 			remote_key.session_id = m_session_id;
-			remote_key.order_ref = pInputOrder->OrderRef;
+			int order_ref = atoi(pInputOrder->OrderRef);
+			remote_key.order_ref = std::to_string(order_ref);
 
 			LocalOrderKey local_key;
 			OrderIdRemoteToLocal(remote_key, &local_key);
@@ -959,7 +972,8 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 	if (pInputOrder && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		ss << m_front_id << m_session_id << pInputOrder->OrderRef;
+		int n_order_ref = atoi(pInputOrder->OrderRef);
+		ss << m_front_id << m_session_id << n_order_ref;
 		std::string strKey = ss.str();
 		auto it = m_input_order_key_map.find(strKey);
 		if (it != m_input_order_key_map.end())
@@ -974,7 +988,8 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 			remote_key.instrument_id = pInputOrder->InstrumentID;
 			remote_key.front_id = m_front_id;
 			remote_key.session_id = m_session_id;
-			remote_key.order_ref = pInputOrder->OrderRef;
+			int order_ref = atoi(pInputOrder->OrderRef);
+			remote_key.order_ref = std::to_string(order_ref);
 
 			LocalOrderKey local_key;
 			OrderIdRemoteToLocal(remote_key, &local_key);
@@ -1121,7 +1136,8 @@ void traderctp::ProcessErrRtnOrderAction(std::shared_ptr<CThostFtdcOrderActionFi
 	if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		ss << pOrderAction->FrontID << pOrderAction->SessionID << pOrderAction->OrderRef;
+		int n_order_ref = atoi(pOrderAction->OrderRef);
+		ss << pOrderAction->FrontID << pOrderAction->SessionID << n_order_ref;
 		std::string strKey = ss.str();
 		auto it = m_action_order_map.find(strKey);
 		if (it != m_action_order_map.end())
@@ -1708,7 +1724,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		, pOrder->ZCETotalTradedVolume);
 
 	std::stringstream ss;
-	ss << pOrder->FrontID << pOrder->SessionID << pOrder->OrderRef;
+	int n_order_ref = atoi(pOrder->OrderRef);
+	ss << pOrder->FrontID << pOrder->SessionID << n_order_ref;
 	std::string strKey = ss.str();
 
 	//找到委托单
@@ -1717,7 +1734,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	remote_key.instrument_id = pOrder->InstrumentID;
 	remote_key.front_id = pOrder->FrontID;
 	remote_key.session_id = pOrder->SessionID;
-	remote_key.order_ref = pOrder->OrderRef;
+	int order_ref = atoi(pOrder->OrderRef);
+	remote_key.order_ref = std::to_string(order_ref);
 	remote_key.order_sys_id = pOrder->OrderSysID;
 	trader_dll::LocalOrderKey local_key;
 	OrderIdRemoteToLocal(remote_key, &local_key);
@@ -1862,7 +1880,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		&& pOrder->OrderStatus != THOST_FTDC_OST_PartTradedNotQueueing
 		)
 	{
-		auto it = m_insert_order_set.find(pOrder->OrderRef);
+		int n_order_ref = atoi(pOrder->OrderRef);
+		auto it = m_insert_order_set.find(std::to_string(n_order_ref));
 		if (it != m_insert_order_set.end())
 		{
 			m_insert_order_set.erase(it);
@@ -1897,7 +1916,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		}
 		else
 		{
-			auto it2 = m_insert_order_set.find(pOrder->OrderRef);
+			int n_order_ref = atoi(pOrder->OrderRef);
+			auto it2 = m_insert_order_set.find(std::to_string(n_order_ref));
 			if (it2 != m_insert_order_set.end())
 			{
 				m_insert_order_set.erase(it2);
@@ -2148,7 +2168,7 @@ int traderctp::ReqAuthenticate()
 		, _req_login.user_name.c_str()
 		, _req_login.broker.product_info.c_str()
 		, _req_login.broker.auth_code.c_str()
-		, ret);
+		, ret);	
 	return ret;
 }
 
@@ -2204,8 +2224,25 @@ int traderctp::RegSystemInfo()
 		, _req_login.client_port
 		, _req_login.client_app_id.c_str()
 		, client_system_info.length()
-		, ret);
+		, ret);	
 	return ret;
+}
+
+int traderctp::ReqUserLogin()
+{
+	CThostFtdcReqUserLoginField field;
+	memset(&field, 0, sizeof(field));
+	strcpy_x(field.BrokerID, _req_login.broker.ctp_broker_id.c_str());
+	strcpy_x(field.UserID, _req_login.user_name.c_str());
+	strcpy_x(field.Password, _req_login.password.c_str());
+	int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
+	Log(LOG_INFO, nullptr
+		, "msg=ctpse ReqUserLogin fail;key=%s;bid=%s;user_name=%s;ret=%d"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, ret);	
+	return ret;	
 }
 
 void traderctp::SendLoginRequest()
@@ -2242,45 +2279,25 @@ void traderctp::SendLoginRequest()
 		}
 		else
 		{
-			CThostFtdcReqUserLoginField field;
-			memset(&field, 0, sizeof(field));
-			strcpy_x(field.BrokerID, _req_login.broker.ctp_broker_id.c_str());
-			strcpy_x(field.UserID, _req_login.user_name.c_str());
-			strcpy_x(field.Password, _req_login.password.c_str());
-			int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
+			ret = ReqUserLogin();
 			if (0 != ret)
 			{
-				Log(LOG_INFO, nullptr
-					, "msg=ctpse ReqUserLogin fail;key=%s;bid=%s;user_name=%s;ret=%d"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, ret);
 				boost::unique_lock<boost::mutex> lock(_logInmutex);
 				_logIn_status = 0;
 				_logInCondition.notify_all();
+				return;
 			}
 		}
 	}
 	else
 	{
-		CThostFtdcReqUserLoginField field;
-		memset(&field, 0, sizeof(field));
-		strcpy_x(field.BrokerID, _req_login.broker.ctp_broker_id.c_str());
-		strcpy_x(field.UserID, _req_login.user_name.c_str());
-		strcpy_x(field.Password, _req_login.password.c_str());
-		int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
+		int ret = ReqUserLogin();
 		if (0 != ret)
-		{
-			Log(LOG_INFO, nullptr
-				, "msg=ctpse ReqUserLogin fail;key=%s;bid=%s;user_name=%s;ret=%d"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, ret);
+		{			
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
 			_logIn_status = 0;
 			_logInCondition.notify_all();
+			return;
 		}
 	}
 }
@@ -3479,6 +3496,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			//加入登录客户端列表
 			m_logined_connIds.push_back(connId);
+
 			char json_str[1024];
 			sprintf(json_str, (u8"{"\
 				"\"aid\": \"rtn_data\","\
@@ -3488,8 +3506,8 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 				"}}}}]}")
 				, _req_login.user_name.c_str()
 				, _req_login.user_name.c_str()
-				, m_trading_day.c_str()
-			);
+				, m_trading_day.c_str());
+
 			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 			_ios.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
 		}
@@ -3997,8 +4015,6 @@ void traderctp::OnClientPeekMessage()
 	//向客户端发送账户信息
 	SendUserData();
 }
-
-
 
 #pragma endregion
 

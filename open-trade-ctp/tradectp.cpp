@@ -328,8 +328,8 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			, pRspUserLogin->TradingDay
 			, pRspUserLogin->FrontID
 			, pRspUserLogin->SessionID
-			, pRspUserLogin->MaxOrderRef
-		);
+			, pRspUserLogin->MaxOrderRef);
+
 		m_position_ready = false;
 		m_req_login_dt.store(0);
 		if (pRspInfo->ErrorID != 0)
@@ -371,7 +371,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			m_trading_day = trading_day;
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef) + 1;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
 			AfterLogin();
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
@@ -503,7 +503,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_trading_day = trading_day;
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef) + 1;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 
 			AfterLogin();
 		}
@@ -519,7 +519,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef) + 1;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 			OutputNotifyAllSycn(0, u8"交易服务器重登录成功");
 
 			m_req_position_id++;
@@ -756,7 +756,8 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 	if (pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		ss << m_front_id << m_session_id << pInputOrder->OrderRef;
+		int n_order_ref = atoi(pInputOrder->OrderRef);
+		ss << m_front_id << m_session_id << n_order_ref;
 		std::string strKey = ss.str();
 		auto it = m_input_order_key_map.find(strKey);
 		if (it != m_input_order_key_map.end())
@@ -767,7 +768,8 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 			remote_key.instrument_id = pInputOrder->InstrumentID;
 			remote_key.front_id = m_front_id;
 			remote_key.session_id = m_session_id;
-			remote_key.order_ref = pInputOrder->OrderRef;
+			int order_ref = atoi(pInputOrder->OrderRef);
+			remote_key.order_ref =std::to_string(order_ref);
 
 			LocalOrderKey local_key;
 			OrderIdRemoteToLocal(remote_key, &local_key);
@@ -938,7 +940,7 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 	if (nullptr == pInputOrder)
 	{
 		Log(LOG_INFO,nullptr,
-			"msg=ctp ProcessErrRtnOrderInsert;instance=%p;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			"msg=ctp ProcessErrRtnOrderInsert;key=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
 			, _key.c_str()
 			, _req_login.user_name.c_str()
 			, pRspInfo ? pRspInfo->ErrorID : -999
@@ -968,7 +970,8 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 	if (pInputOrder && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		ss << m_front_id << m_session_id << pInputOrder->OrderRef;
+		int n_order_ref = atoi(pInputOrder->OrderRef);
+		ss << m_front_id << m_session_id << n_order_ref;
 		std::string strKey = ss.str();
 		auto it = m_input_order_key_map.find(strKey);
 		if (it != m_input_order_key_map.end())
@@ -983,7 +986,8 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 			remote_key.instrument_id = pInputOrder->InstrumentID;
 			remote_key.front_id = m_front_id;
 			remote_key.session_id = m_session_id;
-			remote_key.order_ref = pInputOrder->OrderRef;
+			int order_ref = atoi(pInputOrder->OrderRef);
+			remote_key.order_ref = std::to_string(order_ref);
 
 			LocalOrderKey local_key;
 			OrderIdRemoteToLocal(remote_key, &local_key);
@@ -1130,7 +1134,8 @@ void traderctp::ProcessErrRtnOrderAction(std::shared_ptr<CThostFtdcOrderActionFi
 	if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		ss << pOrderAction->FrontID << pOrderAction->SessionID << pOrderAction->OrderRef;
+		int n_order_ref = atoi(pOrderAction->OrderRef);
+		ss << pOrderAction->FrontID << pOrderAction->SessionID << n_order_ref;
 		std::string strKey = ss.str();
 		auto it = m_action_order_map.find(strKey);
 		if (it != m_action_order_map.end())
@@ -1739,7 +1744,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		, pOrder->ZCETotalTradedVolume);
 
 	std::stringstream ss;
-	ss << pOrder->FrontID << pOrder->SessionID << pOrder->OrderRef;
+	int n_order_ref = atoi(pOrder->OrderRef);
+	ss << pOrder->FrontID << pOrder->SessionID << n_order_ref;
 	std::string strKey = ss.str();
 
 	//找到委托单
@@ -1748,7 +1754,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	remote_key.instrument_id = pOrder->InstrumentID;
 	remote_key.front_id = pOrder->FrontID;
 	remote_key.session_id = pOrder->SessionID;
-	remote_key.order_ref = pOrder->OrderRef;
+	int order_ref = atoi(pOrder->OrderRef);
+	remote_key.order_ref = std::to_string(order_ref);
 	remote_key.order_sys_id = pOrder->OrderSysID;
 	trader_dll::LocalOrderKey local_key;
 	OrderIdRemoteToLocal(remote_key, &local_key);
@@ -1893,14 +1900,15 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		&& pOrder->OrderStatus != THOST_FTDC_OST_PartTradedNotQueueing
 		)
 	{
-		auto it = m_insert_order_set.find(pOrder->OrderRef);
+		int n_order_ref = atoi(pOrder->OrderRef);
+		auto it = m_insert_order_set.find(std::to_string(n_order_ref));
 		if (it != m_insert_order_set.end())
 		{
 			m_insert_order_set.erase(it);
 			OutputNotifyAllSycn(1, u8"下单成功");
 		}
 
-		//更新Order Key		
+		//更新Order Key				
 		auto itOrder = m_input_order_key_map.find(strKey);
 		if (itOrder != m_input_order_key_map.end())
 		{
@@ -1929,7 +1937,8 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		}
 		else
 		{
-			auto it2 = m_insert_order_set.find(pOrder->OrderRef);
+			int n_order_ref = atoi(pOrder->OrderRef);
+			auto it2 = m_insert_order_set.find(std::to_string(n_order_ref));
 			if (it2 != m_insert_order_set.end())
 			{
 				m_insert_order_set.erase(it2);
@@ -2190,6 +2199,27 @@ void traderctp::ReqAuthenticate()
 	}
 }
 
+int traderctp::ReqUserLogin()
+{
+	CThostFtdcReqUserLoginField field;
+	memset(&field, 0, sizeof(field));
+	strcpy_x(field.BrokerID, _req_login.broker.ctp_broker_id.c_str());
+	strcpy_x(field.UserID, _req_login.user_name.c_str());
+	strcpy_x(field.Password, _req_login.password.c_str());
+	strcpy_x(field.UserProductInfo, _req_login.broker.product_info.c_str());
+	strcpy_x(field.LoginRemark, _req_login.client_ip.c_str());
+	int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
+	Log(LOG_INFO, nullptr
+		, "msg=ctp ReqUserLogin fail;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;LoginRemark=%s;ret=%d"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, _req_login.broker.product_info.c_str()
+		, _req_login.client_ip.c_str()
+		, ret);
+	return ret;
+}
+
 void traderctp::SendLoginRequest()
 {
 	if (m_try_req_login_times > 0)
@@ -2204,24 +2234,9 @@ void traderctp::SendLoginRequest()
 	m_try_req_login_times++;
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
-	CThostFtdcReqUserLoginField field;
-	memset(&field, 0, sizeof(field));
-	strcpy_x(field.BrokerID, _req_login.broker.ctp_broker_id.c_str());
-	strcpy_x(field.UserID, _req_login.user_name.c_str());
-	strcpy_x(field.Password, _req_login.password.c_str());
-	strcpy_x(field.UserProductInfo, _req_login.broker.product_info.c_str());
-	strcpy_x(field.LoginRemark, _req_login.client_ip.c_str());
-	int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
+	int ret = ReqUserLogin();
 	if (0 != ret)
-	{
-		Log(LOG_INFO,nullptr
-			,"msg=ctp ReqUserLogin fail;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;LoginRemark=%s;ret=%d"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, _req_login.broker.product_info.c_str()
-			, _req_login.client_ip.c_str()
-			, ret);
+	{		
 		boost::unique_lock<boost::mutex> lock(_logInmutex);
 		_logIn_status = 0;
 		_logInCondition.notify_all();
@@ -3091,7 +3106,7 @@ std::string traderctp::GetConnectionStr()
 void traderctp::CloseConnection(int nId)
 {
 	Log(LOG_INFO,nullptr
-		, "msg=traderctp CloseConnection;key=%s;bid=%s;user_name=%s;conn id=%d"
+		, "msg=traderctp CloseConnection;key=%s;bid=%s;user_name=%s;connid=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -3669,7 +3684,7 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr, std::share
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=SendMsg exception,%s;length=%d;key=%s;bid=%s;user_name=%s"
+				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
 				, ex.what()
 				, msg.length()
 				, _key.c_str()
@@ -3686,7 +3701,7 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr, std::share
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=SendMsg exception,%s;length=%d;key=%s;bid=%s;user_name=%s"
+				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
 				, ex.what()
 				, totalLength
 				, _key.c_str()

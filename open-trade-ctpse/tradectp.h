@@ -274,6 +274,8 @@ private:
 
 	int RegSystemInfo();
 
+	int ReqUserLogin();
+
 	void SendLoginRequest();
 
 	void ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm, bool bIsLast);
