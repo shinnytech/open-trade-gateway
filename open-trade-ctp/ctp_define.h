@@ -70,6 +70,7 @@ namespace trader_dll
 	struct OrderKeyPair
 	{
 		LocalOrderKey local_key;
+
 		RemoteOrderKey remote_key;
 	};
 
@@ -107,13 +108,66 @@ namespace trader_dll
 		using RapidSerialize::Serializer<SerializerCtp>::Serializer;
 
 		void DefineStruct(OrderKeyFile& d);
+
 		void DefineStruct(OrderKeyPair& d);
+
 		void DefineStruct(LocalOrderKey& d);
+
 		void DefineStruct(RemoteOrderKey& d);
+
 		void DefineStruct(CtpActionInsertOrder& d);
+
 		void DefineStruct(CtpActionCancelOrder& d);
+
 		void DefineStruct(CThostFtdcUserPasswordUpdateField& d);
+
 		void DefineStruct(CThostFtdcReqTransferField& d);
+
+		void DefineStruct(CThostFtdcTransferSerialField& d);		
+	};
+
+	class SerializerLogCtp
+		: public RapidSerialize::Serializer<SerializerLogCtp>
+	{
+	public:
+		using RapidSerialize::Serializer<SerializerLogCtp>::Serializer;
+
+		void DefineStruct(CThostFtdcRspAuthenticateField& d);
+
+		void DefineStruct(CThostFtdcRspUserLoginField& d);
+
+		void DefineStruct(CThostFtdcSettlementInfoConfirmField& d);
+
+		void DefineStruct(CThostFtdcSettlementInfoField& d);
+
+		void DefineStruct(CThostFtdcUserPasswordUpdateField& d);
+
+		void DefineStruct(CThostFtdcInputOrderField& d);
+
+		void DefineStruct(CThostFtdcInputOrderActionField& d);
+
+		void DefineStruct(CThostFtdcOrderActionField& d);
+
+		void DefineStruct(CThostFtdcInvestorPositionField& d);
+
+		void DefineStruct(CThostFtdcBrokerTradingParamsField& d);
+
+		void DefineStruct(CThostFtdcTradingAccountField& d);
+
+		void DefineStruct(CThostFtdcContractBankField& d);
+
+		void DefineStruct(CThostFtdcAccountregisterField& d);
+
 		void DefineStruct(CThostFtdcTransferSerialField& d);
+
+		void DefineStruct(CThostFtdcRspTransferField& d);
+
+		void DefineStruct(CThostFtdcReqTransferField& d);
+
+		void DefineStruct(CThostFtdcOrderField& d);
+
+		void DefineStruct(CThostFtdcTradeField& d);
+
+		void DefineStruct(CThostFtdcTradingNoticeInfoField& d);
 	};
 }

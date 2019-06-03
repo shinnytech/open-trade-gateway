@@ -12,8 +12,8 @@ void SerializerTradeBase::DefineStruct(ReqLogin& d)
 	AddItem(d.bid, "bid");
 	AddItem(d.user_name, "user_name");
 	AddItem(d.password, "password");
-	AddItem(d.client_system_info, "client_system_info");
-	AddItem(d.client_app_id, "client_app_id");	
+	AddItem(d.client_app_id, "client_app_id");
+	AddItem(d.client_system_info, "client_system_info");	
 	AddItem(d.client_ip, "client_ip");
 	AddItem(d.client_port, "client_port");
 	AddItem(d.broker_id, "broker_id");
@@ -103,6 +103,8 @@ void SerializerTradeBase::DefineStruct(Position& d)
 	AddItem(d.volume_short_frozen_today, ("volume_short_frozen_today"));
 	AddItem(d.volume_short_frozen_his, ("volume_short_frozen_his"));
 	AddItem(d.volume_short_frozen, ("volume_short_frozen"));
+	AddItem(d.volume_long_yd, ("volume_long_yd"));
+	AddItem(d.volume_short_yd, ("volume_short_yd"));
 
 	AddItem(d.open_price_long, ("open_price_long"));
 	AddItem(d.open_price_short, ("open_price_short"));

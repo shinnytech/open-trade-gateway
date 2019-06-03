@@ -321,7 +321,7 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 	{
 		if (!m_b_login)
 		{
-			Log(LOG_WARNING, nullptr
+			Log(LOG_WARNING,msg.c_str()
 				, "msg=trade sim receive other msg before login;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()

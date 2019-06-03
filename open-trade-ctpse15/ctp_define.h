@@ -116,4 +116,49 @@ namespace trader_dll
 		void DefineStruct(CThostFtdcReqTransferField& d);
 		void DefineStruct(CThostFtdcTransferSerialField& d);
 	};
+
+	class SerializerLogCtp
+		: public RapidSerialize::Serializer<SerializerLogCtp>
+	{
+	public:
+		using RapidSerialize::Serializer<SerializerLogCtp>::Serializer;
+
+		void DefineStruct(CThostFtdcRspAuthenticateField& d);
+
+		void DefineStruct(CThostFtdcRspUserLoginField& d);
+
+		void DefineStruct(CThostFtdcSettlementInfoConfirmField& d);
+
+		void DefineStruct(CThostFtdcSettlementInfoField& d);
+
+		void DefineStruct(CThostFtdcUserPasswordUpdateField& d);
+
+		void DefineStruct(CThostFtdcInputOrderField& d);
+
+		void DefineStruct(CThostFtdcInputOrderActionField& d);
+
+		void DefineStruct(CThostFtdcOrderActionField& d);
+
+		void DefineStruct(CThostFtdcInvestorPositionField& d);
+
+		void DefineStruct(CThostFtdcBrokerTradingParamsField& d);
+
+		void DefineStruct(CThostFtdcTradingAccountField& d);
+
+		void DefineStruct(CThostFtdcContractBankField& d);
+
+		void DefineStruct(CThostFtdcAccountregisterField& d);
+
+		void DefineStruct(CThostFtdcTransferSerialField& d);
+
+		void DefineStruct(CThostFtdcRspTransferField& d);
+
+		void DefineStruct(CThostFtdcReqTransferField& d);
+
+		void DefineStruct(CThostFtdcOrderField& d);
+
+		void DefineStruct(CThostFtdcTradeField& d);
+
+		void DefineStruct(CThostFtdcTradingNoticeInfoField& d);
+	};
 }

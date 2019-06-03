@@ -290,6 +290,9 @@ struct Position
 		volume_short_frozen_his = 0;
 		volume_short_frozen = 0;
 
+		volume_long_yd = 0;
+		volume_short_yd = 0;
+		
 		//成本, 现价与盈亏
 		open_cost_long_today = 0.0;
 		open_cost_short_today = 0.0;
@@ -354,6 +357,10 @@ struct Position
 	int volume_short_frozen_his;
 	int volume_short_frozen;
 
+	//今日开盘前的双向持仓手数
+	int volume_long_yd;
+	int volume_short_yd;
+
 	//成本, 现价与盈亏
 	double open_price_long; //多头开仓均价
 	double open_price_short; //空头开仓均价
@@ -388,7 +395,7 @@ struct Position
 	double margin_short_his;
 	double margin;
 	double frozen_margin;
-
+	
 	//内部使用
 	const Instrument* ins;
 

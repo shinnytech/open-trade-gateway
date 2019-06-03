@@ -172,26 +172,21 @@ traderctp::traderctp(boost::asio::io_context& ios
 void traderctp::ProcessOnFrontConnected()
 {
 	ReqAuthenticate();
-	Log(LOG_INFO,nullptr
-		,"msg=ctp ProcessOnFrontConnected;key=%s;bid=%s;user_name=%s"
-		,_key.c_str()
-		,_req_login.bid.c_str()
-		,_req_login.user_name.c_str());
 	OutputNotifyAllSycn(0, u8"已经重新连接到交易前置");
 }
 
 void traderctp::OnFrontConnected()
 {
+	Log(LOG_INFO,nullptr
+		, "fun=OnFrontConnected;key=%s;bid=%s;user_name=%s"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str());
 	//还在等待登录阶段
 	if (!m_b_login.load())
 	{
 		//这时是安全的
-		ReqAuthenticate();
-		Log(LOG_INFO,nullptr
-			, "msg=ctp OnFrontConnected;key=%s;bid=%s;user_name=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str());
+		ReqAuthenticate();		
 		OutputNotifySycn(m_loging_connectId, 0, u8"已经连接到交易前置");
 	}
 	else
@@ -203,27 +198,21 @@ void traderctp::OnFrontConnected()
 }
 
 void traderctp::ProcessOnFrontDisconnected(int nReason)
-{
-	Log(LOG_WARNING,nullptr
-		, "msg=ctp ProcessOnFrontDisconnected;key=%s;nReason=%d;bid=%s;user_name=%s"
-		, _key.c_str()
-		, nReason
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str());
+{	
 	OutputNotifyAllSycn(1, u8"已经断开与交易前置的连接");
 }
 
 void traderctp::OnFrontDisconnected(int nReason)
 {
+	Log(LOG_WARNING, nullptr
+		, "fun=OnFrontDisconnected;key=%s;bid=%s;user_name=%s;nReason=%d"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, nReason);
 	//还在等待登录阶段
 	if (!m_b_login.load())
-	{
-		Log(LOG_WARNING,nullptr
-			, "msg=ctp OnFrontDisconnected;key=%s;nReason=%d;bid=%s;user_name=%s"
-			, _key.c_str()
-			, nReason
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str());
+	{		
 		OutputNotifySycn(m_loging_connectId, 1, u8"已经断开与交易前置的连接");
 	}
 	else
@@ -238,22 +227,9 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 {
 	if ((nullptr != pRspInfo) && (pRspInfo->ErrorID != 0))
 	{
-		Log(LOG_WARNING, nullptr
-			,"msg=ctp OnRspAuthenticate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 		//如果是未初始化
 		if (7 == pRspInfo->ErrorID)
 		{
-			Log(LOG_INFO, nullptr
-				, "msg=ctp ProcessOnRspAuthenticate need ReinitCtp;key=%s;bid=%s;user_name=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
 			_ios.post(boost::bind(&traderctp::ReinitCtp, this));
 		}
 		return;
@@ -268,38 +244,51 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	
+	if (nullptr != pRspAuthenticateField)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pRspAuthenticateField);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+		Log(LOG_WARNING,strMsg.c_str()
+			, "fun=OnRspAuthenticate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast?"true":"false");
+	}
+	else
+	{
+		Log(LOG_WARNING,nullptr
+			, "fun=OnRspAuthenticate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	
 	//还在等待登录阶段
 	if (!m_b_login.load())
 	{
 		if ((nullptr != pRspInfo) && (pRspInfo->ErrorID != 0))
-		{
-			Log(LOG_WARNING, nullptr
-				, "msg=ctp OnRspAuthenticate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, pRspInfo ? pRspInfo->ErrorID : -999
-				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-			);
+		{			
 			OutputNotifySycn(m_loging_connectId
 				, pRspInfo->ErrorID,
 				u8"交易服务器认证失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
-
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
 			_logIn_status = 0;
 			_logInCondition.notify_all();
 			return;
 		}
 		else
-		{
-			Log(LOG_WARNING,nullptr
-				, "msg=ctp OnRspAuthenticate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, pRspInfo ? pRspInfo->ErrorID : -999
-				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-			);
+		{			
 			m_try_req_authenticate_times = 0;
 			SendLoginRequest();
 		}
@@ -312,120 +301,18 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 	}
 }
 
-void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
-	, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
-{
-	//还在等待登录阶段
-	if (!m_b_login.load())
-	{
-		Log(LOG_INFO,nullptr
-			, "msg=ctp OnRspUserLogin;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;TradingDay=%s;FrontId=%d;SessionId=%d;MaxOrderRef=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-			, pRspUserLogin->TradingDay
-			, pRspUserLogin->FrontID
-			, pRspUserLogin->SessionID
-			, pRspUserLogin->MaxOrderRef);
-
-		m_position_ready = false;
-		m_req_login_dt.store(0);
-		if (pRspInfo->ErrorID != 0)
-		{
-			Log(LOG_WARNING,nullptr
-				, "msg=ctp OnRspUserLogin;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, pRspInfo ? pRspInfo->ErrorID : -999
-				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-			);
-			OutputNotifySycn(m_loging_connectId
-				, pRspInfo->ErrorID,
-				u8"交易服务器登录失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
-			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			if ((pRspInfo->ErrorID == 140)
-				|| (pRspInfo->ErrorID == 131)
-				|| (pRspInfo->ErrorID == 141))
-			{
-				_logIn_status = 1;
-			}
-			else
-			{
-				_logIn_status = 0;
-			}
-			_logInCondition.notify_all();
-			return;
-		}
-		else
-		{
-			m_try_req_login_times = 0;
-			std::string trading_day = pRspUserLogin->TradingDay;
-			if (m_trading_day != trading_day)
-			{
-				m_ordermap_local_remote.clear();
-				m_ordermap_remote_local.clear();
-			}
-			m_trading_day = trading_day;
-			m_front_id = pRspUserLogin->FrontID;
-			m_session_id = pRspUserLogin->SessionID;
-			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
-			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
-			AfterLogin();
-			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn_status = 2;
-			_logInCondition.notify_all();
-		}
-	}
-	else
-	{
-		std::shared_ptr<CThostFtdcRspUserLoginField> ptr1 = nullptr;
-		ptr1 = std::make_shared<CThostFtdcRspUserLoginField>(CThostFtdcRspUserLoginField(*pRspUserLogin));
-		std::shared_ptr<CThostFtdcRspInfoField> ptr2 = nullptr;
-		ptr2 = std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
-		_ios.post(boost::bind(&traderctp::ProcessOnRspUserLogin, this, ptr1, ptr2));
-	}
-}
-
 void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginField> pRspUserLogin
 	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO,nullptr 
-		,"msg=ProcessOnRspUserLogin;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;TradingDay=%s;FrontId=%d;SessionId=%d;MaxOrderRef=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-		, pRspUserLogin->TradingDay
-		, pRspUserLogin->FrontID
-		, pRspUserLogin->SessionID
-		, pRspUserLogin->MaxOrderRef
-	);
 	m_position_ready = false;
 	m_req_login_dt.store(0);
 	if (nullptr != pRspInfo && pRspInfo->ErrorID != 0)
 	{
-		Log(LOG_WARNING,nullptr
-			, "msg=ctp ProcessOnRspUserLogin;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-		);
 		OutputNotifyAllSycn(pRspInfo->ErrorID,
 			u8"交易服务器重登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
 		//如果是未初始化
 		if (7 == pRspInfo->ErrorID)
 		{
-			Log(LOG_INFO, nullptr
-				, "msg=ctp ProcessOnRspUserLogin need ReinitCtp;key=%s;bid=%s;user_name=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
 			_ios.post(boost::bind(&traderctp::ReinitCtp, this));
 		}
 		return;
@@ -437,14 +324,6 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 		if (m_trading_day != trading_day)
 		{
 			//一个新交易日的重新连接,需要重新初始化所有变量
-			Log(LOG_INFO,nullptr
-				, "msg=ctp reinit in new trading day;key=%s;bid=%s;user_name=%s;TradingDay_old=%s;TradingDay_new=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, m_trading_day.c_str()
-				, trading_day.c_str());
-
 			m_ordermap_local_remote.clear();
 			m_ordermap_remote_local.clear();
 
@@ -510,13 +389,6 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 		else
 		{
 			//正常的断开重连成功
-			Log(LOG_INFO, nullptr
-				,"msg=ctp reconnect success;key=%s;bid=%s;user_name=%s;TradingDay=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, m_trading_day.c_str());
-
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
@@ -528,35 +400,102 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 	}
 }
 
-void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm)
+void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
+	, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO,nullptr
-		,"msg=ctp ProcessQrySettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ConfirmDate=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		,(nullptr != pSettlementInfoConfirm) ? pSettlementInfoConfirm->ConfirmDate : "");
-	
-	if ((nullptr != pSettlementInfoConfirm)
-		&& (std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trading_day))
+	if (nullptr != pRspUserLogin)
 	{
-		Log(LOG_INFO,nullptr
-			, u8"msg=已经确认过结算单;key=%s;bid=%s;user_name=%s;ConfirmDate=%s"
+		SerializerLogCtp nss;
+		nss.FromVar(*pRspUserLogin);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspUserLogin;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
-			, (nullptr != pSettlementInfoConfirm) ? pSettlementInfoConfirm->ConfirmDate : "");
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspUserLogin;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
+	//还在等待登录阶段
+	if (!m_b_login.load())
+	{
+		m_position_ready = false;
+		m_req_login_dt.store(0);
+		if (pRspInfo->ErrorID != 0)
+		{
+			OutputNotifySycn(m_loging_connectId
+				, pRspInfo->ErrorID,
+				u8"交易服务器登录失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
+			boost::unique_lock<boost::mutex> lock(_logInmutex);
+			if ((pRspInfo->ErrorID == 140)
+				|| (pRspInfo->ErrorID == 131)
+				|| (pRspInfo->ErrorID == 141))
+			{
+				_logIn_status = 1;
+			}
+			else
+			{
+				_logIn_status = 0;
+			}
+			_logInCondition.notify_all();
+			return;
+		}
+		else
+		{
+			m_try_req_login_times = 0;
+			std::string trading_day = pRspUserLogin->TradingDay;
+			if (m_trading_day != trading_day)
+			{
+				m_ordermap_local_remote.clear();
+				m_ordermap_remote_local.clear();
+			}
+			m_trading_day = trading_day;
+			m_front_id = pRspUserLogin->FrontID;
+			m_session_id = pRspUserLogin->SessionID;
+			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
+			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
+			AfterLogin();
+			boost::unique_lock<boost::mutex> lock(_logInmutex);
+			_logIn_status = 2;
+			_logInCondition.notify_all();
+		}
+	}
+	else
+	{
+		std::shared_ptr<CThostFtdcRspUserLoginField> ptr1 = nullptr;
+		ptr1 = std::make_shared<CThostFtdcRspUserLoginField>(CThostFtdcRspUserLoginField(*pRspUserLogin));
+		std::shared_ptr<CThostFtdcRspInfoField> ptr2 = nullptr;
+		ptr2 = std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
+		_ios.post(boost::bind(&traderctp::ProcessOnRspUserLogin, this, ptr1, ptr2));
+	}
+}
+
+void traderctp::ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm)
+{
+	if ((nullptr != pSettlementInfoConfirm)
+		&& (std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trading_day))
+	{
 		//已经确认过结算单
 		m_confirm_settlement_status.store(2);
 		return;
-	}
-	//还没有确认过结算单
-	Log(LOG_INFO,nullptr
-		,u8"msg=还没有确认过结算单;key=%s;bid=%s;user_name=%s;ConfirmDate=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, (nullptr != pSettlementInfoConfirm) ? pSettlementInfoConfirm->ConfirmDate : "");
+	}	
 	m_need_query_settlement.store(true);
 	m_confirm_settlement_status.store(0);
 }
@@ -565,6 +504,36 @@ void traderctp::OnRspQrySettlementInfoConfirm(
 	CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pSettlementInfoConfirm)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pSettlementInfoConfirm);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQrySettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQrySettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcSettlementInfoConfirmField> ptr = nullptr;
 	if (nullptr != pSettlementInfoConfirm)
 	{
@@ -594,12 +563,7 @@ void  traderctp::ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementIn
 }
 
 void traderctp::ProcessEmptySettlementInfo()
-{
-	Log(LOG_INFO,nullptr
-		, "msg=ctp OnRspQrySettlementInfo,SettlementInfo is empty;key=%s;bid=%s;user_name=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str());
+{	
 	m_need_query_settlement.store(false);
 	if (0 == m_confirm_settlement_status.load())
 	{
@@ -610,6 +574,36 @@ void traderctp::ProcessEmptySettlementInfo()
 void traderctp::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pSettlementInfo)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pSettlementInfo);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQrySettlementInfo;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQrySettlementInfo;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	if (nullptr == pSettlementInfo)
 	{
 		if ((nullptr == pRspInfo) && (bIsLast))
@@ -634,16 +628,7 @@ void traderctp::ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlemen
 	{
 		return;
 	}
-
-	Log(LOG_INFO,nullptr
-		, "msg=ctp ProcessSettlementInfoConfirm;key=%s;bid=%s;user_name=%s;bIsLast=%s;ConfirmDate=%s;ConfirmTime=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, bIsLast ? "true" : "false"		
-		, pSettlementInfoConfirm->ConfirmDate
-		, pSettlementInfoConfirm->ConfirmTime);
-
+		
 	if (bIsLast)
 	{
 		m_confirm_settlement_status.store(2);
@@ -653,8 +638,35 @@ void traderctp::ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlemen
 void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-	if (nullptr == pSettlementInfoConfirm)
+	if (nullptr != pSettlementInfoConfirm)
 	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pSettlementInfoConfirm);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO,strMsg.c_str()
+			, "fun=OnRspSettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO,nullptr
+			, "fun=OnRspSettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+
 		return;
 	}
 
@@ -667,14 +679,6 @@ void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField 
 void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPasswordUpdateField> pUserPasswordUpdate,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO,nullptr
-		, "msg=ctp OnRspUserPasswordUpdate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-	
 	if (nullptr==pRspInfo)
 	{
 		return;
@@ -700,6 +704,36 @@ void traderctp::OnRspUserPasswordUpdate(
 	CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pUserPasswordUpdate)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pUserPasswordUpdate);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspUserPasswordUpdate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspUserPasswordUpdate;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcUserPasswordUpdateField> ptr1 = nullptr;
 	if (nullptr != pUserPasswordUpdate)
 	{
@@ -721,38 +755,7 @@ void traderctp::OnRspUserPasswordUpdate(
 
 void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField> pInputOrder
 	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
-{
-	if (nullptr == pInputOrder)
-	{
-		Log(LOG_INFO,nullptr
-			, "msg=ctp OnRspOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-	}
-	else
-	{
-		Log(LOG_INFO, nullptr
-			, "msg=ctp OnRspOrderInsert;key=%s;bid=%s;user_name=%s;ExchangeID=%s;InstrumentID=%s;OrderRef=%s;FrontId=%d;SessionId=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pInputOrder->ExchangeID
-			, pInputOrder->InstrumentID			
-			, pInputOrder->OrderRef
-			, m_front_id
-			, m_session_id
-			, pInputOrder->OrderPriceType
-			, pInputOrder->Direction
-			, pInputOrder->CombHedgeFlag[0]
-			, pInputOrder->LimitPrice
-			, pInputOrder->VolumeTotalOriginal
-			, pInputOrder->VolumeCondition
-			, pInputOrder->TimeCondition);
-	}
-
+{	
 	if (pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
@@ -885,6 +888,36 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 	, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pInputOrder)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pInputOrder);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcInputOrderField> ptr1 = nullptr;
 	if (nullptr != pInputOrder)
 	{
@@ -896,21 +929,12 @@ void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 		ptr2 = std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
 	}
 	_ios.post(boost::bind(&traderctp::ProcessRspOrderInsert, this, ptr1, ptr2));
-
 }
 
 
 void traderctp::ProcessOrderAction(std::shared_ptr<CThostFtdcInputOrderActionField> pInputOrderAction,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO,nullptr
-		, "msg=ctp OnRspOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 	if (pRspInfo->ErrorID != 0)
 	{
 		OutputNotifyAllSycn(pRspInfo->ErrorID
@@ -921,6 +945,36 @@ void traderctp::ProcessOrderAction(std::shared_ptr<CThostFtdcInputOrderActionFie
 void traderctp::OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAction
 	, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pInputOrderAction)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pInputOrderAction);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcInputOrderActionField> ptr1 = nullptr;
 	if (nullptr != pInputOrderAction)
 	{
@@ -937,36 +991,6 @@ void traderctp::OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAct
 void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderField> pInputOrder,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	if (nullptr == pInputOrder)
-	{
-		Log(LOG_INFO,nullptr,
-			"msg=ctp ProcessErrRtnOrderInsert;key=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-	}
-	else
-	{
-		Log(LOG_INFO,nullptr
-			, "msg=ctp ProcessErrRtnOrderInsert;key=%s;bid=%s;user_name=%s;ExchangeID=%s;InstrumentID=%s;OrderRef=%s;FrontId=%d;SessionId=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pInputOrder->ExchangeID
-			, pInputOrder->InstrumentID
-			, pInputOrder->OrderRef
-			, m_front_id
-			, m_session_id
-			, pInputOrder->OrderPriceType
-			, pInputOrder->Direction
-			, pInputOrder->CombHedgeFlag[0]
-			, pInputOrder->LimitPrice
-			, pInputOrder->VolumeTotalOriginal
-			, pInputOrder->VolumeCondition
-			, pInputOrder->TimeCondition);
-	}
-
 	if (pInputOrder && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
@@ -1104,6 +1128,32 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 	, CThostFtdcRspInfoField *pRspInfo)
 {
+	if (nullptr != pInputOrder)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pInputOrder);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnErrRtnOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnErrRtnOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+	}
+
 	std::shared_ptr<CThostFtdcInputOrderField> ptr1 = nullptr;
 	if (nullptr != pInputOrder)
 	{
@@ -1123,14 +1173,6 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 void traderctp::ProcessErrRtnOrderAction(std::shared_ptr<CThostFtdcOrderActionField> pOrderAction,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	Log(LOG_INFO,nullptr
-		, "msg=ctp OnErrRtnOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrorMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 	if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
@@ -1148,8 +1190,35 @@ void traderctp::ProcessErrRtnOrderAction(std::shared_ptr<CThostFtdcOrderActionFi
 	}
 }
 
-void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)
+void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
+	, CThostFtdcRspInfoField *pRspInfo)
 {
+	if (nullptr != pOrderAction)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pOrderAction);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnErrRtnOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnErrRtnOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+	}
+
 	std::shared_ptr<CThostFtdcOrderActionField> ptr1 = nullptr;
 	if (nullptr != pOrderAction)
 	{
@@ -1171,15 +1240,6 @@ void traderctp::ProcessQryInvestorPosition(
 {
 	if (pRspInvestorPosition)
 	{
-		Log(LOG_INFO,nullptr
-			, "msg=traderctp ProcessQryInvestorPosition;key=%s;bid=%s;user_name=%s;nRequestID=%d;bIsLast=%d;InstrumentId=%s;ExchangeId=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, nRequestID
-			, bIsLast			
-			, pRspInvestorPosition->InstrumentID
-			, pRspInvestorPosition->ExchangeID);
 		std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
 		std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
 		auto ins = GetInstrument(symbol);
@@ -1200,6 +1260,7 @@ void traderctp::ProcessQryInvestorPosition(
 			position.instrument_id = pRspInvestorPosition->InstrumentID;
 			if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long)
 			{
+				position.volume_long_yd += pRspInvestorPosition->YdPosition;
 				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
 				{
 					position.volume_long_today = pRspInvestorPosition->Position;
@@ -1214,14 +1275,15 @@ void traderctp::ProcessQryInvestorPosition(
 					position.volume_long_frozen_his = pRspInvestorPosition->ShortFrozen;
 					position.position_cost_long_his = pRspInvestorPosition->PositionCost;
 					position.open_cost_long_his = pRspInvestorPosition->OpenCost;
-					position.margin_long_his = pRspInvestorPosition->UseMargin;
+					position.margin_long_his = pRspInvestorPosition->UseMargin;					
 				}
 				position.position_cost_long = position.position_cost_long_today + position.position_cost_long_his;
 				position.open_cost_long = position.open_cost_long_today + position.open_cost_long_his;
-				position.margin_long = position.margin_long_today + position.margin_long_his;
+				position.margin_long = position.margin_long_today + position.margin_long_his;				
 			}
 			else
 			{
+				position.volume_short_yd += pRspInvestorPosition->YdPosition;
 				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
 				{
 					position.volume_short_today = pRspInvestorPosition->Position;
@@ -1257,6 +1319,36 @@ void traderctp::ProcessQryInvestorPosition(
 void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInvestorPosition
 	, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pInvestorPosition)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pInvestorPosition);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQryInvestorPosition;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQryInvestorPosition;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcInvestorPositionField> ptr1 = nullptr;
 	if (nullptr != pInvestorPosition)
 	{
@@ -1282,26 +1374,63 @@ void traderctp::ProcessQryBrokerTradingParams(std::shared_ptr<CThostFtdcBrokerTr
 		m_need_query_broker_trading_params.store(false);
 	}
 
-	Log(LOG_INFO,nullptr
-		, "msg=traderctp ProcessQryBrokerTradingParams;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrorMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 	if (!pBrokerTradingParams)
 	{
 		return;
 	}
 
-	Log(LOG_INFO,nullptr
-		, "msg=traderctp BrokerTradingParams;key=%s;bid=%s;user_name=%s;Algorithm=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pBrokerTradingParams->Algorithm);
 	m_Algorithm_Type = pBrokerTradingParams->Algorithm;
+}
+
+void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
+	*pBrokerTradingParams, CThostFtdcRspInfoField *pRspInfo
+	, int nRequestID, bool bIsLast)
+{
+	if (nullptr != pBrokerTradingParams)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pBrokerTradingParams);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQryBrokerTradingParams;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQryBrokerTradingParams;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
+	std::shared_ptr<CThostFtdcBrokerTradingParamsField> ptr1 = nullptr;
+	if (nullptr != pBrokerTradingParams)
+	{
+		ptr1 = std::make_shared<CThostFtdcBrokerTradingParamsField>
+			(CThostFtdcBrokerTradingParamsField(*pBrokerTradingParams));
+	}
+
+	std::shared_ptr<CThostFtdcRspInfoField> ptr2 = nullptr;
+	if (nullptr != pRspInfo)
+	{
+		ptr2 = std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
+	}
+
+	_ios.post(boost::bind(&traderctp::ProcessQryBrokerTradingParams, this
+		, ptr1, ptr2, nRequestID, bIsLast));
 }
 
 void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccountField> pRspInvestorAccount,
@@ -1312,15 +1441,7 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 		m_rsp_account_id.store(nRequestID);
 	}
 
-	Log(LOG_INFO,nullptr
-		, "msg=traderctp ProcessQryTradingAccount;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrorMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
-	if (!pRspInvestorAccount)
+	if (nullptr==pRspInvestorAccount)
 	{
 		return;
 	}
@@ -1370,13 +1491,6 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 
 	account.available = pRspInvestorAccount->Available;
 
-	Log(LOG_INFO,nullptr
-		, "msg=traderctp ProcessQryTradingAccount;key=%s;bid=%s;user_name=%s;available ctp return=%f"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, account.available);
-
 	account.changed = true;
 	if (bIsLast)
 	{
@@ -1388,6 +1502,36 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvestorAccount
 	, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pRspInvestorAccount)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pRspInvestorAccount);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQryTradingAccount;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQryTradingAccount;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcTradingAccountField> ptr1 = nullptr;
 	if (nullptr != pRspInvestorAccount)
 	{
@@ -1404,38 +1548,11 @@ void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvest
 		, ptr1, ptr2, nRequestID, bIsLast));
 }
 
-void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
-	*pBrokerTradingParams, CThostFtdcRspInfoField *pRspInfo
-	, int nRequestID, bool bIsLast)
-{
-	std::shared_ptr<CThostFtdcBrokerTradingParamsField> ptr1 = nullptr;
-	if (nullptr != pBrokerTradingParams)
-	{
-		ptr1 = std::make_shared<CThostFtdcBrokerTradingParamsField>
-			(CThostFtdcBrokerTradingParamsField(*pBrokerTradingParams));
-	}
 
-	std::shared_ptr<CThostFtdcRspInfoField> ptr2 = nullptr;
-	if (nullptr != pRspInfo)
-	{
-		ptr2 = std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
-	}
-
-	_ios.post(boost::bind(&traderctp::ProcessQryBrokerTradingParams, this
-		, ptr1, ptr2, nRequestID, bIsLast));
-}
 
 void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankField> pContractBank,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO, nullptr
-		, "msg=traderctp ProcessQryContractBank;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrorMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 	if (!pContractBank)
 	{
 		m_need_query_bank.store(false);
@@ -1445,14 +1562,7 @@ void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankFie
 	Bank& bank = GetBank(pContractBank->BankID);
 	bank.bank_id = pContractBank->BankID;
 	bank.bank_name = GBKToUTF8(pContractBank->BankName);
-	Log(LOG_INFO, nullptr
-		, "msg=traderctp ProcessQryContractBank;key=%s;bid=%s;user_name=%s;bank_id=%s;bank_name=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, bank.bank_id.c_str()
-		, bank.bank_name.c_str());
-
+	
 	if (bIsLast)
 	{
 		m_need_query_bank.store(false);
@@ -1462,6 +1572,36 @@ void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankFie
 void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pContractBank)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pContractBank);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQryContractBank;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQryContractBank;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcContractBankField> ptr1 = nullptr;
 	if (nullptr != pContractBank)
 	{
@@ -1483,14 +1623,6 @@ void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 void traderctp::ProcessQryAccountregister(std::shared_ptr<CThostFtdcAccountregisterField> pAccountregister,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO, nullptr
-		, "msg=traderctp ProcessQryAccountregister;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrorMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 	if (!pAccountregister)
 	{
 		m_need_query_register.store(false);
@@ -1523,6 +1655,36 @@ void traderctp::ProcessQryAccountregister(std::shared_ptr<CThostFtdcAccountregis
 void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccountregister
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pAccountregister)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pAccountregister);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQryAccountregister;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQryAccountregister;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcAccountregisterField> ptr1 = nullptr;
 	if (nullptr != pAccountregister)
 	{
@@ -1542,14 +1704,6 @@ void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccount
 void traderctp::ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSerialField> pTransferSerial,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
-	Log(LOG_INFO, nullptr
-		, "msg=traderctp ProcessQryTransferSerial;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrorMsg=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pRspInfo ? pRspInfo->ErrorID : -999
-		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
-
 	if (!pTransferSerial)
 	{
 		return;
@@ -1577,6 +1731,36 @@ void traderctp::ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSeria
 void traderctp::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferSerial
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
+	if (nullptr != pTransferSerial)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTransferSerial);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRspQryTransferSerial;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRspQryTransferSerial;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			, nRequestID
+			, bIsLast ? "true" : "false");
+	}
+
 	std::shared_ptr<CThostFtdcTransferSerialField> ptr1 = nullptr;
 	if (nullptr != pTransferSerial)
 	{
@@ -1602,12 +1786,6 @@ void traderctp::ProcessFromBankToFutureByFuture(
 	{
 		return;
 	}
-
-	Log(LOG_INFO,nullptr
-		, "msg=ctp ProcessFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str());
 
 	if (pRspTransfer->ErrorID == 0)
 	{
@@ -1639,6 +1817,30 @@ void traderctp::ProcessFromBankToFutureByFuture(
 void traderctp::OnRtnFromBankToFutureByFuture(
 	CThostFtdcRspTransferField *pRspTransfer)
 {
+	if (nullptr != pRspTransfer)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pRspTransfer);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			);
+	}
+	else
+	{
+		Log(LOG_INFO,nullptr
+			, "fun=OnRtnFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+
 	if (nullptr == pRspTransfer)
 	{
 		return;
@@ -1652,6 +1854,30 @@ void traderctp::OnRtnFromBankToFutureByFuture(
 
 void traderctp::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTransfer)
 {
+	if (nullptr != pRspTransfer)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pRspTransfer);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRtnFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+
 	if (nullptr == pRspTransfer)
 	{
 		return;
@@ -1674,8 +1900,37 @@ void traderctp::ProcessOnErrRtnBankToFutureByFuture(std::shared_ptr<CThostFtdcRs
 		, "WARNING");
 }
 
-void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
+void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer
+	, CThostFtdcRspInfoField *pRspInfo)
 {
+	if (nullptr != pReqTransfer)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pReqTransfer);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnErrRtnBankToFutureByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnErrRtnBankToFutureByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			);
+	}
+
 	if (nullptr == pRspInfo)
 	{
 		return;
@@ -1701,6 +1956,34 @@ void traderctp::ProcessnErrRtnFutureToBankByFuture(std::shared_ptr<CThostFtdcRsp
 
 void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
 {
+	if (nullptr != pReqTransfer)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pReqTransfer);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnErrRtnFutureToBankByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnErrRtnFutureToBankByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, pRspInfo ? pRspInfo->ErrorID : -999
+			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+		);
+	}
+
 	if (nullptr == pRspInfo)
 	{
 		return;
@@ -1716,39 +1999,12 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	{
 		return;
 	}
-
-	Log(LOG_INFO,nullptr
-		, "msg=ctp OnRtnOrder;key=%s;bid=%s;user_name=%s;ExchangeID=%s;InstrumentId=%s;OrderRef=%s;FrontId=%d;SessionId=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;TimeCondition=%c;VolumeCondition=%c;OrderLocalID=%s;OrderSubmitStatus=%c;OrderSysID=%s;OrderStatus=%c;VolumeTraded=%d;VolumeTotal=%d;InsertTime=%s;ZCETotalTradedVolume=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pOrder->ExchangeID
-		, pOrder->InstrumentID
-		, pOrder->OrderRef
-		, pOrder->FrontID
-		, pOrder->SessionID
-		, pOrder->OrderPriceType
-		, pOrder->Direction
-		, pOrder->CombOffsetFlag[0]
-		, pOrder->LimitPrice
-		, pOrder->VolumeTotalOriginal
-		, pOrder->TimeCondition
-		, pOrder->VolumeCondition
-		, pOrder->OrderLocalID
-		, pOrder->OrderSubmitStatus
-		, pOrder->OrderSysID
-		, pOrder->OrderStatus
-		, pOrder->VolumeTraded
-		, pOrder->VolumeTotal
-		, pOrder->InsertTime
-		, pOrder->ZCETotalTradedVolume);
-
+	
 	std::stringstream ss;
 	int n_order_ref = atoi(pOrder->OrderRef);
 	ss << pOrder->FrontID << pOrder->SessionID << n_order_ref;
 	std::string strKey = ss.str();
 
-	//找到委托单
 	trader_dll::RemoteOrderKey remote_key;
 	remote_key.exchange_id = pOrder->ExchangeID;
 	remote_key.instrument_id = pOrder->InstrumentID;
@@ -1758,6 +2014,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	remote_key.order_ref = std::to_string(order_ref);
 	remote_key.order_sys_id = pOrder->OrderSysID;
 	trader_dll::LocalOrderKey local_key;
+	//找到委托单local_key;
 	OrderIdRemoteToLocal(remote_key, &local_key);
 	Order& order = GetOrder(local_key.order_id);
 	//委托单初始属性(由下单者在下单前确定, 不再改变)
@@ -1957,6 +2214,30 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 
 void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 {
+	if (nullptr != pOrder)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pOrder);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnOrder;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()			
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRtnOrder;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()			
+		);
+	}
+
 	if (nullptr == pOrder)
 	{
 		return;
@@ -1969,25 +2250,6 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 
 void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 {
-	Log(LOG_INFO,nullptr
-		, "msg=ctp OnRtnTrade;key=%s;bid=%s;user_name=%s;ExchangeID=%s;InstrumentId=%s;OrderRef=%s;Direction=%c;OrderSysID=%s;OffsetFlag=%c;HedgeFlag=%c;Price=%f;Volume=%d;TradeDate=%s;TradeTime=%s;OrderSysID=%s;OrderLocalID=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, pTrade->ExchangeID
-		, pTrade->InstrumentID
-		, pTrade->OrderRef		
-		, pTrade->Direction
-		, pTrade->OrderSysID
-		, pTrade->OffsetFlag
-		, pTrade->HedgeFlag
-		, pTrade->Price
-		, pTrade->Volume
-		, pTrade->TradeDate
-		, pTrade->TradeTime
-		, pTrade->OrderSysID
-		, pTrade->OrderLocalID);
-
 	std::string exchangeId = pTrade->ExchangeID;
 	std::string orderSysId = pTrade->OrderSysID;
 	for (std::map<std::string, ServerOrderInfo>::iterator it = m_input_order_key_map.begin();
@@ -2080,6 +2342,30 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 
 void traderctp::OnRtnTrade(CThostFtdcTradeField* pTrade)
 {
+	if (nullptr != pTrade)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTrade);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnTrade;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRtnTrade;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+
 	if (nullptr == pTrade)
 	{
 		return;
@@ -2098,19 +2384,37 @@ void traderctp::ProcessOnRtnTradingNotice(std::shared_ptr<CThostFtdcTradingNotic
 
 	auto s = GBKToUTF8(pTradingNoticeInfo->FieldContent);
 	if (!s.empty())
-	{
-		Log(LOG_INFO,nullptr
-			, "msg=ctp OnRtnTradingNotice;key=%s;bid=%s;user_name=%s;TradingNoticeInfoLength=%d"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, s.length());
-		OutputNotifyAllAsych(0, s);
+	{		
+		OutputNotifyAllAsych(0,s);
 	}
 }
 
 void traderctp::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo)
 {
+	if (nullptr != pTradingNoticeInfo)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTradingNoticeInfo);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnTradingNotice;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRtnTradingNotice;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+
 	if (nullptr == pTradingNoticeInfo)
 	{
 		return;
@@ -2124,19 +2428,24 @@ void traderctp::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNot
 void traderctp::ProcessRspError(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
 	if (nullptr != pRspInfo)
-	{
-		Log(LOG_INFO,nullptr
-			, "msg=ctp OnRspError;key=%s;bid=%s;user_name=%s;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, GBKToUTF8(pRspInfo->ErrorMsg).c_str());
+	{		
+		OutputNotifyAllAsych(pRspInfo->ErrorID,GBKToUTF8(pRspInfo->ErrorMsg).c_str());
 	}
 }
 
 void traderctp::OnRspError(CThostFtdcRspInfoField* pRspInfo
 	, int nRequestID, bool bIsLast)
 {
+	Log(LOG_INFO, nullptr
+		, "fun=OnRspError;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s;nRequestID=%d;bIsLast=%s"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, pRspInfo ? pRspInfo->ErrorID : -999
+		, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+		, nRequestID
+		, bIsLast ? "true" : "false");
+
 	if (nullptr == pRspInfo)
 	{
 		return;
@@ -2209,14 +2518,17 @@ int traderctp::ReqUserLogin()
 	strcpy_x(field.UserProductInfo, _req_login.broker.product_info.c_str());
 	strcpy_x(field.LoginRemark, _req_login.client_ip.c_str());
 	int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
-	Log(LOG_INFO, nullptr
-		, "msg=ctp ReqUserLogin fail;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;LoginRemark=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, _req_login.broker.product_info.c_str()
-		, _req_login.client_ip.c_str()
-		, ret);
+	if (0 != ret)
+	{
+		Log(LOG_INFO, nullptr
+			, "msg=ctp ReqUserLogin fail;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;LoginRemark=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, _req_login.broker.product_info.c_str()
+			, _req_login.client_ip.c_str()
+			, ret);
+	}	
 	return ret;
 }
 

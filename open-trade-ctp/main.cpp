@@ -44,9 +44,9 @@ int main(int argc, char* argv[])
 
 		signals_.add(SIGINT);
 		signals_.add(SIGTERM);
-#if defined(SIGQUIT)
-		signals_.add(SIGQUIT);
-#endif 
+		#if defined(SIGQUIT)
+			signals_.add(SIGQUIT);
+		#endif 
 
 		traderctp tradeCtp(ioc, key);
 		tradeCtp.Start();
