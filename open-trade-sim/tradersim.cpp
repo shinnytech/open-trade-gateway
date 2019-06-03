@@ -854,6 +854,8 @@ void tradersim::LoadUserDataFile()
 			item.volume_long_today = 0;
 			item.volume_long_frozen_today = 0;
 			item.volume_short_his = item.volume_short_his + item.volume_short_today;
+			item.volume_long_yd = item.volume_long_his;
+			item.volume_short_yd= item.volume_short_his;
 			item.volume_short_today = 0;
 			item.volume_short_frozen_today = 0;
 			item.changed = true;
