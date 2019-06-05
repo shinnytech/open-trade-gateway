@@ -259,17 +259,6 @@ void connection::OnMessage(const std::string &json_str)
 
 	if (req.aid == "req_login")
 	{
-		Log(LOG_INFO, nullptr
-			,"msg=connection::OnMessage;aid=req_login;key=gateway;bid=%s;user_name=%s;client_app_id=%s;client_system_info=%s;client_ip=%s;client_port=%d;broker_id=%s;front=%s"
-			,req.bid.c_str()
-			,req.user_name.c_str()
-			,req.client_app_id.c_str()
-			,req.client_system_info.c_str()
-			,_X_Real_IP.c_str()
-			,_X_Real_Port
-			,req.broker_id.c_str()
-			,req.front.c_str()
-		);
 		ProcessLogInMessage(req,json_str);
 	}
 	else

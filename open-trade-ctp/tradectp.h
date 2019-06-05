@@ -208,6 +208,8 @@ private:
 	
 	std::map<std::string, std::string> m_action_order_map;
 
+	std::list<int> m_req_transfer_list;
+
 	//用户操作反馈
 
 	//还需要给用户下单反馈的单号集合
@@ -354,10 +356,6 @@ private:
 	void ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSerialField> pTransferSerial,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);
 
-	void ProcessFromBankToFutureByFuture(std::shared_ptr<CThostFtdcRspTransferField> pRspTransfer);
-
-	void ProcessnErrRtnFutureToBankByFuture(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
-
 	void ProcessRspError(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
 	void ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder);
@@ -399,9 +397,18 @@ private:
 	void ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginField> pRspUserLogin
 		, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
-	void ProcessOnErrRtnBankToFutureByFuture(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
-
 	void ProcessOnRtnTradingNotice(std::shared_ptr<CThostFtdcTradingNoticeInfoField> pTradingNoticeInfo);
 
 	void ReinitCtp();
+
+	void ProcessFromBankToFutureByFuture(
+		std::shared_ptr<CThostFtdcRspTransferField> pRspTransfer);
+
+	void ProcessOnErrRtnFutureToBankByFuture(
+		std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
+		,std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
+
+	void ProcessOnErrRtnBankToFutureByFuture(
+		std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
+		, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 };

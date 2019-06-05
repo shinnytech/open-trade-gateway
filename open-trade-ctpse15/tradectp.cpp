@@ -121,6 +121,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, m_order_ref(0)
 	, m_input_order_key_map()
 	, m_action_order_map()
+	, m_req_transfer_list()
 	, _logIn_status(0)
 	, _logInmutex()
 	, _logInCondition()
@@ -341,6 +342,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 
 			m_input_order_key_map.clear();
 			m_action_order_map.clear();
+			m_req_transfer_list.clear();
 			m_insert_order_set.clear();
 			m_cancel_order_set.clear();
 
@@ -1802,16 +1804,26 @@ void traderctp::ProcessFromBankToFutureByFuture(
 		d.datetime = DateTimeToEpochNano(&dt);
 		d.error_id = pRspTransfer->ErrorID;
 		d.error_msg = GBKToUTF8(pRspTransfer->ErrorMsg);
-		OutputNotifyAllSycn(0, u8"转账成功");
+		
+		if (!m_req_transfer_list.empty())
+		{
+			OutputNotifyAllSycn(0, u8"转账成功");
+			m_req_transfer_list.pop_front();
+		}
+
 		m_something_changed = true;
 		SendUserData();
 		m_req_account_id++;
 	}
 	else
 	{
-		OutputNotifyAllSycn(pRspTransfer->ErrorID
-			, u8"银期错误," + GBKToUTF8(pRspTransfer->ErrorMsg)
-			, "WARNING");
+		if (!m_req_transfer_list.empty())
+		{
+			OutputNotifyAllSycn(pRspTransfer->ErrorID
+				, u8"银期错误," + GBKToUTF8(pRspTransfer->ErrorMsg)
+				, "WARNING");
+			m_req_transfer_list.pop_front();
+		}
 	}
 }
 
@@ -1890,15 +1902,27 @@ void traderctp::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTr
 		, ptr1));
 }
 
-void traderctp::ProcessOnErrRtnBankToFutureByFuture(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
+void traderctp::ProcessOnErrRtnBankToFutureByFuture(
+	std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
+	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
+	if (nullptr == pReqTransfer)
+	{
+		return;
+	}
 	if (nullptr == pRspInfo)
 	{
 		return;
 	}
-	OutputNotifyAllAsych(pRspInfo->ErrorID
-		, u8"银行资金转期货错误," + GBKToUTF8(pRspInfo->ErrorMsg)
-		, "WARNING");
+
+	if (!m_req_transfer_list.empty())
+	{
+		OutputNotifyAllAsych(pRspInfo->ErrorID
+			, u8"银行资金转期货错误," + GBKToUTF8(pRspInfo->ErrorMsg)
+			, "WARNING");
+		m_req_transfer_list.pop_front();
+	}
+
 }
 
 void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
@@ -1935,23 +1959,48 @@ void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTra
 	{
 		return;
 	}
+
 	if (0 == pRspInfo->ErrorID)
 	{
 		return;
 	}
+
+	if (nullptr == pReqTransfer)
+	{
+		return;
+	}
+
+	std::shared_ptr<CThostFtdcReqTransferField> ptr1 =
+		std::make_shared<CThostFtdcReqTransferField>(
+			CThostFtdcReqTransferField(*pReqTransfer));
+
 	std::shared_ptr<CThostFtdcRspInfoField> ptr2 =
 		std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
+
 	_ios.post(boost::bind(&traderctp::ProcessOnErrRtnBankToFutureByFuture, this
-		, ptr2));
+		, ptr1, ptr2));
 }
 
-void traderctp::ProcessnErrRtnFutureToBankByFuture(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
+void traderctp::ProcessOnErrRtnFutureToBankByFuture(
+	std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
+	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
 {
-	if (pRspInfo && pRspInfo->ErrorID != 0)
+	if (nullptr == pReqTransfer)
+	{
+		return;
+	}
+	if (nullptr == pRspInfo)
+	{
+		return;
+	}
+
+	if (!m_req_transfer_list.empty())
 	{
 		OutputNotifyAllSycn(pRspInfo->ErrorID
 			, u8"期货资金转银行错误," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
+		m_req_transfer_list.pop_front();
 	}
+
 }
 
 void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
@@ -1988,9 +2037,26 @@ void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTra
 	{
 		return;
 	}
-	std::shared_ptr<CThostFtdcRspInfoField> ptr2 = std::make_shared<CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
-	_ios.post(boost::bind(&traderctp::ProcessnErrRtnFutureToBankByFuture, this
-		, ptr2));
+
+	if (0 == pRspInfo->ErrorID)
+	{
+		return;
+	}
+
+	if (nullptr == pReqTransfer)
+	{
+		return;
+	}
+
+	std::shared_ptr<CThostFtdcReqTransferField> ptr1 =
+		std::make_shared<CThostFtdcReqTransferField>(
+			CThostFtdcReqTransferField(*pReqTransfer));
+
+	std::shared_ptr<CThostFtdcRspInfoField> ptr2 = std::make_shared<
+		CThostFtdcRspInfoField>(CThostFtdcRspInfoField(*pRspInfo));
+
+	_ios.post(boost::bind(&traderctp::ProcessOnErrRtnFutureToBankByFuture, this
+		, ptr1, ptr2));
 }
 
 void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
@@ -2595,12 +2661,11 @@ void traderctp::SendLoginRequest()
 	}
 	m_try_req_login_times++;
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse SendLoginRequest;key=%s;bid=%s;user_name=%s;client_system_info=%s;client_app_id=%s"
+		, "msg=ctpse SendLoginRequest;key=%s;bid=%s;user_name=%s;client_app_id=%s"
 		, _key.c_str()
 		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, _req_login.client_system_info.c_str(),
-		_req_login.client_app_id.c_str());
+		, _req_login.user_name.c_str()		
+		, _req_login.client_app_id.c_str());
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
 	//提交终端信息
@@ -3776,12 +3841,11 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		_req_login = req;
 
 		Log(LOG_INFO,nullptr
-			, "msg=ctpse _req_login;key=%s;bid=%s;user_name=%s;client_system_info=%s;client_app_id=%s"
+			, "msg=ctpse _req_login;key=%s;bid=%s;user_name=%s;client_app_id=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, _req_login.client_system_info.c_str(),
-			_req_login.client_app_id.c_str());
+			, _req_login.user_name.c_str()			
+			, _req_login.client_app_id.c_str());
 
 		auto it = g_config.brokers.find(_req_login.bid);
 		_req_login.broker = it->second;
@@ -4220,27 +4284,33 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 	if (f.TradeAmount >= 0)
 	{
 		strcpy_x(f.TradeCode, "202001");
-		int r = m_pTdApi->ReqFromBankToFutureByFuture(&f, 0);
+		int nRequestID = _requestID++;
+		int r = m_pTdApi->ReqFromBankToFutureByFuture(&f,nRequestID);
+		m_req_transfer_list.push_back(nRequestID);
 		Log(LOG_INFO, nullptr
-			, "msg=ctpse ReqFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d"
+			, "msg=ctpse ReqFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
 			, f.TradeAmount
-			, r);
+			, r
+			, nRequestID);
 	}
 	else
 	{
 		strcpy_x(f.TradeCode, "202002");
+		int nRequestID = _requestID++;
 		f.TradeAmount = -f.TradeAmount;
-		int r = m_pTdApi->ReqFromFutureToBankByFuture(&f, 0);
+		int r = m_pTdApi->ReqFromFutureToBankByFuture(&f, nRequestID);
+		m_req_transfer_list.push_back(nRequestID);
 		Log(LOG_INFO, nullptr
-			, "msg=ctpse ReqFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d"
+			, "msg=ctpse ReqFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
 			, f.TradeAmount
-			, r);
+			, r
+			, nRequestID);
 	}
 }
 
