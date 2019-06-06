@@ -44,11 +44,6 @@ client_connection::client_connection(
 
 void client_connection::start()
 {	
-	int fd=m_ws_socket.next_layer().native_handle();
-	int flags = fcntl(fd, F_GETFD);
-	flags |= FD_CLOEXEC;
-	fcntl(fd, F_SETFD, flags);
-
 	req_ = {};
 	boost::beast::http::async_read(m_ws_socket.next_layer()
 		,flat_buffer_
@@ -65,10 +60,8 @@ void client_connection::on_read_header(boost::beast::error_code ec
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master client connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, ec.message().c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+			, "msg=open trade gateway master client connection on_read_header fail;errmsg=%s;key=gatewayms"
+			, ec.message().c_str());
 		OnCloseConnection();
 		return;
 	}
@@ -85,10 +78,8 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 	if (ec)
 	{
 		LogMs(LOG_WARNING, nullptr
-			, "msg=open trade gateway master client connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, ec.message().c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+			, "msg=open trade gateway master client connection accept fail;errmsg=%s;key=gatewayms"
+			, ec.message().c_str());
 		OnCloseConnection();
 		return;
 	}
@@ -140,9 +131,7 @@ void client_connection::OnRead(boost::system::error_code ec, std::size_t bytes_t
 	if (ec)
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=open trade gateway master client connection read fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle()
+			, "msg=open trade gateway master client connection read fail;errmsg=%s;key=gatewayms"
 			, ec.message().c_str());
 		OnCloseConnection();
 		return;
@@ -156,9 +145,6 @@ void client_connection::SendTextMsg(const std::string& msg)
 {
 	try
 	{
-		LogMs(LOG_INFO,msg.c_str()
-			, "msg=client_connection send json msg to client;key=gatewayms");
-
 		if (m_output_buffer.size() > 0)
 		{
 			m_output_buffer.push_back(msg);
@@ -172,10 +158,8 @@ void client_connection::SendTextMsg(const std::string& msg)
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			, "msg=open trade gateway master client connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+			, "msg=open trade gateway master client connection SendTextMsg exception;errmsg=%s;key=gatewayms"
+			, ex.what());
 	}
 }
 
@@ -198,10 +182,8 @@ void client_connection::DoWrite()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR, nullptr
-			, "msg=open trade gateway master client connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+			, "msg=open trade gateway master client connection DoWrite exception;errmsg=%s;key=gatewayms"
+			, ex.what());
 	}
 }
 
@@ -210,9 +192,7 @@ void client_connection::OnWrite(boost::system::error_code ec, std::size_t bytes_
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master client connection send message fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle()
+			, "msg=open trade gateway master client connection send message fail;errmsg=%s;key=gatewayms"
 			, ec.message().c_str());
 		OnCloseConnection();
 		return;
@@ -253,15 +233,9 @@ void client_connection::OnMessage(const std::string &json_str)
 	if (!ss.FromString(json_str.c_str()))
 	{
 		LogMs(LOG_INFO, nullptr
-			,"msg=receive invalide msg from client;msgcontent=%s;connection=%d;fd=%d;key=gatewayms"
-			,json_str.c_str()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle());
+			,"msg=receive invalide msg from client;key=gatewayms");
 		return;
 	}
-
-	LogMs(LOG_INFO,json_str.c_str()
-		, "msg=client_connection receive json msg from client;key=gatewayms");
 
 	ReqLogin req;
 	ss.ToVar(req);
@@ -284,8 +258,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 	if (it == m_broker_slave_node_Map.end())
 	{
 		LogMs(LOG_WARNING, nullptr
-			, "msg=open trade gateway master get invalid bid;connection=%d;bid=%s;key=gatewayms"
-			, _connection_id
+			, "msg=open trade gateway master get invalid bid;bid=%s;key=gatewayms"
 			, req.bid.c_str());
 		std::stringstream ss;
 		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
@@ -298,61 +271,17 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 	//如果已经连接到服务器
 	if (m_connect_to_server)
 	{
-		//如果是同一家期货公司(一定在同一个结点上)
-		if (req.bid == m_last_req_login.bid)
-		{
-			//直接重发登录请求并返回
-			m_last_req_login = req;
-			SendTextMsgToServer(json_str);
-			return;
-		}
-
-		//如果在同一个结点上
-		if (slaveNodeInfo.name == m_last_slave_node.name)
-		{
-			//直接重发登录请求并返回
-			m_last_req_login = req;
-			SendTextMsgToServer(json_str);
-			return;
-		}
-
-		//如果不在同一个结点,需要关闭掉原来的连接并重新连接
-		boost::beast::error_code ec;
-		m_ws_socket_to_server.close(boost::beast::websocket::close_code::normal, ec);
-		if (ec)
-		{
-			LogMs(LOG_WARNING, nullptr
-				, "msg=open trade gateway master clsoe websocket to server fail!;errmsg=%s;nodename=%s;key=gatewayms"
-				, ec.message().c_str()
-				, m_last_slave_node.name.c_str());
-		}
-		m_cached_msgs.clear();
-		m_connect_to_server = false;
-		m_last_req_login = req;
-		m_last_slave_node = slaveNodeInfo;
-
-		//尝试连接到slave
-		m_cached_msgs.push_back(json_str);
-		start_connect_to_server();
+		//已经登录的连接,直接关掉
+		std::stringstream ss;
+		ss << u8"重复登录!";
+		OutputNotifySycn(1, ss.str(), "WARNING");
+		OnCloseConnection();
+		return;
 	}
 	//如果还没有连接到服务器
 	else
 	{
-		//先尝试关闭原来的连接(正常情况下是空的)
-		if (m_ws_socket_to_server.is_open())
-		{
-			boost::beast::error_code ec;
-			m_ws_socket_to_server.close(boost::beast::websocket::close_code::normal, ec);
-			if (ec)
-			{
-				LogMs(LOG_WARNING, nullptr
-					, "msg=open trade gateway master clsoe websocket to server fail!;errmsg=%s;key=gatewayms"
-					, ec.message().c_str());
-			}
-		}
-
 		m_cached_msgs.clear();
-		m_connect_to_server = false;
 		m_last_req_login = req;
 		m_last_slave_node = slaveNodeInfo;
 
@@ -413,11 +342,6 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 		OutputNotifySycn(1, ss.str(), "WARNING");
 		return;
 	}
-
-	int fd = m_ws_socket_to_server.next_layer().native_handle();
-	int flags = fcntl(fd, F_GETFD);
-	flags |= FD_CLOEXEC;
-	fcntl(fd, F_SETFD, flags);
 
 	//Perform the websocket handshake
 	m_ws_socket_to_server.set_option(boost::beast::websocket::stream_base::decorator(
@@ -498,15 +422,10 @@ void client_connection::OnTextMsgFromServer(const std::string& msg)
 	MasterSerializerConfig ss;
 	if (!ss.FromString(msg.c_str()))
 	{
-		LogMs(LOG_INFO,msg.c_str()
-			, "msg=receive invalide msg from server;connection=%d;fd=%d;key=gatewayms"			
-			, _connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+		LogMs(LOG_INFO,nullptr
+			, "msg=receive invalide msg from server;key=gatewayms");
 		return;
 	}
-
-	LogMs(LOG_INFO, msg.c_str()
-		, "msg=client_connection receive json msg from server;key=gatewayms");
 
 	RtnBrokersMsg req;
 	ss.ToVar(req);
@@ -515,6 +434,10 @@ void client_connection::OnTextMsgFromServer(const std::string& msg)
 	{
 		return;
 	}
+
+	LogMs(LOG_INFO
+		, msg.c_str()
+		, "fun=OnTextMsgFromServer;key=gatewayms");
 
 	//发到客户端
 	SendTextMsg(msg);
@@ -539,10 +462,8 @@ void client_connection::DoWriteToServer()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			, "msg=open trade gateway master client connection DoWriteToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, ex.what()
-			, _connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+			, "msg=open trade gateway master client connection DoWriteToServer exception;errmsg=%s;key=gatewayms"
+			, ex.what());
 	}
 }
 
@@ -551,9 +472,7 @@ void client_connection::OnWriteServer(boost::system::error_code ec, std::size_t 
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master client connection send message to server fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle()
+			, "msg=open trade gateway master client connection send message to server fail;errmsg=%s;key=gatewayms"
 			, ec.message().c_str());
 
 		//关闭整个连接,要求客户端重新登录
@@ -576,8 +495,9 @@ void client_connection::SendTextMsgToServer(const std::string& msg)
 {
 	try
 	{
-		LogMs(LOG_INFO, msg.c_str()
-			, "msg=client_connection send json msg to server;key=gatewayms");
+		LogMs(LOG_INFO
+			, msg.c_str()
+			, "fun=SendTextMsgToServer;key=gatewayms");
 
 		if (m_output_buffer_to_server.size() > 0)
 		{
@@ -592,10 +512,8 @@ void client_connection::SendTextMsgToServer(const std::string& msg)
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			, "msg=open trade gateway master client connection SendTextMsgToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			,ex.what()
-			,_connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+			, "msg=open trade gateway master client connection SendTextMsgToServer exception;errmsg=%s;key=gatewayms"
+			,ex.what());
 	}
 }
 
@@ -617,15 +535,14 @@ void client_connection::OnCloseConnection()
 {	
 	try
 	{
+		//m_connect_to_server = false;
 		client_connection_manager_.stop(shared_from_this());
 	}
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			,"msg=client_connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gatewayms"
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+			,"msg=client_connection::OnCloseConnection();errmsg=%s;key=gatewayms"
+			, ex.what());
 	}	
 }
 
@@ -633,32 +550,18 @@ void client_connection::stop()
 {
 	try
 	{
+		LogMs(LOG_INFO, nullptr
+			, "msg=client_connection stop;key=gatewayms");
+
 		//关掉客户端连接
-		if (m_ws_socket.is_open())
-		{
-			boost::beast::error_code ec;
-			m_ws_socket.close(boost::beast::websocket::close_code::normal, ec);
-			if (ec)
-			{
-				LogMs(LOG_WARNING,nullptr
-					,"msg=open trade gateway master clsoe websocket to client fail!;errmsg=%s;key=gatewayms"
-					, ec.message().c_str());
-			}
-		}
-
+		LogMs(LOG_INFO, nullptr
+			, "msg=client_connection stop m_ws_socket;key=gatewayms");
+		m_ws_socket.next_layer().close();
+				
 		//关掉服务端连接
-		if (m_ws_socket_to_server.is_open())
-		{
-			boost::beast::error_code ec;
-			m_ws_socket_to_server.close(boost::beast::websocket::close_code::normal,ec);
-			if (ec)
-			{
-				LogMs(LOG_WARNING,nullptr
-					, "msg=open trade gateway master clsoe websocket to server fail!;errmsg=%s;key=gatewayms"
-					, ec.message().c_str());
-			}
-		}
-
+		LogMs(LOG_INFO, nullptr
+			, "msg=client_connection stop m_ws_socket_to_server;key=gatewayms");
+		m_ws_socket_to_server.next_layer().close();
 	}
 	catch (std::exception& ex)
 	{
