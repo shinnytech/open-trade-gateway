@@ -178,6 +178,11 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 			&& (_req_login.password == req.password))
 		{
 			OutputNotifySycn(connId, 0, u8"登录成功");
+			Log(LOG_INFO, nullptr
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=true"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str());
 			char json_str[1024];
 			sprintf(json_str, (u8"{"\
 				"\"aid\": \"rtn_data\","\
@@ -201,6 +206,11 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		else
 		{
 			OutputNotifySycn(connId, 0, u8"用户登录失败!");
+			Log(LOG_INFO, nullptr
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=false"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str());
 		}
 	}
 	else
@@ -220,6 +230,11 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		if (m_b_login.load())
 		{
 			OutputNotifySycn(connId, 0, u8"登录成功");
+			Log(LOG_INFO, nullptr
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=true"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str());
 			OnInit();
 			char json_str[1024];
 			sprintf(json_str, (u8"{"\
@@ -240,6 +255,11 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		else
 		{
 			OutputNotifySycn(connId, 0, u8"用户登录失败!");
+			Log(LOG_INFO, nullptr
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=false"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str());
 		}
 	}
 }
