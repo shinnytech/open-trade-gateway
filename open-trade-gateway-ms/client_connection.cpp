@@ -307,7 +307,7 @@ void client_connection::OnResolve(boost::system::error_code ec
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
+		LogMs(LOG_ERROR,nullptr
 			,"msg=open trade gateway master OnResolve Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
@@ -332,7 +332,7 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
+		LogMs(LOG_ERROR,nullptr
 			, "msg=open trade gateway master OnConnectToServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
@@ -363,7 +363,7 @@ void client_connection::OnHandshakeWithServer(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
+		LogMs(LOG_ERROR,nullptr
 			, "msg=open trade gateway master OnHandshakeWithServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
@@ -435,9 +435,9 @@ void client_connection::OnTextMsgFromServer(const std::string& msg)
 		return;
 	}
 
-	LogMs(LOG_INFO
-		, msg.c_str()
-		, "fun=OnTextMsgFromServer;key=gatewayms");
+	//LogMs(LOG_INFO
+	//	, msg.c_str()
+	//	, "fun=OnTextMsgFromServer;key=gatewayms");
 
 	//发到客户端
 	SendTextMsg(msg);
@@ -495,9 +495,9 @@ void client_connection::SendTextMsgToServer(const std::string& msg)
 {
 	try
 	{
-		LogMs(LOG_INFO
-			, msg.c_str()
-			, "fun=SendTextMsgToServer;key=gatewayms");
+		//LogMs(LOG_INFO
+		//	, msg.c_str()
+		//	, "fun=SendTextMsgToServer;key=gatewayms");
 
 		if (m_output_buffer_to_server.size() > 0)
 		{
