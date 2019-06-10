@@ -17,9 +17,18 @@ void client_connection_manager::start(client_connection_ptr c)
 }
 
 void client_connection_manager::stop(client_connection_ptr c)
-{
-	client_connections_.erase(c);
-	c->stop();
+{	
+	try
+	{
+		client_connections_.erase(c);
+		c->stop();
+	}
+	catch (std::exception& ex)
+	{
+		LogMs(LOG_WARNING,nullptr
+			, "fun=stop;msg=client_connection_manager stop connection;errmsg=%s;key=gatewayms"
+			, ex.what());
+	}	
 }
 
 void client_connection_manager::stop_all()

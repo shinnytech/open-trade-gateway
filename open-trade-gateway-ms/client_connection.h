@@ -47,6 +47,8 @@ public:
 
 	void stop();
 
+	void stop_server();
+
 	int connection_id()
 	{
 		return _connection_id;
