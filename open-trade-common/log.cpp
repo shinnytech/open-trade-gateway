@@ -25,7 +25,19 @@ struct LogContext
 	std::mutex m_log_file_mutex;
 
 	int m_log_file_fd;  	
+
+	std::string m_local_host_name;
 } log_context;
+
+void GetLocalHostName()
+{
+	char hostname[128];
+	if (gethostname(hostname, sizeof(hostname)))
+	{
+		log_context.m_local_host_name = "unknown";
+	}
+	log_context.m_local_host_name = hostname;
+}
 
 const char* Level2String(LogLevel level)
 {
@@ -68,6 +80,11 @@ void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...)
 {
 	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
 
+	if (log_context.m_local_host_name.empty())
+	{
+		GetLocalHostName();
+	}
+
 	const char* level_str = Level2String(level);
 
 	const char* datetime_str = CurrentDateTimeStr();
@@ -75,6 +92,11 @@ void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...)
 	std::stringstream ss;
 	ss << "{\"time\": \"" << datetime_str
 		<< "\", \"level\": \"" << level_str << "\"";
+
+	if (!log_context.m_local_host_name.empty())
+	{
+		ss << ",\"node\":\"" << log_context.m_local_host_name << "\"";
+	}
 	
 	if (nullptr!=pack_str) 
 	{
@@ -130,6 +152,11 @@ void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...)
 {
 	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
 
+	if (log_context.m_local_host_name.empty())
+	{
+		GetLocalHostName();
+	}
+
 	const char* level_str = Level2String(level);
 
 	const char* datetime_str = CurrentDateTimeStr();
@@ -137,6 +164,11 @@ void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...)
 	std::stringstream ss;
 	ss << "{\"time\": \"" << datetime_str
 		<< "\", \"level\": \"" << level_str << "\"";
+
+	if (!log_context.m_local_host_name.empty())
+	{
+		ss << ",\"node\":\"" << log_context.m_local_host_name << "\"";
+	}
 
 	if (nullptr != pack_str)
 	{
