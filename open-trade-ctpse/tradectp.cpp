@@ -1273,7 +1273,7 @@ void traderctp::ProcessQryInvestorPosition(
 			position.instrument_id = pRspInvestorPosition->InstrumentID;
 			if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long)
 			{
-				position.volume_long_yd += pRspInvestorPosition->YdPosition;
+				position.volume_long_yd = pRspInvestorPosition->YdPosition;
 				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
 				{
 					position.volume_long_today = pRspInvestorPosition->Position;
@@ -1296,7 +1296,7 @@ void traderctp::ProcessQryInvestorPosition(
 			}
 			else
 			{
-				position.volume_short_yd += pRspInvestorPosition->YdPosition;
+				position.volume_short_yd = pRspInvestorPosition->YdPosition;
 				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
 				{
 					position.volume_short_today = pRspInvestorPosition->Position;
