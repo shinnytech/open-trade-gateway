@@ -33,6 +33,8 @@ connection::connection(boost::asio::io_context& ios
 	req_(),
 	_X_Real_IP(""),
 	_X_Real_Port(0),
+	_agent(""),
+	_analysis(""),
 	_msg_cache()
 {		
 }
@@ -58,7 +60,10 @@ void connection::stop()
 	try
 	{
 		Log(LOG_INFO,nullptr
-			,"msg=trade connection stop;connectionid=%d;fd=%d;key=gateway"
+			,"fun=stop;ip=%s;agent=%s;analysis=%s;msg=trade connection stop;connectionid=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
 		m_ws_socket.next_layer().close();
@@ -66,7 +71,10 @@ void connection::stop()
 	catch (std::exception& ex)
 	{
 		Log(LOG_INFO,nullptr
-			,"msg=connection stop exception;errmsg=%s;key=gateway"
+			,"fun=stop;ip=%s;agent=%s;analysis=%s;msg=connection stop exception;errmsg=%s;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,ex.what());
 	}
 }
@@ -76,7 +84,10 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 	if (ec)
 	{
 		Log(LOG_WARNING,nullptr
-			,"msg=trade connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			,"fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=trade connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,ec.message().c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -104,13 +115,19 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 			_X_Real_Port = atoi(real_port.c_str());
 		}
 		
+		_agent = req_[boost::beast::http::field::user_agent].to_string();
+		_analysis = req_["analysis"].to_string();
+				
 		SendTextMsg(g_config.broker_list_str);
 		DoRead();
 	}
 	catch (std::exception& ex)
 	{
 		Log(LOG_INFO,nullptr
-			,"msg=connection OnOpenConnection exception;errmsg=%s;key=gateway"
+			,"fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=connection OnOpenConnection exception;errmsg=%s;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what());
 	}	
 }
@@ -123,7 +140,10 @@ void connection::on_read_header(boost::beast::error_code ec
 	if (ec == boost::beast::http::error::end_of_stream)
 	{
 		Log(LOG_INFO,nullptr			
-			, "msg=connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			, "fun=on_read_header;ip=%s;agent=%s;analysis=%s;msg=connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ec.message().c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -154,7 +174,10 @@ void connection::SendTextMsg(const std::string& msg)
 	catch (std::exception& ex)
 	{
 		Log(LOG_ERROR, nullptr
-			,"msg=connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			,"fun=SendTextMsg;ip=%s;agent=%s;analysis=%s;msg=connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -180,7 +203,10 @@ void connection::DoWrite()
 	catch (std::exception& ex)
 	{
 		Log(LOG_ERROR, nullptr
-			,"msg=connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			,"fun=DoWrite;ip=%s;agent=%s;analysis=%s;msg=connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,ex.what()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -203,7 +229,10 @@ void connection::OnRead(boost::system::error_code ec, std::size_t bytes_transfer
 		if (ec != boost::beast::websocket::error::closed)
 		{
 			Log(LOG_INFO, nullptr
-				,"msg=trade connection read fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
+				,"fun=OnRead;ip=%s;agent=%s;analysis=%s;msg=trade connection read fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
+				, _X_Real_IP.c_str()
+				, _agent.c_str()
+				, _analysis.c_str()
 				,_connection_id
 				,m_ws_socket.next_layer().native_handle()
 				,ec.message().c_str());
@@ -223,7 +252,10 @@ void connection::OnWrite(boost::system::error_code ec,std::size_t bytes_transfer
 	if (ec)
 	{
 		Log(LOG_INFO, nullptr
-			,"msg=trade server send message fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
+			,"fun=OnWrite;ip=%s;agent=%s;analysis=%s;msg=trade server send message fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle()
 			,ec.message().c_str());
@@ -247,7 +279,10 @@ void connection::OnMessage(const std::string &json_str)
 	if (!ss.FromString(json_str.c_str()))
 	{
 		Log(LOG_WARNING, nullptr
-			,"msg=invalid json str;msgcontent=%s;connection=%d;fd=%d;key=gateway"
+			,"fun=OnMessage;ip=%s;agent=%s;analysis=%s;msg=invalid json str;msgcontent=%s;connection=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,json_str.c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -287,7 +322,10 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	if (it == g_config.brokers.end())
 	{
 		Log(LOG_WARNING,nullptr
-			,"msg=trade server req_login invalid bid;key=gateway;connection=%d;bid=%s"
+			,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=trade server req_login invalid bid;key=gateway;connection=%d;bid=%s"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,_connection_id
 			,req.bid.c_str());
 		std::stringstream ss;
@@ -373,7 +411,10 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		}
 		
 		Log(LOG_INFO,nullptr
-			,"msg=get user broker key;oldkey=%s;newkey=%s;key=gateway"
+			,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=get user broker key;oldkey=%s;newkey=%s;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _user_broker_key.c_str()
 			, new_user_broker_key.c_str());
 
@@ -407,7 +448,10 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		 if (nullptr == userProcessInfoPtr)
 		 {
 			 Log(LOG_ERROR, nullptr
-				 ,"msg=new user process fail;key=%s"
+				 ,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=new user process fail;key=%s"
+				 , _X_Real_IP.c_str()
+				 , _agent.c_str()
+				 , _analysis.c_str()
 				 ,_user_broker_key.c_str());			
 			 return;
 		 }
@@ -415,7 +459,10 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		 if (!userProcessInfoPtr->StartProcess())
 		 {
 			 Log(LOG_ERROR,nullptr
-				 ,"msg=can not start up user process;key=%s"
+				 ,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=can not start up user process;key=%s"
+				 , _X_Real_IP.c_str()
+				 , _agent.c_str()
+				 , _analysis.c_str()
 				 , _user_broker_key.c_str());			
 			 return;
 		 }
@@ -433,9 +480,12 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			 {
 				 userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
 				 Log(LOG_INFO, nullptr
-					 , "msg=connection send cache msg;connectionid=%d;key=%s",
-					 _connection_id,
-					 _user_broker_key.c_str());
+					 , "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=connection send cache msg;connectionid=%d;key=%s"
+					 , _X_Real_IP.c_str()
+					 , _agent.c_str()
+					 , _analysis.c_str()
+					 , _connection_id
+					 ,_user_broker_key.c_str());
 			 }
 			 _msg_cache.clear();
 		 }
@@ -460,9 +510,12 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
 					Log(LOG_INFO,nullptr
-						, "msg=connection send cache msg;connectionid=%d;key=%s",
-						_connection_id,
-						_user_broker_key.c_str());
+						, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=connection send cache msg;connectionid=%d;key=%s"
+						, _X_Real_IP.c_str()
+						, _agent.c_str()
+						, _analysis.c_str()
+						, _connection_id
+						,_user_broker_key.c_str());
 				}
 				_msg_cache.clear();
 			}
@@ -474,7 +527,10 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			if (!flag)
 			{
 				Log(LOG_ERROR, nullptr
-					,"msg=can not start up user process;key=%s"
+					,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=can not start up user process;key=%s"
+					, _X_Real_IP.c_str()
+					, _agent.c_str()
+					, _analysis.c_str()
 					, _user_broker_key.c_str());				
 				return;
 			}
@@ -488,8 +544,11 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
 					Log(LOG_INFO, nullptr
-						, "msg=connection send cache;connectionid=%d;key=%s",
-						_connection_id,
+						, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=connection send cache;connectionid=%d;key=%s"
+						, _X_Real_IP.c_str()
+						, _agent.c_str()
+						, _analysis.c_str()
+						, _connection_id,
 						_user_broker_key.c_str());
 				}
 				_msg_cache.clear();
@@ -538,7 +597,10 @@ void connection::OnCloseConnection()
 	catch (std::exception& ex)
 	{
 		Log(LOG_ERROR,nullptr
-			,"msg=connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gateway"
+			,"fun=OnCloseConnection;ip=%s;agent=%s;analysis=%s;msg=connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gateway"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());

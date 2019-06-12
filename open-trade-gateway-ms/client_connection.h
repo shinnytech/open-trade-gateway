@@ -104,7 +104,7 @@ private:
 	void OnWriteServer(boost::system::error_code ec, std::size_t bytes_transferred);
 
 	boost::asio::io_context& m_ios;
-		
+			
 	boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;
 		
 	boost::beast::multi_buffer m_input_buffer;
@@ -122,6 +122,10 @@ private:
 	std::string _X_Real_IP;
 
 	std::string _X_Real_Port;
+
+	std::string _agent;
+
+	std::string _analysis;
 
 	TBrokerSlaveNodeMap m_broker_slave_node_Map;
 

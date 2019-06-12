@@ -95,9 +95,8 @@ bool master_server::GetSlaveBrokerList()
 
 			if (rtnBroker.aid != "rtn_brokers")
 			{
-				LogMs(LOG_INFO,nullptr
-					, "msg=open trade gateway master GetSlaveBrokerList is not rtn_brokers!;brokerlist=%s;node=%s;key=gatewayms"
-					, strBrokerList.c_str()
+				LogMs(LOG_INFO,strBrokerList.c_str()
+					, "msg=open trade gateway master GetSlaveBrokerList is not rtn_brokers!;node=%s;key=gatewayms"
 					, node.name.c_str());
 				continue;
 			}
@@ -297,7 +296,7 @@ void WebSocketClient::OnConnect(boost::system::error_code ec)
 		[](boost::beast::websocket::request_type& m)
 	{
 		m.insert(boost::beast::http::field::accept, "application/v1+json");
-		m.insert(boost::beast::http::field::user_agent, "OTG-1.1.0.0");
+		m.insert(boost::beast::http::field::user_agent, "OTG-MS-1.1.0.0");
 	}));
 
 	m_ws_socket.async_handshake(

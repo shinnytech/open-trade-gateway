@@ -102,6 +102,10 @@ private:
 
 	int _X_Real_Port;
 
+	std::string _agent;
+
+	std::string _analysis;
+
 	std::vector<std::string> _msg_cache;
 };
 

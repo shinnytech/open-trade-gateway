@@ -20,7 +20,7 @@ client_connection::client_connection(
 	,TBrokerSlaveNodeMap& broker_slave_node_Map
 	,std::string& broker_list_str)
 	:m_ios(ios),
-	m_ws_socket(std::move(socket)),		
+	m_ws_socket(std::move(socket)),
 	m_input_buffer(),
 	m_output_buffer(),
 	client_connection_manager_(manager),
@@ -29,6 +29,8 @@ client_connection::client_connection(
 	req_(),
 	_X_Real_IP(""),
 	_X_Real_Port(""),
+	_agent(""),
+	_analysis(""),
 	m_broker_slave_node_Map(broker_slave_node_Map),
 	m_broker_list_str(broker_list_str),
 	m_connect_to_server(false),
@@ -65,7 +67,10 @@ void client_connection::on_read_header(boost::beast::error_code ec
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=client connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=on_read_header;ip=%s;agent=%s;analysis=%s;msg=client connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ec.message().c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -85,7 +90,10 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 	if (ec)
 	{
 		LogMs(LOG_WARNING, nullptr
-			, "msg=client connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=client connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ec.message().c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -102,7 +110,7 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 		{
 			_X_Real_IP = remote_ep.address().to_string();
 		}
-
+		
 		std::string real_port = req_["X-Real-Port"].to_string();
 		if (real_port.empty())
 		{
@@ -113,6 +121,9 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 			_X_Real_Port = real_port.c_str();
 		}
 
+		_agent= req_[boost::beast::http::field::user_agent].to_string();				
+		_analysis= req_["analysis"].to_string();
+
 		SendTextMsg(m_broker_list_str);
 
 		DoRead();
@@ -120,7 +131,10 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master client connection OnOpenConnection exception;errmsg=%s;key=gatewayms"
+			, "fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection OnOpenConnection exception;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what());
 	}
 }
@@ -138,7 +152,10 @@ void client_connection::DoRead()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=DoRead exception;errmsg=%s;key=gatewayms"
+			, "fun=DoRead;ip=%s;agent=%s;analysis=%s;msg=DoRead exception;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what());
 	}
 }
@@ -148,7 +165,10 @@ void client_connection::OnRead(boost::system::error_code ec, std::size_t bytes_t
 	if (ec)
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=client connection read fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
+			, "fun=OnRead;ip=%s;agent=%s;analysis=%s;msg=client connection read fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle()
 			, ec.message().c_str());
@@ -178,7 +198,10 @@ void client_connection::SendTextMsg(const std::string& msg)
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			, "msg=client_connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=SendTextMsg;ip=%s;agent=%s;analysis=%s;msg=client_connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -204,7 +227,10 @@ void client_connection::DoWrite()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR, nullptr
-			, "msg=client_connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=DoWrite;ip=%s;agent=%s;analysis=%s;msg=client_connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -216,7 +242,10 @@ void client_connection::OnWrite(boost::system::error_code ec, std::size_t bytes_
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=client_connection OnWrite exception;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
+			, "fun=OnWrite;ip=%s;agent=%s;analysis=%s;msg=client_connection OnWrite exception;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle()
 			, ec.message().c_str());
@@ -259,7 +288,10 @@ void client_connection::OnMessage(const std::string &json_str)
 	if (!ss.FromString(json_str.c_str()))
 	{
 		LogMs(LOG_INFO, nullptr
-			,"msg=receive invalide msg from client;msgcontent=%s;connection=%d;fd=%d;key=gatewayms"
+			,"fun=OnMessage;ip=%s;agent=%s;analysis=%s;msg=receive invalide msg from client;msgcontent=%s;connection=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,json_str.c_str()
 			,_connection_id
 			,m_ws_socket.next_layer().native_handle());
@@ -272,7 +304,10 @@ void client_connection::OnMessage(const std::string &json_str)
 	if (req.aid == "req_login")
 	{
 		LogMs(LOG_INFO,nullptr
-			, "fun=OnMessage;msg=req_login message;bid=%s;user_name=%s;key=gatewayms"
+			, "fun=OnMessage;ip=%s;agent=%s;analysis=%s;msg=req_login message;bid=%s;user_name=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, req.bid.c_str()
 			, req.user_name.c_str());
 
@@ -292,7 +327,10 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 	if (it == m_broker_slave_node_Map.end())
 	{
 		LogMs(LOG_WARNING, nullptr
-			, "fun=ProcessLogInMessage;msg=open trade gateway master get invalid bid;connection=%d;bid=%s;key=gatewayms"
+			, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master get invalid bid;connection=%d;bid=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, req.bid.c_str());
 		std::stringstream ss;
@@ -311,7 +349,10 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		{
 			//直接重发登录请求并返回
 			LogMs(LOG_INFO, nullptr
-				, "fun=ProcessLogInMessage;msg=same bid and last login;bid=%s;user_name=%s;key=gatewayms"
+				, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=same bid and last login;bid=%s;user_name=%s;key=gatewayms"
+				, _X_Real_IP.c_str()
+				, _agent.c_str()
+				, _analysis.c_str()
 				, req.bid.c_str()
 				, req.user_name.c_str());
 			m_last_req_login = req;
@@ -324,7 +365,10 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		{
 			//直接重发登录请求并返回
 			LogMs(LOG_INFO, nullptr
-				, "fun=ProcessLogInMessage;msg=same node name and last login;bid=%s;user_name=%s;key=gatewayms"
+				, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=same node name and last login;bid=%s;user_name=%s;key=gatewayms"
+				, _X_Real_IP.c_str()
+				, _agent.c_str()
+				, _analysis.c_str()
 				, req.bid.c_str()
 				, req.user_name.c_str());
 			m_last_req_login = req;
@@ -334,7 +378,10 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		
 		//否则,关闭掉客户端连接
 		LogMs(LOG_WARNING, nullptr
-			, "fun=ProcessLogInMessage;msg=diffrent node name and last login;bid=%s;user_name=%s;key=gatewayms"
+			, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=diffrent node name and last login;bid=%s;user_name=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, req.bid.c_str()
 			, req.user_name.c_str());
 		OnCloseConnection();
@@ -399,7 +446,10 @@ void client_connection::OnResolve(boost::system::error_code ec
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			,"msg=open trade gateway master OnResolve Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			,"fun=OnResolve;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master OnResolve Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
 			, ec.message().c_str());
@@ -424,7 +474,10 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master OnConnectToServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, "fun=OnConnectToServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master OnConnectToServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
 			, ec.message().c_str());
@@ -446,7 +499,8 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 			[&](boost::beast::websocket::request_type& m)
 		{
 			m.insert(boost::beast::http::field::accept, "application/v1+json");
-			m.insert(boost::beast::http::field::user_agent, "OTG-1.1.0.0");
+			m.insert(boost::beast::http::field::user_agent,_agent);
+			m.insert("analysis",_analysis);
 			m.insert("X-Real-IP", _X_Real_IP);
 			m.insert("X-Real-Port", _X_Real_Port);
 		}));
@@ -459,7 +513,10 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 	catch (const std::exception& ex)
 	{
 		LogMs(LOG_WARNING, nullptr
-			, "msg=m_ws_socket_to_server Perform the websocket handshake exception;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, "fun=OnConnectToServer;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server Perform the websocket handshake exception;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
 			, ex.what());
@@ -471,7 +528,10 @@ void client_connection::OnHandshakeWithServer(boost::system::error_code ec)
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master OnHandshakeWithServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, "msg=fun=OnHandshakeWithServer;ip=%s;agent=%s;analysis=%s;open trade gateway master OnHandshakeWithServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
 			, ec.message().c_str());
@@ -514,7 +574,10 @@ void client_connection::DoReadFromServer()
 	catch (const std::exception& ex)
 	{
 		LogMs(LOG_WARNING, nullptr
-			, "msg=m_ws_socket_to_server DoReadFromServer exception;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, "fun=DoReadFromServer;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server DoReadFromServer exception;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, m_last_slave_node.name.c_str()
 			, m_last_req_login.bid.c_str()
 			, ex.what());
@@ -528,7 +591,10 @@ void client_connection::OnReadFromServer(boost::system::error_code ec
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master OnReadFromServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, "fun=OnReadFromServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master OnReadFromServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,m_last_slave_node.name.c_str()
 			,m_last_req_login.bid.c_str()
 			,ec.message().c_str());
@@ -548,7 +614,10 @@ void client_connection::OnTextMsgFromServer(const std::string& msg)
 	if (!ss.FromString(msg.c_str()))
 	{
 		LogMs(LOG_INFO,msg.c_str()
-			, "msg=receive invalide msg from server;connection=%d;fd=%d;key=gatewayms"			
+			, "fun=OnTextMsgFromServer;ip=%s;agent=%s;analysis=%s;msg=receive invalide msg from server;connection=%d;fd=%d;key=gatewayms"			
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket_to_server.next_layer().native_handle());
 		return;
@@ -585,7 +654,10 @@ void client_connection::DoWriteToServer()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			, "msg=open trade gateway master client connection DoWriteToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=DoWriteToServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection DoWriteToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what()
 			, _connection_id
 			, m_ws_socket_to_server.next_layer().native_handle());
@@ -597,7 +669,10 @@ void client_connection::OnWriteServer(boost::system::error_code ec, std::size_t 
 	if (ec)
 	{
 		LogMs(LOG_INFO,nullptr
-			, "msg=open trade gateway master client connection send message to server fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
+			, "fun=OnWriteServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection send message to server fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle()
 			, ec.message().c_str());
@@ -643,7 +718,10 @@ void client_connection::SendTextMsgToServer(const std::string& msg)
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			, "msg=open trade gateway master client connection SendTextMsgToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=SendTextMsgToServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection SendTextMsgToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			,ex.what()
 			,_connection_id
 			, m_ws_socket_to_server.next_layer().native_handle());
@@ -669,7 +747,10 @@ void client_connection::OnCloseConnection()
 	try
 	{
 		LogMs(LOG_INFO, nullptr
-			, "fun=OnCloseConnection;msg=client connection close connection;connection=%d;key=gatewayms"
+			, "fun=OnCloseConnection;ip=%s;agent=%s;analysis=%s;msg=client connection close connection;connection=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id);
 
 		client_connection_manager_.stop(shared_from_this());
@@ -677,7 +758,10 @@ void client_connection::OnCloseConnection()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_ERROR,nullptr
-			,"msg=client_connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gatewayms"
+			,"fun=OnCloseConnection;ip=%s;agent=%s;analysis=%s;msg=client_connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
@@ -689,7 +773,10 @@ void client_connection::stop()
 	try
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=m_ws_socket.next_layer().close();connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=stop;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket.next_layer().close();connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket.next_layer().native_handle());
 		boost::system::error_code ec;
@@ -697,7 +784,10 @@ void client_connection::stop()
 		if (ec)
 		{
 			LogMs(LOG_INFO, nullptr
-				, "msg=m_ws_socket stop exception;errmsg=%s;key=gatewayms"
+				, "fun=stop;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket stop exception;errmsg=%s;key=gatewayms"
+				, _X_Real_IP.c_str()
+				, _agent.c_str()
+				, _analysis.c_str()
 				, ec.message().c_str());
 		}
 
@@ -709,7 +799,10 @@ void client_connection::stop()
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=m_ws_socket stop exception;errmsg=%s;key=gatewayms"
+			, "fun=stop;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket stop exception;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what());
 	}	
 }
@@ -719,7 +812,10 @@ void client_connection::stop_server()
 	try
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=m_ws_socket_to_server.next_layer().close();connectionid=%d;fd=%d;key=gatewayms"
+			, "fun=stop_server;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server.next_layer().close();connectionid=%d;fd=%d;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, _connection_id
 			, m_ws_socket_to_server.next_layer().native_handle());
 		boost::system::error_code ec;
@@ -727,14 +823,20 @@ void client_connection::stop_server()
 		if (ec)
 		{
 			LogMs(LOG_INFO, nullptr
-				, "msg=m_ws_socket_to_server stop exception;errmsg=%s;key=gatewayms"
+				, "fun=stop_server;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server stop exception;errmsg=%s;key=gatewayms"
+				, _X_Real_IP.c_str()
+				, _agent.c_str()
+				, _analysis.c_str()
 				, ec.message().c_str());
 		}
 	}
 	catch (std::exception& ex)
 	{
 		LogMs(LOG_INFO, nullptr
-			, "msg=m_ws_socket_to_server stop exception;errmsg=%s;key=gatewayms"
+			, "fun=stop_server;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server stop exception;errmsg=%s;key=gatewayms"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
 			, ex.what());
 	}
 }
