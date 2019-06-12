@@ -774,8 +774,7 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 	if (pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		int n_order_ref = atoi(pInputOrder->OrderRef);
-		ss << m_front_id << m_session_id << n_order_ref;
+		ss << m_front_id << m_session_id << pInputOrder->OrderRef;
 		std::string strKey = ss.str();
 		auto it = m_input_order_key_map.find(strKey);
 		if (it != m_input_order_key_map.end())
@@ -786,8 +785,7 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 			remote_key.instrument_id = pInputOrder->InstrumentID;
 			remote_key.front_id = m_front_id;
 			remote_key.session_id = m_session_id;
-			int order_ref = atoi(pInputOrder->OrderRef);
-			remote_key.order_ref = std::to_string(order_ref);
+			remote_key.order_ref = pInputOrder->OrderRef;
 
 			LocalOrderKey local_key;
 			OrderIdRemoteToLocal(remote_key, &local_key);
@@ -1008,8 +1006,7 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 	if (pInputOrder && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		int n_order_ref = atoi(pInputOrder->OrderRef);
-		ss << m_front_id << m_session_id << n_order_ref;
+		ss << m_front_id << m_session_id << pInputOrder->OrderRef;
 		std::string strKey = ss.str();
 		auto it = m_input_order_key_map.find(strKey);
 		if (it != m_input_order_key_map.end())
@@ -1024,8 +1021,7 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 			remote_key.instrument_id = pInputOrder->InstrumentID;
 			remote_key.front_id = m_front_id;
 			remote_key.session_id = m_session_id;
-			int order_ref = atoi(pInputOrder->OrderRef);
-			remote_key.order_ref = std::to_string(order_ref);
+			remote_key.order_ref = pInputOrder->OrderRef;
 
 			LocalOrderKey local_key;
 			OrderIdRemoteToLocal(remote_key, &local_key);
@@ -1190,8 +1186,7 @@ void traderctp::ProcessErrRtnOrderAction(std::shared_ptr<CThostFtdcOrderActionFi
 	if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0)
 	{
 		std::stringstream ss;
-		int n_order_ref = atoi(pOrderAction->OrderRef);
-		ss << pOrderAction->FrontID << pOrderAction->SessionID << n_order_ref;
+		ss << pOrderAction->FrontID << pOrderAction->SessionID << pOrderAction->OrderRef;
 		std::string strKey = ss.str();
 		auto it = m_action_order_map.find(strKey);
 		if (it != m_action_order_map.end())
@@ -1252,13 +1247,13 @@ void traderctp::ProcessQryInvestorPosition(
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (pRspInvestorPosition)
-	{		
+	{
 		std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
 		std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
 		auto ins = GetInstrument(symbol);
 		if (!ins)
 		{
-			Log(LOG_WARNING,nullptr
+			Log(LOG_WARNING, nullptr
 				, "msg=ctpse OnRspQryInvestorPosition,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
 				, _key.c_str()
 				, _req_login.bid.c_str()
@@ -2061,8 +2056,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	}
 	
 	std::stringstream ss;
-	int n_order_ref = atoi(pOrder->OrderRef);
-	ss << pOrder->FrontID << pOrder->SessionID << n_order_ref;
+	ss << pOrder->FrontID << pOrder->SessionID << pOrder->OrderRef;
 	std::string strKey = ss.str();
 
 	//找到委托单
@@ -2071,8 +2065,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	remote_key.instrument_id = pOrder->InstrumentID;
 	remote_key.front_id = pOrder->FrontID;
 	remote_key.session_id = pOrder->SessionID;
-	int order_ref = atoi(pOrder->OrderRef);
-	remote_key.order_ref = std::to_string(order_ref);	
+	remote_key.order_ref = pOrder->OrderRef;
 	remote_key.order_sys_id = pOrder->OrderSysID;
 	trader_dll::LocalOrderKey local_key;
 	OrderIdRemoteToLocal(remote_key, &local_key);
@@ -2217,8 +2210,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		&& pOrder->OrderStatus != THOST_FTDC_OST_PartTradedNotQueueing
 		)
 	{
-		int n_order_ref = atoi(pOrder->OrderRef);
-		auto it = m_insert_order_set.find(std::to_string(n_order_ref));
+		auto it = m_insert_order_set.find(pOrder->OrderRef);
 		if (it != m_insert_order_set.end())
 		{
 			m_insert_order_set.erase(it);
@@ -2253,8 +2245,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		}
 		else
 		{
-			int n_order_ref = atoi(pOrder->OrderRef);
-			auto it2 = m_insert_order_set.find(std::to_string(n_order_ref));
+			auto it2 = m_insert_order_set.find(pOrder->OrderRef);
 			if (it2 != m_insert_order_set.end())
 			{
 				m_insert_order_set.erase(it2);
