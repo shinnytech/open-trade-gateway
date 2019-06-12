@@ -154,6 +154,7 @@ public:
             Log(LOG_ERROR,nullptr
 				,"msg=json file parse fail;jsonfile=%s"
 				, json_file);
+			fclose(fp);
             return false;
         }
         fclose(fp);
@@ -165,7 +166,9 @@ public:
         FILE* fp = fopen(json_file, "wb"); // 非 Windows 平台使用 "w"
         if (!fp)
 		{
-            Log(LOG_ERROR,nullptr,"msg=open json file for write fail;jsonfile=%s", json_file);
+            Log(LOG_ERROR,nullptr
+				,"msg=open json file for write fail;jsonfile=%s"
+				, json_file);
             return false;
         }
         char* writeBuffer = new char[65536];
