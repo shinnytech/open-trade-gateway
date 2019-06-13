@@ -15,7 +15,7 @@
 
 static std::string GuessExchangeId(std::string instrument_id)
 {
-	if (instrument_id.size() > 11) 
+	if (instrument_id.size() > 11)
 	{
 		//组合
 		if ((instrument_id[0] == 'S' && instrument_id[1] == 'P' && instrument_id[2] == 'D')
@@ -30,18 +30,39 @@ static std::string GuessExchangeId(std::string instrument_id)
 		&& instrument_id[5] == '-'
 		&& (instrument_id[6] == 'C' || instrument_id[6] == 'P')
 		&& instrument_id[7] == '-'
-		) 
+		)
 	{
-		//大连期权
+		//大连豆粕期权
 		//"^DCE\.m(\d\d)(\d\d)-([CP])-(\d+)$"
+		return "DCE";
+	}
+	if (instrument_id.size() > 8
+		&& instrument_id[0] == 'c'
+		&& instrument_id[5] == '-'
+		&& (instrument_id[6] == 'C' || instrument_id[6] == 'P')
+		&& instrument_id[7] == '-'
+		)
+	{
+		//大连玉米期权
+		//"^DCE\.c(\d\d)(\d\d)-([CP])-(\d+)$"
 		return "DCE";
 	}
 	if (instrument_id.size() > 7
 		&& instrument_id[0] == 'c'
+		&& instrument_id[1] == 'u'
 		&& (instrument_id[6] == 'C' || instrument_id[6] == 'P')
 		) {
-		//上海期权
+		//上海铜期权
 		//"^SHFE\.cu(\d\d)(\d\d)([CP])(\d+)$"
+		return "SHFE";
+	}
+	if (instrument_id.size() > 7
+		&& instrument_id[0] == 'r'
+		&& instrument_id[1] == 'u'
+		&& (instrument_id[6] == 'C' || instrument_id[6] == 'P')
+		) {
+		//上海橡胶期权
+		//"^SHFE\.ru(\d\d)(\d\d)([CP])(\d+)$"
 		return "SHFE";
 	}
 	if (instrument_id.size() > 6
@@ -49,8 +70,17 @@ static std::string GuessExchangeId(std::string instrument_id)
 		&& instrument_id[1] == 'R'
 		&& (instrument_id[5] == 'C' || instrument_id[5] == 'P')
 		) {
-		//郑州期权
+		//郑州白糖期权
 		//"CZCE\.SR(\d)(\d\d)([CP])(\d+)"
+		return "CZCE";
+	}
+	if (instrument_id.size() > 6
+		&& instrument_id[0] == 'C'
+		&& instrument_id[1] == 'F'
+		&& (instrument_id[5] == 'C' || instrument_id[5] == 'P')
+		) {
+		//郑州棉花期权
+		//"CZCE\.CF(\d)(\d\d)([CP])(\d+)"
 		return "CZCE";
 	}
 	if (instrument_id.size() == 5
