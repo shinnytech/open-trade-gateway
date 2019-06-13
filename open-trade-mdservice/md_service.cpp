@@ -109,7 +109,7 @@ namespace md_service
 		catch (std::exception& ex)
 		{
 			Log(LOG_FATAL,nullptr
-				,"msg=construct m_ins_map fail;errmsg=%s;key=mdservice"
+				,"fun=LoadInsList;msg=construct m_ins_map fail;errmsg=%s;key=mdservice"
 				,ex.what());
 		}
 
@@ -118,14 +118,14 @@ namespace md_service
 		if (HttpGet(ins_file_url,&content) != 0) 
 		{
 			Log(LOG_FATAL,nullptr
-				,"msg=md service download ins file fail;key=mdservice");
+				,"fun=LoadInsList;msg=md service download ins file fail;key=mdservice");
 			return false;
 		}
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str())) 
 		{
 			Log(LOG_FATAL, nullptr,
-				"msg=md service parse downloaded ins file fail;key=mdservice");
+				"fun=LoadInsList;msg=md service parse downloaded ins file fail;key=mdservice");
 			return false;
 		}
 		for (auto& m : ss.m_doc->GetObject()) 
@@ -208,7 +208,7 @@ namespace md_service
 		catch (...)
 		{
 			Log(LOG_INFO,nullptr
-				,"msg=mdservice Init exception;key=mdservice");
+				,"fun=Init;msg=mdservice Init exception;key=mdservice");
 			return false;
 		}				
 	}
@@ -229,7 +229,7 @@ namespace md_service
 		if (ec)
 		{
 			Log(LOG_WARNING,nullptr
-				,"msg=md service resolve fail;errmsg=%s;key=mdservice"
+				,"fun=OnResolve;msg=md service resolve fail;errmsg=%s;key=mdservice"
 				,ec.message().c_str());
 			return;
 		}
@@ -248,7 +248,7 @@ namespace md_service
 		if (ec) 
 		{
 			Log(LOG_WARNING,nullptr
-				,"msg=md session connect fail;errmsg=%s;key=mdservice"
+				,"fun=OnConnect;msg=md session connect fail;errmsg=%s;key=mdservice"
 				, ec.message().c_str());
 			return;
 		}
@@ -269,13 +269,13 @@ namespace md_service
 		if (ec)
 		{
 			Log(LOG_WARNING, nullptr
-				,"msg=md session handshake fail;errmsg=%s;key=mdservice"
+				,"fun=OnHandshake;msg=md session handshake fail;errmsg=%s;key=mdservice"
 				, ec.message().c_str());
 			return;
 		}
 
 		Log(LOG_INFO, nullptr
-			,"msg=md service got connection;key=mdservice");
+			,"fun=OnHandshake;msg=md service got connection;key=mdservice");
 
 		SendTextMsg(md_context.m_req_subscribe_quote);
 
@@ -302,11 +302,11 @@ namespace md_service
 			if (ec != boost::beast::websocket::error::closed)
 			{
 				Log(LOG_WARNING, nullptr
-					,"msg=md service read fail;errmsg=%s;key=mdservice"
+					,"fun=OnRead;msg=md service read fail;errmsg=%s;key=mdservice"
 					, ec.message().c_str());
 			}
 			Log(LOG_INFO, nullptr
-				,"msg=md session loss connection;key=mdservice");
+				,"fun=OnRead;msg=md session loss connection;key=mdservice");
 			DoResolve();
 			return;
 		}
@@ -319,7 +319,7 @@ namespace md_service
 	void OnMessage(const std::string &json_str)
 	{
 		Log(LOG_INFO, nullptr
-			,"msg=md service received message;len=%d;key=mdservice"
+			,"fun=OnMessage;msg=md service received message;len=%d;key=mdservice"
 			,json_str.size());
 		
 		SendTextMsg(md_context.m_req_peek_message);
@@ -371,7 +371,7 @@ namespace md_service
 		if (ec)
 		{
 			Log(LOG_WARNING, nullptr
-				,"msg=md session send message fail;key=mdservice");
+				,"fun=OnWrite;msg=md session send message fail;key=mdservice");
 		}
 		md_context.m_output_buffer.consume(bytes_transferred);
 		if (md_context.m_output_buffer.size() > 0)
