@@ -197,7 +197,7 @@ void traderctp::ProcessOnFrontConnected()
 	if (0 != ret)
 	{
 		Log(LOG_WARNING,nullptr
-			, "msg=ctp ReqAuthenticate;key=%s;bid=%s;user_name=%s;ret=%d"
+			, "fun=ProcessOnFrontConnected;msg=ctp ReqAuthenticate;key=%s;bid=%s;user_name=%s;ret=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -1254,7 +1254,7 @@ void traderctp::ProcessQryInvestorPosition(
 		if (!ins)
 		{
 			Log(LOG_WARNING, nullptr
-				, "msg=ctpse OnRspQryInvestorPosition,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
+				, "fun=ProcessQryInvestorPosition;msg=ctpse OnRspQryInvestorPosition,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -2080,7 +2080,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	if (!ins)
 	{
 		Log(LOG_ERROR,nullptr
-			, "msg=ctpse OnRtnOrder,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
+			, "fun=ProcessRtnOrder;msg=ctpse OnRtnOrder,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -2339,7 +2339,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	if (!ins)
 	{
 		Log(LOG_ERROR,nullptr
-			, "msg=ctpse OnRtnTrade,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
+			, "fun=ProcessRtnTrade;msg=ctpse OnRtnTrade,instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -2526,7 +2526,7 @@ int traderctp::ReqAuthenticate()
 	if (_req_login.broker.auth_code.empty())
 	{
 		Log(LOG_INFO,nullptr
-			, "msg=_req_login.broker.auth_code.empty();key=%s;bid=%s;user_name=%s"
+			, "fun=ReqAuthenticate;msg=_req_login.broker.auth_code.empty();key=%s;bid=%s;user_name=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
@@ -2542,7 +2542,7 @@ int traderctp::ReqAuthenticate()
 	strcpy_x(field.AuthCode, _req_login.broker.auth_code.c_str());
 	int ret = m_pTdApi->ReqAuthenticate(&field, ++_requestID);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqAuthenticate;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
+		, "fun=ReqAuthenticate;msg=ctpse ReqAuthenticate;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2595,7 +2595,7 @@ int traderctp::RegSystemInfo()
 
 	int ret = m_pTdApi->RegisterUserSystemInfo(&f);
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse RegisterUserSystemInfo;key=%s;bid=%s;user_name=%s;ClientLoginTime=%s;ClientPublicIP=%s;ClientIPPort=%d;ClientAppID=%s;ClientSystemInfoLen=%d;ret=%d"
+		, "fun=RegSystemInfo;msg=ctpse RegisterUserSystemInfo;key=%s;bid=%s;user_name=%s;ClientLoginTime=%s;ClientPublicIP=%s;ClientIPPort=%d;ClientAppID=%s;ClientSystemInfoLen=%d;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2617,7 +2617,7 @@ int traderctp::ReqUserLogin()
 	strcpy_x(field.Password, _req_login.password.c_str());
 	int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqUserLogin;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqUserLogin;msg=ctpse ReqUserLogin;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2638,7 +2638,7 @@ void traderctp::SendLoginRequest()
 	}
 	m_try_req_login_times++;
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse SendLoginRequest;key=%s;bid=%s;user_name=%s;client_app_id=%s"
+		, "fun=SendLoginRequest;msg=ctpse SendLoginRequest;key=%s;bid=%s;user_name=%s;client_app_id=%s"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2685,7 +2685,7 @@ void traderctp::SendLoginRequest()
 void traderctp::ReinitCtp()
 {
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse ReinitCtp begin;key=%s;bid=%s;user_name=%s"
+		, "fun=ReinitCtp;msg=ctpse ReinitCtp begin;key=%s;bid=%s;user_name=%s"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -2700,7 +2700,7 @@ void traderctp::ReinitCtp()
 		m_pTdApi->Init();
 	}
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReinitCtp end;key=%s;bid=%s;user_name=%s"
+		, "fun=ReinitCtp;msg=ctpse ReinitCtp end;key=%s;bid=%s;user_name=%s"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str());
@@ -2714,7 +2714,7 @@ void traderctp::ReqConfirmSettlement()
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqSettlementInfoConfirm(&field, 0);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqConfirmSettlement;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqConfirmSettlement;msg=ctpse ReqConfirmSettlement;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2731,7 +2731,7 @@ void traderctp::ReqQrySettlementInfoConfirm()
 	strcpy_x(field.CurrencyID, "CNY");
 	int r = m_pTdApi->ReqQrySettlementInfoConfirm(&field, 0);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqQrySettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQrySettlementInfoConfirm;msg=ctpse ReqQrySettlementInfoConfirm;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2746,7 +2746,7 @@ int traderctp::ReqQryBrokerTradingParams()
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQryBrokerTradingParams(&field, 0);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqQryBrokerTradingParams;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQryBrokerTradingParams;msg=ctpse ReqQryBrokerTradingParams;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2762,7 +2762,7 @@ int traderctp::ReqQryAccount(int reqid)
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQryTradingAccount(&field, reqid);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqQryTradingAccount;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQryAccount;msg=ctpse ReqQryTradingAccount;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2778,7 +2778,7 @@ int traderctp::ReqQryPosition(int reqid)
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQryInvestorPosition(&field, reqid);
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse ReqQryInvestorPosition;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQryPosition;msg=ctpse ReqQryInvestorPosition;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2794,7 +2794,7 @@ void traderctp::ReqQryBank()
 	m_pTdApi->ReqQryContractBank(&field, 0);
 	int r = m_pTdApi->ReqQryContractBank(&field, 0);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqQryContractBank;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQryBank;msg=ctpse ReqQryContractBank;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2809,7 +2809,7 @@ void traderctp::ReqQryAccountRegister()
 	m_pTdApi->ReqQryAccountregister(&field, 0);
 	int r = m_pTdApi->ReqQryAccountregister(&field, 0);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqQryAccountregister;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQryAccountRegister;msg=ctpse ReqQryAccountregister;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -2825,7 +2825,7 @@ void traderctp::ReqQrySettlementInfo()
 	strcpy_x(field.AccountID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQrySettlementInfo(&field, 0);
 	Log(LOG_INFO, nullptr
-		, "msg=ctpse ReqQrySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=ReqQrySettlementInfo;msg=ctpse ReqQrySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -3098,7 +3098,7 @@ void traderctp::SendUserDataImd(int connectId)
 		if (nullptr == ps.ins)
 		{
 			Log(LOG_ERROR, nullptr
-				, "msg=ctpse miss symbol %s when processing position;key=%s;bid=%s;user_name=%s"
+				, "fun=SendUserDataImd;msg=ctpse miss symbol %s when processing position;key=%s;bid=%s;user_name=%s"
 				, symbol.c_str()
 				, _key.c_str()
 				, _req_login.bid.c_str()
@@ -3242,7 +3242,7 @@ void traderctp::SendUserData()
 		if (nullptr == ps.ins)
 		{
 			Log(LOG_ERROR, nullptr
-				, "msg=ctpse miss symbol %s when processing position;key=%s;bid=%s;user_name=%s"
+				, "fun=SendUserData;msg=ctpse miss symbol %s when processing position;key=%s;bid=%s;user_name=%s"
 				, symbol.c_str()
 				, _key.c_str()
 				, _req_login.bid.c_str()
@@ -3384,7 +3384,7 @@ void traderctp::Start()
 	catch (const std::exception& ex)
 	{
 		Log(LOG_ERROR,nullptr
-			,"msg=Open message_queue exception;errmsg=%s;key=%s"
+			,"fun=Start;msg=Open message_queue exception;errmsg=%s;key=%s"
 			,ex.what()
 			,_key.c_str());
 	}
@@ -3397,7 +3397,7 @@ void traderctp::Start()
 	catch (const std::exception& ex)
 	{
 		Log(LOG_ERROR, nullptr
-			,"msg=trade ctpse start ReceiveMsg thread fail;errmsg=%s;key=%s"
+			,"fun=Start;msg=trade ctpse start ReceiveMsg thread fail;errmsg=%s;key=%s"
 			,ex.what()
 			,_key.c_str());
 	}
@@ -3434,7 +3434,7 @@ void traderctp::ReceiveMsg(const std::string& key)
 			if ((nPos <= 0) || (nPos + 1 >= line.length()))
 			{
 				Log(LOG_WARNING,nullptr
-					, "msg=traderctp ReceiveMsg is invalid!;key=%s;msgcontent=%s"
+					, "fun=ReceiveMsg;msg=traderctp ReceiveMsg is invalid!;key=%s;msgcontent=%s"
 					, strKey.c_str()
 					, line.c_str());
 				continue;
@@ -3452,7 +3452,7 @@ void traderctp::ReceiveMsg(const std::string& key)
 		catch (const std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				,"msg=traderctp ReceiveMsg exception;errmsg=%s;key=%s"
+				,"fun=ReceiveMsg;msg=traderctp ReceiveMsg exception;errmsg=%s;key=%s"
 				,ex.what()
 				,strKey.c_str());
 			break;
@@ -3512,7 +3512,7 @@ std::string traderctp::GetConnectionStr()
 void traderctp::CloseConnection(int nId)
 {
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse CloseConnection;key=%s;bid=%s;user_name=%s;connid=%d"
+		, "fun=CloseConnection;msg=ctpse CloseConnection;key=%s;bid=%s;user_name=%s;connid=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -3610,7 +3610,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 	if (!ss.FromString(msg.c_str()))
 	{
 		Log(LOG_WARNING,nullptr
-			, "msg=ctpse parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"			
+			, "fun=ProcessInMsg;msg=ctpse parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"			
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -3630,7 +3630,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		if (nullptr == m_pTdApi)
 		{
 			Log(LOG_ERROR, nullptr
-				, "msg=trade ctpse receive change_password msg before receive login msg;key=%s;bid=%s;user_name=%s;connid=%d"
+				, "fun=ProcessInMsg;msg=trade ctpse receive change_password msg before receive login msg;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -3641,7 +3641,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		if ((!m_b_login.load()) && (m_loging_connectId != connId))
 		{
 			Log(LOG_ERROR,nullptr
-				,"msg=trade ctpse receive change_password msg from a diffrent connection before login suceess;key=%s;bid=%s;user_name=%s;connid=%d"
+				,"fun=ProcessInMsg;msg=trade ctpse receive change_password msg from a diffrent connection before login suceess;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -3677,7 +3677,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		if (!m_b_login)
 		{
 			Log(LOG_WARNING,msg.c_str()
-				, "msg=trade ctpse receive other msg before login;key=%s;bid=%s;user_name=%s;connid=%d"
+				, "fun=ProcessInMsg;msg=trade ctpse receive other msg before login;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -3688,7 +3688,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		if (!IsConnectionLogin(connId))
 		{
 			Log(LOG_WARNING,msg.c_str()
-				, "msg=trade ctpse receive other msg which from not login connecion;key=%s;bid=%s;user_name=%s;connid=%d"				
+				, "fun=ProcessInMsg;msg=trade ctpse receive other msg which from not login connecion;key=%s;bid=%s;user_name=%s;connid=%d"				
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -3735,7 +3735,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		else if (aid == "confirm_settlement")
 		{
 			Log(LOG_INFO,msg.c_str()
-				, "msg=trade ctpse receive confirm_settlement msg;key=%s;bid=%s;user_name=%s;connid=%d"
+				, "fun=ProcessInMsg;msg=trade ctpse receive confirm_settlement msg;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -3811,7 +3811,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		_req_login = req;
 
 		Log(LOG_INFO,nullptr
-			, "msg=ctpse _req_login;key=%s;bid=%s;user_name=%s;client_app_id=%s"
+			, "fun=ProcessReqLogIn;msg=ctpse _req_login;key=%s;bid=%s;user_name=%s;client_app_id=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -3825,7 +3825,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			(!_req_login.front.empty()))
 		{
 			Log(LOG_INFO,nullptr
-				, "msg=ctpse login from custom front and broker_id;key=%s;bid=%s;user_name=%s;broker_id=%s;front=%s"
+				, "fun=ProcessReqLogIn;msg=ctpse login from custom front and broker_id;key=%s;bid=%s;user_name=%s;broker_id=%s;front=%s"
 				, _key.c_str()
 				, req.bid.c_str()
 				, req.user_name.c_str()
@@ -3900,7 +3900,7 @@ int traderctp::WaitLogIn()
 		if (!notify)
 		{
 			Log(LOG_WARNING,nullptr
-				, "msg=ctpse login timeout,trading fronts is closed or trading fronts config is error;key=%s;bid=%s;user_name=%s"
+				, "fun=WaitLogIn;msg=ctpse login timeout,trading fronts is closed or trading fronts config is error;key=%s;bid=%s;user_name=%s"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str());
@@ -3923,7 +3923,7 @@ void traderctp::InitTdApi()
 	if (_req_login.broker.is_fens)
 	{
 		Log(LOG_INFO,nullptr
-			, "msg=fens address is used;key=%s;bid=%s;user_name=%s"
+			, "fun=InitTdApi;msg=fens address is used;key=%s;bid=%s;user_name=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
@@ -3958,7 +3958,7 @@ void traderctp::StopTdApi()
 	if (nullptr != m_pTdApi)
 	{
 		Log(LOG_INFO, nullptr
-			, "msg=ctpse OnFinish;key=%s;bid=%s;user_name=%s"
+			, "fun=StopTdApi;msg=ctpse OnFinish;key=%s;bid=%s;user_name=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
@@ -4105,7 +4105,7 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
+				, "fun=SendMsgAll;msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
 				, ex.what()
 				, msg.length()
 				, _key.c_str()
@@ -4122,7 +4122,7 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,msg.c_str()
-				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
+				, "fun=SendMsgAll;msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
 				, ex.what()				
 				, totalLength
 				, _key.c_str()
@@ -4175,7 +4175,7 @@ void traderctp::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
+				, "fun=SendMsg;msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
 				, ex.what()
 				, msg.length()
 				, _key.c_str()
@@ -4192,7 +4192,7 @@ void traderctp::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,msg.c_str()
-				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
+				, "fun=SendMsg;msg=SendMsg exception;errmsg=%s;length=%d;key=%s;bid=%s;user_name=%s"
 				, ex.what()				
 				, totalLength
 				, _key.c_str()
@@ -4233,7 +4233,7 @@ void traderctp::OnClientReqChangePassword(CThostFtdcUserPasswordUpdateField f)
 	strcpy_x(f.UserID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqUserPasswordUpdate(&f, 0);
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse ReqUserPasswordUpdate;key=%s;bid=%s;user_name=%s;ret=%d"
+		, "fun=OnClientReqChangePassword;msg=ctpse ReqUserPasswordUpdate;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -4256,7 +4256,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 		int r = m_pTdApi->ReqFromBankToFutureByFuture(&f,nRequestID);
 		m_req_transfer_list.push_back(nRequestID);
 		Log(LOG_INFO, nullptr
-			, "msg=ctpse ReqFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
+			, "fun=OnClientReqTransfer;msg=ctpse ReqFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, f.UserID
@@ -4272,7 +4272,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 		int r = m_pTdApi->ReqFromFutureToBankByFuture(&f, nRequestID);
 		m_req_transfer_list.push_back(nRequestID);
 		Log(LOG_INFO, nullptr
-			, "msg=ctpse ReqFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
+			, "fun=OnClientReqTransfer;msg=ctpse ReqFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, f.UserID
@@ -4319,7 +4319,7 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse ReqOrderAction;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d"
+		, "fun=OnClientReqCancelOrder;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, d.f.InvestorID
@@ -4366,7 +4366,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
 	Log(LOG_INFO,nullptr
-		, "msg=ctpse ReqOrderInsert;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
+		, "fun=OnClientReqInsertOrder;msg=ctpse ReqOrderInsert;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
