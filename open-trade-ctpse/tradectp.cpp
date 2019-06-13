@@ -1262,13 +1262,24 @@ void traderctp::ProcessQryInvestorPosition(
 		}
 		else
 		{
+			bool b_has_td_yd_distinct = (exchange_id == "SHFE") || (exchange_id == "INE");
 			Position& position = GetPosition(symbol);
 			position.user_id = pRspInvestorPosition->InvestorID;
 			position.exchange_id = exchange_id;
 			position.instrument_id = pRspInvestorPosition->InstrumentID;
 			if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long)
 			{
-				position.volume_long_yd = pRspInvestorPosition->YdPosition;
+				if (!b_has_td_yd_distinct)
+				{
+					position.volume_long_yd = pRspInvestorPosition->YdPosition;
+				}
+				else
+				{
+					if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_History)
+					{
+						position.volume_long_yd = pRspInvestorPosition->YdPosition;
+					}
+				}
 				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
 				{
 					position.volume_long_today = pRspInvestorPosition->Position;
@@ -1291,7 +1302,17 @@ void traderctp::ProcessQryInvestorPosition(
 			}
 			else
 			{
-				position.volume_short_yd = pRspInvestorPosition->YdPosition;
+				if (!b_has_td_yd_distinct)
+				{
+					position.volume_short_yd = pRspInvestorPosition->YdPosition;
+				}
+				else
+				{
+					if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_History)
+					{
+						position.volume_short_yd = pRspInvestorPosition->YdPosition;
+					}
+				}
 				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
 				{
 					position.volume_short_today = pRspInvestorPosition->Position;
