@@ -33,6 +33,15 @@
             "required": ["aid"],
             "additionalProperties": false
         },
+		"qry_settlement_info": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["qry_settlement_info"] },
+				"trading_day": { "type": "integer"}
+            },
+            "required": ["aid","trading_day"],
+            "additionalProperties": false
+        },
         "change_password": {
             "type": "object",
             "properties": {
@@ -87,6 +96,78 @@
             },
             "required": ["aid", "bank_id", "future_account", "future_password", "bank_password", "currency", "amount"],
             "additionalProperties": false
+        },
+		"insert_condition_order": {
+		  "type": "object",
+		  "properties":
+		  {
+		    "aid": { "enum": ["insert_condition_order"] },
+		    "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+            "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 },
+			"condition_list":
+			{
+				"type": "array",
+				"items": 
+				{
+					"type": "object",
+					"properties": 
+					{
+						"contingent_type":  { "enum": ["time", "market_open", "price", "price_range","break_even"]},
+						"exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
+						"instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+						"contingent_time":{ "type": "integer"},
+						"contingent_price":{ "type": "number"},
+						"price_relation":{ "enum": ["G", "GE", "L", "LE"]},
+						"contingent_price_range_left":{ "type": "number"},
+						"contingent_price_range_right":{ "type": "number"},
+						"break_even_ticks":{ "type": "integer"}
+					},
+					"required": ["contingent_type", "exchange_id", "instrument_id"],
+					"additionalProperties": false
+				},
+				"minItems":1,
+				"uniqueItems": true
+			},						
+			"conditions_logic_oper":{ "enum": ["AND", "OR"]},
+			"order_list":
+			{
+				"type": "array",
+				"items": 
+				{
+					"type": "object",
+					"properties": 
+					{
+						"exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
+						"instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+						"direction": { "enum": ["BUY", "SELL"]},
+						"offset": { "enum": ["OPEN", "CLOSE", "CLOSETODAY","REVERSE"]},
+						"volume_type":{ "enum": ["NUM", "CLOSE_ALL"]},
+						"volume": { "type": "integer"},
+						"price_type":{ "enum": ["CONTINGENT", "CONSIDERATION", "MARKET","OVER","LIMIT"]},
+						"limit_price":{ "type": "number"}
+					},
+					"required": ["exchange_id", "instrument_id", "direction","offset","volume_type","price_type"],
+					"additionalProperties": false
+				},
+				"minItems":1,
+				"uniqueItems": true
+			},
+			"time_condition_type": { "enum": ["GFD", "GTD", "GTC"]},
+			"GTD_date":{ "type": "integer"},
+			"is_cancel_ori_close_order":{"type": "boolean"}
+		  },
+		  "required": ["aid", "user_id", "order_id","condition_list","order_list"],
+          "additionalProperties": false
+		},
+		 "cancel_condition_order": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["cancel_condition_order"] },
+                "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 }
+            },
+            "required": ["aid", "user_id", "order_id"],
+            "additionalProperties": false
         }
     },
     "anyOf": [
@@ -96,6 +177,8 @@
         { "$ref": "#/definitions/cancel_order" },
         { "$ref": "#/definitions/req_transfer" },
         { "$ref": "#/definitions/confirm_settlement" },
-        { "$ref": "#/definitions/change_password" }
+        { "$ref": "#/definitions/change_password" },
+		{ "$ref": "#/definitions/insert_condition_order" },
+		{ "$ref": "#/definitions/cancel_condition_order" }
     ]
 }
