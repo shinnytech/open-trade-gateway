@@ -170,6 +170,25 @@ struct ReqLogin
 	std::string front;
 };
 
+struct qry_settlement_info
+{
+	qry_settlement_info() :
+		aid("")
+		,trading_day(0)
+		,user_name("")
+		,settlement_info("")
+	{
+	}
+
+	std::string aid;
+
+	int trading_day;
+
+	std::string user_name;
+
+	std::string settlement_info;
+};
+
 struct Order
 {
 	Order()

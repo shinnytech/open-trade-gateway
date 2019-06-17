@@ -81,4 +81,6 @@ public:
 	void DefineStruct(Trade& d);
 
 	void DefineStruct(Notify& d);
+
+	void DefineStruct(qry_settlement_info& d);
 };

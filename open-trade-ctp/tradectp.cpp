@@ -196,6 +196,10 @@ traderctp::traderctp(boost::asio::io_context& ios
 	m_need_save_file.store(false);
 
 	m_need_query_broker_trading_params.store(false);
+
+	m_is_qry_his_settlement_info.store(false);
+	m_his_settlement_info = "";
+	m_qry_his_settlement_info_trading_days.clear();
 }
 
 #pragma region spicallback
@@ -416,6 +420,10 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 
+			m_is_qry_his_settlement_info.store(false);
+			m_his_settlement_info = "";
+			m_qry_his_settlement_info_trading_days.clear();
+
 			AfterLogin();
 		}
 		else
@@ -577,30 +585,85 @@ void traderctp::OnRspQrySettlementInfoConfirm(
 
 void  traderctp::ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementInfoField> pSettlementInfo, bool bIsLast)
 {
-	if (bIsLast)
+	if (m_is_qry_his_settlement_info.load())
 	{
-		m_need_query_settlement.store(false);
-		std::string str = GBKToUTF8(pSettlementInfo->Content);
-		m_settlement_info += str;
-		if (0 == m_confirm_settlement_status.load())
+		if (bIsLast)
 		{
-			OutputNotifyAllSycn(0, m_settlement_info, "INFO", "SETTLEMENT");
+			m_is_qry_his_settlement_info.store(false);
+			std::string str = GBKToUTF8(pSettlementInfo->Content);
+			m_his_settlement_info += str;
+			NotifyClientHisSettlementInfo(m_his_settlement_info);
+		}
+		else
+		{
+			std::string str = GBKToUTF8(pSettlementInfo->Content);
+			m_his_settlement_info += str;
 		}
 	}
 	else
 	{
-		std::string str = GBKToUTF8(pSettlementInfo->Content);
-		m_settlement_info += str;
-	}
+		if (bIsLast)
+		{
+			m_need_query_settlement.store(false);
+			std::string str = GBKToUTF8(pSettlementInfo->Content);
+			m_settlement_info += str;
+			if (0 == m_confirm_settlement_status.load())
+			{
+				OutputNotifyAllSycn(0, m_settlement_info, "INFO", "SETTLEMENT");
+			}
+		}
+		else
+		{
+			std::string str = GBKToUTF8(pSettlementInfo->Content);
+			m_settlement_info += str;
+		}
+	}	
 }
 
 void traderctp::ProcessEmptySettlementInfo()
 {	
-	m_need_query_settlement.store(false);
-	if (0 == m_confirm_settlement_status.load())
+	if (m_is_qry_his_settlement_info.load())
 	{
-		OutputNotifyAllSycn(0, "", "INFO", "SETTLEMENT");
+		m_is_qry_his_settlement_info.store(false);
+		NotifyClientHisSettlementInfo("");
 	}
+	else
+	{
+		m_need_query_settlement.store(false);
+		if (0 == m_confirm_settlement_status.load())
+		{
+			OutputNotifyAllSycn(0, "", "INFO", "SETTLEMENT");
+		}
+	}	
+}
+
+void traderctp::NotifyClientHisSettlementInfo(const std::string& hisSettlementInfo)
+{
+	if (m_qry_his_settlement_info_trading_days.empty())
+	{
+		return;
+	}
+	int trading_day = m_qry_his_settlement_info_trading_days.front();
+	m_qry_his_settlement_info_trading_days.pop_front();
+
+	//构建数据包
+	qry_settlement_info settle;
+	settle.aid = "qry_settlement_info";
+	settle.trading_day = trading_day;
+	settle.user_name = _req_login.user_name;
+	settle.settlement_info = hisSettlementInfo;
+
+	SerializerTradeBase nss;
+	nss.FromVar(settle);
+	std::string strMsg = "";
+	nss.ToString(&strMsg);
+	std::string str = GetConnectionStr();
+	if (!str.empty())
+	{
+		std::shared_ptr<std::string> msg_ptr(new std::string(strMsg));
+		std::shared_ptr<std::string> conn_ptr(new std::string(str));
+		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+	}	
 }
 
 void traderctp::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo
@@ -2820,6 +2883,40 @@ void traderctp::ReqQrySettlementInfo()
 		, r);
 }
 
+void traderctp::ReqQryHistorySettlementInfo()
+{
+	if (m_qry_his_settlement_info_trading_days.empty())
+	{
+		return;
+	}
+
+	if (m_is_qry_his_settlement_info)
+	{
+		return;
+	}
+
+	std::string tradingDay = std::to_string(
+		m_qry_his_settlement_info_trading_days.front());
+	CThostFtdcQrySettlementInfoField field;
+	memset(&field, 0, sizeof(field));
+	strcpy_x(field.BrokerID, m_broker_id.c_str());
+	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
+	strcpy_x(field.AccountID, _req_login.user_name.c_str());
+	strcpy_x(field.TradingDay, tradingDay.c_str());
+	int r = m_pTdApi->ReqQrySettlementInfo(&field, 0);
+	Log(LOG_INFO, nullptr
+		, "fun=ReqQryHistorySettlementInfo;msg=ctp ReqQryHistorySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, r);
+	if (r == 0)
+	{
+		m_his_settlement_info = "";
+		m_is_qry_his_settlement_info = true;
+	}
+}
+
 void traderctp::ReSendSettlementInfo(int connectId)
 {
 	if (m_need_query_settlement.load())
@@ -3067,6 +3164,13 @@ void traderctp::OnIdle()
 	if (m_confirm_settlement_status.load() == 1)
 	{
 		ReqConfirmSettlement();
+		m_next_qry_dt = now + 1100;
+		return;
+	}
+
+	if (!m_qry_his_settlement_info_trading_days.empty())
+	{
+		ReqQryHistorySettlementInfo();
 		m_next_qry_dt = now + 1100;
 		return;
 	}
@@ -3604,6 +3708,10 @@ void traderctp::CloseConnection(int nId)
 
 		m_need_query_broker_trading_params.store(false);
 		m_Algorithm_Type = THOST_FTDC_AG_None;
+
+		m_is_qry_his_settlement_info.store(false);
+		m_his_settlement_info = "";
+		m_qry_his_settlement_info_trading_days.clear();
 	}
 }
 
@@ -3666,13 +3774,13 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 
 		m_loging_connectId = connId;
 
-		SerializerCtp ss;
-		if (!ss.FromString(msg.c_str()))
+		SerializerCtp ssCtp;
+		if (!ssCtp.FromString(msg.c_str()))
 		{
 			return;
 		}
 
-		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ss.m_doc));
+		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ssCtp.m_doc));
 		if (!dt || !dt->IsString())
 		{
 			return;
@@ -3683,7 +3791,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			CThostFtdcUserPasswordUpdateField f;
 			memset(&f, 0, sizeof(f));
-			ss.ToVar(f);
+			ssCtp.ToVar(f);
 			OnClientReqChangePassword(f);
 		}
 	}
@@ -3711,13 +3819,13 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			return;
 		}
 
-		SerializerCtp ss;
-		if (!ss.FromString(msg.c_str()))
+		SerializerCtp ssCtp;
+		if (!ssCtp.FromString(msg.c_str()))
 		{
 			return;
 		}
 
-		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ss.m_doc));
+		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ssCtp.m_doc));
 		if (!dt || !dt->IsString())
 		{
 			return;
@@ -3731,20 +3839,20 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		else if (aid == "insert_order")
 		{
 			CtpActionInsertOrder d;
-			ss.ToVar(d);
+			ssCtp.ToVar(d);
 			OnClientReqInsertOrder(d);
 		}
 		else if (aid == "cancel_order")
 		{
 			CtpActionCancelOrder d;
-			ss.ToVar(d);
+			ssCtp.ToVar(d);
 			OnClientReqCancelOrder(d);
 		}
 		else if (aid == "req_transfer")
 		{
 			CThostFtdcReqTransferField f;
 			memset(&f, 0, sizeof(f));
-			ss.ToVar(f);
+			ssCtp.ToVar(f);
 			OnClientReqTransfer(f);
 		}
 		else if (aid == "confirm_settlement")
@@ -3761,7 +3869,25 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			}
 			ReqConfirmSettlement();
 		}
+		else if (aid == "qry_settlement_info")
+		{
+			Log(LOG_INFO, msg.c_str()
+				, "fun=ProcessInMsg;msg=trade ctp receive qry_settlement_info msg;key=%s;bid=%s;user_name=%s;connid=%d"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, connId);
+			qry_settlement_info qrySettlementInfo;
+			ss.ToVar(qrySettlementInfo);
+			OnClientReqQrySettlementInfo(qrySettlementInfo);
+		}
 	}
+}
+
+void traderctp::OnClientReqQrySettlementInfo(const qry_settlement_info
+	& qrySettlementInfo)
+{
+	m_qry_his_settlement_info_trading_days.push_back(qrySettlementInfo.trading_day);
 }
 
 void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)

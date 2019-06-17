@@ -191,6 +191,12 @@ private:
 
 	std::atomic_bool m_need_query_register;
 
+	std::atomic_bool m_is_qry_his_settlement_info;
+
+	std::string m_his_settlement_info;
+
+	std::list<int> m_qry_his_settlement_info_trading_days;
+	
 	//交易账户全信息
 	User m_data;  
 
@@ -375,6 +381,14 @@ private:
 	void OnClientReqTransfer(CThostFtdcReqTransferField f);
 
 	void OnClientReqChangePassword(CThostFtdcUserPasswordUpdateField f);
+
+	void OnClientReqQrySettlementInfo(const qry_settlement_info
+		& qrySettlementInfo);
+
+	void ReqQryHistorySettlementInfo();
+
+	void NotifyClientHisSettlementInfo(const std::string&
+		hisSettlementInfo);
 
 	void OnIdle();
 

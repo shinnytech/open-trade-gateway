@@ -26,6 +26,14 @@ void SerializerTradeBase::DefineStruct(Bank& d)
 	AddItem(d.bank_name, ("name"));
 }
 
+void SerializerTradeBase::DefineStruct(qry_settlement_info& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.trading_day, ("trading_day"));
+	AddItem(d.user_name, ("user_name"));
+	AddItem(d.settlement_info, ("settlement_info"));
+}
+
 void SerializerTradeBase::DefineStruct(TransferLog& d)
 {
 	AddItem(d.datetime, ("datetime"));
