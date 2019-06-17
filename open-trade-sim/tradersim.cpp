@@ -824,17 +824,45 @@ void tradersim::OnInit()
 
 void tradersim::LoadUserDataFile()
 {
+	Log(LOG_INFO, nullptr
+		, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;msg=ready to load user data file"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str());
+
 	if (m_user_file_path.empty())
 	{
+		Log(LOG_INFO, nullptr
+			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;msg=m_user_file_path is empty"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str());
 		return;
 	}
 	
 	//加载存档文件
 	std::string fn = m_user_file_path + "/" + m_user_id;
 
+	Log(LOG_INFO, nullptr
+		, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, fn.c_str());
+
 	//加载存档文件
 	SerializerTradeBase nss;
-	nss.FromFile(fn.c_str());
+	bool loadfile=nss.FromFile(fn.c_str());
+	if (!loadfile)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=load file failed!"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, fn.c_str());
+	}
+
 	nss.ToVar(m_data);
 	//重建内存中的索引表和指针
 	for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end();)
@@ -842,9 +870,20 @@ void tradersim::LoadUserDataFile()
 		Position& position = it->second;
 		position.ins = GetInstrument(position.symbol());
 		if (position.ins && !position.ins->expired)
+		{
 			++it;
+		}
 		else
+		{
+			Log(LOG_INFO, nullptr
+				, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=miss sysmbol in position!;symbol=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, fn.c_str()
+				, position.symbol().c_str());
 			it = m_data.m_positions.erase(it);
+		}			
 	}
 	/*如果不是当天的存档文件, 则需要调整
 		委托单和成交记录全部清空
@@ -853,6 +892,15 @@ void tradersim::LoadUserDataFile()
 	*/
 	if (m_data.trading_day != g_config.trading_day)
 	{
+		Log(LOG_INFO, nullptr
+			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=diffrent trading day!;old_trading_day=%s;trading_day=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, fn.c_str()
+			, m_data.trading_day.c_str()
+			, g_config.trading_day.c_str());
+
 		m_data.m_orders.clear();
 		m_data.m_trades.clear();
 		m_data.m_transfers.clear();
@@ -884,6 +932,14 @@ void tradersim::LoadUserDataFile()
 	}
 	else
 	{
+		Log(LOG_INFO, nullptr
+			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=same trading day!;trading_day=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, fn.c_str()
+			, m_data.trading_day.c_str());
+
 		for (auto it = m_data.m_orders.begin(); it != m_data.m_orders.end(); ++it)
 		{
 			m_alive_order_set.insert(&(it->second));
@@ -893,16 +949,42 @@ void tradersim::LoadUserDataFile()
 
 void tradersim::SaveUserDataFile()
 {
+	Log(LOG_INFO, nullptr
+		, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;msg=ready to save user data file"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str());
+
 	if (m_user_file_path.empty())
 	{
+		Log(LOG_INFO, nullptr
+			, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;msg=user file path is empty"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str());
 		return;
 	}
 	std::string fn = m_user_file_path + "/" + m_user_id;
+	Log(LOG_INFO, nullptr
+		, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=user file path is empty"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, fn.c_str());
 	SerializerTradeBase nss;
 	nss.dump_all = true;
 	m_data.trading_day = g_config.trading_day;
 	nss.FromVar(m_data);
-	nss.ToFile(fn.c_str());
+	bool saveFile=nss.ToFile(fn.c_str());
+	if (!saveFile)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=save file failed!"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, fn.c_str());
+	}
 }
 
 
