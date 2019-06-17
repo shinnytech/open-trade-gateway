@@ -120,7 +120,7 @@
 						"price_relation":{ "enum": ["G", "GE", "L", "LE"]},
 						"contingent_price_range_left":{ "type": "number"},
 						"contingent_price_range_right":{ "type": "number"},
-						"break_even_ticks":{ "type": "integer"}
+						"break_even_price":{ "type": "number"}
 					},
 					"required": ["contingent_type", "exchange_id", "instrument_id"],
 					"additionalProperties": false
