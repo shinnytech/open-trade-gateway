@@ -3589,7 +3589,7 @@ void traderctp::Stop()
 {
 	if (nullptr != _thread_ptr)
 	{
-		m_run_receive_msg.store(true);
+		m_run_receive_msg.store(false);
 		_thread_ptr->join();
 		//_thread_ptr->detach();
 		//_thread_ptr.reset();

@@ -97,7 +97,7 @@ void tradersim::Stop()
 		//_thread_ptr.reset();
 	}
 
-	SaveUserDataFile();
+	//SaveUserDataFile();
 }
 
 void tradersim::ReceiveMsg(const std::string& key)
