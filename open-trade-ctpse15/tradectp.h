@@ -240,6 +240,8 @@ private:
 
 	int m_try_req_login_times;
 
+	std::atomic_bool m_run_receive_msg;
+
 	void InitTdApi();
 
 	void StopTdApi();

@@ -46,6 +46,7 @@ tradersim::tradersim(boost::asio::io_context& ios
 ,m_peeking_message(false)
 ,m_next_send_dt(0)
 ,m_transfer_seq(0)
+,m_run_receive_msg(false)
 {
 }
 
@@ -73,6 +74,7 @@ void tradersim::Start()
 
 	try
 	{
+		m_run_receive_msg.store(true);
 		_thread_ptr = boost::make_shared<boost::thread>(
 			boost::bind(&tradersim::ReceiveMsg, this, _key));
 	}
@@ -89,8 +91,10 @@ void tradersim::Stop()
 {
 	if (nullptr != _thread_ptr)
 	{
-		_thread_ptr->detach();
-		_thread_ptr.reset();
+		m_run_receive_msg.store(false);
+		_thread_ptr->join();
+		//_thread_ptr->detach();
+		//_thread_ptr.reset();
 	}
 
 	SaveUserDataFile();
@@ -102,7 +106,7 @@ void tradersim::ReceiveMsg(const std::string& key)
 	char buf[MAX_MSG_LENTH + 1];
 	unsigned int priority = 0;
 	boost::interprocess::message_queue::size_type recvd_size = 0;
-	while (true)
+	while (m_run_receive_msg.load())
 	{
 		try
 		{
@@ -110,6 +114,10 @@ void tradersim::ReceiveMsg(const std::string& key)
 			boost::posix_time::ptime tm = boost::get_system_time()
 				+ boost::posix_time::milliseconds(100);
 			bool flag = _in_mq_ptr->timed_receive(buf, sizeof(buf), recvd_size, priority, tm);
+			if (!m_run_receive_msg.load())
+			{
+				break;
+			}
 			if (!flag)
 			{
 				_ios.post(boost::bind(&tradersim::OnIdle, this));
