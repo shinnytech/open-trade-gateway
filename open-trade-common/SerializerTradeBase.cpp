@@ -113,7 +113,10 @@ void SerializerTradeBase::DefineStruct(Position& d)
 	AddItem(d.volume_short_frozen, ("volume_short_frozen"));
 	AddItem(d.volume_long_yd, ("volume_long_yd"));
 	AddItem(d.volume_short_yd, ("volume_short_yd"));
-
+	AddItem(d.pos_long_his, ("pos_long_his"));
+	AddItem(d.pos_long_today, ("pos_long_today"));
+	AddItem(d.pos_short_his, ("pos_short_his"));
+	AddItem(d.pos_short_today, ("pos_short_today"));
 	AddItem(d.open_price_long, ("open_price_long"));
 	AddItem(d.open_price_short, ("open_price_short"));
 	AddItem(d.open_cost_long, ("open_cost_long"));

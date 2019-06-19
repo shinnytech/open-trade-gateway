@@ -190,6 +190,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	m_need_query_bank.store(false);
 	m_need_query_register.store(false);
 	m_position_ready.store(false);
+	m_position_inited.store(false);
 
 	m_something_changed = false;
 	m_peeking_message = false;
@@ -404,6 +405,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_req_position_id.store(0);
 			m_rsp_position_id.store(0);
 			m_position_ready.store(false);
+			m_position_inited.store(false);
 
 			m_need_query_bank.store(false);
 			m_need_query_register.store(false);
@@ -1424,8 +1426,95 @@ void traderctp::ProcessQryInvestorPosition(
 		m_rsp_position_id.store(nRequestID);
 		m_something_changed = true;
 		m_position_ready = true;
+		if(!m_position_inited){
+			InitPositionVolume();
+			m_position_inited.store(true);
+		}
 		SendUserData();
 	}
+}
+
+void traderctp::InitPositionVolume(){
+	for (auto it = m_data.m_positions.begin();
+		it != m_data.m_positions.end(); ++it)
+	{
+		const std::string& symbol = it->first;
+		Position& position = it->second;
+		position.pos_long_today = 0;
+		position.pos_long_his = position.volume_long_yd;
+		position.pos_short_today = 0;
+		position.pos_short_his = position.volume_short_yd;
+		position.changed=true;
+	}
+	std::map<long, Trade*> sorted_trade;
+	for (auto it = m_data.m_trades.begin();
+		it != m_data.m_trades.end(); ++it)
+	{
+		Trade& trade = it->second;
+		sorted_trade[trade.seqno] = &trade;
+	}
+	for(auto it = sorted_trade.begin(); it!= sorted_trade.end(); ++it){
+		Trade& trade = *(it->second);
+		AdjustPositionByTrade(trade);
+	}
+}
+
+void traderctp::AdjustPositionByTrade(const Trade& trade)
+{
+	Position& pos = GetPosition(trade.symbol());
+	if(trade.offset == kOffsetOpen){
+		if(trade.direction == kDirectionBuy){
+			pos.pos_long_today += trade.volume;
+		}else{
+			pos.pos_short_today += trade.volume;
+		}
+	} else {
+		if((trade.exchange_id == "SHFE" || trade.exchange_id == "INE") && trade.offset == kOffsetCloseToday){
+			if(trade.direction == kDirectionBuy){
+				pos.pos_short_today -= trade.volume;
+			}else{
+				pos.pos_long_today -= trade.volume;
+			}
+		}else{
+			if(trade.direction == kDirectionBuy){
+				pos.pos_short_his -= trade.volume;
+			}else{
+				pos.pos_long_his -= trade.volume;
+			}
+		}
+		if (pos.pos_short_today + pos.pos_short_his < 0
+			||pos.pos_long_today + pos.pos_long_his < 0){
+			Log(LOG_ERROR, nullptr
+				, "fun=InitPositionVolume;bid=%s;user_name=%s;exchange_id=%s;instrument_id=%s;pos_short_today=%d;pos_short_his=%d;pos_long_today=%d;pos_long_his=%d"
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, trade.exchange_id.c_str()
+				, trade.instrument_id.c_str()
+				, pos.pos_short_today 
+				, pos.pos_short_his
+				, pos.pos_long_today 
+				, pos.pos_long_his
+				);
+			return;
+		}
+		if (pos.pos_short_today < 0){
+			pos.pos_short_his += pos.pos_short_today;
+			pos.pos_short_today = 0;
+		}
+		if (pos.pos_short_his < 0){
+			pos.pos_short_today += pos.pos_short_his;
+			pos.pos_short_his = 0;
+		}
+		if (pos.pos_long_today < 0){
+			pos.pos_long_his += pos.pos_long_today;
+			pos.pos_long_today = 0;
+		}
+		if (pos.pos_long_his < 0){
+			pos.pos_long_today += pos.pos_long_his;
+			pos.pos_long_his = 0;
+		}
+	}
+	pos.changed = true;
 }
 
 void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInvestorPosition
@@ -2510,6 +2599,9 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	trade.commission = 0.0;
 	trade.changed = true;
 	m_something_changed = true;
+	if (m_position_inited){
+		AdjustPositionByTrade(trade);
+	}
 	SendUserData();
 }
 
