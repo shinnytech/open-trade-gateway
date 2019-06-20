@@ -98,9 +98,10 @@ void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...)
 		rapidjson::Pointer("/node").Set(*nss.m_doc
 			,log_context.m_local_host_name.c_str());
 	}
+
+	SerializerTradeBase nss_pack;
 	if (nullptr != pack_str)
-	{		
-		SerializerTradeBase nss_pack;
+	{
 		if (nss_pack.FromString(pack_str))
 		{
 			rapidjson::Value packValue;
@@ -178,9 +179,10 @@ void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...)
 		rapidjson::Pointer("/node").Set(*nss.m_doc
 			, log_context.m_local_host_name.c_str());
 	}
+	
+	SerializerTradeBase nss_pack;
 	if (nullptr != pack_str)
-	{
-		SerializerTradeBase nss_pack;
+	{		
 		if (nss_pack.FromString(pack_str))
 		{
 			rapidjson::Value packValue; 
@@ -188,7 +190,7 @@ void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...)
 			packValue.CopyFrom(*nss_pack.m_doc,a);
 			rapidjson::Pointer("/pack").Set(*nss.m_doc, packValue);
 		}
-	}
+	}		
 
 	char buf[1024 * 5];
 	memset(buf, 0, sizeof(buf));
