@@ -206,6 +206,8 @@ private:
 
 	std::atomic_bool m_position_ready;
 
+	std::atomic_bool m_position_inited; //当日初始持仓信息是否已到位。每个交易日只需一次
+
 	std::atomic_int m_rsp_position_id;
 
 	std::atomic_int m_rsp_account_id;
@@ -429,4 +431,7 @@ private:
 	void ProcessOnErrRtnBankToFutureByFuture(
 		std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
 		, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
+
+	void InitPositionVolume();
+	void AdjustPositionByTrade(const Trade& trade);
 };
