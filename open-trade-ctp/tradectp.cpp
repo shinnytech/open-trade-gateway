@@ -782,10 +782,12 @@ void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPas
 		
 	if (pRspInfo->ErrorID == 0)
 	{
+		std::string strOldPassword = GBKToUTF8(pUserPasswordUpdate->OldPassword);
+		std::string strNewPassword = GBKToUTF8(pUserPasswordUpdate->NewPassword);
 		OutputNotifySycn(m_loging_connectId, pRspInfo->ErrorID, u8"修改密码成功");
-		if (_req_login.password == pUserPasswordUpdate->OldPassword)
+		if (_req_login.password == strOldPassword)
 		{
-			_req_login.password = pUserPasswordUpdate->NewPassword;
+			_req_login.password = strNewPassword;
 		}
 	}
 	else
@@ -1558,12 +1560,15 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 		return;
 	}
 
-	Account& account = GetAccount(pRspInvestorAccount->CurrencyID);
+	std::string strCurrencyID= GBKToUTF8(pRspInvestorAccount->CurrencyID);
+
+	Account& account = GetAccount(strCurrencyID);
 
 	//账号及币种
-	account.user_id = pRspInvestorAccount->AccountID;
+	account.user_id = GBKToUTF8(pRspInvestorAccount->AccountID);
 
-	account.currency = pRspInvestorAccount->CurrencyID;
+	account.currency = strCurrencyID;
+
 	//本交易日开盘前状态
 	account.pre_balance = pRspInvestorAccount->PreBalance;
 
@@ -1671,8 +1676,10 @@ void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankFie
 		return;
 	}
 
-	Bank& bank = GetBank(pContractBank->BankID);
-	bank.bank_id = pContractBank->BankID;
+	std::string strBankID = GBKToUTF8(pContractBank->BankID);
+
+	Bank& bank = GetBank(strBankID);
+	bank.bank_id = strBankID;
 	bank.bank_name = GBKToUTF8(pContractBank->BankName);
 	
 	if (bIsLast)
@@ -1743,7 +1750,9 @@ void traderctp::ProcessQryAccountregister(std::shared_ptr<CThostFtdcAccountregis
 		return;
 	}
 
-	Bank& bank = GetBank(pAccountregister->BankID);
+	std::string strBankID = GBKToUTF8(pAccountregister->BankID);
+
+	Bank& bank = GetBank(strBankID);
 	bank.changed = true;
 	std::map<std::string, Bank>::iterator it = m_banks.find(bank.bank_id);
 	if (it == m_banks.end())
@@ -1820,9 +1829,12 @@ void traderctp::ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSeria
 	{
 		return;
 	}
-
+	   
 	TransferLog& d = GetTransferLog(std::to_string(pTransferSerial->PlateSerial));
-	d.currency = pTransferSerial->CurrencyID;
+
+	std::string strCurrencyID = GBKToUTF8(pTransferSerial->CurrencyID);
+
+	d.currency = strCurrencyID;
 	d.amount = pTransferSerial->TradeAmount;
 	if (pTransferSerial->TradeCode == std::string("202002"))
 		d.amount = 0 - d.amount;
@@ -1902,7 +1914,10 @@ void traderctp::ProcessFromBankToFutureByFuture(
 	if (pRspTransfer->ErrorID == 0)
 	{
 		TransferLog& d = GetTransferLog(std::to_string(pRspTransfer->PlateSerial));
-		d.currency = pRspTransfer->CurrencyID;
+
+		std::string strCurrencyID = GBKToUTF8(pRspTransfer->CurrencyID);
+
+		d.currency = strCurrencyID;
 		d.amount = pRspTransfer->TradeAmount;
 		if (pRspTransfer->TradeCode == std::string("202002"))
 			d.amount = 0 - d.amount;
@@ -2829,12 +2844,15 @@ int traderctp::ReqQryPosition(int reqid)
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQryInvestorPosition(&field, reqid);
-	Log(LOG_INFO,nullptr
-		, "fun=ReqQryPosition;msg=ctp ReqQryInvestorPosition;key=%s;bid=%s;user_name=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, r);
+	if (0 != r)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqQryPosition;msg=ctp ReqQryInvestorPosition;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, r);
+	}	
 	return r;
 }
 
@@ -2845,12 +2863,15 @@ void traderctp::ReqQryBank()
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	m_pTdApi->ReqQryContractBank(&field, 0);
 	int r = m_pTdApi->ReqQryContractBank(&field, 0);
-	Log(LOG_INFO,nullptr
-		,"fun=ReqQryBank;msg=ctp ReqQryContractBank;key=%s;bid=%s;user_name=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, r);
+	if (0 != r)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqQryBank;msg=ctp ReqQryContractBank;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, r);
+	}	
 }
 
 void traderctp::ReqQryAccountRegister()
@@ -2860,12 +2881,15 @@ void traderctp::ReqQryAccountRegister()
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	m_pTdApi->ReqQryAccountregister(&field, 0);
 	int r = m_pTdApi->ReqQryAccountregister(&field, 0);
-	Log(LOG_INFO, nullptr
-		, "fun=ReqQryAccountRegister;msg=ctp ReqQryAccountregister;key=%s;bid=%s;user_name=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, r);
+	if (0 != r)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqQryAccountRegister;msg=ctp ReqQryAccountregister;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, r);
+	}	
 }
 
 void traderctp::ReqQrySettlementInfo()
@@ -2876,12 +2900,15 @@ void traderctp::ReqQrySettlementInfo()
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
 	strcpy_x(field.AccountID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqQrySettlementInfo(&field, 0);
-	Log(LOG_INFO,nullptr
-		, "fun=ReqQrySettlementInfo;msg=ctp ReqQrySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, r);
+	if (0 != r)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqQrySettlementInfo;msg=ctp ReqQrySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, r);
+	}	
 }
 
 void traderctp::ReqQryHistorySettlementInfo()
@@ -2905,12 +2932,15 @@ void traderctp::ReqQryHistorySettlementInfo()
 	strcpy_x(field.AccountID, _req_login.user_name.c_str());
 	strcpy_x(field.TradingDay, tradingDay.c_str());
 	int r = m_pTdApi->ReqQrySettlementInfo(&field, 0);
-	Log(LOG_INFO, nullptr
-		, "fun=ReqQryHistorySettlementInfo;msg=ctp ReqQryHistorySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, r);
+	if (0 != r)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqQryHistorySettlementInfo;msg=ctp ReqQryHistorySettlementInfo;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, r);
+	}	
 	if (r == 0)
 	{
 		m_his_settlement_info = "";
@@ -3591,8 +3621,6 @@ void traderctp::Stop()
 	{
 		m_run_receive_msg.store(false);
 		_thread_ptr->join();
-		//_thread_ptr->detach();
-		//_thread_ptr.reset();
 	}
 
 	StopTdApi();
@@ -4363,7 +4391,7 @@ void traderctp::OnClientReqChangePassword(CThostFtdcUserPasswordUpdateField f)
 	strcpy_x(f.BrokerID, m_broker_id.c_str());
 	strcpy_x(f.UserID, _req_login.user_name.c_str());
 	int r = m_pTdApi->ReqUserPasswordUpdate(&f, 0);
-	Log(LOG_INFO,nullptr
+	Log(LOG_INFO, nullptr
 		, "fun=OnClientReqChangePassword;key=%s;bid=%s;user_name=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
@@ -4386,8 +4414,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 		strcpy_x(f.TradeCode, "202001");
 		int nRequestID = _requestID++;
 		int r = m_pTdApi->ReqFromBankToFutureByFuture(&f,nRequestID);
-		m_req_transfer_list.push_back(nRequestID);
-		Log(LOG_INFO,nullptr
+		Log(LOG_INFO, nullptr
 			, "fun=OnClientReqTransfer;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
@@ -4395,6 +4422,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 			, f.TradeAmount
 			, r
 			, nRequestID);
+		m_req_transfer_list.push_back(nRequestID);		
 	}
 	else
 	{
@@ -4402,8 +4430,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 		f.TradeAmount = -f.TradeAmount;
 		int nRequestID = _requestID++;
 		int r = m_pTdApi->ReqFromFutureToBankByFuture(&f,nRequestID);
-		m_req_transfer_list.push_back(nRequestID);
-		Log(LOG_INFO,nullptr
+		Log(LOG_INFO, nullptr
 			, "fun=OnClientReqTransfer;key=%s;bid=%s;user_name=%s;TradeAmount=%f;ret=%d;nRequestID=%d"
 			, _key.c_str()
 			, _req_login.bid.c_str()
@@ -4411,6 +4438,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 			, f.TradeAmount
 			, r
 			, nRequestID);
+		m_req_transfer_list.push_back(nRequestID);		
 	}
 }
 
@@ -4450,7 +4478,7 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 		std::map<std::string, std::string>::value_type(strKey, strKey));
 
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
-	Log(LOG_INFO,nullptr
+	Log(LOG_INFO, nullptr
 		, "fun=OnClientReqCancelOrder;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
@@ -4497,7 +4525,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		, ServerOrderInfo>::value_type(strKey, serverOrder));
 
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
-	Log(LOG_INFO,nullptr
+	Log(LOG_INFO, nullptr
 		, "fun=OnClientReqInsertOrder;key=%s;orderid=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
 		, _key.c_str()
 		, d.local_key.order_id.c_str()
@@ -4513,7 +4541,6 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		, d.f.VolumeTotalOriginal
 		, d.f.VolumeCondition
 		, d.f.TimeCondition);
-
 	m_need_save_file.store(true);
 }
 

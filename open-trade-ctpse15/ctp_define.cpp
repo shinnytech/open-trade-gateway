@@ -12,10 +12,8 @@ namespace trader_dll
 	void SerializerCtp::DefineStruct(CThostFtdcReqTransferField& d)
 	{
 		AddItem(d.BankID, ("bank_id"));
-		//AddItem(d.BankBranchID, ("bank_brch_id"));
 		AddItem(d.AccountID, ("future_account"));
 		AddItem(d.Password, ("future_password"));
-		//AddItem(d.BankAccount, ("bank_account"));
 		AddItem(d.BankPassWord, ("bank_password"));
 		AddItem(d.CurrencyID, ("currency"));
 		AddItem(d.TradeAmount, ("amount"));
@@ -32,7 +30,9 @@ namespace trader_dll
 		AddItem(d.CurrencyID, ("currency"));
 		AddItem(d.TradeAmount, ("amount"));
 		if (d.TradeCode == "")
+		{
 			d.TradeAmount = 0 - d.TradeAmount;
+		}			
 		DateTime dt;
 		dt.time.microsecond = 0;
 		sscanf(d.TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
@@ -133,69 +133,122 @@ namespace trader_dll
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcRspAuthenticateField& d)
 	{
-		AddItem(d.UserID, ("UserID"));
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.UserProductInfo, ("UserProductInfo"));		
+		std::string strUserID=GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+		
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+	
+		std::string strUserProductInfo = GBKToUTF8(d.UserProductInfo);
+		AddItem(strUserProductInfo, ("UserProductInfo"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcRspUserLoginField& d)
 	{
-		AddItem(d.TradingDay, ("TradingDay"));
-		AddItem(d.LoginTime, ("LoginTime"));
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.UserID, ("UserID"));
+		std::string strTradingDay = GBKToUTF8(d.TradingDay);
+		AddItem(strTradingDay, ("TradingDay"));
+
+		std::string strLoginTime = GBKToUTF8(d.LoginTime);
+		AddItem(strLoginTime, ("LoginTime"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+
 		std::string strSystemName = GBKToUTF8(d.SystemName);
 		AddItem(strSystemName,("SystemName"));
+
 		AddItem(d.FrontID, ("FrontID"));
+
 		AddItem(d.SessionID, ("SessionID"));
+
 		AddItem(d.MaxOrderRef, ("MaxOrderRef"));
+
 		AddItem(d.SHFETime, ("SHFETime"));
+
 		AddItem(d.DCETime, ("DCETime"));
+
 		AddItem(d.CZCETime, ("CZCETime"));
+
 		AddItem(d.FFEXTime, ("FFEXTime"));
+
 		AddItem(d.INETime, ("INETime"));	
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcSettlementInfoConfirmField& d)
 	{
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
 		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+		
 		AddItem(d.ConfirmDate, ("ConfirmDate"));
 		AddItem(d.ConfirmTime, ("ConfirmTime"));
+
 		AddItem(d.SettlementID, ("SettlementID"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.CurrencyID, ("CurrencyID"));		
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcSettlementInfoField& d)
 	{
 		AddItem(d.TradingDay, ("TradingDay"));
 		AddItem(d.SettlementID, ("SettlementID"));
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.SequenceNo, ("SequenceNo"));
+
 		std::string strContent = GBKToUTF8(d.Content);
 		AddItem(strContent, ("Content"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.CurrencyID, ("CurrencyID"));		
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.UserID, ("UserID"));
-		AddItem(d.OldPassword, ("OldPassword"));
-		AddItem(d.NewPassword, ("NewPassword"));			
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+
+		std::string strOldPassword = GBKToUTF8(d.OldPassword);
+		AddItem(strOldPassword,("OldPassword"));
+
+		std::string strNewPassword = GBKToUTF8(d.NewPassword);
+		AddItem(strNewPassword, ("NewPassword"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.InstrumentID, ("InstrumentID"));
 		AddItem(d.OrderRef, ("OrderRef"));
 
-		AddItem(d.UserID, ("UserID"));
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+
 		AddItem(d.OrderPriceType, ("OrderPriceType"));
 		AddItem(d.Direction, ("Direction"));
 		AddItem(d.CombOffsetFlag, ("CombOffsetFlag"));
@@ -213,27 +266,43 @@ namespace trader_dll
 		AddItem(d.StopPrice, ("StopPrice"));
 		AddItem(d.ForceCloseReason, ("ForceCloseReason"));
 		AddItem(d.IsAutoSuspend, ("IsAutoSuspend"));
-		AddItem(d.BusinessUnit, ("BusinessUnit"));
+
+		std::string strBusinessUnit = GBKToUTF8(d.BusinessUnit);
+		AddItem(strBusinessUnit, ("BusinessUnit"));
 
 		AddItem(d.RequestID, ("RequestID"));
 		AddItem(d.UserForceClose, ("UserForceClose"));
 		AddItem(d.IsSwapOrder, ("IsSwapOrder"));
 		AddItem(d.ExchangeID, ("ExchangeID"));
 
-		AddItem(d.InvestUnitID, ("InvestUnitID"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
-		AddItem(d.ClientID, ("ClientID"));
+		std::string strInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(strInvestUnitID, ("InvestUnitID"));
 
-		AddItem(d.IPAddress, ("IPAddress"));
-		AddItem(d.MacAddress, ("MacAddress"));				
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
+
+		std::string strClientID = GBKToUTF8(d.ClientID);
+		AddItem(strClientID, ("ClientID"));
+
+		std::string strIPAddress = GBKToUTF8(d.IPAddress);
+		AddItem(strIPAddress, ("IPAddress"));
+
+		std::string strMacAddress = GBKToUTF8(d.MacAddress);
+		AddItem(strMacAddress, ("MacAddress"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderActionField& d)
 	{
 
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.OrderActionRef, ("OrderActionRef"));
 		AddItem(d.OrderRef, ("OrderRef"));
 
@@ -248,19 +317,31 @@ namespace trader_dll
 		AddItem(d.LimitPrice, ("LimitPrice"));
 		AddItem(d.VolumeChange, ("VolumeChange"));
 
-		AddItem(d.UserID, ("UserID"));
-		AddItem(d.InstrumentID, ("InstrumentID"));
-		AddItem(d.InvestUnitID, ("InvestUnitID"));
-		AddItem(d.IPAddress, ("IPAddress"));
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
 
-		AddItem(d.MacAddress, ("MacAddress"));
+		
+		AddItem(d.InstrumentID, ("InstrumentID"));
+
+		std::string strInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(strInvestUnitID, ("InvestUnitID"));
+
+		std::string strIPAddress = GBKToUTF8(d.IPAddress);
+		AddItem(strIPAddress, ("IPAddress"));
+
+		std::string strMacAddress = GBKToUTF8(d.MacAddress);
+		AddItem(strMacAddress, ("MacAddress"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcOrderActionField& d)
 	{
 
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.OrderActionRef, ("OrderActionRef"));
 		AddItem(d.OrderRef, ("OrderRef"));
 
@@ -284,24 +365,40 @@ namespace trader_dll
 		AddItem(d.ParticipantID, ("ParticipantID"));
 		AddItem(d.ClientID, ("ClientID"));
 
-		AddItem(d.BusinessUnit, ("BusinessUnit"));
+		std::string strBusinessUnit = GBKToUTF8(d.BusinessUnit);
+		AddItem(strBusinessUnit, ("BusinessUnit"));
+
 		AddItem(d.OrderActionStatus, ("OrderActionStatus"));
-		AddItem(d.UserID, ("UserID"));
-		AddItem(d.StatusMsg, ("StatusMsg"));
+
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+
+		std::string strStatusMsg = GBKToUTF8(d.StatusMsg);
+		AddItem(strStatusMsg, ("StatusMsg"));
 
 		AddItem(d.InstrumentID, ("InstrumentID"));
 		AddItem(d.BranchID, ("BranchID"));
-		AddItem(d.InvestUnitID, ("InvestUnitID"));
-		AddItem(d.IPAddress, ("IPAddress"));
 
-		AddItem(d.MacAddress, ("MacAddress"));	
+		std::string strInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(strInvestUnitID, ("InvestUnitID"));
+
+		std::string strIPAddress = GBKToUTF8(d.IPAddress);
+		AddItem(strIPAddress, ("IPAddress"));
+
+		std::string strMacAddress = GBKToUTF8(d.MacAddress);
+		AddItem(strMacAddress, ("MacAddress"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcInvestorPositionField& d)
 	{
 		AddItem(d.InstrumentID, ("InstrumentID"));
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.PosiDirection, ("PosiDirection"));
 
 		AddItem(d.HedgeFlag, ("HedgeFlag"));
@@ -355,26 +452,42 @@ namespace trader_dll
 		AddItem(d.ExchangeID, ("ExchangeID"));
 
 		AddItem(d.YdStrikeFrozen, ("YdStrikeFrozen"));
-		AddItem(d.InvestUnitID, ("InvestUnitID"));		
+
+		std::string strInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(strInvestUnitID, ("InvestUnitID"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcBrokerTradingParamsField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.MarginPriceType, ("MarginPriceType"));
 		AddItem(d.Algorithm, ("Algorithm"));
 
 		AddItem(d.AvailIncludeCloseProfit, ("AvailIncludeCloseProfit"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
+
 		AddItem(d.OptionRoyaltyPriceType, ("OptionRoyaltyPriceType"));
-		AddItem(d.AccountID, ("AccountID"));	
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcTradingAccountField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.AccountID, ("AccountID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
 		AddItem(d.PreMortgage, ("PreMortgage"));
 		AddItem(d.PreCredit, ("PreCredit"));
 
@@ -411,7 +524,9 @@ namespace trader_dll
 		AddItem(d.DeliveryMargin, ("DeliveryMargin"));
 		AddItem(d.ExchangeDeliveryMargin, ("ExchangeDeliveryMargin"));
 		AddItem(d.ReserveBalance, ("ReserveBalance"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
 
 		AddItem(d.PreFundMortgageIn, ("PreFundMortgageIn"));
 		AddItem(d.PreFundMortgageOut, ("PreFundMortgageOut"));
@@ -438,9 +553,15 @@ namespace trader_dll
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcContractBankField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.BankID, ("BankID"));
-		AddItem(d.BankBrchID, ("BankBrchID"));		
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strBankID = GBKToUTF8(d.BankID);
+		AddItem(strBankID, ("BankID"));
+
+		std::string strBankBrchID = GBKToUTF8(d.BankBrchID);
+		AddItem(strBankBrchID, ("BankBrchID"));
+
 		std::string strBankName = GBKToUTF8(d.BankName);
 		AddItem(strBankName, ("BankName"));		
 	}
@@ -448,22 +569,41 @@ namespace trader_dll
 	void SerializerLogCtp::DefineStruct(CThostFtdcAccountregisterField& d)
 	{
 		AddItem(d.TradeDay, ("TradeDay"));
-		AddItem(d.BankID, ("BankID"));
-		AddItem(d.BankBranchID, ("BankBranchID"));
-		AddItem(d.BankAccount, ("BankAccount"));
 
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.BrokerBranchID, ("BrokerBranchID"));
-		AddItem(d.AccountID, ("AccountID"));
+		std::string strBankID = GBKToUTF8(d.BankID);
+		AddItem(strBankID, ("BankID"));
+
+		std::string strBankBranchID = GBKToUTF8(d.BankBranchID);
+		AddItem(strBankBranchID, ("BankBranchID"));
+
+		std::string strBankAccount = GBKToUTF8(d.BankAccount);
+		AddItem(strBankAccount, ("BankAccount"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strBrokerBranchID = GBKToUTF8(d.BrokerBranchID);
+		AddItem(strBrokerBranchID, ("BrokerBranchID"));
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
 		AddItem(d.IdCardType, ("IdCardType"));
 
-		AddItem(d.IdentifiedCardNo, ("IdentifiedCardNo"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
+		std::string strIdentifiedCardNo = GBKToUTF8(d.IdentifiedCardNo);
+		AddItem(strIdentifiedCardNo, ("IdentifiedCardNo"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
+
 		AddItem(d.OpenOrDestroy, ("OpenOrDestroy"));
+
 		AddItem(d.RegDate, ("RegDate"));
 		
 		AddItem(d.OutDate, ("OutDate"));
+
 		AddItem(d.TID, ("TID"));
+
 		AddItem(d.CustType, ("CustType"));
 		AddItem(d.BankAccType, ("BankAccType"));
 
@@ -483,32 +623,58 @@ namespace trader_dll
 
 		AddItem(d.TradeCode, ("TradeCode"));
 		AddItem(d.SessionID, ("SessionID"));
-		AddItem(d.BankID, ("BankID"));
-		AddItem(d.BankBranchID, ("BankBranchID"));
+
+		std::string strBankID = GBKToUTF8(d.BankID);
+		AddItem(strBankID, ("BankID"));
+
+		std::string strBankBranchID = GBKToUTF8(d.BankBranchID);
+		AddItem(strBankBranchID, ("BankBranchID"));
 
 		AddItem(d.BankAccType, ("BankAccType"));
-		AddItem(d.BankAccount, ("BankAccount"));
-		AddItem(d.BankSerial, ("BankSerial"));
-		AddItem(d.BrokerID, ("BrokerID"));
 
-		AddItem(d.BrokerBranchID, ("BrokerBranchID"));
+		std::string strBankAccount = GBKToUTF8(d.BankAccount);
+		AddItem(strBankAccount, ("BankAccount"));
+
+		std::string strBankSerial = GBKToUTF8(d.BankSerial);
+		AddItem(strBankSerial, ("BankSerial"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strBrokerBranchID = GBKToUTF8(d.BrokerBranchID);
+		AddItem(strBrokerBranchID, ("BrokerBranchID"));
+
 		AddItem(d.FutureAccType, ("FutureAccType"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 
 		AddItem(d.FutureSerial, ("FutureSerial"));
 		AddItem(d.IdCardType, ("IdCardType"));
-		AddItem(d.IdentifiedCardNo, ("IdentifiedCardNo"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
+
+		std::string strIdentifiedCardNo = GBKToUTF8(d.IdentifiedCardNo);
+		AddItem(strIdentifiedCardNo, ("IdentifiedCardNo"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
 
 		AddItem(d.TradeAmount, ("TradeAmount"));
 		AddItem(d.CustFee, ("CustFee"));
 		AddItem(d.BrokerFee, ("BrokerFee"));
 		AddItem(d.AvailabilityFlag, ("AvailabilityFlag"));
 
-		AddItem(d.OperatorCode, ("OperatorCode"));
-		AddItem(d.BankNewAccount, ("BankNewAccount"));
+		std::string strOperatorCode = GBKToUTF8(d.OperatorCode);
+		AddItem(strOperatorCode, ("OperatorCode"));
+
+		std::string strBankNewAccount = GBKToUTF8(d.BankNewAccount);
+		AddItem(strBankNewAccount, ("BankNewAccount"));
+
 		AddItem(d.ErrorID, ("ErrorID"));	
+
 		std::string strErrorMsg = GBKToUTF8(d.ErrorMsg);
 		AddItem(strErrorMsg, ("ErrorMsg"));		
 	}
@@ -516,19 +682,21 @@ namespace trader_dll
 	void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 	{
 		AddItem(d.TradeCode, ("TradeCode"));
-		AddItem(d.BankID, ("BankID"));
-		AddItem(d.BankBranchID, ("BankBranchID"));
-		AddItem(d.BrokerID, ("BrokerID"));
 
-		AddItem(d.BrokerBranchID, ("BrokerBranchID"));
+		std::string strBankID = GBKToUTF8(d.BankID);
+		AddItem(strBankID, ("BankID"));
+		
+		std::string strBrokerBranchID = GBKToUTF8(d.BrokerBranchID);
+		AddItem(strBrokerBranchID, ("BrokerBranchID"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
 		AddItem(d.TradeDate, ("TradeDate"));
 		AddItem(d.TradeTime, ("TradeTime"));
-		AddItem(d.BankSerial, ("BankSerial"));
 
-		AddItem(d.TradingDay, ("TradingDay"));
-		AddItem(d.PlateSerial, ("PlateSerial"));
-		AddItem(d.LastFragment, ("LastFragment"));
-		AddItem(d.SessionID, ("SessionID"));
+		std::string strBankSerial = GBKToUTF8(d.BankSerial);
+		AddItem(strBankSerial, ("BankSerial"));
 
 		AddItem(d.TradingDay, ("TradingDay"));
 		AddItem(d.PlateSerial, ("PlateSerial"));
@@ -536,19 +704,35 @@ namespace trader_dll
 		AddItem(d.SessionID, ("SessionID"));
 
 		AddItem(d.IdCardType, ("IdCardType"));
-		AddItem(d.IdentifiedCardNo, ("IdentifiedCardNo"));
-		AddItem(d.CustType, ("CustType"));
-		AddItem(d.BankAccount, ("BankAccount"));
 
-		AddItem(d.BankPassWord, ("BankPassWord"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.Password, ("Password"));
+		std::string strIdentifiedCardNo = GBKToUTF8(d.IdentifiedCardNo);
+		AddItem(strIdentifiedCardNo, ("IdentifiedCardNo"));
+
+		AddItem(d.CustType, ("CustType"));
+
+		std::string strBankAccount = GBKToUTF8(d.BankAccount);
+		AddItem(strBankAccount, ("BankAccount"));
+
+		std::string strBankPassWord = GBKToUTF8(d.BankPassWord);
+		AddItem(strBankPassWord, ("BankPassWord"));
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strPassword = GBKToUTF8(d.Password);
+		AddItem(strPassword, ("Password"));
+
 		AddItem(d.InstallID, ("InstallID"));
 
 		AddItem(d.FutureSerial, ("FutureSerial"));
-		AddItem(d.UserID, ("UserID"));
+
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+		
 		AddItem(d.VerifyCertNoFlag, ("VerifyCertNoFlag"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
 
 		AddItem(d.TradeAmount, ("TradeAmount"));
 		AddItem(d.FutureFetchAmount, ("FutureFetchAmount"));
@@ -557,16 +741,24 @@ namespace trader_dll
 
 		AddItem(d.BrokerFee, ("BrokerFee"));
 		AddItem(d.BankAccType, ("BankAccType"));
-		AddItem(d.DeviceID, ("DeviceID"));
+
+		std::string strDeviceID = GBKToUTF8(d.DeviceID);
+		AddItem(strDeviceID, ("DeviceID"));
+
 		AddItem(d.BankSecuAccType, ("BankSecuAccType"));
 
-		AddItem(d.BrokerIDByBank, ("BrokerIDByBank"));
+		std::string strBrokerIDByBank = GBKToUTF8(d.BrokerIDByBank);
+		AddItem(strBrokerIDByBank, ("BrokerIDByBank"));
+
 		AddItem(d.BankSecuAcc, ("BankSecuAcc"));
 		AddItem(d.BankPwdFlag, ("BankPwdFlag"));
 		AddItem(d.SecuPwdFlag, ("SecuPwdFlag"));
 
-		AddItem(d.OperNo, ("OperNo"));
+		std::string strOperNo = GBKToUTF8(d.OperNo);
+		AddItem(strOperNo, ("OperNo"));
+
 		AddItem(d.RequestID, ("RequestID"));
+
 		AddItem(d.TID, ("TID"));
 		AddItem(d.TransferStatus, ("TransferStatus"));
 
@@ -592,11 +784,19 @@ namespace trader_dll
 	{
 
 		AddItem(d.TradeCode, ("TradeCode"));
-		AddItem(d.BankID, ("BankID"));
-		AddItem(d.BankBranchID, ("BankBranchID"));
-		AddItem(d.BrokerID, ("BrokerID"));
 
-		AddItem(d.BrokerBranchID, ("BrokerBranchID"));
+		std::string strBankID = GBKToUTF8(d.BankID);
+		AddItem(strBankID, ("BankID"));
+
+		std::string strBankBranchID = GBKToUTF8(d.BankBranchID);
+		AddItem(strBankBranchID, ("BankBranchID"));
+
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strBrokerBranchID = GBKToUTF8(d.BrokerBranchID);
+		AddItem(strBrokerBranchID, ("BrokerBranchID"));
+
 		AddItem(d.TradeDate, ("TradeDate"));
 		AddItem(d.TradeTime, ("TradeTime"));
 		AddItem(d.BankSerial, ("BankSerial"));
@@ -607,19 +807,35 @@ namespace trader_dll
 		AddItem(d.SessionID, ("SessionID"));
 
 		AddItem(d.IdCardType, ("IdCardType"));
-		AddItem(d.IdentifiedCardNo, ("IdentifiedCardNo"));
-		AddItem(d.CustType, ("CustType"));
-		AddItem(d.BankAccount, ("BankAccount"));
 
-		AddItem(d.BankPassWord, ("BankPassWord"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.Password, ("Password"));
+		std::string strIdentifiedCardNo = GBKToUTF8(d.IdentifiedCardNo);
+		AddItem(strIdentifiedCardNo, ("IdentifiedCardNo"));
+
+		AddItem(d.CustType, ("CustType"));
+
+		std::string strBankAccount = GBKToUTF8(d.BankAccount);
+		AddItem(strBankAccount, ("BankAccount"));
+
+		std::string strBankPassWord = GBKToUTF8(d.BankPassWord);
+		AddItem(strBankPassWord, ("BankPassWord"));
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strPassword = GBKToUTF8(d.Password);
+		AddItem(strPassword, ("Password"));
+
 		AddItem(d.InstallID, ("InstallID"));
 
 		AddItem(d.FutureSerial, ("FutureSerial"));
-		AddItem(d.UserID, ("UserID"));
+
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+
 		AddItem(d.VerifyCertNoFlag, ("VerifyCertNoFlag"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
 
 		AddItem(d.TradeAmount, ("TradeAmount"));
 		AddItem(d.FutureFetchAmount, ("FutureFetchAmount"));
@@ -628,15 +844,25 @@ namespace trader_dll
 
 		AddItem(d.BrokerFee, ("BrokerFee"));
 		AddItem(d.BankAccType, ("BankAccType"));
-		AddItem(d.DeviceID, ("DeviceID"));
+
+		std::string strDeviceID = GBKToUTF8(d.DeviceID);
+		AddItem(strDeviceID, ("DeviceID"));
+
 		AddItem(d.BankSecuAccType, ("BankSecuAccType"));
 
-		AddItem(d.BrokerIDByBank, ("BrokerIDByBank"));
-		AddItem(d.BankSecuAcc, ("BankSecuAcc"));
-		AddItem(d.BankPwdFlag, ("BankPwdFlag"));
-		AddItem(d.SecuPwdFlag, ("SecuPwdFlag"));
+		std::string strBrokerIDByBank = GBKToUTF8(d.BrokerIDByBank);
+		AddItem(strBrokerIDByBank, ("BrokerIDByBank"));
 
-		AddItem(d.OperNo, ("OperNo"));
+		std::string strBankSecuAcc = GBKToUTF8(d.BankSecuAcc);
+		AddItem(strBankSecuAcc, ("BankSecuAcc"));
+
+		AddItem(d.BankPwdFlag, ("BankPwdFlag"));
+
+		AddItem(d.SecuPwdFlag, ("SecuPwdFlag"));
+		
+		std::string strOperNo = GBKToUTF8(d.OperNo);
+		AddItem(strOperNo, ("OperNo"));
+
 		AddItem(d.RequestID, ("RequestID"));
 		AddItem(d.TID, ("TID"));
 		AddItem(d.TransferStatus, ("TransferStatus"));		
@@ -656,12 +882,18 @@ namespace trader_dll
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcOrderField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.InstrumentID, ("InstrumentID"));
 		AddItem(d.OrderRef, ("OrderRef"));
 
-		AddItem(d.UserID, ("UserID"));
+		std::string strUserID = GBKToUTF8(d.UserID);
+		AddItem(strUserID, ("UserID"));
+
 		AddItem(d.OrderPriceType, ("OrderPriceType"));
 		AddItem(d.Direction, ("Direction"));
 		AddItem(d.CombOffsetFlag, ("CombOffsetFlag"));
@@ -679,14 +911,20 @@ namespace trader_dll
 		AddItem(d.StopPrice, ("StopPrice"));
 		AddItem(d.ForceCloseReason, ("ForceCloseReason"));
 		AddItem(d.IsAutoSuspend, ("IsAutoSuspend"));
-		AddItem(d.BusinessUnit, ("BusinessUnit"));
+
+		std::string strBusinessUnit = GBKToUTF8(d.BusinessUnit);
+		AddItem(strBusinessUnit, ("BusinessUnit"));
 
 		AddItem(d.RequestID, ("RequestID"));
 		AddItem(d.OrderLocalID, ("OrderLocalID"));
 		AddItem(d.ExchangeID, ("ExchangeID"));
-		AddItem(d.ParticipantID, ("ParticipantID"));
 
-		AddItem(d.ClientID, ("ClientID"));
+		std::string strParticipantID = GBKToUTF8(d.ParticipantID);
+		AddItem(strParticipantID, ("ParticipantID"));
+
+		std::string strClientID = GBKToUTF8(d.ClientID);
+		AddItem(strClientID, ("ClientID"));
+
 		AddItem(d.ExchangeInstID, ("ExchangeInstID"));
 		AddItem(d.TraderID, ("TraderID"));
 		AddItem(d.InstallID, ("InstallID"));
@@ -711,28 +949,44 @@ namespace trader_dll
 		AddItem(d.UpdateTime, ("UpdateTime"));
 		AddItem(d.CancelTime, ("CancelTime"));
 
-		AddItem(d.ActiveTraderID, ("ActiveTraderID"));
-		AddItem(d.ClearingPartID, ("ClearingPartID"));
+		std::string strActiveTraderID = GBKToUTF8(d.ActiveTraderID);
+		AddItem(strActiveTraderID, ("ActiveTraderID"));
+
+		std::string strClearingPartID = GBKToUTF8(d.ClearingPartID);
+		AddItem(strClearingPartID, ("ClearingPartID"));
+
 		AddItem(d.SequenceNo, ("SequenceNo"));
 		AddItem(d.FrontID, ("FrontID"));
 
 		AddItem(d.SessionID, ("SessionID"));
 		AddItem(d.UserProductInfo, ("UserProductInfo"));
 		AddItem(d.UserForceClose, ("UserForceClose"));
-		AddItem(d.ActiveUserID, ("ActiveUserID"));
+
+		std::string strActiveUserID = GBKToUTF8(d.ActiveUserID);
+		AddItem(strActiveUserID, ("ActiveUserID"));
 
 		AddItem(d.BrokerOrderSeq, ("BrokerOrderSeq"));
 		AddItem(d.RelativeOrderSysID, ("RelativeOrderSysID"));
 		AddItem(d.ZCETotalTradedVolume, ("ZCETotalTradedVolume"));
 		AddItem(d.IsSwapOrder, ("IsSwapOrder"));
 
+		std::string strBranchID = GBKToUTF8(d.BranchID);
 		AddItem(d.BranchID, ("BranchID"));
-		AddItem(d.InvestUnitID, ("InvestUnitID"));
-		AddItem(d.AccountID, ("AccountID"));
-		AddItem(d.CurrencyID, ("CurrencyID"));
 
-		AddItem(d.IPAddress, ("IPAddress"));
-		AddItem(d.MacAddress, ("MacAddress"));
+		std::string strInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(strInvestUnitID, ("InvestUnitID"));
+
+		std::string strAccountID = GBKToUTF8(d.AccountID);
+		AddItem(strAccountID, ("AccountID"));
+
+		std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+		AddItem(strCurrencyID, ("CurrencyID"));
+
+		std::string strIPAddress = GBKToUTF8(d.IPAddress);
+		AddItem(strIPAddress, ("IPAddress"));
+
+		std::string strMacAddress = GBKToUTF8(d.MacAddress);
+		AddItem(strMacAddress, ("MacAddress"));
 
 		std::string strStatusMsg = GBKToUTF8(d.StatusMsg);
 		AddItem(strStatusMsg, ("StatusMsg"));	
@@ -740,19 +994,30 @@ namespace trader_dll
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcTradeField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.InstrumentID, ("InstrumentID"));
 		AddItem(d.OrderRef, ("OrderRef"));
 
+		std::string strUserID = GBKToUTF8(d.UserID);
 		AddItem(d.UserID, ("UserID"));
+
 		AddItem(d.ExchangeID, ("ExchangeID"));
 		AddItem(d.TradeID, ("TradeID"));
 		AddItem(d.Direction, ("Direction"));
 
 		AddItem(d.OrderSysID, ("OrderSysID"));
-		AddItem(d.ParticipantID, ("ParticipantID"));
-		AddItem(d.ClientID, ("ClientID"));
+
+		std::string strParticipantID = GBKToUTF8(d.ParticipantID);
+		AddItem(strParticipantID, ("ParticipantID"));
+
+		std::string strClientID = GBKToUTF8(d.ClientID);
+		AddItem(strClientID, ("ClientID"));
+		
 		AddItem(d.TradingRole, ("TradingRole"));
 
 		AddItem(d.ExchangeInstID, ("ExchangeInstID"));
@@ -768,27 +1033,41 @@ namespace trader_dll
 		AddItem(d.PriceSource, ("PriceSource"));
 		AddItem(d.TraderID, ("TraderID"));
 		AddItem(d.OrderLocalID, ("OrderLocalID"));
-		AddItem(d.ClearingPartID, ("ClearingPartID"));
 
-		AddItem(d.BusinessUnit, ("BusinessUnit"));
+		std::string strClearingPartID = GBKToUTF8(d.ClearingPartID);
+		AddItem(strClearingPartID, ("ClearingPartID"));
+
+		std::string strBusinessUnit = GBKToUTF8(d.BusinessUnit);
+		AddItem(strBusinessUnit, ("BusinessUnit"));
+
 		AddItem(d.SequenceNo, ("SequenceNo"));
 		AddItem(d.TradingDay, ("TradingDay"));
 		AddItem(d.SettlementID, ("SettlementID"));
 
 		AddItem(d.BrokerOrderSeq, ("BrokerOrderSeq"));
+
+		
 		AddItem(d.TradeSource, ("TradeSource"));
-		AddItem(d.InvestUnitID, ("InvestUnitID"));			
+
+		std::string stInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(stInvestUnitID, ("InvestUnitID"));
 	}
 
 	void SerializerLogCtp::DefineStruct(CThostFtdcTradingNoticeInfoField& d)
 	{
-		AddItem(d.BrokerID, ("BrokerID"));
-		AddItem(d.InvestorID, ("InvestorID"));
+		std::string strBrokerID = GBKToUTF8(d.BrokerID);
+		AddItem(strBrokerID, ("BrokerID"));
+		
+		std::string strInvestorID = GBKToUTF8(d.InvestorID);
+		AddItem(strInvestorID, ("InvestorID"));
+
 		AddItem(d.SendTime, ("SendTime"));
 		AddItem(d.SequenceSeries, ("SequenceSeries"));
 
 		AddItem(d.SequenceNo, ("SequenceNo"));
-		AddItem(d.InvestUnitID, ("InvestUnitID"));		
+
+		std::string stInvestUnitID = GBKToUTF8(d.InvestUnitID);
+		AddItem(stInvestUnitID, ("InvestUnitID"));
 
 		std::string strContent = GBKToUTF8(d.FieldContent);
 		AddItem(strContent, ("FieldContent"));		

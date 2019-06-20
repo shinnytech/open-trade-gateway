@@ -801,9 +801,11 @@ void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPas
 	if (pRspInfo->ErrorID == 0)
 	{
 		OutputNotifySycn(m_loging_connectId, pRspInfo->ErrorID, u8"修改密码成功");
-		if (_req_login.password == pUserPasswordUpdate->OldPassword)
+		std::string strOldPassword = GBKToUTF8(pUserPasswordUpdate->OldPassword);
+		std::string strNewPassword = GBKToUTF8(pUserPasswordUpdate->NewPassword);
+		if (_req_login.password == strOldPassword)
 		{
-			_req_login.password = pUserPasswordUpdate->NewPassword;
+			_req_login.password = strNewPassword;
 		}
 	}
 	else
@@ -1575,11 +1577,16 @@ void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccoun
 		return;
 	}
 
-	Account& account = GetAccount(pRspInvestorAccount->CurrencyID);
+	std::string strCurrencyID = GBKToUTF8(pRspInvestorAccount->CurrencyID);
+	std::string strAccountID = GBKToUTF8(pRspInvestorAccount->AccountID);
+
+	Account& account = GetAccount(strCurrencyID);
 
 	//账号及币种
-	account.user_id = pRspInvestorAccount->AccountID;
-	account.currency = pRspInvestorAccount->CurrencyID;
+	
+
+	account.user_id = strAccountID;
+	account.currency = strCurrencyID;
 	//本交易日开盘前状态
 	account.pre_balance = pRspInvestorAccount->PreBalance;
 	//本交易日内已发生事件的影响
@@ -1672,8 +1679,9 @@ void traderctp::ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankFie
 		return;
 	}
 
-	Bank& bank = GetBank(pContractBank->BankID);
-	bank.bank_id = pContractBank->BankID;
+	std::string strBankID = GBKToUTF8(pContractBank->BankID);
+	Bank& bank = GetBank(strBankID);
+	bank.bank_id = strBankID;
 	bank.bank_name = GBKToUTF8(pContractBank->BankName);
 	
 	if (bIsLast)
@@ -1744,7 +1752,8 @@ void traderctp::ProcessQryAccountregister(std::shared_ptr<CThostFtdcAccountregis
 		return;
 	}
 
-	Bank& bank = GetBank(pAccountregister->BankID);
+	std::string strBankID = GBKToUTF8(pAccountregister->BankID);
+	Bank& bank = GetBank(strBankID);
 	bank.changed = true;
 	std::map<std::string, Bank>::iterator it = m_banks.find(bank.bank_id);
 	if (it == m_banks.end())
@@ -1823,7 +1832,8 @@ void traderctp::ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSeria
 	}
 
 	TransferLog& d = GetTransferLog(std::to_string(pTransferSerial->PlateSerial));
-	d.currency = pTransferSerial->CurrencyID;
+	std::string strCurrencyID = GBKToUTF8(pTransferSerial->CurrencyID);
+	d.currency = strCurrencyID;
 	d.amount = pTransferSerial->TradeAmount;
 	if (pTransferSerial->TradeCode == std::string("202002"))
 		d.amount = 0 - d.amount;
@@ -1903,7 +1913,8 @@ void traderctp::ProcessFromBankToFutureByFuture(
 	if (pRspTransfer->ErrorID == 0)
 	{
 		TransferLog& d = GetTransferLog(std::to_string(pRspTransfer->PlateSerial));
-		d.currency = pRspTransfer->CurrencyID;
+		std::string strCurrencyID = GBKToUTF8(pRspTransfer->CurrencyID);
+		d.currency = strCurrencyID;
 		d.amount = pRspTransfer->TradeAmount;
 		if (pRspTransfer->TradeCode == std::string("202002"))
 			d.amount = 0 - d.amount;

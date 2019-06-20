@@ -75,7 +75,7 @@ bool master_server::GetSlaveBrokerList()
 			if (strBrokerList.empty())
 			{
 				LogMs(LOG_INFO,nullptr
-					,"msg=open trade gateway master can not get broker list from slave node!;node=%s;key=gatewayms"
+					,"msg=open trade gateway master can not get broker list from slave node!;nodename=%s;key=gatewayms"
 					,node.name.c_str());
 				continue;
 			}
@@ -84,7 +84,7 @@ bool master_server::GetSlaveBrokerList()
 			if (!ss.FromString(strBrokerList.c_str()))
 			{
 				LogMs(LOG_INFO,nullptr
-					,"msg=open trade gateway master GetSlaveBrokerList is not json!;brokerlist=%s;node=%s;key=gatewayms"
+					,"msg=open trade gateway master GetSlaveBrokerList is not json!;brokerlist=%s;nodename=%s;key=gatewayms"
 					,strBrokerList.c_str()
 					,node.name.c_str());
 				continue;
@@ -96,7 +96,7 @@ bool master_server::GetSlaveBrokerList()
 			if (rtnBroker.aid != "rtn_brokers")
 			{
 				LogMs(LOG_INFO,strBrokerList.c_str()
-					, "msg=open trade gateway master GetSlaveBrokerList is not rtn_brokers!;node=%s;key=gatewayms"
+					, "msg=open trade gateway master GetSlaveBrokerList is not rtn_brokers!;nodename=%s;key=gatewayms"
 					, node.name.c_str());
 				continue;
 			}
