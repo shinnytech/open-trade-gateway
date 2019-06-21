@@ -187,7 +187,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			OutputNotifySycn(connId, 0, u8"登录成功");
 			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=true"
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=true;msg=m_b_login is true"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str());
@@ -215,7 +215,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			OutputNotifySycn(connId, 0, u8"用户登录失败!");
 			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=false"
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=false;msg=m_b_login is true"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str());
@@ -229,6 +229,21 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		if (!g_config.user_file_path.empty())
 		{
 			m_user_file_path = g_config.user_file_path + "/" + _req_login.bid;
+			Log(LOG_INFO, nullptr
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;g_config user_file_path is not empty"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, m_user_file_path.c_str());
+		}
+		else
+		{
+			Log(LOG_INFO, nullptr
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;msg=g_config user_file_path is empty"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, m_user_file_path.c_str());
 		}
 		m_user_id = _req_login.user_name;
 		m_data.user_id = m_user_id;
@@ -280,7 +295,7 @@ bool tradersim::WaitLogIn()
 void tradersim::CloseConnection(int nId)
 {
 	Log(LOG_INFO,nullptr
-		, "msg=tradersim CloseConnection;key=%s;bid=%s;user_name=%s;connid=%d"
+		, "fun=CloseConnection;msg=tradersim CloseConnection;key=%s;bid=%s;user_name=%s;connid=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -802,6 +817,9 @@ void tradersim::OnInit()
 	m_account = &(m_data.m_accounts["CNY"]);
 	if (m_account->static_balance < 1.0)
 	{
+		Log(LOG_INFO, nullptr
+			, "msg=sim init new balance;key=%s"
+			, _key.c_str());
 		m_account->user_id = m_user_id;
 		m_account->currency = "CNY";
 		m_account->pre_balance = 0;
@@ -881,6 +899,17 @@ void tradersim::LoadUserDataFile()
 		{
 			++it;
 		}
+		else if (position.ins && position.ins->expired)
+		{
+			Log(LOG_INFO, nullptr
+				, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=sysmbol is expired!;symbol=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, fn.c_str()
+				, position.symbol().c_str());
+			it = m_data.m_positions.erase(it);
+		}
 		else
 		{
 			Log(LOG_INFO, nullptr
@@ -890,7 +919,9 @@ void tradersim::LoadUserDataFile()
 				, _req_login.user_name.c_str()
 				, fn.c_str()
 				, position.symbol().c_str());
-			it = m_data.m_positions.erase(it);
+			//临时补丁,先不清空,等open-trade-mdservice修好再改回来
+			++it;
+			//it = m_data.m_positions.erase(it);
 		}			
 	}
 	/*如果不是当天的存档文件, 则需要调整
@@ -966,15 +997,17 @@ void tradersim::SaveUserDataFile()
 	if (m_user_file_path.empty())
 	{
 		Log(LOG_INFO, nullptr
-			, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;msg=user file path is empty"
+			, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;msg=user file path is empty"
 			, _key.c_str()
 			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str());
+			, _req_login.user_name.c_str()
+			, m_user_file_path.c_str());
 		return;
 	}
+
 	std::string fn = m_user_file_path + "/" + m_user_id;
 	Log(LOG_INFO, nullptr
-		, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=user file path is empty"
+		, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
