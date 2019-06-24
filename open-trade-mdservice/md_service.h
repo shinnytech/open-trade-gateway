@@ -6,29 +6,47 @@
 
 #pragma once
 
-#include "types.h"
-#include <boost/asio/io_context.hpp>
+#include "md_connection.h"
 
-namespace md_service
+class mdservice
 {
-	bool LoadInsList();
+public:
+	mdservice(boost::asio::io_context& ios);
 
-	/*
-	MdService 从 Diff (http://www.shinnytech.com/diff) 的服务器获取合约及行情信息
-	Example:
-		运行及停止 MdService:
-			md_service::Init();  //初始化 合约及行情服务
-			md_service::Cleanup();  //要求 合约及行情服务 停止运行
+	mdservice(const mdservice&) = delete;
 
-		md_service 初始化完成后, 可以提供合约及行情信息:
-			md_service::Instrument* ins = md_service::GetInstrument("SHFE.cu1801");
-			ins->volume_multiple; //合约乘数
-			ins->last_price; //合约的最新价
-	*/
+	mdservice& operator=(const mdservice&) = delete;
 
-	//初始化 MdService 实例
-	bool Init(boost::asio::io_context& ioc);
+	bool init();
 
-	//要求 MdService 实例停止运行
-	void Stop();
-}
+	void stop();
+
+	void OnConnectionnClose();
+
+	void OnConnectionnError();
+private:
+	boost::asio::io_context& io_context_;
+
+	boost::interprocess::managed_shared_memory* m_segment;
+
+	ShmemAllocator* m_alloc_inst;
+
+	//合约及行情数据
+	InsMapType* m_ins_map;	
+
+	std::string m_req_subscribe_quote;
+
+	std::string m_req_peek_message;
+
+	md_connection_ptr m_md_connection_ptr;
+
+	boost::asio::deadline_timer _timer;
+
+	bool m_stop_reconnect;
+	
+	bool LoadInsList();		
+
+	void StartConnect();
+
+	void ReStartConnect();
+};

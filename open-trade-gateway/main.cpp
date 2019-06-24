@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
 		if (!s.init())
 		{
 			md_child.terminate();
+			md_child.wait();
 			Log(LOG_INFO, nullptr
 				,"msg=trade_server init fail!;key=gateway");
 			return -1;
@@ -54,12 +55,16 @@ int main(int argc, char* argv[])
 		signals_.async_wait(
 			[&s,&ios,&md_child,&flag](boost::system::error_code, int sig)
 		{						
-			md_child.terminate();
+			Log(LOG_INFO, nullptr
+				, "msg=trade_server got sig %d;key=gateway", sig);
+						
 			s.stop();	
 			flag.store(false);
 			ios.stop();
-			Log(LOG_INFO, nullptr
-				,"msg=trade_server got sig %d;key=gateway", sig);
+
+			md_child.terminate();
+			md_child.wait();
+			
 			Log(LOG_INFO, nullptr
 				,"msg=trade_server exit;key=gateway");
 		});
