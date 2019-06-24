@@ -918,10 +918,8 @@ void tradersim::LoadUserDataFile()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
 				, fn.c_str()
-				, position.symbol().c_str());
-			//临时补丁,先不清空,等open-trade-mdservice修好再改回来
-			++it;
-			//it = m_data.m_positions.erase(it);
+				, position.symbol().c_str());			
+			it = m_data.m_positions.erase(it);
 		}			
 	}
 	/*如果不是当天的存档文件, 则需要调整

@@ -133,7 +133,7 @@ bool mdservice::LoadInsList()
 	catch (std::exception& ex)
 	{
 		Log(LOG_FATAL, nullptr
-			, "fun=LoadInsList;msg=construct m_ins_map fail;errmsg=%s;key=mdservice"
+			, "fun=LoadInsList;msg=mdservice construct m_ins_map fail;errmsg=%s;key=mdservice"
 			, ex.what());
 		return false;
 	}
@@ -148,6 +148,9 @@ bool mdservice::LoadInsList()
 				, "fun=LoadInsList;msg=md service download ins file fail;key=mdservice");
 			return false;
 		}
+
+		Log(LOG_INFO,content.c_str()
+			, "fun=LoadInsList;msg=mdservice download ins file success;key=mdservice");
 
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str()))
