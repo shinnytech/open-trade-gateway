@@ -1487,17 +1487,17 @@ void traderctp::AdjustPositionByTrade(const Trade& trade)
 			pos.pos_short_today += trade.volume;
 		}
 	} else {
-		if((trade.exchange_id == "SHFE" || trade.exchange_id == "INE") && trade.offset == kOffsetCloseToday){
-			if(trade.direction == kDirectionBuy){
-				pos.pos_short_today -= trade.volume;
-			}else{
-				pos.pos_long_today -= trade.volume;
-			}
-		}else{
+		if((trade.exchange_id == "SHFE" || trade.exchange_id == "INE") && trade.offset != kOffsetCloseToday){
 			if(trade.direction == kDirectionBuy){
 				pos.pos_short_his -= trade.volume;
 			}else{
 				pos.pos_long_his -= trade.volume;
+			}
+		}else{
+			if(trade.direction == kDirectionBuy){
+				pos.pos_short_today -= trade.volume;
+			}else{
+				pos.pos_long_today -= trade.volume;
 			}
 		}
 		if (pos.pos_short_today + pos.pos_short_his < 0
