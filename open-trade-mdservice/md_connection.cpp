@@ -64,7 +64,7 @@ void md_connection::Stop()
 	m_ws_socket.next_layer().close(ec);
 	if (ec)
 	{
-		LogMs(LOG_INFO, nullptr
+		LogMs(LOG_WARNING, nullptr
 			, "fun=Stop;msg=m_ws_socket close exception;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
 	}
@@ -134,7 +134,7 @@ void md_connection::OnHandshake(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		Log(LOG_WARNING, nullptr
+		Log(LOG_ERROR, nullptr
 			, "fun=OnHandshake;msg=md_connection handshake fail;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
 		//Á¬½Ó´íÎó
