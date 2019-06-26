@@ -131,7 +131,7 @@ private:
 	int m_transfer_seq;
 
 	std::atomic_bool m_run_receive_msg;
-
+	
 	void ReceiveMsg(const std::string& key);
 
 	void CloseConnection(int nId);

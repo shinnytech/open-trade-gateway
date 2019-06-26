@@ -1428,7 +1428,8 @@ void traderctp::ProcessQryInvestorPosition(
 		m_rsp_position_id.store(nRequestID);
 		m_something_changed = true;
 		m_position_ready = true;
-		if(!m_position_inited){
+		if(!m_position_inited)
+		{
 			InitPositionVolume();
 			m_position_inited.store(true);
 		}
@@ -1436,7 +1437,8 @@ void traderctp::ProcessQryInvestorPosition(
 	}
 }
 
-void traderctp::InitPositionVolume(){
+void traderctp::InitPositionVolume()
+{
 	for (auto it = m_data.m_positions.begin();
 		it != m_data.m_positions.end(); ++it)
 	{
@@ -1455,7 +1457,8 @@ void traderctp::InitPositionVolume(){
 		Trade& trade = it->second;
 		sorted_trade[trade.seqno] = &trade;
 	}
-	for(auto it = sorted_trade.begin(); it!= sorted_trade.end(); ++it){
+	for(auto it = sorted_trade.begin(); it!= sorted_trade.end(); ++it)
+	{
 		Trade& trade = *(it->second);
 		AdjustPositionByTrade(trade);
 	}
@@ -1464,28 +1467,45 @@ void traderctp::InitPositionVolume(){
 void traderctp::AdjustPositionByTrade(const Trade& trade)
 {
 	Position& pos = GetPosition(trade.symbol());
-	if(trade.offset == kOffsetOpen){
-		if(trade.direction == kDirectionBuy){
+	if(trade.offset == kOffsetOpen)
+	{
+		if(trade.direction == kDirectionBuy)
+		{
 			pos.pos_long_today += trade.volume;
-		}else{
+		}
+		else
+		{
 			pos.pos_short_today += trade.volume;
 		}
-	} else {
-		if((trade.exchange_id == "SHFE" || trade.exchange_id == "INE") && trade.offset != kOffsetCloseToday){
-			if(trade.direction == kDirectionBuy){
+	} 
+	else
+	{
+		if((trade.exchange_id == "SHFE" || trade.exchange_id == "INE") 
+			&& trade.offset != kOffsetCloseToday)
+		{
+			if(trade.direction == kDirectionBuy)
+			{
 				pos.pos_short_his -= trade.volume;
-			}else{
+			}
+			else
+			{
 				pos.pos_long_his -= trade.volume;
 			}
-		}else{
-			if(trade.direction == kDirectionBuy){
+		}
+		else
+		{
+			if(trade.direction == kDirectionBuy)
+			{
 				pos.pos_short_today -= trade.volume;
-			}else{
+			}
+			else
+			{
 				pos.pos_long_today -= trade.volume;
 			}
 		}
 		if (pos.pos_short_today + pos.pos_short_his < 0
-			||pos.pos_long_today + pos.pos_long_his < 0){
+			||pos.pos_long_today + pos.pos_long_his < 0)
+		{
 			Log(LOG_ERROR, nullptr
 				, "fun=InitPositionVolume;bid=%s;user_name=%s;exchange_id=%s;instrument_id=%s;pos_short_today=%d;pos_short_his=%d;pos_long_today=%d;pos_long_his=%d"
 				, _req_login.bid.c_str()
@@ -1499,19 +1519,23 @@ void traderctp::AdjustPositionByTrade(const Trade& trade)
 				);
 			return;
 		}
-		if (pos.pos_short_today < 0){
+		if (pos.pos_short_today < 0)
+		{
 			pos.pos_short_his += pos.pos_short_today;
 			pos.pos_short_today = 0;
 		}
-		if (pos.pos_short_his < 0){
+		if (pos.pos_short_his < 0)
+		{
 			pos.pos_short_today += pos.pos_short_his;
 			pos.pos_short_his = 0;
 		}
-		if (pos.pos_long_today < 0){
+		if (pos.pos_long_today < 0)
+		{
 			pos.pos_long_his += pos.pos_long_today;
 			pos.pos_long_today = 0;
 		}
-		if (pos.pos_long_his < 0){
+		if (pos.pos_long_his < 0)
+		{
 			pos.pos_long_today += pos.pos_long_his;
 			pos.pos_long_his = 0;
 		}

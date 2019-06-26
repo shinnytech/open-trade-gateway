@@ -92,12 +92,10 @@ void tradersim::Stop()
 	if (nullptr != _thread_ptr)
 	{
 		m_run_receive_msg.store(false);
-		_thread_ptr->join();
-		//_thread_ptr->detach();
-		//_thread_ptr.reset();
-	}
+		_thread_ptr->join();		
+	}	
 
-	//SaveUserDataFile();
+	SaveUserDataFile();
 }
 
 void tradersim::ReceiveMsg(const std::string& key)
@@ -230,7 +228,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			m_user_file_path = g_config.user_file_path + "/" + _req_login.bid;
 			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;g_config user_file_path is not empty"
+				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;msg=g_config user_file_path is not empty"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -345,7 +343,7 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 	if (!ss.FromString(msg.c_str()))
 	{
 		Log(LOG_WARNING,nullptr
-			, "msg=tradersim parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"
+			, "fun=ProcessInMsg;msg=tradersim parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str()
@@ -365,7 +363,7 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		if (!m_b_login)
 		{
 			Log(LOG_WARNING,msg.c_str()
-				, "msg=trade sim receive other msg before login;key=%s;bid=%s;user_name=%s;connid=%d"
+				, "fun=ProcessInMsg;msg=trade sim receive other msg before login;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -376,7 +374,7 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		if (!IsConnectionLogin(connId))
 		{
 			Log(LOG_WARNING,msg.c_str()
-				, "msg=trade sim receive other msg which from not login connecion;key=%s;bid=%s;user_name=%s;connid=%d"
+				, "fun=ProcessInMsg;msg=trade sim receive other msg which from not login connecion;key=%s;bid=%s;user_name=%s;connid=%d"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -386,10 +384,29 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 
 		SerializerSim ss;
 		if (!ss.FromString(msg.c_str()))
+		{
+			Log(LOG_WARNING, nullptr
+				, "fun=ProcessInMsg;msg=tradersim parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, connId
+				, msg.c_str());
 			return;
+		}
+			
 		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ss.m_doc));
 		if (!dt || !dt->IsString())
+		{
+			Log(LOG_WARNING,msg.c_str()
+				, "fun=ProcessInMsg;msg=tradersim receive invalid json fail;key=%s;bid=%s;user_name=%s;connid=%d"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, connId);
 			return;
+		}
+			
 		std::string aid = dt->GetString();
 		if (aid == "insert_order")
 		{
@@ -679,16 +696,23 @@ void tradersim::SendUserDataImd(int connectId)
 void tradersim::SendUserData()
 {
 	if (!m_peeking_message)
+	{
 		return;
+	}
+		
 	//尝试匹配成交
 	TryOrderMatch();
+
 	//重算所有持仓项的持仓盈亏和浮动盈亏
+	//总持仓盈亏
 	double total_position_profit = 0;
+	////总浮动盈亏
 	double total_float_profit = 0;
+	//总保证金
 	double total_margin = 0;
+	//总冻结保证金
 	double total_frozen_margin = 0.0;
-	for (auto it = m_data.m_positions.begin();
-		it != m_data.m_positions.end(); ++it)
+	for (auto it = m_data.m_positions.begin();it != m_data.m_positions.end(); ++it)
 	{
 		const std::string& symbol = it->first;
 		Position& ps = it->second;
@@ -702,45 +726,91 @@ void tradersim::SendUserData()
 				,_key.c_str());
 			continue;
 		}
+
+		//得到最新价
 		double last_price = ps.ins->last_price;
+
+		//如果最新价不合法,用昨结算价
 		if (!IsValid(last_price))
 			last_price = ps.ins->pre_settlement;
-		if ((IsValid(last_price) && (last_price != ps.last_price)) || ps.changed) {
+		
+		if ((IsValid(last_price) && (last_price != ps.last_price)) || ps.changed) 
+		{
 			ps.last_price = last_price;
+
+			//计算多头持仓盈亏(多头现在市值-多头持仓成本)
 			ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+
+			//计算空头持仓盈亏(空头持仓成本-空头现在市值)
 			ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+			
+			//计算总持仓盈亏(多头持仓盈亏+空头持仓盈亏)
 			ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+
+			//计算多头浮动盈亏(多头现在市值-多头开仓市值)
 			ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+
+			//计算空头浮动盈亏(空头开仓市值-空头现在市值)
 			ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+
+			//计算总浮动盈亏(多头浮动盈亏+空头浮动盈亏)
 			ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+
 			ps.changed = true;
 			m_something_changed = true;
 		}
+
+		//计算总的持仓盈亏
 		if (IsValid(ps.position_profit))
 			total_position_profit += ps.position_profit;
+
+		//计算总的浮动盈亏
 		if (IsValid(ps.float_profit))
 			total_float_profit += ps.float_profit;
+
+		//计算总的保证金占用
 		if (IsValid(ps.margin))
 			total_margin += ps.margin;
+
+		//计算总的冻结保证金
 		total_frozen_margin += ps.frozen_margin;
 	}
 	//重算资金账户
 	if (m_something_changed)
 	{
+		//持仓盈亏
 		m_account->position_profit = total_position_profit;
+
+		//浮动盈亏
 		m_account->float_profit = total_float_profit;
-		m_account->balance = m_account->static_balance + m_account->float_profit + m_account->close_profit - m_account->commission;
+
+		//当前权益(动态),静态权益+浮动盈亏+平仓盈亏-手续费
+		m_account->balance = m_account->static_balance 
+			+ m_account->float_profit 
+			+ m_account->close_profit 
+			- m_account->commission;
+		
+		//保证金占用
 		m_account->margin = total_margin;
+
+		//冻结保证金
 		m_account->frozen_margin = total_frozen_margin;
+
+		//计算可用资金(动态权益-保证金占用-冻结保证金)
 		m_account->available = m_account->balance - m_account->margin - m_account->frozen_margin;
+
+		//计算风险度
 		if (IsValid(m_account->available) && IsValid(m_account->balance) && !IsZero(m_account->balance))
 			m_account->risk_ratio = 1.0 - m_account->available / m_account->balance;
 		else
 			m_account->risk_ratio = NAN;
+
 		m_account->changed = true;
 	}
+
 	if (!m_something_changed)
 		return;
+
 	//构建数据包
 	m_data.m_trade_more_data = false;
 	SerializerTradeBase nss;
@@ -818,7 +888,7 @@ void tradersim::OnInit()
 	if (m_account->static_balance < 1.0)
 	{
 		Log(LOG_INFO, nullptr
-			, "msg=sim init new balance;key=%s"
+			, "fun=OnIni;msg=sim init new balance;key=%s"
 			, _key.c_str());
 		m_account->user_id = m_user_id;
 		m_account->currency = "CNY";
@@ -908,7 +978,7 @@ void tradersim::LoadUserDataFile()
 				, _req_login.user_name.c_str()
 				, fn.c_str()
 				, position.symbol().c_str());
-			it = m_data.m_positions.erase(it);
+			it = m_data.m_positions.erase(it);			
 		}
 		else
 		{
@@ -919,14 +989,11 @@ void tradersim::LoadUserDataFile()
 				, _req_login.user_name.c_str()
 				, fn.c_str()
 				, position.symbol().c_str());			
-			it = m_data.m_positions.erase(it);
+			it = m_data.m_positions.erase(it);			
 		}			
 	}
-	/*如果不是当天的存档文件, 则需要调整
-		委托单和成交记录全部清空
-		用户权益转为昨权益, 平仓盈亏
-		持仓手数全部移动到昨仓, 持仓均价调整到昨结算价
-	*/
+	
+	//如果不是当天的存档文件,则需要调整
 	if (m_data.trading_day != g_config.trading_day)
 	{
 		Log(LOG_INFO, nullptr
@@ -938,9 +1005,16 @@ void tradersim::LoadUserDataFile()
 			, m_data.trading_day.c_str()
 			, g_config.trading_day.c_str());
 
+		//清空全部委托记录
 		m_data.m_orders.clear();
+
+		//清空全部成交记录
 		m_data.m_trades.clear();
+
+		//清空全部转账记录
 		m_data.m_transfers.clear();
+
+		//用户权益转为昨权益
 		for (auto it = m_data.m_accounts.begin(); it != m_data.m_accounts.end(); ++it)
 		{
 			Account& item = it->second;
@@ -951,18 +1025,152 @@ void tradersim::LoadUserDataFile()
 			item.withdraw = 0;
 			item.deposit = 0;
 			item.changed = true;
+
+			//冻结保证金
+			item.frozen_margin = 0;
+
+			//冻结手续费
+			item.frozen_commission = 0;			
 		}
+
+		//重算持仓情况(上期和原油持仓手数全部移动到昨仓,其它全部为今仓)
 		for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end(); ++it)
 		{
 			Position& item = it->second;
-			item.volume_long_his = item.volume_long_his + item.volume_long_today;
-			item.volume_long_today = 0;
-			item.volume_long_frozen_today = 0;
-			item.volume_short_his = item.volume_short_his + item.volume_short_today;
-			item.volume_long_yd = item.volume_long_his;
-			item.volume_short_yd= item.volume_short_his;
-			item.volume_short_today = 0;
-			item.volume_short_frozen_today = 0;
+
+			//上期和原油交易所
+			if ((item.exchange_id == "SHFE" || item.exchange_id == "INE"))
+			{
+				//今天多头持仓调整为历史多头持仓
+				item.volume_long_his = item.volume_long_his + item.volume_long_today;
+				item.volume_long_today = 0;
+
+				//今天多头开仓市值调整为历史多头开仓市值
+				item.open_cost_long_his = item.open_cost_long_his + item.open_cost_long_today;
+				item.open_cost_long_today = 0;
+
+				//今天多头持仓成本调整为历史多头持仓成本
+				item.position_cost_long_his = item.position_cost_long_his + item.position_cost_long_today;
+				item.position_cost_long_today = 0;
+
+				//今天多头保证金占用调整为历史多头保证金占用
+				item.margin_long_his = item.margin_long_his + item.margin_long_today;
+				item.margin_long_today = 0;
+
+				//今日开盘前的多头持仓手数
+				item.volume_long_yd = item.volume_long_his;
+
+				//今天空头持仓调整为历史空头持仓
+				item.volume_short_his = item.volume_short_his + item.volume_short_today;
+				item.volume_short_today = 0;
+
+				//今天空头开仓市值调整为历史空头开仓市值
+				item.open_cost_short_his = item.open_cost_short_his + item.open_cost_short_today;
+				item.open_cost_short_today = 0;
+
+				//今天空头持仓成本调整为历史空头持仓成本
+				item.position_cost_short_his = item.position_cost_short_his + item.position_cost_short_today;
+				item.position_cost_short_today = 0;
+
+				//今天空头保证金占用调整为历史空头保证金占用
+				item.margin_short_his = item.margin_short_his + item.margin_short_today;
+				item.margin_short_today = 0;
+
+				//今日开盘前的空头持仓手数
+				item.volume_short_yd = item.volume_short_his;
+
+				//今昨仓持仓情况(这里表示实际上的今昨仓,不是概念上的今昨仓)
+				item.pos_long_his = item.volume_long_yd;
+				item.pos_long_today = 0;
+				item.pos_short_his = item.volume_short_yd;
+				item.pos_short_today = 0;
+
+				//多头冻结手数
+				item.volume_long_frozen_today = 0;
+				item.volume_long_frozen_his = 0;
+				item.volume_long_frozen = 0;
+
+				//空头冻结手数
+				item.volume_short_frozen_today = 0;
+				item.volume_short_frozen_his = 0;
+				item.volume_short_frozen = 0;
+
+				//冻结保证金
+				item.frozen_margin = 0;
+			}
+			//其它交易所
+			else
+			{
+				//历史和今天多头持仓				
+				item.volume_long_today = item.volume_long_his + item.volume_long_today;
+				item.volume_long_his = 0;
+
+				//多头开仓市值(今仓)
+				item.open_cost_long_today = item.open_cost_long_his + item.open_cost_long_today;
+
+				//多头开仓市值(昨仓)
+				item.open_cost_long_his = 0;
+
+				//多头持仓成本(今仓)
+				item.position_cost_long_today = item.position_cost_long_his + item.position_cost_long_today;
+
+				//多头持仓成本(昨仓)
+				item.position_cost_long_his = 0;
+				
+				//多头保证金占用(今仓)
+				item.margin_long_today = item.margin_long_his + item.margin_long_today;
+
+				//多头保证金占用(昨仓)
+				item.margin_long_his = 0;
+
+				//今日开盘前的多头持仓手数
+				item.volume_long_yd = item.volume_long_today;
+
+				//历史和今天空头持仓
+				item.volume_short_today = item.volume_short_his + item.volume_short_today;
+				item.volume_short_his = 0;
+
+				//空头开仓市值(今仓)
+				item.open_cost_short_today = item.open_cost_short_his + item.open_cost_short_today;
+
+				//空头开仓市值(昨仓)
+				item.open_cost_short_his = 0;
+
+				//空头持仓成本(今仓)	
+				item.position_cost_short_today = item.position_cost_short_his + item.position_cost_short_today;
+
+				//空头持仓成本(昨仓)
+				item.position_cost_short_his = 0;
+
+				//空头保证金占用(今仓)	
+				item.margin_short_today = item.margin_short_his + item.margin_short_today;
+
+				//空头保证金占用(昨仓)
+				item.margin_short_his = 0;
+
+				//今日开盘前的空头持仓手数
+				item.volume_short_yd = item.volume_short_today;
+
+				//今昨仓持仓情况(这里表示实际上的今昨仓,不是概念上的今昨仓)
+				item.pos_long_his = item.volume_long_yd;
+				item.pos_long_today = 0;
+				item.pos_short_his = item.volume_short_yd;
+				item.pos_short_today = 0;
+
+				//多头冻结手数
+				item.volume_long_frozen_today = 0;
+				item.volume_long_frozen_his = 0;
+				item.volume_long_frozen = 0;
+
+				//空头冻结手数
+				item.volume_short_frozen_today = 0;
+				item.volume_short_frozen_his = 0;
+				item.volume_short_frozen = 0;
+
+				//冻结保证金
+				item.frozen_margin = 0;
+			}
+			
 			item.changed = true;
 		}
 		m_data.trading_day = g_config.trading_day;
@@ -1026,7 +1234,6 @@ void tradersim::SaveUserDataFile()
 	}
 }
 
-
 void tradersim::UpdateOrder(Order* order)
 {
 	order->seqno = m_last_seq_no++;
@@ -1044,47 +1251,132 @@ Position& tradersim::GetPosition(const std::string symbol)
 
 void tradersim::UpdatePositionVolume(Position* position)
 {
+	//重算如下指标
+
+	//冻结保证金
 	position->frozen_margin = 0;
+	//多头冻结手数(今仓)
 	position->volume_long_frozen_today = 0;
+	//多头冻结手数(昨仓)
+	position->volume_long_frozen_his = 0;
+	//空头冻结手数(今仓)
 	position->volume_short_frozen_today = 0;
+	//空头冻结手数(昨仓)
+	position->volume_short_frozen_his = 0;
+
 	for (auto it_order = m_alive_order_set.begin()
 		; it_order != m_alive_order_set.end()
 		; ++it_order)
 	{
 		Order* order = *it_order;
+
 		if (order->status != kOrderStatusAlive)
+		{
 			continue;
+		}
+
 		if (position->instrument_id != order->instrument_id)
+		{
 			continue;
+		}
+
 		if (order->offset == kOffsetOpen)
 		{
+			//如果是开仓,冻结保证金加上本订单占用的冻结保证金
 			position->frozen_margin += position->ins->margin * order->volume_left;
 		}
 		else
+			//如果是平仓
 		{
-			if (order->direction == kDirectionBuy)
-				position->volume_short_frozen_today += order->volume_left;
+			//上期和原油交易所(区分平今平昨)
+			if ((position->exchange_id == "SHFE" || position->exchange_id == "INE"))
+			{
+				//平今
+				if (order->offset == kOffsetCloseToday)
+				{
+					if (order->direction == kDirectionBuy)
+					{
+						//今仓空头冻结手数加上本定单的冻结手数
+						position->volume_short_frozen_today += order->volume_left;
+					}
+					else
+					{
+						//今仓多头冻结手数加上本定单的冻结手数
+						position->volume_long_frozen_today += order->volume_left;
+					}
+				}
+				//平昨
+				else if (order->offset == kOffsetClose)
+				{
+					if (order->direction == kDirectionBuy)
+					{
+						//昨仓空头冻结手数加上本定单的冻结手数
+						position->volume_long_frozen_his += order->volume_left;
+					}
+					else
+					{
+						//昨仓多头冻结手数加上本定单的冻结手数
+						position->volume_short_frozen_his += order->volume_left;
+					}
+				}
+			}
 			else
-				position->volume_long_frozen_today += order->volume_left;
+				//其它交易所(不区分平今平昨)
+			{
+				//如果是平仓,冻结手数需加上本订单的订单手数
+				if (order->direction == kDirectionBuy)
+				{
+					//今仓空头冻结手数加上本定单的冻结手数
+					position->volume_short_frozen_today += order->volume_left;
+				}
+				else
+				{
+					//今仓多头冻结手数加上本定单的冻结手数
+					position->volume_long_frozen_today += order->volume_left;
+				}
+			}
 		}
 	}
+
+	//总的多头冻结手数
 	position->volume_long_frozen = position->volume_long_frozen_his + position->volume_long_frozen_today;
+
+	//总的空头冻结手数
 	position->volume_short_frozen = position->volume_short_frozen_his + position->volume_short_frozen_today;
+
+	//总的多头持仓
 	position->volume_long = position->volume_long_his + position->volume_long_today;
+
+	//总的空头持仓
 	position->volume_short = position->volume_short_his + position->volume_short_today;
+
+	//多头保证金占用
 	position->margin_long = position->ins->margin * position->volume_long;
+
+	//空头保证金占用
 	position->margin_short = position->ins->margin * position->volume_short;
+
+	//总的保证金占用
 	position->margin = position->margin_long + position->margin_short;
+	
 	if (position->volume_long > 0)
 	{
+		//计算多头开仓均价
 		position->open_price_long = position->open_cost_long / (position->volume_long * position->ins->volume_multiple);
+
+		//计算多头持仓均价
 		position->position_price_long = position->position_cost_long / (position->volume_long * position->ins->volume_multiple);
 	}
+
 	if (position->volume_short > 0)
 	{
+		//计算空头开仓均价
 		position->open_price_short = position->open_cost_short / (position->volume_short * position->ins->volume_multiple);
+
+		//计算空头持仓均价
 		position->position_price_short = position->position_cost_short / (position->volume_short * position->ins->volume_multiple);
 	}
+
 	position->changed = true;
 }
 
@@ -1119,27 +1411,41 @@ void tradersim::CheckOrderTrade(Order* order)
 		if (order->limit_price - 0.0001 > ins->upper_limit)
 		{
 			OutputNotifyAllSycn(1
-				, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板", "WARNING");
+				, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板"
+				, "WARNING");
+
 			order->status = kOrderStatusFinished;
+
 			UpdateOrder(order);
 			return;
 		}
+
 		if (order->limit_price + 0.0001 < ins->lower_limit)
 		{
 			OutputNotifyAllSycn(1
 				, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格跌破跌停板"
 				, "WARNING");
+
 			order->status = kOrderStatusFinished;
+
 			UpdateOrder(order);
 			return;
 		}
 	}
+	
 	if (order->direction == kDirectionBuy && IsValid(ins->ask_price1)
 		&& (order->price_type == kPriceTypeAny || order->limit_price >= ins->ask_price1))
+	{
+		//用卖一价成交
 		DoTrade(order, order->volume_left, ins->ask_price1);
+	}
+		
 	if (order->direction == kDirectionSell && IsValid(ins->bid_price1)
 		&& (order->price_type == kPriceTypeAny || order->limit_price <= ins->bid_price1))
+	{
+		//用买一价成交
 		DoTrade(order, order->volume_left, ins->bid_price1);
+	}		
 }
 
 void tradersim::DoTrade(Order* order, int volume, double price)
@@ -1176,50 +1482,198 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 	}
 	order->seqno = m_last_seq_no++;
 	order->changed = true;
+
 	//调整持仓数据
 	Position* position = &(m_data.m_positions[order->symbol()]);
 	double commission = position->ins->commission * volume;
 	trade->commission = commission;
+
+	//如果是开仓
 	if (order->offset == kOffsetOpen)
 	{
+		//多开
 		if (order->direction == kDirectionBuy)
 		{
+			//多头持仓手数
 			position->volume_long_today += volume;
+
+			//多头开仓市值
 			position->open_cost_long += price * volume * position->ins->volume_multiple;
+
+			//多头持仓成本
 			position->position_cost_long += price * volume * position->ins->volume_multiple;
+
+			//多头开仓均价
 			position->open_price_long = position->open_cost_long / (position->volume_long * position->ins->volume_multiple);
-			position->position_price_long = position->open_cost_long / (position->volume_long * position->ins->volume_multiple);
+
+			//多头持仓均价
+			position->position_price_long = position->position_cost_long / (position->volume_long * position->ins->volume_multiple);
+
+			//实际上的多头持仓(今仓)
+			position->pos_long_today  += volume;
 		}
+		//空开
 		else
 		{
+			//空头持仓手数
 			position->volume_short_today += volume;
+
+			//空头开仓市值
 			position->open_cost_short += price * volume * position->ins->volume_multiple;
+
+			//空头持仓成本
 			position->position_cost_short += price * volume * position->ins->volume_multiple;
+
+			//空头开仓均价
 			position->open_price_short = position->open_cost_short / (position->volume_short * position->ins->volume_multiple);
-			position->position_price_short = position->open_cost_short / (position->volume_short * position->ins->volume_multiple);
+			
+			//空头持仓均价
+			position->position_price_short = position->position_cost_short / (position->volume_short * position->ins->volume_multiple);
+
+			//实际上的空头持仓(今仓)
+			position->pos_short_today += volume;
 		}
 	}
+	//如果是平仓
 	else
 	{
 		double close_profit = 0;
-		if (order->direction == kDirectionBuy)
+		//上期和原油交易所(区分平今平昨)
+		if ((position->exchange_id == "SHFE" || position->exchange_id == "INE"))
 		{
-			position->open_cost_short = position->open_cost_short * (position->volume_short - volume) / position->volume_short;
-			position->position_cost_short = position->position_cost_short * (position->volume_short - volume) / position->volume_short;
-			close_profit = (position->position_price_short - price) * volume * position->ins->volume_multiple;
-			position->volume_short_today -= volume;
+			//平今
+			if (order->offset == kOffsetCloseToday)
+			{
+				if (order->direction == kDirectionBuy)
+				{
+					//空头开仓市值
+					position->open_cost_short = position->open_cost_short * (position->volume_short - volume) / position->volume_short;
+
+					//空头持仓成本
+					position->position_cost_short = position->position_cost_short * (position->volume_short - volume) / position->volume_short;
+
+					//平仓盈亏
+					close_profit = (position->position_price_short - price) * volume * position->ins->volume_multiple;
+
+					//更新空头持仓手数(今仓)
+					position->volume_short_today -= volume;
+
+					//更新实际上的空头持仓(今仓)
+					position->pos_short_today -= volume;
+				}
+				else
+				{
+					//多头开仓市值
+					position->open_cost_long = position->open_cost_long * (position->volume_long - volume) / position->volume_long;
+
+					//多头持仓成本
+					position->position_cost_long = position->position_cost_long * (position->volume_long - volume) / position->volume_long;
+
+					//平仓盈亏
+					close_profit = (price - position->position_price_long) * volume * position->ins->volume_multiple;
+
+					//更新多头持仓手数
+					position->volume_long_today -= volume;
+
+					//更新实际上的多头持仓(今仓)
+					position->pos_long_today -= volume;
+				}
+			}
+			//平昨
+			else if (order->offset == kOffsetClose)
+			{
+				if (order->direction == kDirectionBuy)
+				{
+					//空头开仓市值
+					position->open_cost_short = position->open_cost_short * (position->volume_short - volume) / position->volume_short;
+
+					//空头持仓成本
+					position->position_cost_short = position->position_cost_short * (position->volume_short - volume) / position->volume_short;
+
+					//平仓盈亏
+					close_profit = (position->position_price_short - price) * volume * position->ins->volume_multiple;
+
+					//更新空头持仓手数(昨仓)
+					position->volume_short_his -= volume;
+
+					//更新实际上的空头持仓(昨仓)
+					position->pos_short_his -= volume;
+				}
+				else
+				{
+					//多头开仓市值
+					position->open_cost_long = position->open_cost_long * (position->volume_long - volume) / position->volume_long;
+
+					//多头持仓成本
+					position->position_cost_long = position->position_cost_long * (position->volume_long - volume) / position->volume_long;
+
+					//平仓盈亏
+					close_profit = (price - position->position_price_long) * volume * position->ins->volume_multiple;
+
+					//更新多头持仓手数(昨仓)
+					position->volume_long_his -= volume;
+
+					//更新实际上的多头持仓(昨仓)
+					position->pos_long_his -= volume;
+				}
+			}
 		}
 		else
-		{
-			position->open_cost_long = position->open_cost_long * (position->volume_long - volume) / position->volume_long;
-			position->position_cost_long = position->position_cost_long * (position->volume_long - volume) / position->volume_long;
-			close_profit = (price - position->position_price_long) * volume * position->ins->volume_multiple;
-			position->volume_long_today -= volume;
+		//其它交易所(不区分平今平昨)
+		{			
+			if (order->direction == kDirectionBuy)
+			{
+				//空头开仓市值
+				position->open_cost_short = position->open_cost_short * (position->volume_short - volume) / position->volume_short;
+				
+				//空头持仓成本
+				position->position_cost_short = position->position_cost_short * (position->volume_short - volume) / position->volume_short;
+
+				//平仓盈亏
+				close_profit = (position->position_price_short - price) * volume * position->ins->volume_multiple;
+
+				//更新空头持仓手数
+				position->volume_short_today -= volume;
+
+				//更新实际上的空头持仓(今仓),优先平今算法
+				position->pos_short_today -= volume;
+				if (position->pos_short_today < 0)
+				{
+					position->pos_short_his += position->pos_short_today;
+					position->pos_short_today = 0;
+				}
+			}
+			else
+			{
+				//多头开仓市值
+				position->open_cost_long = position->open_cost_long * (position->volume_long - volume) / position->volume_long;
+
+				//多头持仓成本
+				position->position_cost_long = position->position_cost_long * (position->volume_long - volume) / position->volume_long;
+
+				//平仓盈亏
+				close_profit = (price - position->position_price_long) * volume * position->ins->volume_multiple;
+				
+				//更新多头持仓手数
+				position->volume_long_today -= volume;
+
+				//更新实际上的多头持仓(今仓),优先平今算法
+				position->pos_long_today -= volume;
+				if (position->pos_long_today < 0)
+				{
+					position->pos_long_his += position->pos_long_today;
+					position->pos_long_today = 0;
+				}
+			}			
 		}
+		//调整账户资金(平仓盈亏)
 		m_account->close_profit += close_profit;
 	}
-	//调整账户资金
+	
+	//调整账户资金(手续费)
 	m_account->commission += commission;
+
+	//更新持仓信息
 	UpdatePositionVolume(position);
 }
 
@@ -1248,7 +1702,8 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 	if (it != m_data.m_orders.end())
 	{
 		OutputNotifyAllSycn(1
-			, u8"下单, 已被服务器拒绝,原因:单号重复", "WARNING");
+			, u8"下单, 已被服务器拒绝,原因:单号重复"
+			, "WARNING");
 		return;
 	}
 
@@ -1271,69 +1726,131 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 	order->time_condition = action_insert_order.time_condition;
 	order->insert_date_time = GetLocalEpochNano();
 	order->seqno = m_last_seq_no++;
+
 	if (action_insert_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
 		OutputNotifyAllSycn(1
-			, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误", "WARNING");
+			, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误"
+			, "WARNING");
 		order->status = kOrderStatusFinished;
 		return;
 	}
+
 	if (!ins)
 	{
 		OutputNotifyAllSycn(1
-			, u8"下单, 已被服务器拒绝, 原因:合约不合法", "WARNING");
+			, u8"下单, 已被服务器拒绝, 原因:合约不合法"
+			, "WARNING");
 		order->status = kOrderStatusFinished;
 		return;
 	}
+
 	if (ins->product_class != kProductClassFutures)
 	{
 		OutputNotifyAllSycn(1
-			, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约", "WARNING");
+			, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约"
+			, "WARNING");
 		order->status = kOrderStatusFinished;
 		return;
 	}
+
 	if (action_insert_order.volume <= 0)
 	{
 		OutputNotifyAllSycn(1
-			, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0", "WARNING");
+			, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0"
+			, "WARNING");
 		order->status = kOrderStatusFinished;
 		return;
 	}
+
 	double xs = action_insert_order.limit_price / ins->price_tick;
 	if (xs - int(xs + 0.5) >= 0.001)
 	{
 		OutputNotifyAllSycn(1
-			, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数", "WARNING");
+			, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数"
+			, "WARNING");
 		order->status = kOrderStatusFinished;
 		return;
 	}
+	
 	Position* position = &(m_data.m_positions[symbol]);
 	position->ins = ins;
 	position->instrument_id = order->instrument_id;
 	position->exchange_id = order->exchange_id;
 	position->user_id = m_user_id;
+
+	//如果是开仓
 	if (action_insert_order.offset == kOffsetOpen)
 	{
 		if (position->ins->margin * action_insert_order.volume > m_account->available)
 		{
 			OutputNotifyAllSycn(1
-				, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足", "WARNING");
+				, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足"
+				, "WARNING");
 			order->status = kOrderStatusFinished;
 			return;
 		}
 	}
+	//如果是平仓
 	else
 	{
-		if ((action_insert_order.direction == kDirectionBuy && position->volume_short < action_insert_order.volume + position->volume_short_frozen_today)
-			|| (action_insert_order.direction == kDirectionSell && position->volume_long < action_insert_order.volume + position->volume_long_frozen_today))
+		//上期和原油交易所(区分平今平昨)
+		if ((position->exchange_id == "SHFE" || position->exchange_id == "INE"))
 		{
-			OutputNotifyAllSycn(1
-				, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量", "WARNING");
-			order->status = kOrderStatusFinished;
-			return;
+			//平今
+			if (order->offset == kOffsetCloseToday)
+			{
+				if (
+					(action_insert_order.direction == kDirectionBuy
+						&& position->volume_short_today < action_insert_order.volume + position->volume_short_frozen_today)
+					|| (action_insert_order.direction == kDirectionSell
+						&& position->volume_long_today < action_insert_order.volume + position->volume_long_frozen_today)
+					)
+				{
+					OutputNotifyAllSycn(1
+						, u8"下单, 已被服务器拒绝, 原因:平今手数超过今仓持仓量", "WARNING");
+					order->status = kOrderStatusFinished;
+					return;
+				}
+			}
+			//平昨
+			else if (order->offset == kOffsetClose)
+			{
+				if (
+					(action_insert_order.direction == kDirectionBuy
+						&& position->volume_short_his < action_insert_order.volume + position->volume_short_frozen_his)
+					|| (action_insert_order.direction == kDirectionSell
+						&& position->volume_long_his < action_insert_order.volume + position->volume_long_frozen_his)
+					)
+				{
+					OutputNotifyAllSycn(1
+						, u8"下单, 已被服务器拒绝, 原因:平昨手数超过昨仓持仓量", "WARNING");
+					order->status = kOrderStatusFinished;
+					return;
+				}
+			}
 		}
+		else
+		//其它交易所(不区分平今平昨)
+		{
+			if (
+				(action_insert_order.direction == kDirectionBuy
+					&& position->volume_short < action_insert_order.volume + position->volume_short_frozen_today)
+				|| (action_insert_order.direction == kDirectionSell
+					&& position->volume_long < action_insert_order.volume + position->volume_long_frozen_today)
+				)
+			{
+				OutputNotifyAllSycn(1
+					, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量"
+					, "WARNING");
+				order->status = kOrderStatusFinished;
+				return;
+			}
+		}		
 	}
+
 	m_alive_order_set.insert(order);
+
 	UpdateOrder(order);
 	SaveUserDataFile();
 	OutputNotifyAllSycn(1, u8"下单成功");
@@ -1345,9 +1862,11 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 	if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
 		OutputNotifyAllSycn(1
-			, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误", "WARNING");
+			, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误"
+			, "WARNING");
 		return;
 	}
+
 	for (auto it_order = m_alive_order_set.begin(); it_order != m_alive_order_set.end(); ++it_order)
 	{
 		Order* order = *it_order;
@@ -1357,11 +1876,13 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 			order->status = kOrderStatusFinished;
 			UpdateOrder(order);
 			m_something_changed = true;
-			OutputNotifyAllSycn(1, u8"撤单成功");
+			OutputNotifyAllSycn(1, u8"撤单成功");			
 			return;
 		}
 	}
-	OutputNotifyAllSycn(1, u8"要撤销的单不存在", "WARNING");
+	OutputNotifyAllSycn(1
+		, u8"要撤销的单不存在"
+		, "WARNING");
 	return;
 }
 
@@ -1396,8 +1917,7 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	d.error_msg = u8"正确";
 
 	m_something_changed = true;
-	OutputNotifyAllSycn(0, u8"转账成功");
-
+	OutputNotifyAllSycn(0, u8"转账成功");	
 	SendUserData();
 }
 

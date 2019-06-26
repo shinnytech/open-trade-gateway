@@ -311,6 +311,7 @@ struct Position
 
 		volume_long_yd = 0;
 		volume_short_yd = 0;
+
 		pos_long_his = 0;
 		pos_long_today = 0;
 		pos_short_his = 0;
@@ -366,16 +367,22 @@ struct Position
 		return exchange_id + "." + instrument_id;
 	}
 
-	//持仓手数与冻结手数
+	//多头持仓手数
 	int volume_long_today;
 	int volume_long_his;
 	int volume_long;
+
+	//多头冻结手数
 	int volume_long_frozen_today;
 	int volume_long_frozen_his;
 	int volume_long_frozen;
+	
+	//空头持仓手数
 	int volume_short_today;
 	int volume_short_his;
 	int volume_short;
+
+	//空头冻结手数
 	int volume_short_frozen_today;
 	int volume_short_frozen_his;
 	int volume_short_frozen;
@@ -384,45 +391,75 @@ struct Position
 	int volume_long_yd;
 	int volume_short_yd;
 		
-	int pos_long_his;
-	int pos_long_today;
-	int pos_short_his;
-	int pos_short_today;
+	//今昨仓持仓情况
+	int pos_long_his;//多头持仓(昨仓)
+	int pos_long_today;//多头持仓(今仓)
+	int pos_short_his;//空头持仓(昨仓)
+	int pos_short_today;//空头持仓(今仓)
 
 	//成本, 现价与盈亏
 	double open_price_long; //多头开仓均价
+
 	double open_price_short; //空头开仓均价
+
 	double open_cost_long; //多头开仓市值
+
 	double open_cost_short; //空头开仓市值
-	double open_cost_long_today; //多头开仓市值
-	double open_cost_short_today; //空头开仓市值
-	double open_cost_long_his; //多头开仓市值
-	double open_cost_short_his; //空头开仓市值
+	
+	double open_cost_long_his; //多头开仓市值(昨仓)
+
+	double open_cost_long_today; //多头开仓市值(今仓)
+
+	double open_cost_short_today; //空头开仓市值(今仓)	
+
+	double open_cost_short_his; //空头开仓市值(昨仓)
+
 	double position_price_long; //多头持仓均价
+
 	double position_price_short; //空头持仓均价
+
 	double position_cost_long; //多头持仓成本
+
 	double position_cost_short; //空头持仓成本
-	double position_cost_long_today; //多头持仓成本
-	double position_cost_short_today; //空头持仓成本
-	double position_cost_long_his; //多头持仓成本
-	double position_cost_short_his; //空头持仓成本
-	double last_price;
-	double float_profit_long;
-	double float_profit_short;
-	double float_profit;
-	double position_profit_long;
-	double position_profit_short;
-	double position_profit;
+
+	double position_cost_long_today; //多头持仓成本(今仓)
+
+	double position_cost_long_his; //多头持仓成本(昨仓)
+
+	double position_cost_short_today; //空头持仓成本(今仓)	
+
+	double position_cost_short_his; //空头持仓成本(昨仓)
+
+	double last_price;//最新价
+
+	double float_profit_long;//多头浮动盈亏
+
+	double float_profit_short;//空头浮动盈亏
+
+	double float_profit;//浮动盈亏
+
+	double position_profit_long;//多头持仓盈亏
+
+	double position_profit_short;//空头持仓盈亏
+
+	double position_profit;//持仓盈亏
 
 	//保证金占用
-	double margin_long;
-	double margin_short;
-	double margin_long_today;
-	double margin_short_today;
-	double margin_long_his;
-	double margin_short_his;
-	double margin;
-	double frozen_margin;
+	double margin_long;//多头保证金占用
+
+	double margin_short;//空头保证金占用
+
+	double margin_long_today;//多头保证金占用(今仓)
+
+	double margin_short_today;//空头保证金占用(今仓)
+
+	double margin_long_his;//多头保证金占用(昨仓)
+
+	double margin_short_his;//空头保证金占用(昨仓)
+
+	double margin;//保证金占用
+
+	double frozen_margin;//冻结保证金
 	
 	//内部使用
 	const Instrument* ins;
@@ -468,31 +505,31 @@ struct Account
 	std::string user_id;
 	std::string currency;
 
-	//本交易日开盘前状态
+	//本交易日开盘前状态(权益)
 	double pre_balance;
 
-	//本交易日内已发生事件的影响
-	double deposit;
-	double withdraw;
-	double close_profit;
-	double commission;
-	double premium;
-	double static_balance;
+	//本交易日内已发生事件的影响	
+	double deposit;//入金
+	double withdraw;//出金
+	double close_profit;//平仓盈亏
+	double commission;//手续费
+	double premium;//暂时无用
+	double static_balance;//静态权益
 
 	//当前持仓盈亏
-	double position_profit;
-	double float_profit;
+	double position_profit;//持仓盈亏
+	double float_profit;//浮动盈亏
 
 	//当前权益
 	double balance;
 
 	//保证金占用, 冻结及风险度
-	double margin;
-	double frozen_margin;
-	double frozen_commission;
-	double frozen_premium;
-	double available;
-	double risk_ratio;
+	double margin;//保证金
+	double frozen_margin;//冻结保证金
+	double frozen_commission;//冻结手续费
+	double frozen_premium;//暂时无用
+	double available;//可用资金
+	double risk_ratio;//风险度
 
 	//内部使用
 	bool changed;
