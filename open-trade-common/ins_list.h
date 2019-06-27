@@ -10,3 +10,7 @@
 
 //获取指定代码的合约/行情信息
 Instrument* GetInstrument(const std::string& symbol);
+
+bool GenInstrumentExchangeIdMap();
+
+std::string GuessExchangeId(const std::string& instrument_id);

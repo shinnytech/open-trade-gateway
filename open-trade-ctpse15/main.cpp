@@ -44,6 +44,15 @@ int main(int argc, char* argv[])
 		
 			return -1;
 		}
+
+		//加载合约映射
+		if (!GenInstrumentExchangeIdMap())
+		{
+			Log(LOG_WARNING, nullptr
+				, "msg=trade ctpse load instrument exchange id map failed!;key=%s"
+				, key.c_str());
+			return -1;
+		}
 		
 		boost::asio::io_context ioc;
 
