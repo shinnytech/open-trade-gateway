@@ -66,14 +66,7 @@ void client_connection::on_read_header(boost::beast::error_code ec
 	boost::ignore_unused(bytes_transferred);
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=on_read_header;ip=%s;agent=%s;analysis=%s;msg=client connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ec.message().c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "on_read_header").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client connection on_read_header fail").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ec.message().c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_INFO);
 		OnCloseConnection();
 		return;
 	}
@@ -89,14 +82,7 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=client connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ec.message().c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "OnOpenConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client connection accept fail").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ec.message().c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_WARNING);
 		OnCloseConnection();
 		return;
 	}
@@ -130,12 +116,7 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection OnOpenConnection exception;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what());
+		LogMs.WithField("fun", "OnOpenConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master client connection OnOpenConnection exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).Write(LOG_INFO);
 	}
 }
 
@@ -151,12 +132,7 @@ void client_connection::DoRead()
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=DoRead;ip=%s;agent=%s;analysis=%s;msg=DoRead exception;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what());
+		LogMs.WithField("fun", "DoRead").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "DoRead exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).Write(LOG_INFO);
 	}
 }
 
@@ -164,14 +140,7 @@ void client_connection::OnRead(boost::system::error_code ec, std::size_t bytes_t
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=OnRead;ip=%s;agent=%s;analysis=%s;msg=client connection read fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle()
-			, ec.message().c_str());
+		LogMs.WithField("fun", "OnRead").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client connection read fail").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		OnCloseConnection();
 		return;
 	}
@@ -197,14 +166,7 @@ void client_connection::SendTextMsg(const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR,nullptr
-			, "fun=SendTextMsg;ip=%s;agent=%s;analysis=%s;msg=client_connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "SendTextMsg").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client_connection SendTextMsg exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_ERROR);
 	}
 }
 
@@ -226,14 +188,7 @@ void client_connection::DoWrite()
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR, nullptr
-			, "fun=DoWrite;ip=%s;agent=%s;analysis=%s;msg=client_connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "DoWrite").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client_connection DoWrite exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_ERROR);
 	}
 }
 
@@ -241,14 +196,7 @@ void client_connection::OnWrite(boost::system::error_code ec, std::size_t bytes_
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=OnWrite;ip=%s;agent=%s;analysis=%s;msg=client_connection OnWrite exception;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle()
-			, ec.message().c_str());
+		LogMs.WithField("fun", "OnWrite").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client_connection OnWrite exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		OnCloseConnection();
 		return;
 	}
@@ -287,14 +235,7 @@ void client_connection::OnMessage(const std::string &json_str)
 	SerializerTradeBase ss;
 	if (!ss.FromString(json_str.c_str()))
 	{
-		LogMs(LOG_INFO, nullptr
-			,"fun=OnMessage;ip=%s;agent=%s;analysis=%s;msg=receive invalide msg from client;msgcontent=%s;connection=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,json_str.c_str()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "OnMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "receive invalide msg from client").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("msgcontent", json_str.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_INFO);
 		return;
 	}
 		
@@ -303,13 +244,7 @@ void client_connection::OnMessage(const std::string &json_str)
 
 	if (req.aid == "req_login")
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=OnMessage;ip=%s;agent=%s;analysis=%s;msg=req_login message;bid=%s;user_name=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, req.bid.c_str()
-			, req.user_name.c_str());
+		LogMs.WithField("fun", "OnMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "req_login message").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("bid", req.bid.c_str()).WithField("user_name", req.user_name.c_str()).Write(LOG_INFO);
 
 		ProcessLogInMessage(req,json_str);
 	}
@@ -326,13 +261,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 	TBrokerSlaveNodeMap::iterator it = m_broker_slave_node_Map.find(req.bid);
 	if (it == m_broker_slave_node_Map.end())
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master get invalid bid;connection=%d;bid=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, req.bid.c_str());
+		LogMs.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master get invalid bid").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("bid", req.bid.c_str()).Write(LOG_WARNING);
 		std::stringstream ss;
 		ss << u8"暂不支持," << req.bid << u8",请联系该期货公司或快期技术支持人员!";
 		OutputNotifySycn(1, ss.str(), "WARNING");
@@ -348,13 +277,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		if (req.bid == m_last_req_login.bid)
 		{
 			//直接重发登录请求并返回
-			LogMs(LOG_INFO, nullptr
-				, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=same bid and last login;bid=%s;user_name=%s;key=gatewayms"
-				, _X_Real_IP.c_str()
-				, _agent.c_str()
-				, _analysis.c_str()
-				, req.bid.c_str()
-				, req.user_name.c_str());
+			LogMs.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "same bid and last login").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("bid", req.bid.c_str()).WithField("user_name", req.user_name.c_str()).Write(LOG_INFO);
 			m_last_req_login = req;
 			SendTextMsgToServer(json_str);
 			return;
@@ -364,26 +287,14 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		if (slaveNodeInfo.name == m_last_slave_node.name)
 		{
 			//直接重发登录请求并返回
-			LogMs(LOG_INFO, nullptr
-				, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=same node name and last login;bid=%s;user_name=%s;key=gatewayms"
-				, _X_Real_IP.c_str()
-				, _agent.c_str()
-				, _analysis.c_str()
-				, req.bid.c_str()
-				, req.user_name.c_str());
+			LogMs.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "same node name and last login").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("bid", req.bid.c_str()).WithField("user_name", req.user_name.c_str()).Write(LOG_INFO);
 			m_last_req_login = req;
 			SendTextMsgToServer(json_str);
 			return;
 		}
 		
 		//否则,关闭掉客户端连接
-		LogMs(LOG_WARNING, nullptr
-			, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=diffrent node name and last login;bid=%s;user_name=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, req.bid.c_str()
-			, req.user_name.c_str());
+		LogMs.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "diffrent node name and last login").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("bid", req.bid.c_str()).WithField("user_name", req.user_name.c_str()).Write(LOG_WARNING);
 		OnCloseConnection();
 
 		/*
@@ -392,10 +303,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		m_ws_socket_to_server.next_layer().close(ec);
 		if (ec)
 		{
-			LogMs(LOG_WARNING, nullptr
-				, "msg=open trade gateway master clsoe websocket to server fail!;errmsg=%s;nodename=%s;key=gatewayms"
-				, ec.message().c_str()
-				, m_last_slave_node.name.c_str());
+			LogMs.WithField("msg", "open trade gateway master clsoe websocket to server fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", m_last_slave_node.name.c_str()).Write(LOG_WARNING);
 		}
 		m_cached_msgs.clear();
 		m_connect_to_server = false;
@@ -445,14 +353,7 @@ void client_connection::OnResolve(boost::system::error_code ec
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			,"fun=OnResolve;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master OnResolve Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, m_last_slave_node.name.c_str()
-			, m_last_req_login.bid.c_str()
-			, ec.message().c_str());
+		LogMs.WithField("fun", "OnResolve").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master OnResolve Slave node").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("SlaveNode", m_last_slave_node.name.c_str()).WithField("bid", m_last_req_login.bid.c_str()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		std::stringstream ss;
 		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
 		OutputNotifySycn(1,ss.str(),"WARNING");
@@ -473,14 +374,7 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=OnConnectToServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master OnConnectToServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, m_last_slave_node.name.c_str()
-			, m_last_req_login.bid.c_str()
-			, ec.message().c_str());
+		LogMs.WithField("fun", "OnConnectToServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master OnConnectToServer Slave node").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("SlaveNode", m_last_slave_node.name.c_str()).WithField("bid", m_last_req_login.bid.c_str()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		std::stringstream ss;
 		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
 		OutputNotifySycn(1, ss.str(), "WARNING");
@@ -512,14 +406,7 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 	}
 	catch (const std::exception& ex)
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "fun=OnConnectToServer;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server Perform the websocket handshake exception;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, m_last_slave_node.name.c_str()
-			, m_last_req_login.bid.c_str()
-			, ex.what());
+		LogMs.WithField("fun", "OnConnectToServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket_to_server Perform the websocket handshake exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("SlaveNode", m_last_slave_node.name.c_str()).WithField("bid", m_last_req_login.bid.c_str()).WithField("errmsg", ex.what()).Write(LOG_WARNING);
 	}
 }
 
@@ -527,12 +414,8 @@ void client_connection::OnHandshakeWithServer(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "msg=fun=OnHandshakeWithServer;ip=%s;agent=%s;analysis=%s;open trade gateway master OnHandshakeWithServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, m_last_slave_node.name.c_str()
+		LogMs.WithField("msg", "fun=OnHandshakeWithServer").WithField("ip", _X_Real_IP.c_str()).WithField("key", "gatewayms").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("open trade gateway master OnHandshakeWithServer Slave node;SlaveNode", m_last_slave_node.name.c_str())(LOG_INFO,nullptr
+			,"bid=%s;errmsg=%s;"
 			, m_last_req_login.bid.c_str()
 			, ec.message().c_str());
 		std::stringstream ss;
@@ -573,14 +456,7 @@ void client_connection::DoReadFromServer()
 	}
 	catch (const std::exception& ex)
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "fun=DoReadFromServer;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server DoReadFromServer exception;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, m_last_slave_node.name.c_str()
-			, m_last_req_login.bid.c_str()
-			, ex.what());
+		LogMs.WithField("fun", "DoReadFromServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket_to_server DoReadFromServer exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("SlaveNode", m_last_slave_node.name.c_str()).WithField("bid", m_last_req_login.bid.c_str()).WithField("errmsg", ex.what()).Write(LOG_WARNING);
 	}
 }
 
@@ -590,14 +466,7 @@ void client_connection::OnReadFromServer(boost::system::error_code ec
 	boost::ignore_unused(bytes_transferred);
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=OnReadFromServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master OnReadFromServer Slave node;SlaveNode=%s;bid=%s;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,m_last_slave_node.name.c_str()
-			,m_last_req_login.bid.c_str()
-			,ec.message().c_str());
+		LogMs.WithField("fun", "OnReadFromServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master OnReadFromServer Slave node").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("SlaveNode", m_last_slave_node.name.c_str()).WithField("bid", m_last_req_login.bid.c_str()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		//关闭客户端连接
 		OnCloseConnection();
 		return;
@@ -613,13 +482,7 @@ void client_connection::OnTextMsgFromServer(const std::string& msg)
 	MasterSerializerConfig ss;
 	if (!ss.FromString(msg.c_str()))
 	{
-		LogMs(LOG_INFO,msg.c_str()
-			, "fun=OnTextMsgFromServer;ip=%s;agent=%s;analysis=%s;msg=receive invalide msg from server;connection=%d;fd=%d;key=gatewayms"			
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+		LogMs.WithField("fun", "OnTextMsgFromServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "receive invalide msg from server").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket_to_server.next_layer().native_handle()).WithField("pack", msg.c_str()).Write(LOG_INFO);
 		return;
 	}
 		
@@ -653,14 +516,7 @@ void client_connection::DoWriteToServer()
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR,nullptr
-			, "fun=DoWriteToServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection DoWriteToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what()
-			, _connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+		LogMs.WithField("fun", "DoWriteToServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master client connection DoWriteToServer exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket_to_server.next_layer().native_handle()).Write(LOG_ERROR);
 	}
 }
 
@@ -668,14 +524,7 @@ void client_connection::OnWriteServer(boost::system::error_code ec, std::size_t 
 {
 	if (ec)
 	{
-		LogMs(LOG_INFO,nullptr
-			, "fun=OnWriteServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection send message to server fail;connection=%d;fd=%d;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle()
-			, ec.message().c_str());
+		LogMs.WithField("fun", "OnWriteServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master client connection send message to server fail").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 
 		//关闭客户端连接
 		OnCloseConnection();
@@ -717,14 +566,7 @@ void client_connection::SendTextMsgToServer(const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR,nullptr
-			, "fun=SendTextMsgToServer;ip=%s;agent=%s;analysis=%s;msg=open trade gateway master client connection SendTextMsgToServer exception;errmsg=%s;connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,ex.what()
-			,_connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+		LogMs.WithField("fun", "SendTextMsgToServer").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "open trade gateway master client connection SendTextMsgToServer exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket_to_server.next_layer().native_handle()).Write(LOG_ERROR);
 	}
 }
 
@@ -746,25 +588,13 @@ void client_connection::OnCloseConnection()
 {	
 	try
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=OnCloseConnection;ip=%s;agent=%s;analysis=%s;msg=client connection close connection;connection=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id);
+		LogMs.WithField("fun", "OnCloseConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client connection close connection").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).Write(LOG_INFO);
 
 		client_connection_manager_.stop(shared_from_this());
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR,nullptr
-			,"fun=OnCloseConnection;ip=%s;agent=%s;analysis=%s;msg=client_connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "OnCloseConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "client_connection::OnCloseConnection()").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_ERROR);
 	}	
 }
 
@@ -772,23 +602,12 @@ void client_connection::stop()
 {
 	try
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=stop;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket.next_layer().close();connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "stop").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket.next_layer().close()").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_INFO);
 		boost::system::error_code ec;
 		m_ws_socket.next_layer().close(ec);
 		if (ec)
 		{
-			LogMs(LOG_INFO, nullptr
-				, "fun=stop;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket stop exception;errmsg=%s;key=gatewayms"
-				, _X_Real_IP.c_str()
-				, _agent.c_str()
-				, _analysis.c_str()
-				, ec.message().c_str());
+			LogMs.WithField("fun", "stop").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket stop exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		}
 
 		if (m_connect_to_server)
@@ -798,12 +617,7 @@ void client_connection::stop()
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=stop;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket stop exception;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what());
+		LogMs.WithField("fun", "stop").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket stop exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).Write(LOG_INFO);
 	}	
 }
 
@@ -811,32 +625,16 @@ void client_connection::stop_server()
 {
 	try
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=stop_server;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server.next_layer().close();connectionid=%d;fd=%d;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket_to_server.next_layer().native_handle());
+		LogMs.WithField("fun", "stop_server").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket_to_server.next_layer().close()").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket_to_server.next_layer().native_handle()).Write(LOG_INFO);
 		boost::system::error_code ec;
 		m_ws_socket_to_server.next_layer().close(ec);
 		if (ec)
 		{
-			LogMs(LOG_INFO, nullptr
-				, "fun=stop_server;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server stop exception;errmsg=%s;key=gatewayms"
-				, _X_Real_IP.c_str()
-				, _agent.c_str()
-				, _analysis.c_str()
-				, ec.message().c_str());
+			LogMs.WithField("fun", "stop_server").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket_to_server stop exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		}
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_INFO, nullptr
-			, "fun=stop_server;ip=%s;agent=%s;analysis=%s;msg=m_ws_socket_to_server stop exception;errmsg=%s;key=gatewayms"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what());
+		LogMs.WithField("fun", "stop_server").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "m_ws_socket_to_server stop exception").WithField("agent", _agent.c_str()).WithField("key", "gatewayms").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).Write(LOG_INFO);
 	}
 }

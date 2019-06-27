@@ -17,14 +17,12 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		Log(LOG_INFO,nullptr
-			,"msg=trade server init;key=gateway");
+		Log.WithField("msg", "trade server init").WithField("key", "gateway").Write(LOG_INFO);
 
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,nullptr
-				,"msg=trade_server load config failed!;key=gateway");
+			Log.WithField("msg", "trade_server load config failed!").WithField("key", "gateway").Write(LOG_WARNING);
 			return -1;
 		}
 
@@ -38,8 +36,7 @@ int main(int argc, char* argv[])
 		{
 			md_child.terminate();
 			md_child.wait();
-			Log(LOG_INFO, nullptr
-				,"msg=trade_server init fail!;key=gateway");
+			Log.WithField("msg", "trade_server init fail!").WithField("key", "gateway").Write(LOG_INFO);
 			return -1;
 		}
 		
@@ -55,8 +52,8 @@ int main(int argc, char* argv[])
 		signals_.async_wait(
 			[&s,&ios,&md_child,&flag](boost::system::error_code, int sig)
 		{						
-			Log(LOG_INFO, nullptr
-				, "msg=trade_server got sig %d;key=gateway", sig);
+			Log.WithField("key", "gateway")(LOG_INFO, nullptr
+				,"msg=trade_server got sig %d;", sig);
 						
 			s.stop();	
 			flag.store(false);
@@ -65,8 +62,7 @@ int main(int argc, char* argv[])
 			md_child.terminate();
 			md_child.wait();
 			
-			Log(LOG_INFO, nullptr
-				,"msg=trade_server exit;key=gateway");
+			Log.WithField("msg", "trade_server exit").WithField("key", "gateway").Write(LOG_INFO);
 		});
 		
 		while (flag.load())
@@ -78,9 +74,7 @@ int main(int argc, char* argv[])
 			}
 			catch(std::exception& ex)
 			{
-				Log(LOG_ERROR,nullptr
-					,"msg=ios run exception;errmsg=%s;key=gateway"
-					,ex.what());
+				Log.WithField("msg", "ios run exception").WithField("errmsg", ex.what()).WithField("key", "gateway").Write(LOG_ERROR);
 			}
 		}
 

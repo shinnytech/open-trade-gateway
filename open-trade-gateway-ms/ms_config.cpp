@@ -43,8 +43,7 @@ bool LoadMasterConfig()
 	MasterSerializerConfig ss;
 	if (!ss.FromFile("/etc/open-trade-gateway/config-ms.json"))
 	{
-		LogMs(LOG_FATAL,nullptr
-			, "msg=load /etc/open-trade-gateway/config-ms.json file fail;key=gatewayms");
+		LogMs.WithField("msg", "load /etc/open-trade-gateway/config-ms.json file fail").WithField("key", "gatewayms").Write(LOG_FATAL);
 		return false;
 	}
 

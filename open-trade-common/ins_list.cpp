@@ -23,9 +23,7 @@ Instrument* GetInstrument(const std::string& symbol)
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_FATAL,nullptr
-				,"msg=GetInstrument open InsMapSharedMemory fail;errmsg=%s"
-				,ex.what());
+			Log.WithField("msg", "GetInstrument open InsMapSharedMemory fail").WithField("errmsg", ex.what()).Write(LOG_FATAL);
 			return nullptr;
 		}		
 	}	

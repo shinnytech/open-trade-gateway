@@ -47,15 +47,12 @@ bool LoadConfig()
 {
     g_config.trading_day = GuessTradingDay();
 
-	Log(LOG_INFO,nullptr
-		,"msg=LoadConfig;trading_day=%s"
-		,g_config.trading_day.c_str());
+	Log.WithField("msg", "LoadConfig").WithField("trading_day", g_config.trading_day.c_str()).Write(LOG_INFO);
 
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json"))
     {
-		Log(LOG_FATAL,nullptr
-			,"msg=load /etc/open-trade-gateway/config.json file fail");
+		Log.WithField("msg", "load /etc/open-trade-gateway/config.json file fail").Write(LOG_FATAL);
         return false;
     }
     ss.ToVar(g_config);
@@ -128,8 +125,7 @@ bool LoadConfig()
    
 	if (brokerConfigMap.empty())
 	{
-		Log(LOG_FATAL,nullptr
-			,"msg=load broker list fail!");
+		Log.WithField("msg", "load broker list fail!").Write(LOG_FATAL);
 		return false;
 	}
 

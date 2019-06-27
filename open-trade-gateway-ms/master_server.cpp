@@ -48,15 +48,13 @@ bool master_server::init()
 {	
 	if (!GetSlaveBrokerList())
 	{
-		LogMs(LOG_ERROR,nullptr
-			,"msg=open trade gateway master GetSlaveBrokerList fail,check if slave node is start up!;key=gatewayms");
+		LogMs.WithField("msg", "open trade gateway master GetSlaveBrokerList fail,check if slave node is start up!").WithField("key", "gatewayms").Write(LOG_ERROR);
 		return false;
 	}
 
 	if (!InitClientAcceptor())
 	{
-		LogMs(LOG_ERROR,nullptr
-			,"msg=open trade gateway master InitClientAcceptor fail!;key=gatewayms");
+		LogMs.WithField("msg", "open trade gateway master InitClientAcceptor fail!").WithField("key", "gatewayms").Write(LOG_ERROR);
 		return false;
 	}
 
@@ -74,19 +72,14 @@ bool master_server::GetSlaveBrokerList()
 			std::string strBrokerList = socketClient.WaitBrokerList();
 			if (strBrokerList.empty())
 			{
-				LogMs(LOG_INFO,nullptr
-					,"msg=open trade gateway master can not get broker list from slave node!;nodename=%s;key=gatewayms"
-					,node.name.c_str());
+				LogMs.WithField("msg", "open trade gateway master can not get broker list from slave node!").WithField("nodename", node.name.c_str()).WithField("key", "gatewayms").Write(LOG_INFO);
 				continue;
 			}
 
 			MasterSerializerConfig ss;
 			if (!ss.FromString(strBrokerList.c_str()))
 			{
-				LogMs(LOG_INFO,nullptr
-					,"msg=open trade gateway master GetSlaveBrokerList is not json!;brokerlist=%s;nodename=%s;key=gatewayms"
-					,strBrokerList.c_str()
-					,node.name.c_str());
+				LogMs.WithField("msg", "open trade gateway master GetSlaveBrokerList is not json!").WithField("brokerlist", strBrokerList.c_str()).WithField("key", "gatewayms").WithField("nodename", node.name.c_str()).Write(LOG_INFO);
 				continue;
 			}
 
@@ -95,9 +88,7 @@ bool master_server::GetSlaveBrokerList()
 
 			if (rtnBroker.aid != "rtn_brokers")
 			{
-				LogMs(LOG_INFO,strBrokerList.c_str()
-					, "msg=open trade gateway master GetSlaveBrokerList is not rtn_brokers!;nodename=%s;key=gatewayms"
-					, node.name.c_str());
+				LogMs.WithField("msg", "open trade gateway master GetSlaveBrokerList is not rtn_brokers!").WithField("nodename", node.name.c_str()).WithField("key", "gatewayms").WithField("pack", strBrokerList.c_str()).Write(LOG_INFO);
 				continue;
 			}
 
@@ -112,18 +103,14 @@ bool master_server::GetSlaveBrokerList()
 		}
 		catch (std::exception const& ex)
 		{
-			LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master GetSlaveBrokerList fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			,ex.what()
-			,node.name.c_str());
+			LogMs.WithField("msg", "open trade gateway master GetSlaveBrokerList fail!").WithField("errmsg", ex.what()).WithField("key", "gatewayms").WithField("nodename", node.name.c_str()).Write(LOG_WARNING);
 			continue;
 		}
 	}
 
 	if (m_broker_slave_node_Map.empty())
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "msg=open trade gateway master can not get slave broker list!;key=gatewayms");
+		LogMs.WithField("msg", "open trade gateway master can not get slave broker list!").WithField("key", "gatewayms").Write(LOG_WARNING);
 		return false;
 	}
 	
@@ -147,36 +134,28 @@ bool  master_server::InitClientAcceptor()
 	client_acceptor_.open(client_endpoint_.protocol(),ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master client acceptor open fail;errmsg=%s;key=gatewayms"
-			,ec.message().c_str());
+		LogMs.WithField("msg", "open trade gateway master client acceptor open fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").Write(LOG_WARNING);
 		return false;
 	}
 
 	client_acceptor_.set_option(boost::asio::socket_base::reuse_address(true),ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master client acceptor set option fail;errmsg=%s;key=gatewayms"
-			,ec.message().c_str());
+		LogMs.WithField("msg", "open trade gateway master client acceptor set option fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").Write(LOG_WARNING);
 		return false;
 	}
 
 	client_acceptor_.bind(client_endpoint_,ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master client acceptor bind fail;errmsg=%s;key=gatewayms"
-			,ec.message().c_str());
+		LogMs.WithField("msg", "open trade gateway master client acceptor bind fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").Write(LOG_WARNING);
 		return false;
 	}
 
 	client_acceptor_.listen(boost::asio::socket_base::max_listen_connections,ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master client acceptor listen fail;errmsg=%s;key=gatewayms"
-			,ec.message().c_str());
+		LogMs.WithField("msg", "open trade gateway master client acceptor listen fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").Write(LOG_WARNING);
 		return false;
 	}
 
@@ -199,16 +178,13 @@ void master_server::OnClientAccept(boost::system::error_code ec
 {
 	if (!client_acceptor_.is_open())
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master client acceptor is not open!;key=gatewayms");
+		LogMs.WithField("msg", "open trade gateway master client acceptor is not open!").WithField("key", "gatewayms").Write(LOG_WARNING);
 		return;
 	}
 
 	if (ec)
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "msg=open trade gateway master client acceptor accept error;errmsg=%s;key=gatewayms"
-			,ec.message().c_str());
+		LogMs.WithField("msg", "open trade gateway master client acceptor accept error").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").Write(LOG_WARNING);
 		do_client_accept();
 		return;
 	}
@@ -262,10 +238,7 @@ void WebSocketClient::OnResolve(boost::system::error_code ec
 {
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master resolve node host fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			,ec.message().c_str()
-			,_slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master resolve node host fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 		OnError();
 		return;
 	}
@@ -284,10 +257,7 @@ void WebSocketClient::OnConnect(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "msg=open trade gateway master connect node host fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			, ec.message().c_str()
-			,_slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master connect node host fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 		OnError();
 		return;
 	}
@@ -311,10 +281,7 @@ void WebSocketClient::OnHandshake(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master handshake with node host fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			,ec.message().c_str()
-			,_slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master handshake with node host fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 		OnError();
 		return;
 	}
@@ -336,10 +303,7 @@ void WebSocketClient::OnRead(boost::system::error_code ec
 	boost::ignore_unused(bytes_transferred);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			,"msg=open trade gateway master read broker list from node host fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			,ec.message().c_str()
-			,_slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master read broker list from node host fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 		OnError();
 		return;
 	}
@@ -360,10 +324,7 @@ void WebSocketClient::OnTimeOut()
 	m_ws_socket.close(boost::beast::websocket::close_code::normal,ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "msg=open trade gateway master clsoe websocket client fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			, ec.message().c_str()
-			, _slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master clsoe websocket client fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 	}
 
 	_ios.stop();
@@ -375,20 +336,14 @@ void WebSocketClient::OnError()
 	_timer.cancel(ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "msg=open trade gateway master cancel timer fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			, ec.message().c_str()
-			, _slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master cancel timer fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 	}
 
 	boost::beast::error_code ec2;
 	m_ws_socket.close(boost::beast::websocket::close_code::normal,ec2);
 	if (ec2)
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "msg=open trade gateway master clsoe websocket client fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			, ec2.message().c_str()
-			, _slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master clsoe websocket client fail!").WithField("errmsg", ec2.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 	}
 
 	_ios.stop();
@@ -400,10 +355,7 @@ void WebSocketClient::OnFinish()
 	_timer.cancel(ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "msg=open trade gateway master cancel timer fail!;errmsg=%s;nodename=%s;key=gatewayms"
-			, ec.message().c_str()
-			,_slaveNodeInfo.name.c_str());
+		LogMs.WithField("msg", "open trade gateway master cancel timer fail!").WithField("errmsg", ec.message().c_str()).WithField("key", "gatewayms").WithField("nodename", _slaveNodeInfo.name.c_str()).Write(LOG_WARNING);
 	}
 
 	_ios.stop();

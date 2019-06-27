@@ -64,9 +64,7 @@ void md_connection::Stop()
 	m_ws_socket.next_layer().close(ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "fun=Stop;msg=m_ws_socket close exception;errmsg=%s;key=mdservice"
-			, ec.message().c_str());
+		LogMs.WithField("fun", "Stop").WithField("errmsg", ec.message().c_str()).WithField("msg", "m_ws_socket close exception").WithField("key", "mdservice").Write(LOG_WARNING);
 	}
 }
 
@@ -86,9 +84,7 @@ void md_connection::OnResolve(boost::system::error_code ec
 {
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			, "fun=OnResolve;msg=md_connection resolve fail;errmsg=%s;key=mdservice"
-			, ec.message().c_str());
+		Log.WithField("fun", "OnResolve").WithField("errmsg", ec.message().c_str()).WithField("msg", "md_connection resolve fail").WithField("key", "mdservice").Write(LOG_ERROR);
 		//连接错误
 		OnConnectionnError();
 		return;
@@ -107,9 +103,7 @@ void md_connection::OnConnect(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			, "fun=OnConnect;msg=md_connection connect fail;errmsg=%s;key=mdservice"
-			, ec.message().c_str());
+		Log.WithField("fun", "OnConnect").WithField("errmsg", ec.message().c_str()).WithField("msg", "md_connection connect fail").WithField("key", "mdservice").Write(LOG_ERROR);
 		//连接错误
 		OnConnectionnError();
 		return;
@@ -134,9 +128,7 @@ void md_connection::OnHandshake(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			, "fun=OnHandshake;msg=md_connection handshake fail;errmsg=%s;key=mdservice"
-			, ec.message().c_str());
+		Log.WithField("fun", "OnHandshake").WithField("errmsg", ec.message().c_str()).WithField("msg", "md_connection handshake fail").WithField("key", "mdservice").Write(LOG_ERROR);
 		//连接错误
 		OnConnectionnClose();
 		return;
@@ -165,10 +157,7 @@ void md_connection::SendTextMsg(const std::string &msg)
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR, nullptr
-			, "fun=SendTextMsg;msg=SendTextMsg exception;errmsg=%s;fd=%d;key=mdservice"
-			, ex.what()
-			, m_ws_socket.next_layer().native_handle());
+		LogMs.WithField("fun", "SendTextMsg").WithField("errmsg", ex.what()).WithField("msg", "SendTextMsg exception").WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("key", "mdservice").Write(LOG_ERROR);
 	}
 }
 
@@ -187,9 +176,7 @@ void md_connection::OnRead(boost::system::error_code ec
 	boost::ignore_unused(bytes_transferred);
 	if (ec)
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=OnRead;msg=md service read fail;errmsg=%s;key=mdservice"
-			, ec.message().c_str());
+		Log.WithField("fun", "OnRead").WithField("errmsg", ec.message().c_str()).WithField("msg", "md service read fail").WithField("key", "mdservice").Write(LOG_WARNING);
 
 		//连接关闭
 		OnConnectionnClose();
@@ -202,9 +189,7 @@ void md_connection::OnRead(boost::system::error_code ec
 
 void  md_connection::OnMessage(const std::string &json_str)
 {
-	Log(LOG_INFO,nullptr
-		, "fun=OnMessage;msg=md_connection receive md message;len=%d;key=mdservice"
-		, json_str.size());
+	Log.WithField("fun", "OnMessage").WithField("len", json_str.size()).WithField("msg", "md_connection receive md message").WithField("key", "mdservice").Write(LOG_INFO);
 
 	SendTextMsg(m_req_peek_message);
 
@@ -247,10 +232,7 @@ void md_connection::OnWrite(boost::system::error_code ec
 {
 	if (ec)
 	{
-		LogMs(LOG_WARNING, nullptr
-			, "fun=OnWrite;msg=mdservice OnWrite exception;fd=%d;errmsg=%s;key=mdservice"
-			, m_ws_socket.next_layer().native_handle()
-			, ec.message().c_str());
+		LogMs.WithField("fun", "OnWrite").WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("msg", "mdservice OnWrite exception").WithField("errmsg", ec.message().c_str()).WithField("key", "mdservice").Write(LOG_WARNING);
 
 		//连接关闭
 		OnConnectionnClose();

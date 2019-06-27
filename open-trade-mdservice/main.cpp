@@ -17,22 +17,19 @@
 
 int main(int argc, char* argv[])
 {
-	Log(LOG_INFO,nullptr
-		,"msg=mdservice init;key=mdservice");
+	Log.WithField("msg", "mdservice init").WithField("key", "mdservice").Write(LOG_INFO);
 
 	boost::asio::io_context ioc;
 
 	mdservice s(ioc);
 	if (!s.init())
 	{
-		LogMs(LOG_ERROR, nullptr
-			, "msg=mdservice init fail!;key=mdservice");
+		LogMs.WithField("msg", "mdservice init fail!").WithField("key", "mdservice").Write(LOG_ERROR);
 		return -1;
 	}
 	else
 	{
-		Log(LOG_INFO, nullptr
-			, "msg=mdservice init success;key=mdservice");
+		Log.WithField("msg", "mdservice init success").WithField("key", "mdservice").Write(LOG_INFO);
 	}
 
 	std::atomic_bool flag;
@@ -48,16 +45,15 @@ int main(int argc, char* argv[])
 	signals_.async_wait(
 			[&s, &ioc, &flag](boost::system::error_code, int sig)
 		{
-			Log(LOG_INFO, nullptr
-				, "msg=mdservice got sig %d;key=mdservice", sig);
+			Log.WithField("key", "mdservice")(LOG_INFO, nullptr
+				,"msg=mdservice got sig %d;", sig);
 
 			s.stop();
 
 			flag.store(false);
 			ioc.stop();			
 
-			Log(LOG_INFO, nullptr
-				,"msg=mdservice exit;key=mdservice");
+			Log.WithField("msg", "mdservice exit").WithField("key", "mdservice").Write(LOG_INFO);
 		});
 	
 	while (flag.load())
@@ -69,9 +65,7 @@ int main(int argc, char* argv[])
 		}
 		catch (std::exception& ex)
 		{
-			LogMs(LOG_ERROR, nullptr
-				, "msg=mdservice ios run exception;errmsg=%s;key=mdservice"
-				, ex.what());
+			LogMs.WithField("msg", "mdservice ios run exception").WithField("errmsg", ex.what()).WithField("key", "mdservice").Write(LOG_ERROR);
 		}
 	}	
 

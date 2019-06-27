@@ -26,21 +26,16 @@ int main(int argc, char* argv[])
 		}
 		std::string key = argv[1];
 		
-		Log(LOG_INFO,nullptr
-			,"msg=trade ctpse init;key=%s"
-			, key.c_str());
+		Log.WithField("msg", "trade ctpse init").WithField("key", key.c_str()).Write(LOG_INFO);
 
-		Log(LOG_INFO,nullptr
-			,"msg=trade ctpse ctp version,%s;key=%s"
-			, CThostFtdcTraderApi::GetApiVersion()
+		Log.WithField("key", CThostFtdcTraderApi::GetApiVersion())(LOG_INFO,nullptr
+			,"msg=trade ctpse ctp version,%s;"
 			, key.c_str());
 
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,nullptr
-				,"msg=trade ctpse load config failed!;key=%s"
-				, key.c_str());
+			Log.WithField("msg", "trade ctpse load config failed!").WithField("key", key.c_str()).Write(LOG_WARNING);
 		
 			return -1;
 		}
@@ -66,12 +61,10 @@ int main(int argc, char* argv[])
 			tradeCtp.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO, nullptr
-				,"trade ctpse got sig %d;key=%s"
-				,sig,key.c_str());
-			Log(LOG_INFO, nullptr
-				,"trade ctpse exit;key=%s"
-				,key.c_str());
+			Log.WithField("trade ctpse got sig %d;key", sig)(LOG_INFO, nullptr
+				,"",key.c_str());
+			Log.WithField("trade ctpse exit;key", key.c_str())(LOG_INFO, nullptr
+				,"");
 		});
 		
 		while (flag.load())
@@ -83,9 +76,8 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR,nullptr
-					,"trade ctpse ioc run exception,%s;key=%s"					
-					,ex.what()
+				Log.WithField("trade ctpse ioc run exception,%s;key", ex.what())(LOG_ERROR,nullptr
+					,""
 					,key.c_str());
 			}
 		}

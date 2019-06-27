@@ -59,23 +59,12 @@ void connection::stop()
 {
 	try
 	{
-		Log(LOG_INFO,nullptr
-			,"fun=stop;ip=%s;agent=%s;analysis=%s;msg=trade connection stop;connectionid=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "stop").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "trade connection stop").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_INFO);
 		m_ws_socket.next_layer().close();
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_INFO,nullptr
-			,"fun=stop;ip=%s;agent=%s;analysis=%s;msg=connection stop exception;errmsg=%s;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,ex.what());
+		Log.WithField("fun", "stop").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection stop exception").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).Write(LOG_INFO);
 	}
 }
 
@@ -83,14 +72,7 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 {
 	if (ec)
 	{
-		Log(LOG_WARNING,nullptr
-			,"fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=trade connection accept fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,ec.message().c_str()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "OnOpenConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "trade connection accept fail").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ec.message().c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_WARNING);
 		OnCloseConnection();
 		return;
 	}
@@ -123,12 +105,7 @@ void connection::OnOpenConnection(boost::system::error_code ec)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_INFO,nullptr
-			,"fun=OnOpenConnection;ip=%s;agent=%s;analysis=%s;msg=connection OnOpenConnection exception;errmsg=%s;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what());
+		Log.WithField("fun", "OnOpenConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection OnOpenConnection exception").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).Write(LOG_INFO);
 	}	
 }
 
@@ -139,14 +116,7 @@ void connection::on_read_header(boost::beast::error_code ec
 
 	if (ec == boost::beast::http::error::end_of_stream)
 	{
-		Log(LOG_INFO,nullptr			
-			, "fun=on_read_header;ip=%s;agent=%s;analysis=%s;msg=connection on_read_header fail;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ec.message().c_str()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "on_read_header").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection on_read_header fail").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ec.message().c_str()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_INFO);
 		OnCloseConnection();
 		return;
 	}
@@ -173,14 +143,7 @@ void connection::SendTextMsg(const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			,"fun=SendTextMsg;ip=%s;agent=%s;analysis=%s;msg=connection SendTextMsg exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "SendTextMsg").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection SendTextMsg exception").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_ERROR);
 	}	
 }
 
@@ -202,14 +165,7 @@ void connection::DoWrite()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			,"fun=DoWrite;ip=%s;agent=%s;analysis=%s;msg=connection DoWrite exception;errmsg=%s;connectionid=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,ex.what()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "DoWrite").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection DoWrite exception").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connectionid", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_ERROR);
 	}	
 }
 
@@ -228,14 +184,7 @@ void connection::OnRead(boost::system::error_code ec, std::size_t bytes_transfer
 	{
 		if (ec != boost::beast::websocket::error::closed)
 		{
-			Log(LOG_INFO, nullptr
-				,"fun=OnRead;ip=%s;agent=%s;analysis=%s;msg=trade connection read fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
-				, _X_Real_IP.c_str()
-				, _agent.c_str()
-				, _analysis.c_str()
-				,_connection_id
-				,m_ws_socket.next_layer().native_handle()
-				,ec.message().c_str());
+			Log.WithField("fun", "OnRead").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "trade connection read fail").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		}
 		OnCloseConnection();
 		return;
@@ -251,14 +200,7 @@ void connection::OnWrite(boost::system::error_code ec,std::size_t bytes_transfer
 {
 	if (ec)
 	{
-		Log(LOG_INFO, nullptr
-			,"fun=OnWrite;ip=%s;agent=%s;analysis=%s;msg=trade server send message fail;connection=%d;fd=%d;errmsg=%s;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle()
-			,ec.message().c_str());
+		Log.WithField("fun", "OnWrite").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "trade server send message fail").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).WithField("errmsg", ec.message().c_str()).Write(LOG_INFO);
 		OnCloseConnection();
 		return;
 	}				
@@ -278,14 +220,7 @@ void connection::OnMessage(const std::string &json_str)
 	SerializerTradeBase ss;
 	if (!ss.FromString(json_str.c_str()))
 	{
-		Log(LOG_WARNING, nullptr
-			,"fun=OnMessage;ip=%s;agent=%s;analysis=%s;msg=invalid json str;msgcontent=%s;connection=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,json_str.c_str()
-			,_connection_id
-			,m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "OnMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "invalid json str").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("msgcontent", json_str.c_str()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_WARNING);
 		return;
 	}
 		
@@ -321,13 +256,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	auto it = g_config.brokers.find(_reqLogin.bid);
 	if (it == g_config.brokers.end())
 	{
-		Log(LOG_WARNING,nullptr
-			,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=trade server req_login invalid bid;key=gateway;connection=%d;bid=%s"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			,_connection_id
-			,req.bid.c_str());
+		Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "trade server req_login invalid bid").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("connection", _connection_id).WithField("bid", req.bid.c_str()).Write(LOG_WARNING);
 		std::stringstream ss;
 		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
 		OutputNotifySycn(1,ss.str(),"WARNING");
@@ -410,13 +339,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				+ _reqLogin.user_name + "_" + _reqLogin.broker_id + "_" + strFront;
 		}
 		
-		Log(LOG_INFO,nullptr
-			,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=get user broker key;oldkey=%s;newkey=%s;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, _user_broker_key.c_str()
-			, new_user_broker_key.c_str());
+		Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "get user broker key").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("oldkey", _user_broker_key.c_str()).WithField("newkey", new_user_broker_key.c_str()).Write(LOG_INFO);
 
 		if (new_user_broker_key != _user_broker_key)
 		{
@@ -447,23 +370,13 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 		 UserProcessInfo_ptr userProcessInfoPtr = std::make_shared<UserProcessInfo>(m_ios,_user_broker_key,_reqLogin);
 		 if (nullptr == userProcessInfoPtr)
 		 {
-			 Log(LOG_ERROR, nullptr
-				 ,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=new user process fail;key=%s"
-				 , _X_Real_IP.c_str()
-				 , _agent.c_str()
-				 , _analysis.c_str()
-				 ,_user_broker_key.c_str());			
+			 Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "new user process fail").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("key", _user_broker_key.c_str()).Write(LOG_ERROR);			
 			 return;
 		 }
 
 		 if (!userProcessInfoPtr->StartProcess())
 		 {
-			 Log(LOG_ERROR,nullptr
-				 ,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=can not start up user process;key=%s"
-				 , _X_Real_IP.c_str()
-				 , _agent.c_str()
-				 , _analysis.c_str()
-				 , _user_broker_key.c_str());			
+			 Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "can not start up user process").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("key", _user_broker_key.c_str()).Write(LOG_ERROR);			
 			 return;
 		 }
 
@@ -479,13 +392,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			 for (int i = 0; i < _msg_cache.size(); ++i)
 			 {
 				 userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-				 Log(LOG_INFO, nullptr
-					 , "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=connection send cache msg;connectionid=%d;key=%s"
-					 , _X_Real_IP.c_str()
-					 , _agent.c_str()
-					 , _analysis.c_str()
-					 , _connection_id
-					 ,_user_broker_key.c_str());
+				 Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection send cache msg").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("connectionid", _connection_id).WithField("key", _user_broker_key.c_str()).Write(LOG_INFO);
 			 }
 			 _msg_cache.clear();
 		 }
@@ -509,13 +416,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				for (int i = 0; i < _msg_cache.size(); ++i)
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log(LOG_INFO,nullptr
-						, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=connection send cache msg;connectionid=%d;key=%s"
-						, _X_Real_IP.c_str()
-						, _agent.c_str()
-						, _analysis.c_str()
-						, _connection_id
-						,_user_broker_key.c_str());
+					Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection send cache msg").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("connectionid", _connection_id).WithField("key", _user_broker_key.c_str()).Write(LOG_INFO);
 				}
 				_msg_cache.clear();
 			}
@@ -526,12 +427,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			flag = userProcessInfoPtr->StartProcess();
 			if (!flag)
 			{
-				Log(LOG_ERROR, nullptr
-					,"fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=can not start up user process;key=%s"
-					, _X_Real_IP.c_str()
-					, _agent.c_str()
-					, _analysis.c_str()
-					, _user_broker_key.c_str());				
+				Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "can not start up user process").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("key", _user_broker_key.c_str()).Write(LOG_ERROR);				
 				return;
 			}
 			userProcessInfoPtr->user_connections_.insert(
@@ -543,13 +439,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 				for (int i = 0; i < _msg_cache.size(); ++i)
 				{
 					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log(LOG_INFO, nullptr
-						, "fun=ProcessLogInMessage;ip=%s;agent=%s;analysis=%s;msg=connection send cache;connectionid=%d;key=%s"
-						, _X_Real_IP.c_str()
-						, _agent.c_str()
-						, _analysis.c_str()
-						, _connection_id,
-						_user_broker_key.c_str());
+					Log.WithField("fun", "ProcessLogInMessage").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection send cache").WithField("agent", _agent.c_str()).WithField("analysis", _analysis.c_str()).WithField("connectionid", _connection_id).WithField("key", _user_broker_key.c_str()).Write(LOG_INFO);
 				}
 				_msg_cache.clear();
 			}
@@ -596,14 +486,7 @@ void connection::OnCloseConnection()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,nullptr
-			,"fun=OnCloseConnection;ip=%s;agent=%s;analysis=%s;msg=connection::OnCloseConnection();errmsg=%s;connection=%d;fd=%d;key=gateway"
-			, _X_Real_IP.c_str()
-			, _agent.c_str()
-			, _analysis.c_str()
-			, ex.what()
-			, _connection_id
-			, m_ws_socket.next_layer().native_handle());
+		Log.WithField("fun", "OnCloseConnection").WithField("ip", _X_Real_IP.c_str()).WithField("msg", "connection::OnCloseConnection()").WithField("agent", _agent.c_str()).WithField("key", "gateway").WithField("analysis", _analysis.c_str()).WithField("errmsg", ex.what()).WithField("connection", _connection_id).WithField("fd", m_ws_socket.next_layer().native_handle()).Write(LOG_ERROR);
 	}	
 }
 

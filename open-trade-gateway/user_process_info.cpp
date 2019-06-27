@@ -58,19 +58,13 @@ bool UserProcessInfo::StartProcess()
 		}
 		else
 		{
-			Log(LOG_ERROR,nullptr
-				,"msg=trade server req_login invalid broker_type;type=%s;key=%s"
-				,_reqLogin.broker.broker_type.c_str()
-				, _key.c_str());
+			Log.WithField("msg", "trade server req_login invalid broker_type").WithField("type", _reqLogin.broker.broker_type.c_str()).WithField("key", _key.c_str()).Write(LOG_ERROR);
 			return false;
 		}		
 	}
 	catch (const std::exception& ex)
 	{
-		Log(LOG_WARNING,nullptr
-			,"msg=UserProcessInfo::StartProcess() fail!;errmsg=%s;key=%s"
-			,ex.what()
-			,_key.c_str());
+		Log.WithField("msg", "UserProcessInfo::StartProcess() fail!").WithField("errmsg", ex.what()).WithField("key", _key.c_str()).Write(LOG_WARNING);
 		return false;
 	}	
 }
@@ -125,9 +119,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 {	
 	if (nullptr == _in_mq_ptr)
 	{
-		Log(LOG_WARNING,nullptr
-			,"msg=UserProcessInfo::SendMsg,nullptr is _in_mq_ptr;key=%s"
-			, _key.c_str());
+		Log.WithField("msg", "UserProcessInfo::SendMsg,nullptr is _in_mq_ptr").WithField("key", _key.c_str()).Write(LOG_WARNING);
 		return;
 	}
 
@@ -140,11 +132,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR,msg.c_str()
-			,"msg=UserProcessInfo::SendMsg exception;errmsg=%s;length=%d;key=%s"
-			, ex.what()
-			, str.length()
-			, _key.c_str());
+		Log.WithField("msg", "UserProcessInfo::SendMsg exception").WithField("errmsg", ex.what()).WithField("length", str.length()).WithField("key", _key.c_str()).WithField("pack", msg.c_str()).Write(LOG_ERROR);
 	}	
 }
 
@@ -152,9 +140,8 @@ void UserProcessInfo::NotifyClose(int connid)
 {
 	if (nullptr == _in_mq_ptr)
 	{
-		Log(LOG_WARNING, nullptr
-			,"UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr;key=%s"
-			, _key.c_str());
+		Log.WithField("UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr;key", _key.c_str())(LOG_WARNING, nullptr
+			,"");
 		return;
 	}
 
@@ -167,12 +154,7 @@ void UserProcessInfo::NotifyClose(int connid)
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			,"msg=UserProcessInfo::SendMsg exception;errmsg=%s;msgcontent=%s;length=%d;key=%s"
-			, ex.what()
-			, str.c_str()
-			, str.length()
-			, _key.c_str());
+		Log.WithField("msg", "UserProcessInfo::SendMsg exception").WithField("errmsg", ex.what()).WithField("msgcontent", str.c_str()).WithField("length", str.length()).WithField("key", _key.c_str()).Write(LOG_ERROR);
 	}
 }
 
@@ -188,10 +170,7 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			,"msg=StartProcess_i,create out message queue;key=%s;errmsg=%s"
-			,_key.c_str()
-			,ex.what());
+		Log.WithField("msg", "StartProcess_i,create out message queue").WithField("key", _key.c_str()).WithField("errmsg", ex.what()).Write(LOG_ERROR);
 		return false;
 	}
 
@@ -203,10 +182,7 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			, "msg=StartProcess_i,start ReceiveMsg_i thread;key=%s;errmsg=%s"
-			, _key.c_str()
-			, ex.what());
+		Log.WithField("msg", "StartProcess_i,start ReceiveMsg_i thread").WithField("key", _key.c_str()).WithField("errmsg", ex.what()).Write(LOG_ERROR);
 		return false;
 	}
 
@@ -220,10 +196,7 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			, "msg=StartProcess_i,create in message queue;key=%s;errmsg=%s"
-			, _key.c_str()
-			, ex.what());
+		Log.WithField("msg", "StartProcess_i,create in message queue").WithField("key", _key.c_str()).WithField("errmsg", ex.what()).Write(LOG_ERROR);
 		return false;
 	}
 	
@@ -240,10 +213,7 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_ERROR, nullptr
-			, "msg=StartProcess_i,start user process;key=%s;errmsg=%s"
-			, _key.c_str()
-			, ex.what());
+		Log.WithField("msg", "StartProcess_i,start user process").WithField("key", _key.c_str()).WithField("errmsg", ex.what()).Write(LOG_ERROR);
 		return false;
 	}
 }
@@ -310,10 +280,7 @@ void UserProcessInfo::ReceiveMsg_i(const std::string& key)
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_ERROR,nullptr
-				,"msg=ReceiveMsg_i Erro;errmsg=%s;key=%s"
-				,ex.what()
-				,strKey.c_str());
+			Log.WithField("msg", "ReceiveMsg_i Erro").WithField("errmsg", ex.what()).WithField("key", strKey.c_str()).Write(LOG_ERROR);
 		}
 	}
 }

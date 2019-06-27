@@ -29,9 +29,7 @@ int main(int argc, char* argv[])
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,nullptr
-				,"msg=trade ctp load config failed!;key=%s"
-				,key.c_str());
+			Log.WithField("msg", "trade ctp load config failed!").WithField("key", key.c_str()).Write(LOG_WARNING);
 			return -1;
 		}
 
@@ -56,14 +54,11 @@ int main(int argc, char* argv[])
 			tradeCtp.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO,nullptr
-				,"msg=trade ctp got sig %d;key=%s"
-				,sig
+			Log.WithField("key", sig)(LOG_INFO,nullptr
+				,"msg=trade ctp got sig %d;"
 				,key.c_str());
 
-			Log(LOG_INFO,nullptr
-				,"msg=trade ctp exit;key=%s"
-				,key.c_str());
+			Log.WithField("msg", "trade ctp exit").WithField("key", key.c_str()).Write(LOG_INFO);
 		});
 
 		while (flag.load())
@@ -75,9 +70,8 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR,nullptr
-					,"trade ctp ioc run exception,%s;key=%s"					
-					, ex.what()
+				Log.WithField("trade ctp ioc run exception,%s;key", ex.what())(LOG_ERROR,nullptr
+					,""
 					, key.c_str());
 			}
 		}

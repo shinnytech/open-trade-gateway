@@ -25,9 +25,7 @@ void client_connection_manager::stop(client_connection_ptr c)
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_WARNING,nullptr
-			, "fun=stop;msg=client_connection_manager stop connection;errmsg=%s;key=gatewayms"
-			, ex.what());
+		LogMs.WithField("fun", "stop").WithField("errmsg", ex.what()).WithField("msg", "client_connection_manager stop connection").WithField("key", "gatewayms").Write(LOG_WARNING);
 	}	
 }
 

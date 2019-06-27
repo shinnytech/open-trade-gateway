@@ -17,14 +17,12 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		LogMs(LOG_INFO,nullptr
-			,"msg=open trade gateway master init;key=gatewayms");
+		LogMs.WithField("msg", "open trade gateway master init").WithField("key", "gatewayms").Write(LOG_INFO);
 
 		//加载配置文件
 		if (!LoadMasterConfig())
 		{
-			LogMs(LOG_WARNING,nullptr
-				,"msg=open trade gateway master load config failed!;key=gatewayms");			
+			LogMs.WithField("msg", "open trade gateway master load config failed!").WithField("key", "gatewayms").Write(LOG_WARNING);			
 			return -1;
 		}
 
@@ -33,8 +31,7 @@ int main(int argc, char* argv[])
 		master_server s(ios,g_masterConfig);
 		if (!s.init())
 		{
-			LogMs(LOG_INFO,nullptr
-				,"msg=open trade gateway master init fail!;key=gatewayms");
+			LogMs.WithField("msg", "open trade gateway master init fail!").WithField("key", "gatewayms").Write(LOG_INFO);
 			return -1;
 		}
 
@@ -54,12 +51,11 @@ int main(int argc, char* argv[])
 			flag.store(false);
 			ios.stop();
 
-			LogMs(LOG_INFO,nullptr
-				, "msg=open trade gateway master got sig %d;key=gatewayms"
+			LogMs.WithField("key", "gatewayms")(LOG_INFO,nullptr
+				,"msg=open trade gateway master got sig %d;"
 				, sig);
 
-			LogMs(LOG_INFO,nullptr
-				, "msg=open trade gateway master exit;key=gatewayms");
+			LogMs.WithField("msg", "open trade gateway master exit").WithField("key", "gatewayms").Write(LOG_INFO);
 		});
 		
 		while (flag.load())
@@ -71,9 +67,7 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				LogMs(LOG_ERROR,nullptr
-					, "msg=open trade gateway master ios run exception;errmsg=%s;key=gatewayms"
-					, ex.what());
+				LogMs.WithField("msg", "open trade gateway master ios run exception").WithField("errmsg", ex.what()).WithField("key", "gatewayms").Write(LOG_ERROR);
 			}
 		}
 

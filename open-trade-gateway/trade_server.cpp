@@ -49,9 +49,7 @@ bool trade_server::init()
 	acceptor_.open(_endpoint.protocol(), ec);
 	if (ec)
 	{
-		Log(LOG_ERROR,nullptr
-			,"msg=trade server acceptor open fail;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log.WithField("msg", "trade server acceptor open fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gateway").Write(LOG_ERROR);
 		return false;
 	}
 
@@ -59,9 +57,7 @@ bool trade_server::init()
 	acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
 	if (ec)
 	{
-		Log(LOG_ERROR,nullptr
-			,"msg=trade server acceptor set option fail;errmsg=%s;key=gateway"
-			,ec.message().c_str());
+		Log.WithField("msg", "trade server acceptor set option fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gateway").Write(LOG_ERROR);
 		return false;
 	}
 
@@ -69,9 +65,7 @@ bool trade_server::init()
 	acceptor_.bind(_endpoint, ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			,"msg=trade server acceptor bind fail;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log.WithField("msg", "trade server acceptor bind fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gateway").Write(LOG_ERROR);
 		return false;
 	}
 
@@ -80,9 +74,7 @@ bool trade_server::init()
 		, ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			,"msg=trade server acceptor listen fail;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log.WithField("msg", "trade server acceptor listen fail").WithField("errmsg", ec.message().c_str()).WithField("key", "gateway").Write(LOG_ERROR);
 		return false;
 	}
 
@@ -110,9 +102,7 @@ void trade_server::OnAccept(boost::system::error_code ec
 
 	if (ec)
 	{
-		Log(LOG_WARNING, nullptr
-			,"msg=trade_server accept error;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log.WithField("msg", "trade_server accept error").WithField("errmsg", ec.message().c_str()).WithField("key", "gateway").Write(LOG_WARNING);
 		do_accept();
 		return;
 	}	
