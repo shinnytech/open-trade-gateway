@@ -4,15 +4,15 @@
             "type": "object",
             "properties": {
                 "aid": { "enum": ["req_login"] },
-                "bid": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "user_name": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "password": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "client_app_id": { "type": "string", "minLength": 1 , "maxLength": 64 }, 
+                "bid": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "user_name": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "password": { "type": "string", "minLength": 1 , "maxLength": 64},
+                "client_app_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"}, 
                 "client_system_info": { "type": "string", "minLength": 0 , "maxLength": 1024 },
-				"client_ip": { "type": "string", "minLength": 1 , "maxLength": 64 },
+				"client_ip": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
 				"client_port": { "type": "integer"},
-				"broker_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-				"front": { "type": "string", "minLength": 1 , "maxLength": 256 }
+				"broker_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+				"front": { "type": "string","pattern": "^[^=#|;]{1,256}$"}
             },
             "required": ["aid", "bid", "user_name", "password"],
             "additionalProperties": false
@@ -56,10 +56,10 @@
             "type": "object",
             "properties": {
                 "aid": { "enum": ["insert_order"] },
-                "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "order_id": { "type": "string", "minLength": 0 , "maxLength": 256 },
+                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "order_id": { "type": "string","pattern": "^[^=#|;/]{0,256}$"},
                 "exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
-                "instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+                "instrument_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
                 "direction": { "enum": ["BUY", "SELL"]},
                 "offset": { "enum": ["OPEN", "CLOSE", "CLOSETODAY"]},
                 "limit_price": { "type": "number"},
@@ -77,8 +77,8 @@
             "type": "object",
             "properties": {
                 "aid": { "enum": ["cancel_order"] },
-                "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "order_id": { "type": "string", "minLength": 0 , "maxLength": 256 }
+                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
             },
             "required": ["aid", "user_id", "order_id"],
             "additionalProperties": false
@@ -87,11 +87,11 @@
             "type": "object",
             "properties": {
                 "aid": { "enum": ["req_transfer"] },
-                "bank_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "future_account": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "bank_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "future_account": { "type": "string","pattern": "^[^=#|;/]{1,256}$"},
                 "future_password": { "type": "string", "minLength": 0 , "maxLength": 256 },
                 "bank_password": { "type": "string", "minLength": 0 , "maxLength": 256 },
-                "currency": { "type": "string", "minLength": 1 , "maxLength": 256 },
+                "currency": { "type": "string","pattern": "^[^=#|;/]{1,256}$"},
                 "amount": { "type": "number"}
             },
             "required": ["aid", "bank_id", "future_account", "future_password", "bank_password", "currency", "amount"],
@@ -102,8 +102,8 @@
 		  "properties":
 		  {
 		    "aid": { "enum": ["insert_condition_order"] },
-		    "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-            "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 },
+		    "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+            "order_id": { "type": "string","pattern": "^[^=#|;/]{0,256}$"},
 			"condition_list":
 			{
 				"type": "array",
@@ -114,7 +114,7 @@
 					{
 						"contingent_type":  { "enum": ["time", "market_open", "price", "price_range","break_even"]},
 						"exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
-						"instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+						"instrument_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
 						"contingent_time":{ "type": "integer"},
 						"contingent_price":{ "type": "number"},
 						"price_relation":{ "enum": ["G", "GE", "L", "LE"]},
@@ -138,7 +138,7 @@
 					"properties": 
 					{
 						"exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
-						"instrument_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
+						"instrument_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
 						"direction": { "enum": ["BUY", "SELL"]},
 						"offset": { "enum": ["OPEN", "CLOSE", "CLOSETODAY","REVERSE"]},
 						"volume_type":{ "enum": ["NUM", "CLOSE_ALL"]},
@@ -163,10 +163,32 @@
             "type": "object",
             "properties": {
                 "aid": { "enum": ["cancel_condition_order"] },
-                "user_id": { "type": "string", "minLength": 1 , "maxLength": 64 },
-                "order_id": { "type": "string", "minLength": 1 , "maxLength": 256 }
+                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
             },
             "required": ["aid", "user_id", "order_id"],
+            "additionalProperties": false
+        }
+		,
+		 "pause_condition_order": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["pause_condition_order"] },
+                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
+            },
+            "required": ["aid", "user_id", "order_id"],
+            "additionalProperties": false
+        }
+		,
+		 "qry_his_condition_order": {
+            "type": "object",
+            "properties": {
+                "aid": { "enum": ["qry_his_condition_order"] },
+                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
+                "action_day": { "type": "integer"}
+            },
+            "required": ["aid", "user_id", "action_day"],
             "additionalProperties": false
         }
     },
