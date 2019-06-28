@@ -56,6 +56,14 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, m_try_req_authenticate_times(0)
 	, m_try_req_login_times(0)
 	, m_run_receive_msg(false)
+	, m_rtn_order_log_map()
+	, m_rtn_trade_log_map()
+	, m_err_rtn_future_to_bank_by_future_log_map()
+	, m_err_rtn_bank_to_future_by_future_log_map()
+	, m_rtn_from_bank_to_future_by_future_log_map()
+	, m_rtn_from_future_to_bank_by_future_log_map()
+	, m_err_rtn_order_insert_log_map()
+	, m_err_rtn_order_action_log_map()
 	, m_condition_order_manager(*this)
 {
 	_requestID.store(0);
@@ -1111,18 +1119,35 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 {
 	if (nullptr != pInputOrder)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pInputOrder);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pInputOrder->InstrumentID
+			<< pInputOrder->OrderRef
+			<< pInputOrder->OrderPriceType
+			<< pInputOrder->CombOffsetFlag
+			<< pInputOrder->LimitPrice
+			<< pInputOrder->VolumeTotalOriginal
+			<< pInputOrder->TimeCondition
+			<< pInputOrder->VolumeCondition;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_err_rtn_order_insert_log_map.find(strKey);
+		if (it == m_err_rtn_order_insert_log_map.end())
+		{
+			m_err_rtn_order_insert_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnErrRtnOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+			SerializerLogCtp nss;
+			nss.FromVar(*pInputOrder);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnErrRtnOrderInsert;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, pRspInfo ? pRspInfo->ErrorID : -999
+				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+
+		}
 	}
 	else
 	{
@@ -1175,18 +1200,30 @@ void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 {
 	if (nullptr != pOrderAction)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pOrderAction);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pOrderAction->FrontID
+			<< pOrderAction->SessionID
+			<< pOrderAction->OrderRef
+			<< pOrderAction->OrderActionStatus;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_err_rtn_order_action_log_map.find(strKey);
+		if (it == m_err_rtn_order_action_log_map.end())
+		{
+			m_err_rtn_order_action_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnErrRtnOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+			SerializerLogCtp nss;
+			nss.FromVar(*pOrderAction);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnErrRtnOrderAction;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, pRspInfo ? pRspInfo->ErrorID : -999
+				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "");
+		}
 	}
 	else
 	{
@@ -1955,17 +1992,29 @@ void traderctp::OnRtnFromBankToFutureByFuture(
 {
 	if (nullptr != pRspTransfer)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pRspTransfer);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pRspTransfer->BankSerial
+			<< "_" << pRspTransfer->PlateSerial;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it =
+			m_rtn_from_bank_to_future_by_future_log_map.find(strKey);
+		if (it == m_rtn_from_bank_to_future_by_future_log_map.end())
+		{
+			m_rtn_from_bank_to_future_by_future_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnRtnFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
+			SerializerLogCtp nss;
+			nss.FromVar(*pRspTransfer);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnRtnFromBankToFutureByFuture;key=%s;bid=%s;user_name=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
 			);
+
+		}
 	}
 	else
 	{
@@ -1992,17 +2041,28 @@ void traderctp::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTr
 {
 	if (nullptr != pRspTransfer)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pRspTransfer);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pRspTransfer->BankSerial
+			<< "_" << pRspTransfer->PlateSerial;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_rtn_from_future_to_bank_by_future_log_map.find(strKey);
+		if (it == m_rtn_from_future_to_bank_by_future_log_map.end())
+		{
+			m_rtn_from_future_to_bank_by_future_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnRtnFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-		);
+			SerializerLogCtp nss;
+			nss.FromVar(*pRspTransfer);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnRtnFromFutureToBankByFuture;key=%s;bid=%s;user_name=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+			);
+
+		}
 	}
 	else
 	{
@@ -2053,19 +2113,30 @@ void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTra
 {
 	if (nullptr != pReqTransfer)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pReqTransfer);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pReqTransfer->BankSerial
+			<< "_" << pReqTransfer->PlateSerial;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_err_rtn_bank_to_future_by_future_log_map.find(strKey);
+		if (it == m_err_rtn_bank_to_future_by_future_log_map.end())
+		{
+			m_err_rtn_bank_to_future_by_future_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnErrRtnBankToFutureByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			SerializerLogCtp nss;
+			nss.FromVar(*pReqTransfer);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnErrRtnFutureToBankByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, pRspInfo ? pRspInfo->ErrorID : -999
+				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
 			);
+
+		}
 	}
 	else
 	{
@@ -2131,19 +2202,29 @@ void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTra
 {
 	if (nullptr != pReqTransfer)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pReqTransfer);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pReqTransfer->BankSerial
+			<< "_" << pReqTransfer->PlateSerial;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_err_rtn_future_to_bank_by_future_log_map.find(strKey);
+		if (it == m_err_rtn_future_to_bank_by_future_log_map.end())
+		{
+			m_err_rtn_future_to_bank_by_future_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnErrRtnFutureToBankByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, pRspInfo ? pRspInfo->ErrorID : -999
-			, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
-		);
+			SerializerLogCtp nss;
+			nss.FromVar(*pReqTransfer);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnErrRtnFutureToBankByFuture;key=%s;bid=%s;user_name=%s;ErrorID=%d;ErrMsg=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+				, pRspInfo ? pRspInfo->ErrorID : -999
+				, pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : ""
+			);
+		}
 	}
 	else
 	{
@@ -2402,17 +2483,29 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 {
 	if (nullptr != pOrder)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pOrder);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pOrder->FrontID
+			<< pOrder->SessionID
+			<< pOrder->OrderRef
+			<< pOrder->OrderSubmitStatus
+			<< pOrder->OrderStatus;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_rtn_order_log_map.find(strKey);
+		if (it == m_rtn_order_log_map.end())
+		{
+			m_rtn_order_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
+			SerializerLogCtp nss;
+			nss.FromVar(*pOrder);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnRtnOrder;key=%s;bid=%s;user_name=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()			
-		);
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnRtnOrder;key=%s;bid=%s;user_name=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+			);
+		}
 	}
 	else
 	{
@@ -2533,17 +2626,27 @@ void traderctp::OnRtnTrade(CThostFtdcTradeField* pTrade)
 {
 	if (nullptr != pTrade)
 	{
-		SerializerLogCtp nss;
-		nss.FromVar(*pTrade);
-		std::string strMsg = "";
-		nss.ToString(&strMsg);
+		std::stringstream ss;
+		ss << pTrade->OrderSysID
+			<< pTrade->TradeID;
+		std::string strKey = ss.str();
+		std::map<std::string, std::string>::iterator it = m_rtn_trade_log_map.find(strKey);
+		if (it == m_rtn_trade_log_map.end())
+		{
+			m_rtn_trade_log_map.insert(std::map<std::string, std::string>::value_type(strKey, strKey));
 
-		Log(LOG_INFO, strMsg.c_str()
-			, "fun=OnRtnTrade;key=%s;bid=%s;user_name=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-		);
+			SerializerLogCtp nss;
+			nss.FromVar(*pTrade);
+			std::string strMsg = "";
+			nss.ToString(&strMsg);
+
+			Log(LOG_INFO, strMsg.c_str()
+				, "fun=OnRtnTrade;key=%s;bid=%s;user_name=%s"
+				, _key.c_str()
+				, _req_login.bid.c_str()
+				, _req_login.user_name.c_str()
+			);
+		}
 	}
 	else
 	{

@@ -244,6 +244,22 @@ private:
 
 	std::atomic_bool m_run_receive_msg;
 
+	std::map<std::string,std::string> m_rtn_order_log_map;
+
+	std::map<std::string, std::string> m_rtn_trade_log_map;
+
+	std::map<std::string, std::string> m_err_rtn_future_to_bank_by_future_log_map;
+
+	std::map<std::string, std::string> m_err_rtn_bank_to_future_by_future_log_map;
+
+	std::map<std::string, std::string> m_rtn_from_bank_to_future_by_future_log_map;
+
+	std::map<std::string, std::string> m_rtn_from_future_to_bank_by_future_log_map;
+
+	std::map<std::string, std::string> m_err_rtn_order_insert_log_map;
+
+	std::map<std::string, std::string> m_err_rtn_order_action_log_map;
+
 	void InitTdApi();
 
 	void StopTdApi();
