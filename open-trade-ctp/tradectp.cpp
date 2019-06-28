@@ -56,6 +56,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, m_try_req_authenticate_times(0)
 	, m_try_req_login_times(0)
 	, m_run_receive_msg(false)
+	, m_condition_order_manager(*this)
 {
 	_requestID.store(0);
 
@@ -3071,6 +3072,9 @@ TransferLog& traderctp::GetTransferLog(const std::string& seq_id)
 
 void traderctp::LoadFromFile()
 {
+	
+	m_condition_order_manager.Load(_key);
+
 	if (m_user_file_path.empty())
 	{
 		return;
@@ -3092,6 +3096,8 @@ void traderctp::LoadFromFile()
 
 void traderctp::SaveToFile()
 {
+	m_condition_order_manager.Save(_key);
+
 	if (m_user_file_path.empty())
 	{
 		return;
@@ -3916,6 +3922,22 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			qry_settlement_info qrySettlementInfo;
 			ss.ToVar(qrySettlementInfo);
 			OnClientReqQrySettlementInfo(qrySettlementInfo);
+		}
+		else if (aid == "insert_condition_order")
+		{
+			m_condition_order_manager.InsertConditionOrder(msg);
+		}
+		else if (aid == "cancel_condition_order")
+		{
+			m_condition_order_manager.CancelConditionOrder(msg);
+		}
+		else if (aid == "pause_condition_order")
+		{
+			m_condition_order_manager.PauseConditionOrder(msg);
+		}
+		else if (aid == "qry_his_condition_order")
+		{
+			m_condition_order_manager.QryHisConditionOrder(msg);
 		}
 	}
 }

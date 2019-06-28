@@ -8,6 +8,7 @@
 
 #include "ctp_define.h"
 #include "types.h"
+#include "condition_order_manager.h"
 
 #include <map>
 #include <queue>
@@ -28,6 +29,7 @@
 using namespace trader_dll;
 
 class traderctp : public CThostFtdcTraderSpi
+	,public IConditionOrderCallBack
 {
 public:
 	traderctp(boost::asio::io_context& ios
@@ -243,6 +245,8 @@ private:
 	int m_try_req_login_times;
 
 	std::atomic_bool m_run_receive_msg;
+
+	ConditionOrderManager m_condition_order_manager;
 
 	void InitTdApi();
 
