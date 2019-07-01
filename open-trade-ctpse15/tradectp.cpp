@@ -2761,7 +2761,7 @@ int traderctp::ReqAuthenticate()
 	strcpy_x(field.AuthCode, _req_login.broker.auth_code.c_str());
 	int ret = m_pTdApi->ReqAuthenticate(&field, ++_requestID);
 	Log(LOG_INFO, nullptr
-		, "msg=fun=ReqAuthenticate;ctpse ReqAuthenticate;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
+		, "fun=ReqAuthenticate;msg=ctpse ReqAuthenticate;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
