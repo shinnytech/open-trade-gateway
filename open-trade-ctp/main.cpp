@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 			catch (std::exception& ex)
 			{
 				Log(LOG_ERROR,nullptr
-					,"trade ctp ioc run exception,%s;key=%s"					
+					,"msg=trade ctp ioc run exception,%s;key=%s"					
 					, ex.what()
 					, key.c_str());
 			}

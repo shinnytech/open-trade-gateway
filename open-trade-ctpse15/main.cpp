@@ -76,10 +76,10 @@ int main(int argc, char* argv[])
 			flag.store(false);
 			ioc.stop();
 			Log(LOG_INFO, nullptr
-				,"trade ctpse got sig %d;key=%s"
+				,"msg=trade ctpse got sig %d;key=%s"
 				,sig,key.c_str());
 			Log(LOG_INFO, nullptr
-				,"trade ctpse exit;key=%s"
+				,"msg=trade ctpse exit;key=%s"
 				,key.c_str());
 		});
 		
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 			catch (std::exception& ex)
 			{
 				Log(LOG_ERROR,nullptr
-					,"trade ctpse ioc run exception,%s;key=%s"					
+					,"msg=trade ctpse ioc run exception,%s;key=%s"					
 					,ex.what()
 					,key.c_str());
 			}

@@ -153,7 +153,7 @@ void UserProcessInfo::NotifyClose(int connid)
 	if (nullptr == _in_mq_ptr)
 	{
 		Log(LOG_WARNING, nullptr
-			,"UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr;key=%s"
+			,"msg=UserProcessInfo::NotifyClose,nullptr is _in_mq_ptr;key=%s"
 			, _key.c_str());
 		return;
 	}

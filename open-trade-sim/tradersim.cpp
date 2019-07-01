@@ -67,7 +67,7 @@ void tradersim::Start()
 	catch (const std::exception& ex)
 	{
 		Log(LOG_ERROR,nullptr
-			, "msg=tradersim open message queue exception;errmsg=%s;key=%s"
+			, "fun=Start;msg=tradersim open message queue exception;errmsg=%s;key=%s"
 			, ex.what()
 			,_key.c_str());
 	}
@@ -81,7 +81,7 @@ void tradersim::Start()
 	catch (const std::exception& ex)
 	{
 		Log(LOG_ERROR,nullptr
-			, "msg=tradersim start ReceiveMsg thread;errmsg=%s;key=%s"
+			, "fun=Start;msg=tradersim start ReceiveMsg thread;errmsg=%s;key=%s"
 			, ex.what()
 			, _key.c_str());
 	}
@@ -132,7 +132,7 @@ void tradersim::ReceiveMsg(const std::string& key)
 			if ((nPos <= 0) || (nPos + 1 >= line.length()))
 			{
 				Log(LOG_WARNING,nullptr
-					, "msg=tradersim ReceiveMsg is invalid!;key=%s;msgcontent=%s"
+					, "fun=ReceiveMsg;msg=tradersim ReceiveMsg is invalid!;key=%s;msgcontent=%s"
 					, _key.c_str()
 					, line.c_str());
 				continue;
@@ -150,7 +150,7 @@ void tradersim::ReceiveMsg(const std::string& key)
 		catch (const std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=ReceiveMsg exception;errmsg=%s;key=%s"
+				, "fun=ReceiveMsg;msg=ReceiveMsg exception;errmsg=%s;key=%s"
 				, ex.what()
 				, _key.c_str());
 		}
@@ -583,7 +583,7 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
+				, "fun=SendMsgAll;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
 				, ex.what()
 				, msg.length()
 				,_key.c_str());
@@ -598,7 +598,7 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,msg.c_str()
-				, "msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
+				, "fun=SendMsgAll;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
 				, ex.what()				
 				, totalLength
 				, _key.c_str());
@@ -649,7 +649,7 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR, nullptr
-				,"msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
+				,"fun=SendMsg;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
 				,ex.what()
 				,msg.length()
 				,_key.c_str());
@@ -664,7 +664,7 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		catch (std::exception& ex)
 		{
 			Log(LOG_ERROR,msg.c_str()
-				,"msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
+				,"fun=SendMsg;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
 				, ex.what()
 				,totalLength
 				,_key.c_str());
@@ -721,7 +721,7 @@ void tradersim::SendUserData()
 		if (!ps.ins)
 		{
 			Log(LOG_ERROR,nullptr
-				, "msg=miss symbol %s when processing position;key=%s"
+				, "fun=SendUserData;msg=miss symbol %s when processing position;key=%s"
 				, symbol.c_str()
 				,_key.c_str());
 			continue;
@@ -914,7 +914,7 @@ void tradersim::OnInit()
 	bank->changed = true;
 	m_something_changed = true;
 	Log(LOG_INFO,nullptr 
-		,"msg=sim OnInit;key=%s"
+		,"fun=OnInit;msg=sim OnInit;key=%s"
 		, _key.c_str());
 }
 
