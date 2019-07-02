@@ -2835,12 +2835,15 @@ int traderctp::ReqUserLogin()
 	strcpy_x(field.UserID, _req_login.user_name.c_str());
 	strcpy_x(field.Password, _req_login.password.c_str());
 	int ret = m_pTdApi->ReqUserLogin(&field, ++_requestID);
-	Log(LOG_INFO, nullptr
-		, "fun=ReqUserLogin;msg=ctpse ReqUserLogin fail;key=%s;bid=%s;user_name=%s;ret=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, ret);	
+	if (0 != ret)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqUserLogin;msg=ctpse ReqUserLogin fail;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, ret);
+	}	
 	return ret;	
 }
 
@@ -2857,11 +2860,12 @@ void traderctp::SendLoginRequest()
 	}
 	m_try_req_login_times++;
 	Log(LOG_INFO, nullptr
-		, "fun=SendLoginRequest;msg=ctpse SendLoginRequest;key=%s;bid=%s;user_name=%s;client_app_id=%s"
+		, "fun=SendLoginRequest;msg=ctpse SendLoginRequest;key=%s;bid=%s;user_name=%s;client_app_id=%s;client_system_info_len=%d"
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()		
-		, _req_login.client_app_id.c_str());
+		, _req_login.client_app_id.c_str()
+		, _req_login.client_system_info.length());
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
 	//提交终端信息
