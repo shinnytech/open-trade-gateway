@@ -2865,7 +2865,8 @@ void traderctp::SendLoginRequest()
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
 	//提交终端信息
-	if (!_req_login.client_system_info.empty())
+	if ((!_req_login.client_system_info.empty())
+		&&(_req_login.bid!="simnow"))
 	{
 		int ret = RegSystemInfo();
 		if (0 != ret)
