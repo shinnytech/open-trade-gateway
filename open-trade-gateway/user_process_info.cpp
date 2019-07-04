@@ -40,10 +40,6 @@ bool UserProcessInfo::StartProcess()
 		{			
 			return StartProcess_i("open-trade-ctp",_key);
 		}
-		/*else if (_reqLogin.broker.broker_type == "ctpse13")
-		{
-			return StartProcess_i("open-trade-ctpse",_key);
-		}*/
 		else if (_reqLogin.broker.broker_type == "ctpse")
 		{
 			return StartProcess_i("open-trade-ctpse15",_key);
