@@ -2967,6 +2967,7 @@ int traderctp::ReqQryBrokerTradingParams()
 	memset(&field, 0, sizeof(field));
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
+	strcpy_x(field.CurrencyID, "CNY");
 	int r = m_pTdApi->ReqQryBrokerTradingParams(&field, 0);
 	if (0 != r)
 	{
