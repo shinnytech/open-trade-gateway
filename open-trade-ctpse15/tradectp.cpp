@@ -1574,6 +1574,33 @@ void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
 		, ptr1, ptr2, nRequestID, bIsLast));
 }
 
+void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus)
+{
+	if (nullptr != pInstrumentStatus)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pInstrumentStatus);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnInstrumentStatus;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRtnInstrumentStatus;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+}
+
 void traderctp::ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccountField> pRspInvestorAccount,
 	std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast)
 {
@@ -3423,6 +3450,7 @@ void traderctp::SendUserDataImd(int connectId)
 		double po_ori = 0;
 		double po_curr = 0;
 		double av_diff = 0;
+
 		switch (m_Algorithm_Type)
 		{
 		case THOST_FTDC_AG_All:
@@ -3456,6 +3484,7 @@ void traderctp::SendUserDataImd(int connectId)
 		default:
 			break;
 		}
+
 		av_diff = po_curr - po_ori;
 		acc.position_profit = total_position_profit;
 		acc.float_profit = total_float_profit;
@@ -3566,6 +3595,7 @@ void traderctp::SendUserData()
 		double po_ori = 0;
 		double po_curr = 0;
 		double av_diff = 0;
+
 		switch (m_Algorithm_Type)
 		{
 		case THOST_FTDC_AG_All:
@@ -3599,6 +3629,7 @@ void traderctp::SendUserData()
 		default:
 			break;
 		}
+
 		av_diff = po_curr - po_ori;
 		acc.position_profit = total_position_profit;
 		acc.float_profit = total_float_profit;

@@ -4,95 +4,96 @@
 #include <vector>
 #include <map>
 
-//Ìõ¼ş´¥·¢ÀàĞÍ
+//æ¡ä»¶è§¦å‘ç±»å‹
 enum class EContingentType
 {
-	market_open,//¿ªÅÌ´¥·¢
-	time,//Ê±¼ä´¥·¢
-	price,//¼Û¸ñ´¥·¢
-	price_range,//¼Û¸ñÇø¼ä´¥·¢
-	break_even//¹Ì¶¨¼Û¸ñ±£±¾´¥·¢
+	market_open,//å¼€ç›˜è§¦å‘
+	time,//æ—¶é—´è§¦å‘
+	price,//ä»·æ ¼è§¦å‘
+	price_range,//ä»·æ ¼åŒºé—´è§¦å‘
+	break_even//å›ºå®šä»·æ ¼ä¿æœ¬è§¦å‘
 };
 
-//¼Û¸ñ¹ØÏµÀàĞÍ
+//ä»·æ ¼å…³ç³»ç±»å‹
 enum class EPriceRelationType
 {
-	G,//´óÓÚ
-	GE,//´óÓÚµÈÓÚ
-	L,//Ğ¡ÓÚ
-	LE//Ğ¡ÓÚµÈÓÚ
+	G,//å¤§äº
+	GE,//å¤§äºç­‰äº
+	L,//å°äº
+	LE//å°äºç­‰äº
 };
 
-//ÏÂµ¥ÂòÂô·½Ïò
+//ä¸‹å•ä¹°å–æ–¹å‘
 enum class EOrderDirection
 {
-	buy,//Âò
-	sell//Âô
+	buy,//ä¹°
+	sell//å–
 };
 
-//ÏÂµ¥¿ªÆ½·½Ïò
+//ä¸‹å•å¼€å¹³æ–¹å‘
 enum class EOrderOffset
 {
-	open,//¿ª
-	close,//Æ½
-	close_today,//Æ½½ñ
-	reverse//·´ÊÖ
+	open,//å¼€
+	close,//å¹³
+	close_today,//å¹³ä»Š
+	reverse//åæ‰‹
 };
 
-//ÊÖÊıÀàĞÍ
+//æ‰‹æ•°ç±»å‹
 enum class EVolumeType
 {
-	num,//¾ßÌåÊÖÊı
-	close_all//È«Æ½
+	num,//å…·ä½“æ‰‹æ•°
+	close_all//å…¨å¹³
 };
 
-//¼Û¸ñÀàĞÍ
+//ä»·æ ¼ç±»å‹
 enum class EPriceType
 {
-	contingent,//´¥·¢¼Û¸ñ
-	consideration,//¶Ô¼Û
-	market,//ÊĞ¼Û
-	over,//³¬¼Û
-	limit,//ÏŞ¼Û
+	contingent,//è§¦å‘ä»·æ ¼
+	consideration,//å¯¹ä»·
+	market,//å¸‚ä»·
+	over,//è¶…ä»·
+	limit,//é™ä»·
 };
 
-//Âß¼­²Ù×÷·û
+//é€»è¾‘æ“ä½œç¬¦
 enum class ELogicOperator
 {
-	logic_and,//Âß¼­Óë
-	logic_or//Âß¼­»ò
+	logic_and,//é€»è¾‘ä¸
+	logic_or//é€»è¾‘æˆ–
 };
 
-//Ìõ¼şµ¥µÄÓĞĞ§Ê±³¤
+//æ¡ä»¶å•çš„æœ‰æ•ˆæ—¶é•¿
 enum class ETimeConditionType
 {
-	GFD,//µ±ÈÕÓĞĞ§
-	GTD,//Ö¸¶¨ÈÕÆÚÇ°ÓĞĞ§
-	GTC//³·ÏûÇ°Ò»Ö±ÓĞĞ§
+	GFD,//å½“æ—¥æœ‰æ•ˆ
+	GTD,//æŒ‡å®šæ—¥æœŸå‰æœ‰æ•ˆ
+	GTC//æ’¤æ¶ˆå‰ä¸€ç›´æœ‰æ•ˆ
 };
 
-//Ìõ¼şµ¥µÄ×´Ì¬
+//æ¡ä»¶å•çš„çŠ¶æ€
 enum class EConditionOrderStatus
 {
-	live,//¿ÉÓÃ
-	suspend,//ÔİÍ£
-	cancel,//³·Ïû
-	touched//´¥·¢
+	live,//å¯ç”¨
+	suspend,//æš‚åœ
+	cancel,//æ’¤æ¶ˆ
+	discard,//ä½œåºŸ
+	touched//è§¦å‘
 };
 
-//ÊĞ³¡×´Ì¬
+//å¸‚åœºçŠ¶æ€
 enum class EMarketStatus
 {
-	before_trading,//¿ªÅÌÇ°
-	no_trading,//·Ç½»Ò×
-	continous, //Á¬Ğø½»Ò×
-	auction_ordering,//¼¯ºÏ¾º¼Û±¨µ¥
-	auction_balance,//¼¯ºÏ¾º¼Û¼Û¸ñÆ½ºâ
-	auction_match,//¼¯ºÏ¾º¼Û´éºÏ
-	is_closed//ÊÕÅÌ
+	before_trading,//å¼€ç›˜å‰
+	no_trading,//éäº¤æ˜“
+	continous, //è¿ç»­äº¤æ˜“
+	auction_ordering,//é›†åˆç«ä»·æŠ¥å•
+	auction_balance,//é›†åˆç«ä»·ä»·æ ¼å¹³è¡¡
+	auction_match,//é›†åˆç«ä»·æ’®åˆ
+	is_closed//æ”¶ç›˜
 };
 
-//´¥·¢Ìõ¼ş
+//è§¦å‘æ¡ä»¶
 struct ContingentCondition
 {
 	ContingentCondition() :
@@ -110,50 +111,50 @@ struct ContingentCondition
 	{
 	}
 
-	//Ìõ¼ş´¥·¢ÀàĞÍ
+	//æ¡ä»¶è§¦å‘ç±»å‹
 	EContingentType contingent_type;
 
-	//½»Ò×ËùID
+	//äº¤æ˜“æ‰€ID
 	std::string exchange_id;
 
-	//ºÏÔ¼´úÂë
+	//åˆçº¦ä»£ç 
 	std::string instrument_id;
 
-	//Ìõ¼şÊÇ·ñÒÑ¾­´¥·¢
+	//æ¡ä»¶æ˜¯å¦å·²ç»è§¦å‘
 	bool is_touched;
 
-	//ÊĞ³¡×´Ì¬
+	//å¸‚åœºçŠ¶æ€
 	EMarketStatus market_status;
 
-	//´¥·¢¼Û¸ñ
+	//è§¦å‘ä»·æ ¼
 	double contingent_price;
 
-	//´¥·¢¼Û¸ñ¹ØÏµ
+	//è§¦å‘ä»·æ ¼å…³ç³»
 	EPriceRelationType price_relation_type;
 
-	//´¥·¢Ê±¼ä
+	//è§¦å‘æ—¶é—´
 	int contingent_time;
 
-	//´¥·¢¼Û¸ñÇø¼ä×ó±ß½ç
+	//è§¦å‘ä»·æ ¼åŒºé—´å·¦è¾¹ç•Œ
 	double contingent_price_left;
 
-	//´¥·¢¼Û¸ñÇø¼äÓÒ±ß½ç
+	//è§¦å‘ä»·æ ¼åŒºé—´å³è¾¹ç•Œ
 	double contingent_price_right;
 
-	//Ö¹Ó¯¼Û¸ñ
-	int break_even_price;
+	//æ­¢ç›ˆä»·æ ¼
+	double break_even_price;
 
-	//¸üĞÂÊĞ³¡×´Ì¬
+	//æ›´æ–°å¸‚åœºçŠ¶æ€
 	void UpdateMarketStatus(EMarketStatus marketStatus);
 
-	//¸üĞÂÊĞ³¡Ê±¼ä
+	//æ›´æ–°å¸‚åœºæ—¶é—´
 	void UpdateMarketTime(int marketTime);
 
-	//¸üĞÂÊĞ³¡¼Û¸ñ
+	//æ›´æ–°å¸‚åœºä»·æ ¼
 	void UpdatePrice(double price);
 };
 
-//Ìõ¼ş´¥·¢ºóµÄ¶©µ¥
+//æ¡ä»¶è§¦å‘åçš„è®¢å•
 struct ContingentOrder
 {
 	ContingentOrder()
@@ -168,24 +169,24 @@ struct ContingentOrder
 	{
 	}
 
-	std::string exchange_id;//½»Ò×ËùID
+	std::string exchange_id;//äº¤æ˜“æ‰€ID
 
-	std::string instrument_id;//ºÏÔ¼´úÂë
+	std::string instrument_id;//åˆçº¦ä»£ç 
 
-	EOrderDirection direction;//·½Ïò
+	EOrderDirection direction;//æ–¹å‘
 
-	EOrderOffset offset;//¿ªÆ½
+	EOrderOffset offset;//å¼€å¹³
 
-	EVolumeType volume_type;//ÊÖÊıÀàĞÍ
+	EVolumeType volume_type;//æ‰‹æ•°ç±»å‹
 
-	int volume;//¾ßÌåÊÖÊı
+	int volume;//å…·ä½“æ‰‹æ•°
 
-	EPriceType price_type;//¼Û¸ñÀàĞÍ
+	EPriceType price_type;//ä»·æ ¼ç±»å‹
 
-	double limit_price;//¾ßÌåÏŞ¼Û
+	double limit_price;//å…·ä½“é™ä»·
 };
 
-//Ìõ¼şµ¥
+//æ¡ä»¶å•
 struct ConditionOrder
 {
 	ConditionOrder()
@@ -203,41 +204,41 @@ struct ConditionOrder
 	{
 	}
 
-	//Ìõ¼şµ¥µÄ¶©µ¥ºÅ
+	//æ¡ä»¶å•çš„è®¢å•å·
 	std::string order_id;
 
-	//Ìõ¼şµ¥Éú³ÉÊ±µÄ½»Ò×ÈÕ
+	//æ¡ä»¶å•ç”Ÿæˆæ—¶çš„äº¤æ˜“æ—¥
 	int trading_day;
 
-	//Ìõ¼şµ¥Éú³ÉµÄÊ±¼ä
+	//æ¡ä»¶å•ç”Ÿæˆçš„æ—¶é—´
 	long long insert_date_time;
 
-	//Ìõ¼şµ¥µÄÌõ¼şÁĞ±í
+	//æ¡ä»¶å•çš„æ¡ä»¶åˆ—è¡¨
 	std::vector<ContingentCondition> condition_list;
 
-	//¶à¸öÌõ¼şÖ®¼äµÄÂß¼­²Ù×÷·û
+	//å¤šä¸ªæ¡ä»¶ä¹‹é—´çš„é€»è¾‘æ“ä½œç¬¦
 	ELogicOperator conditions_logic_oper;
 
-	//Ìõ¼ş´¥·¢ºóµÄ¶©µ¥ÁĞ±í
+	//æ¡ä»¶è§¦å‘åçš„è®¢å•åˆ—è¡¨
 	std::vector<ContingentOrder> order_list;
 
-	//Ìõ¼şµ¥µÄÓĞĞ§Ê±³¤
+	//æ¡ä»¶å•çš„æœ‰æ•ˆæ—¶é•¿
 	ETimeConditionType time_condition_type;
 
-	//ÓĞĞ§Ê±ÆÚ
+	//æœ‰æ•ˆæ—¶æœŸ
 	int GTD_date;
 
-	//¿ÉÆ½²»×ãÊ±ÊÇ·ñ³·Ô­Æ½²Ö¹Òµ¥
+	//å¯å¹³ä¸è¶³æ—¶æ˜¯å¦æ’¤åŸå¹³ä»“æŒ‚å•
 	bool is_cancel_ori_close_order;
 
-	//Ìõ¼şµ¥×´Ì¬
+	//æ¡ä»¶å•çŠ¶æ€
 	EConditionOrderStatus status;
 
-	//ÄÚ²¿Ê¹ÓÃ
+	//å†…éƒ¨ä½¿ç”¨
 	bool changed;
 };
 
-//Ìõ¼şµ¥Êı¾İ
+//æ¡ä»¶å•æ•°æ®
 struct ConditionOrderData
 {
 	ConditionOrderData()
@@ -252,17 +253,44 @@ struct ConditionOrderData
 	//bid
 	std::string broker_id;
 
-	//ÓÃ»§Ãû
+	//ç”¨æˆ·å
 	std::string user_id;
 
-	//ÓÃ»§ÃÜÂë
+	//ç”¨æˆ·å¯†ç 
 	std::string user_password;
 
-	//½»Ò×ÈÕ
+	//äº¤æ˜“æ—¥
 	std::string trading_day;
 
-	//Ìõ¼şµ¥ÁĞ±í
+	//æ¡ä»¶å•åˆ—è¡¨
 	std::map<std::string,ConditionOrder> condition_orders;
+};
+
+//æ¡ä»¶å•å†å²æ•°æ®
+struct ConditionOrderHisData
+{
+	ConditionOrderHisData()
+		:broker_id("")
+		, user_id("")
+		, user_password("")
+		, trading_day("")		
+		, his_condition_orders()
+	{
+	}
+
+	//bid
+	std::string broker_id;
+
+	//ç”¨æˆ·å
+	std::string user_id;
+
+	//ç”¨æˆ·å¯†ç 
+	std::string user_password;
+
+	//äº¤æ˜“æ—¥
+	std::string trading_day;
+
+	std::vector<ConditionOrder> his_condition_orders;
 };
 
 struct req_insert_condition_order
@@ -271,28 +299,79 @@ struct req_insert_condition_order
 
 	std::string aid;
 
-	//ÓÃ»§Ãû
+	//ç”¨æˆ·å
 	std::string user_id;
 
-	//Ìõ¼şµ¥µÄ¶©µ¥ºÅ
+	//æ¡ä»¶å•çš„è®¢å•å·
 	std::string order_id;
 
-	//Ìõ¼şµ¥µÄÌõ¼şÁĞ±í
+	//æ¡ä»¶å•çš„æ¡ä»¶åˆ—è¡¨
 	std::vector<ContingentCondition> condition_list;
 
-	//¶à¸öÌõ¼şÖ®¼äµÄÂß¼­²Ù×÷·û
+	//å¤šä¸ªæ¡ä»¶ä¹‹é—´çš„é€»è¾‘æ“ä½œç¬¦
 	ELogicOperator conditions_logic_oper;
 
-	//Ìõ¼ş´¥·¢ºóµÄ¶©µ¥ÁĞ±í
+	//æ¡ä»¶è§¦å‘åçš„è®¢å•åˆ—è¡¨
 	std::vector<ContingentOrder> order_list;
 
-	//Ìõ¼şµ¥µÄÓĞĞ§Ê±³¤
+	//æ¡ä»¶å•çš„æœ‰æ•ˆæ—¶é•¿
 	ETimeConditionType time_condition_type;
 
-	//ÓĞĞ§Ê±ÆÚ
+	//æœ‰æ•ˆæ—¶æœŸ
 	int GTD_date;
 
-	//¿ÉÆ½²»×ãÊ±ÊÇ·ñ³·Ô­Æ½²Ö¹Òµ¥
+	//å¯å¹³ä¸è¶³æ—¶æ˜¯å¦æ’¤åŸå¹³ä»“æŒ‚å•
 	bool is_cancel_ori_close_order;
 };
 
+struct req_cancel_condition_order
+{
+	req_cancel_condition_order();
+
+	std::string aid;
+
+	//ç”¨æˆ·å
+	std::string user_id;
+
+	//æ¡ä»¶å•çš„è®¢å•å·
+	std::string order_id;
+};
+
+struct req_pause_condition_order
+{
+	req_pause_condition_order();
+
+	std::string aid;
+
+	//ç”¨æˆ·å
+	std::string user_id;
+
+	//æ¡ä»¶å•çš„è®¢å•å·
+	std::string order_id;
+};
+
+struct req_resume_condition_order
+{
+	req_resume_condition_order();
+
+	std::string aid;
+
+	//ç”¨æˆ·å
+	std::string user_id;
+
+	//æ¡ä»¶å•çš„è®¢å•å·
+	std::string order_id;
+};
+
+struct qry_histroy_condition_order
+{
+	qry_histroy_condition_order();
+
+	std::string aid;
+
+	//ç”¨æˆ·å
+	std::string user_id;
+
+	//æ’å…¥æ¡ä»¶å•çš„æ—¥æœŸ,è‡ªç„¶æ—¥
+	int action_day;
+};

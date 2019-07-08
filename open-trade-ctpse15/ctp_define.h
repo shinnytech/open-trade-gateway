@@ -160,5 +160,7 @@ namespace trader_dll
 		void DefineStruct(CThostFtdcTradeField& d);
 
 		void DefineStruct(CThostFtdcTradingNoticeInfoField& d);
+
+		void DefineStruct(CThostFtdcInstrumentStatusField& d);
 	};
 }

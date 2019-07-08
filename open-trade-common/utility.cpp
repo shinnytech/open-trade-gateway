@@ -25,8 +25,15 @@ std::string GenerateUniqFileName()
 long long GetLocalEpochNano()
 {
     auto now = std::chrono::high_resolution_clock::now();
-    std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
+	std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
     return ns.count();
+}
+
+long long GetLocalEpochMilli()
+{
+	auto now = std::chrono::high_resolution_clock::now();
+	std::chrono::milliseconds mi = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+	return mi.count();
 }
 
 std::string GuessTradingDay()

@@ -121,6 +121,9 @@ public:
 	///请求查询经纪公司交易参数响应
 	virtual void OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField *pBrokerTradingParams
 		, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+
+	///合约交易状态通知
+	virtual void OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus);
 private:
 	std::atomic_bool m_b_login;
 

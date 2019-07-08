@@ -123,6 +123,9 @@ public:
 	///请求查询经纪公司交易参数响应
 	virtual void OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField *pBrokerTradingParams
 		, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+
+	///合约交易状态通知
+	virtual void OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus);
 private:
 	std::atomic_bool m_b_login;
 
@@ -289,7 +292,7 @@ private:
 	void OutputNotifyAllSycn(long notify_code
 		, const std::string& ret_msg, const char* level = "INFO"
 		, const char* type = "MESSAGE");
-
+	
 	void SendMsgAll(std::shared_ptr<std::string> conn_str_ptr,std::shared_ptr<std::string> msg_ptr);
 
 	void SendMsg(int connId,std::shared_ptr<std::string> msg_ptr);
@@ -450,5 +453,13 @@ private:
 	void NotifyClientHisSettlementInfo(const std::string& hisSettlementInfo);
 
 	void InitPositionVolume();
+
 	void AdjustPositionByTrade(const Trade& trade);
+
+	virtual void SendConditionOrderData(const std::string& msg);
+
+	virtual void SendConditionOrderData(int connectId, const std::string& msg);
+
+	virtual void OutputNotifyAll(long notify_code,const std::string& ret_msg
+		, const char* level	, const char* type);
 };

@@ -21,7 +21,17 @@ public:
 
 	void DefineStruct(ConditionOrderData& d);
 
+	void DefineStruct(ConditionOrderHisData& d);
+
 	void DefineStruct(req_insert_condition_order& d);
+
+	void DefineStruct(req_cancel_condition_order& d);	
+
+	void DefineStruct(req_pause_condition_order& d);
+
+	void DefineStruct(req_resume_condition_order& d);
+
+	void DefineStruct(qry_histroy_condition_order& d);
 public:
 	bool dump_all;
 };

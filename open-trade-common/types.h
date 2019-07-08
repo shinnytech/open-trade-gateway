@@ -501,26 +501,35 @@ struct Account
 		changed = true;
 	}
 
-	//账号及币种
+	//账号
 	std::string user_id;
+
+	//币种
 	std::string currency;
 
-	//本交易日开盘前状态(权益)
+	//本交易日开盘前状态(昨权益)
 	double pre_balance;
 
 	//本交易日内已发生事件的影响	
+
 	double deposit;//入金
+
 	double withdraw;//出金
+
 	double close_profit;//平仓盈亏
+
 	double commission;//手续费
+
 	double premium;//暂时无用
+
 	double static_balance;//静态权益
 
 	//当前持仓盈亏
 	double position_profit;//持仓盈亏
+
 	double float_profit;//浮动盈亏
 
-	//当前权益
+	//当前权益(动态权益)
 	double balance;
 
 	//保证金占用, 冻结及风险度

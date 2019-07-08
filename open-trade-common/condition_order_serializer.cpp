@@ -136,6 +136,7 @@ void SerializerConditionOrderData::DefineStruct(ConditionOrder& d)
 		, { { EConditionOrderStatus::cancel, ("cancel") },
 		{ EConditionOrderStatus::live, ("live") },
 		{ EConditionOrderStatus::suspend, ("suspend") },
+		{ EConditionOrderStatus::discard, ("discard") },
 		{ EConditionOrderStatus::touched, ("touched") },
 		});
 }
@@ -147,6 +148,15 @@ void SerializerConditionOrderData::DefineStruct(ConditionOrderData& d)
 	AddItem(d.user_password, ("user_password"));
 	AddItem(d.trading_day, ("trading_day"));
 	AddItem(d.condition_orders, ("condition_orders"));
+}
+
+void SerializerConditionOrderData::DefineStruct(ConditionOrderHisData& d)
+{
+	AddItem(d.broker_id, ("broker_id"));
+	AddItem(d.user_id, ("user_id"));
+	AddItem(d.user_password, ("user_password"));
+	AddItem(d.trading_day, ("trading_day"));
+	AddItem(d.his_condition_orders, ("his_condition_orders"));
 }
 
 void SerializerConditionOrderData::DefineStruct(req_insert_condition_order& d)
@@ -168,4 +178,32 @@ void SerializerConditionOrderData::DefineStruct(req_insert_condition_order& d)
 		});
 	AddItem(d.GTD_date, ("GTD_date"));
 	AddItem(d.is_cancel_ori_close_order, ("is_cancel_ori_close_order"));	
+}
+
+void SerializerConditionOrderData::DefineStruct(req_cancel_condition_order& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.user_id, ("user_id"));
+	AddItem(d.order_id, ("order_id"));
+}
+
+void SerializerConditionOrderData::DefineStruct(req_pause_condition_order& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.user_id, ("user_id"));
+	AddItem(d.order_id, ("order_id"));
+}
+
+void SerializerConditionOrderData::DefineStruct(req_resume_condition_order& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.user_id, ("user_id"));
+	AddItem(d.order_id, ("order_id"));
+}
+
+void SerializerConditionOrderData::DefineStruct(qry_histroy_condition_order& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.user_id, ("user_id"));
+	AddItem(d.action_day, ("action_day"));
 }

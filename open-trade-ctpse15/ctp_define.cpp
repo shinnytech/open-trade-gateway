@@ -1072,4 +1072,17 @@ namespace trader_dll
 		std::string strContent = GBKToUTF8(d.FieldContent);
 		AddItem(strContent, ("FieldContent"));		
 	}
+
+	void SerializerLogCtp::DefineStruct(CThostFtdcInstrumentStatusField& d)
+	{
+		AddItem(d.ExchangeID, ("ExchangeID"));
+		AddItem(d.ExchangeInstID, ("ExchangeInstID"));
+		std::string strSettlementGroupID = GBKToUTF8(d.SettlementGroupID);
+		AddItem(strSettlementGroupID, ("SettlementGroupID"));
+		AddItem(d.InstrumentID, ("InstrumentID"));
+		AddItem(d.InstrumentStatus, ("InstrumentStatus"));
+		AddItem(d.TradingSegmentSN, ("TradingSegmentSN"));
+		AddItem(d.EnterTime, ("EnterTime"));
+		AddItem(d.EnterReason, ("EnterReason"));
+	}
 }

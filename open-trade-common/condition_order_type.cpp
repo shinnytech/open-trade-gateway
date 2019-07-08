@@ -48,3 +48,35 @@ req_insert_condition_order::req_insert_condition_order()
 	,is_cancel_ori_close_order(false)
 {
 }
+
+req_cancel_condition_order::req_cancel_condition_order()
+	:aid("")
+	,user_id("")
+	,order_id("")
+{
+
+}
+
+req_pause_condition_order::req_pause_condition_order()
+	:aid("")
+	, user_id("")
+	, order_id("")
+{
+
+}
+
+req_resume_condition_order::req_resume_condition_order()
+	:aid("")
+	, user_id("")
+	, order_id("")
+{
+
+}
+
+qry_histroy_condition_order::qry_histroy_condition_order()
+	:aid("")
+	, user_id("")
+	, action_day(0)
+{
+
+}

@@ -64,7 +64,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, m_rtn_from_future_to_bank_by_future_log_map()
 	, m_err_rtn_order_insert_log_map()
 	, m_err_rtn_order_action_log_map()
-	, m_condition_order_manager(*this)
+	, m_condition_order_manager(_key,*this)
 {
 	_requestID.store(0);
 
@@ -2542,7 +2542,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 
 			std::stringstream ss;
 			ss << u8"成交通知,合约:" << serverOrderInfo.ExchangeId
-				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume;
+				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume ;
 			OutputNotifyAllSycn(0, ss.str().c_str());
 
 			if (serverOrderInfo.VolumeLeft <= 0)
@@ -2749,6 +2749,32 @@ void traderctp::OnRspError(CThostFtdcRspInfoField* pRspInfo
 		, ptr2));
 }
 
+void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus)
+{
+	if (nullptr != pInstrumentStatus)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pInstrumentStatus);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log(LOG_INFO, strMsg.c_str()
+			, "fun=OnRtnInstrumentStatus;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnRtnInstrumentStatus;key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+		);
+	}
+}
 
 #pragma endregion
 
@@ -2909,7 +2935,7 @@ int traderctp::ReqQryBrokerTradingParams()
 	memset(&field, 0, sizeof(field));
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
 	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
-	strcpy_x(field.CurrencyID, "CNY");
+	strcpy_x(field.CurrencyID, "CNY");	
 	int r = m_pTdApi->ReqQryBrokerTradingParams(&field, 0);
 	if (0 != r)
 	{
@@ -3175,10 +3201,7 @@ TransferLog& traderctp::GetTransferLog(const std::string& seq_id)
 }
 
 void traderctp::LoadFromFile()
-{
-	
-	m_condition_order_manager.Load(_key);
-
+{	
 	if (m_user_file_path.empty())
 	{
 		return;
@@ -3200,8 +3223,6 @@ void traderctp::LoadFromFile()
 
 void traderctp::SaveToFile()
 {
-	m_condition_order_manager.Save(_key);
-
 	if (m_user_file_path.empty())
 	{
 		return;
@@ -3395,7 +3416,7 @@ void traderctp::SendUserData()
 		double dv = total_position_profit - acc.position_profit;
 		double po_ori = 0;
 		double po_curr = 0;
-		double av_diff = 0;
+		double av_diff = 0;		
 		switch (m_Algorithm_Type)
 		{
 		case THOST_FTDC_AG_All:
@@ -3537,6 +3558,7 @@ void traderctp::SendUserDataImd(int connectId)
 		double po_ori = 0;
 		double po_curr = 0;
 		double av_diff = 0;
+
 		switch (m_Algorithm_Type)
 		{
 		case THOST_FTDC_AG_All:
@@ -3570,6 +3592,7 @@ void traderctp::SendUserDataImd(int connectId)
 		default:
 			break;
 		}
+
 		av_diff = po_curr - po_ori;
 		acc.position_profit = total_position_profit;
 		acc.float_profit = total_float_profit;
@@ -4003,12 +4026,6 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "confirm_settlement")
 		{
-			Log(LOG_INFO,msg.c_str()
-				, "fun=ProcessInMsg;msg=trade ctp receive confirm_settlement;key=%s;bid=%s;user_name=%s;connid=%d"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, connId);
 			if (0 == m_confirm_settlement_status.load())
 			{
 				m_confirm_settlement_status.store(1);
@@ -4017,12 +4034,6 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "qry_settlement_info")
 		{
-			Log(LOG_INFO, msg.c_str()
-				, "fun=ProcessInMsg;msg=trade ctp receive qry_settlement_info msg;key=%s;bid=%s;user_name=%s;connid=%d"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, connId);
 			qry_settlement_info qrySettlementInfo;
 			ss.ToVar(qrySettlementInfo);
 			OnClientReqQrySettlementInfo(qrySettlementInfo);
@@ -4038,6 +4049,10 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		else if (aid == "pause_condition_order")
 		{
 			m_condition_order_manager.PauseConditionOrder(msg);
+		}
+		else if (aid == "resume_condition_order")
+		{
+			m_condition_order_manager.ResumeConditionOrder(msg);
 		}
 		else if (aid == "qry_his_condition_order")
 		{
@@ -4111,6 +4126,8 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			//发送用户数据
 			SendUserDataImd(connId);
 
+			m_condition_order_manager.SendAllConditionOrderDataImd(connId);
+
 			//重发结算结果确认信息
 			ReSendSettlementInfo(connId);
 		}
@@ -4170,6 +4187,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			m_b_login.store(true);
 		}
 
+		//如果登录成功
 		if (m_b_login.load())
 		{
 			//加入登录客户端列表
@@ -4187,6 +4205,12 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			);
 			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 			_ios.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
+
+			//加载条件单数据
+			m_condition_order_manager.Load(_req_login.bid,
+				_req_login.user_name,
+				_req_login.password,
+				m_trading_day);
 		}
 		else
 		{
@@ -4506,6 +4530,14 @@ void traderctp::OutputNotifyAllSycn(long notify_code
 		std::shared_ptr<std::string> conn_ptr(new std::string(str));
 		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
 	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=OutputNotifyAllSycn;key=%s;bid=%s;user_name=%s;msg=GetConnectionStr is empty"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str());
+	}
 }
 
 #pragma endregion
@@ -4681,3 +4713,30 @@ void traderctp::OnClientPeekMessage()
 
 #pragma endregion
 
+#pragma region ConditionOrderCallBack
+
+void traderctp::SendConditionOrderData(const std::string& msg)
+{
+	std::string str = GetConnectionStr();
+	if (!str.empty())
+	{
+		std::shared_ptr<std::string> msg_ptr(new std::string(msg));
+		std::shared_ptr<std::string> conn_ptr(new std::string(str));
+		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+	}
+}
+
+void traderctp::SendConditionOrderData(int connectId, const std::string& msg)
+{
+	std::shared_ptr<std::string> msg_ptr(new std::string(msg));
+	_ios.post(boost::bind(&traderctp::SendMsg, this, connectId, msg_ptr));
+}
+
+
+void traderctp::OutputNotifyAll(long notify_code, const std::string& ret_msg
+	, const char* level	,const char* type)
+{
+	OutputNotifyAllSycn(notify_code,ret_msg,level,type);
+}
+
+#pragma endregion
