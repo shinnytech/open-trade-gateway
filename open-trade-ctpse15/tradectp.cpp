@@ -3838,69 +3838,6 @@ void traderctp::CloseConnection(int nId)
 			break;
 		}
 	}
-
-	//如果已经没有客户端连接,将来要考虑条件单的情况
-	if (m_logined_connIds.empty())
-	{
-		if (m_need_save_file.load())
-		{
-			SaveToFile();
-		}
-
-		StopTdApi();
-		m_b_login.store(false);
-		_logIn_status = 0;
-		m_try_req_authenticate_times = 0;
-		m_try_req_login_times = 0;
-		m_ordermap_local_remote.clear();
-		m_ordermap_remote_local.clear();
-
-		m_data.m_accounts.clear();
-		m_data.m_banks.clear();
-		m_data.m_orders.clear();
-		m_data.m_positions.clear();
-		m_data.m_trades.clear();
-		m_data.m_transfers.clear();
-		m_data.m_trade_more_data = false;
-		
-		m_banks.clear();
-
-		m_settlement_info = "";
-
-		m_notify_seq = 0;
-		m_data_seq = 0;
-		_requestID.store(0);
-
-		m_trading_day = "";
-		m_front_id = 0;
-		m_session_id = 0;
-		m_order_ref = 0;
-
-		m_req_login_dt = 0;
-		m_next_qry_dt = 0;
-		m_next_send_dt = 0;
-
-		m_need_query_settlement.store(false);
-		m_confirm_settlement_status.store(0);
-
-		m_req_account_id.store(0);
-		m_rsp_account_id.store(0);
-
-		m_req_position_id.store(0);
-		m_rsp_position_id.store(0);
-		m_position_ready.store(false);
-
-		m_need_query_bank.store(false);
-		m_need_query_register.store(false);
-
-		m_something_changed = false;
-		m_peeking_message = false;
-
-		m_need_save_file.store(false);
-
-		m_need_query_broker_trading_params.store(false);
-		m_Algorithm_Type = THOST_FTDC_AG_None;
-	}
 }
 
 void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
