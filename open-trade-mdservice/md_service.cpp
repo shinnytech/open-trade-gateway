@@ -149,8 +149,9 @@ bool mdservice::LoadInsList()
 			return false;
 		}
 
-		Log(LOG_INFO,content.c_str()
-			, "fun=LoadInsList;msg=mdservice download ins file success;key=mdservice");
+		Log(LOG_INFO,nullptr
+			, "fun=LoadInsList;msg=mdservice download ins file success;key=mdservice;contentlen=%d"
+			, content.length());
 
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str()))
