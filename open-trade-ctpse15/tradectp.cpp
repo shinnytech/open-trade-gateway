@@ -4586,7 +4586,9 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	Log(LOG_INFO, nullptr
-		, "fun=OnClientReqCancelOrder;msg=ctpse ReqOrderAction;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d"
+		, "fun=OnClientReqCancelOrder;msg=ctpse ReqOrderAction;ExchangeID=%s;InvestorID=%s;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d"
+		,d.f.ExchangeID
+		, d.f.InvestorID
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
@@ -4633,7 +4635,9 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
 	Log(LOG_INFO, nullptr
-		, "fun=OnClientReqInsertOrder;msg=ctpse ReqOrderInsert;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
+		, "fun=OnClientReqInsertOrder;msg=ctpse ReqOrderInsert;ExchangeID=%s;InvestorID=%s;key=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
+		,d.f.ExchangeID
+		,d.f.InvestorID
 		, _key.c_str()
 		, _req_login.bid.c_str()
 		, _req_login.user_name.c_str()
