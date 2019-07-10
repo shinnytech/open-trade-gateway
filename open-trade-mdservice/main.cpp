@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	mdservice s(ioc);
 	if (!s.init())
 	{
-		LogMs(LOG_ERROR, nullptr
+		Log(LOG_ERROR, nullptr
 			, "msg=mdservice init fail!;key=mdservice");
 		return -1;
 	}
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 		}
 		catch (std::exception& ex)
 		{
-			LogMs(LOG_ERROR, nullptr
+			Log(LOG_ERROR, nullptr
 				, "msg=mdservice ios run exception;errmsg=%s;key=mdservice"
 				, ex.what());
 		}

@@ -64,7 +64,7 @@ void md_connection::Stop()
 	m_ws_socket.next_layer().close(ec);
 	if (ec)
 	{
-		LogMs(LOG_WARNING, nullptr
+		Log(LOG_WARNING, nullptr
 			, "fun=Stop;msg=m_ws_socket close exception;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
 	}
@@ -165,7 +165,7 @@ void md_connection::SendTextMsg(const std::string &msg)
 	}
 	catch (std::exception& ex)
 	{
-		LogMs(LOG_ERROR, nullptr
+		Log(LOG_ERROR, nullptr
 			, "fun=SendTextMsg;msg=SendTextMsg exception;errmsg=%s;fd=%d;key=mdservice"
 			, ex.what()
 			, m_ws_socket.next_layer().native_handle());
@@ -247,7 +247,7 @@ void md_connection::OnWrite(boost::system::error_code ec
 {
 	if (ec)
 	{
-		LogMs(LOG_WARNING, nullptr
+		Log(LOG_WARNING, nullptr
 			, "fun=OnWrite;msg=mdservice OnWrite exception;fd=%d;errmsg=%s;key=mdservice"
 			, m_ws_socket.next_layer().native_handle()
 			, ec.message().c_str());
