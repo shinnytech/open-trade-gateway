@@ -2897,8 +2897,8 @@ void traderctp::SendLoginRequest()
 	m_req_login_dt.store(now);
 	//提交终端信息
 	if ((!_req_login.client_system_info.empty())
-		&&(_req_login.bid!="simnow"))
-	{
+		&&(_req_login.bid.find("simnow",0)==std::string::npos))
+	{	
 		int ret = RegSystemInfo();
 		if (0 != ret)
 		{

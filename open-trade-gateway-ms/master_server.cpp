@@ -65,6 +65,7 @@ bool master_server::init()
 
 bool master_server::GetSlaveBrokerList()
 {
+	std::vector<std::string> brokerVector;
 	for (auto node : masterConfig_.slaveNodeList)
 	{
 		try
@@ -106,6 +107,7 @@ bool master_server::GetSlaveBrokerList()
 				TBrokerSlaveNodeMap::iterator it = m_broker_slave_node_Map.find(bid);
 				if (it == m_broker_slave_node_Map.end())
 				{
+					brokerVector.push_back(bid);
 					m_broker_slave_node_Map.insert(TBrokerSlaveNodeMap::value_type(bid,node));
 				}
 			}
@@ -120,7 +122,7 @@ bool master_server::GetSlaveBrokerList()
 		}
 	}
 
-	if (m_broker_slave_node_Map.empty())
+	if (brokerVector.empty())
 	{
 		LogMs(LOG_WARNING,nullptr
 			, "msg=open trade gateway master can not get slave broker list!;key=gatewayms");
@@ -130,9 +132,9 @@ bool master_server::GetSlaveBrokerList()
 	SerializerTradeBase ss_broker_list_str;
 	rapidjson::Pointer("/aid").Set(*ss_broker_list_str.m_doc, "rtn_brokers");
 	int i = 0;
-	for (auto b : m_broker_slave_node_Map)
+	for (auto b : brokerVector)
 	{
-		std::string brokerName = b.first;
+		std::string brokerName = b;
 		rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc,brokerName);
 		i++;
 	}

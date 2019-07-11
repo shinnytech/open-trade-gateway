@@ -61,6 +61,8 @@ bool LoadConfig()
     ss.ToVar(g_config);
 		
 	std::map<std::string, BrokerConfig> brokerConfigMap;
+	std::vector< std::string> brokerNameList;
+
 	std::string strFileName = "/etc/open-trade-gateway/broker_list.json";
 	
 	if (boost::filesystem::exists(strFileName))
@@ -78,6 +80,7 @@ bool LoadConfig()
 			ss_broker.ToVar(broker_list);
 			for (auto b : broker_list)
 			{
+				brokerNameList.push_back(b.broker_name);
 				brokerConfigMap[b.broker_name] = b;
 			}
 		}		
@@ -124,9 +127,10 @@ bool LoadConfig()
 		ss_broker.ToVar(bc);
 
 		brokerConfigMap[bc.broker_name] = bc;
+		brokerNameList.push_back(bc.broker_name);
 	}
    
-	if (brokerConfigMap.empty())
+	if (brokerNameList.empty())
 	{
 		Log(LOG_FATAL,nullptr
 			,"msg=load broker list fail!");
@@ -134,24 +138,21 @@ bool LoadConfig()
 	}
 
 	g_config.brokers = brokerConfigMap;	
-    boost::filesystem::path ufpath(g_config.user_file_path);
-	std::vector<std::string> brokerList;
+    boost::filesystem::path ufpath(g_config.user_file_path);	
 	for (auto it : g_config.brokers)
 	{
 		BrokerConfig& broker = it.second;
 		if (!boost::filesystem::exists(ufpath/broker.broker_name))
 		{
 			boost::filesystem::create_directory(ufpath/broker.broker_name);
-		}
-		brokerList.push_back(broker.broker_name);
+		}		
 	}
 
-	std::sort(brokerList.begin(),brokerList.end());
 	SerializerTradeBase ss_broker_list_str;
 	rapidjson::Pointer("/aid").Set(*ss_broker_list_str.m_doc,"rtn_brokers");
-	for (int i = 0; i < brokerList.size();i++)
+	for (int i = 0; i < brokerNameList.size();i++)
 	{
-		rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc,brokerList[i]);
+		rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc, brokerNameList[i]);
 	}
     ss_broker_list_str.ToString(&g_config.broker_list_str);
 
