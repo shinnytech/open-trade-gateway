@@ -26,6 +26,8 @@ public:
 	~UserProcessInfo();
 
 	bool StartProcess();
+
+	bool ReStartProcess();
 	   
 	void StopProcess();
 
@@ -35,6 +37,8 @@ public:
 
 	void NotifyClose(int connid);	
 private:
+	bool RestartProcess_i(const std::string& name, const std::string& cmd);
+
 	bool StartProcess_i(const std::string& name, const std::string& cmd);
 
 	void ReceiveMsg_i(const std::string& key);

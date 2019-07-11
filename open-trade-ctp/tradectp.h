@@ -408,6 +408,12 @@ private:
 	void OnClientReqQrySettlementInfo(const qry_settlement_info
 		& qrySettlementInfo);
 
+	void OnReqStartCTP(const std::string& msg);
+
+	void OnReqStopCTP(const std::string& msg);
+
+	void ClearOldData();
+
 	void OnIdle();
 
 	int ReqQryBrokerTradingParams();

@@ -567,6 +567,7 @@ void connection::ProcessOtherMessage(const std::string &json_str)
 	bool flag = userProcessInfoPtr->ProcessIsRunning();
 	if (!flag)
 	{
+		//TODO::自动重启子进程?
 		OnCloseConnection();
 		return;
 	}
@@ -578,6 +579,13 @@ void connection::OnCloseConnection()
 {	
 	try
 	{
+		Log(LOG_INFO, nullptr
+			, "fun=OnCloseConnection;msg=connection close self;ip=%s;agent=%s;analysis=%s;key=%s"
+			, _X_Real_IP.c_str()
+			, _agent.c_str()
+			, _analysis.c_str()
+			, _user_broker_key.c_str());
+
 		auto userIt = g_userProcessInfoMap.find(_user_broker_key);		
 		if (userIt != g_userProcessInfoMap.end())
 		{			

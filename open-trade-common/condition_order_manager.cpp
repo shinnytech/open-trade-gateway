@@ -19,7 +19,24 @@ ConditionOrderManager::ConditionOrderManager(const std::string& userKey
 	,m_current_valid_condition_order_count(0)
 	,m_condition_order_his_data()
 	,m_callBack(callBack)
+	,m_run_server(true)
 {
+	LoadConditionOrderConfig();
+}
+
+void ConditionOrderManager::LoadConditionOrderConfig()
+{
+	condition_order_config tmp_co_config;
+	SerializerConditionOrderData ss;
+	if (!ss.FromFile("/etc/open-trade-gateway/config-condition-order.json"))
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=LoadConditionOrderConfig;key=%s;msg=load /etc/open-trade-gateway/config-condition-order.json file fail!"
+			, m_userKey.c_str());
+		return;
+	}
+	ss.ToVar(tmp_co_config);
+	m_run_server = tmp_co_config.run_server;
 }
 
 ConditionOrderManager::~ConditionOrderManager()
@@ -580,6 +597,15 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		return;
 	}
 
+	if (!m_run_server)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			, "WARNING", "MESSAGE");
+		return;
+	}
+
 	req_insert_condition_order insert_co;
 	nss.ToVar(insert_co);
 	
@@ -609,6 +635,8 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			, "WARNING", "MESSAGE");
 		return;
 	}
+
+	
 	
 	ConditionOrder order;
 	order.order_id = insert_co.order_id;
@@ -669,6 +697,15 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			, m_userKey.c_str()
 			, m_condition_order_data.broker_id.c_str()
 			, m_condition_order_data.user_id.c_str());
+		return;
+	}
+
+	if (!m_run_server)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"条件单撤单请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			, "WARNING", "MESSAGE");
 		return;
 	}
 
@@ -743,6 +780,15 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			, m_userKey.c_str()
 			, m_condition_order_data.broker_id.c_str()
 			, m_condition_order_data.user_id.c_str());
+		return;
+	}
+
+	if (!m_run_server)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"条件单暂停请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			, "WARNING", "MESSAGE");
 		return;
 	}
 
@@ -827,6 +873,15 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 		return;
 	}
 
+	if (!m_run_server)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"条件单恢复请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			, "WARNING", "MESSAGE");
+		return;
+	}
+
 	req_resume_condition_order resume_co;
 	nss.ToVar(resume_co);
 
@@ -882,6 +937,15 @@ void ConditionOrderManager::QryHisConditionOrder(const std::string& msg)
 		return;
 	}
 
+	if (!m_run_server)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			, "WARNING", "MESSAGE");
+		return;
+	}
+
 	qry_histroy_condition_order qry_his_co;
 	nss.ToVar(qry_his_co);
 
@@ -932,3 +996,36 @@ void ConditionOrderManager::QryHisConditionOrder(const std::string& msg)
 	m_callBack.SendConditionOrderData(json_str);
 }
 
+void ConditionOrderManager::ChangeCOSStatus(const std::string& msg)
+{
+	SerializerConditionOrderData nss;
+	if (!nss.FromString(msg.c_str()))
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ChangeCOSStatus;key=%s;bid=%s;user_name=%s;msg=not invalid ChangeCOSStatus msg!"
+			, m_userKey.c_str()
+			, m_condition_order_data.broker_id.c_str()
+			, m_condition_order_data.user_id.c_str());
+		return;
+	}
+
+	req_ccos_status req;
+	nss.ToVar(req);
+	m_run_server = req.run_server;
+	if (!m_run_server)
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ChangeCOSStatus;key=%s;bid=%s;user_name=%s;msg=cos is stoped!"
+			, m_userKey.c_str()
+			, m_condition_order_data.broker_id.c_str()
+			, m_condition_order_data.user_id.c_str());
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ChangeCOSStatus;key=%s;bid=%s;user_name=%s;msg=cos is started!"
+			, m_userKey.c_str()
+			, m_condition_order_data.broker_id.c_str()
+			, m_condition_order_data.user_id.c_str());
+	}
+}

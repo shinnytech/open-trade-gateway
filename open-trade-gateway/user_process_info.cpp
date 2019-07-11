@@ -6,6 +6,7 @@
 
 #include "user_process_info.h"
 #include "SerializerTradeBase.h"
+#include "condition_order_serializer.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -69,6 +70,63 @@ bool UserProcessInfo::StartProcess()
 			,_key.c_str());
 		return false;
 	}	
+}
+
+bool UserProcessInfo::ReStartProcess()
+{
+	bool flag = false;
+	if (_reqLogin.broker.broker_type == "ctp")
+	{
+		flag=RestartProcess_i("open-trade-ctp", _key);
+	}
+	else if (_reqLogin.broker.broker_type == "ctpse")
+	{
+		flag=RestartProcess_i("open-trade-ctpse15", _key);
+	}
+	else if (_reqLogin.broker.broker_type == "sim")
+	{
+		flag=RestartProcess_i("open-trade-sim", _key);
+	}
+	else if (_reqLogin.broker.broker_type == "perftest")
+	{
+		flag=RestartProcess_i("open-trade-perftest", _key);
+	}
+	else
+	{
+		Log(LOG_ERROR, nullptr
+			, "fun=ReStartProcess;msg=ReStartProcess invalid broker_type;type=%s;key=%s"
+			, _reqLogin.broker.broker_type.c_str()
+			, _key.c_str());
+		flag = false;
+	}
+
+	if (!flag)
+	{
+		Log(LOG_ERROR, nullptr
+			, "fun=ReStartProcess;msg=ReStartProcess fail!;type=%s;key=%s"
+			, _reqLogin.broker.broker_type.c_str()
+			, _key.c_str());
+
+		return false;
+	}
+	
+	SerializerTradeBase nss;
+	nss.FromVar(_reqLogin);
+	std::string strMsg;
+	nss.ToString(&strMsg);
+	SendMsg(0,strMsg);
+
+	req_reconnect_trade_instance req_reconnect;
+	for (auto a : user_connections_)
+	{
+		req_reconnect.connIds.push_back(a.first);
+	}
+	SerializerConditionOrderData ns;
+	ns.FromVar(req_reconnect);
+	ns.ToString(&strMsg);
+	SendMsg(0, strMsg);
+
+	return true;
 }
 
 void UserProcessInfo::StopProcess()
@@ -169,6 +227,37 @@ void UserProcessInfo::NotifyClose(int connid)
 			, str.c_str()
 			, str.length()
 			, _key.c_str());
+	}
+}
+
+bool UserProcessInfo::RestartProcess_i(const std::string& name, const std::string& cmd)
+{
+	try
+	{
+		if (nullptr != _process_ptr)
+		{
+			_process_ptr->wait();
+			_process_ptr.reset();
+		}
+
+		_process_ptr = std::make_shared<boost::process::child>(boost::process::child(
+			boost::process::search_path(name)
+			, cmd.c_str()));
+		
+		if (nullptr == _process_ptr)
+		{
+			return false;
+		}
+
+		return _process_ptr->running();
+	}
+	catch (std::exception& ex)
+	{
+		Log(LOG_ERROR, nullptr
+			, "fun=RestartProcess_i;msg=restart process user process exception;key=%s;errmsg=%s"
+			, _key.c_str()
+			, ex.what());
+		return false;
 	}
 }
 

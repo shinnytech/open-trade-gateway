@@ -32,6 +32,18 @@ public:
 	void DefineStruct(req_resume_condition_order& d);
 
 	void DefineStruct(qry_histroy_condition_order& d);
+
+	void DefineStruct(time_span& d);
+
+	void DefineStruct(weekday_time_span& d);
+
+	void DefineStruct(condition_order_config& d);
+
+	void DefineStruct(req_ccos_status& d);
+
+	void DefineStruct(req_start_trade_instance& d);
+
+	void DefineStruct(req_reconnect_trade_instance& d);
 public:
 	bool dump_all;
 };

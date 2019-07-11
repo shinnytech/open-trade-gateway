@@ -207,3 +207,43 @@ void SerializerConditionOrderData::DefineStruct(qry_histroy_condition_order& d)
 	AddItem(d.user_id, ("user_id"));
 	AddItem(d.action_day, ("action_day"));
 }
+
+void SerializerConditionOrderData::DefineStruct(time_span& d)
+{
+	AddItem(d.begin, ("begin"));
+	AddItem(d.end, ("end"));
+}
+
+void SerializerConditionOrderData::DefineStruct(weekday_time_span& d)
+{
+	AddItem(d.weekday, ("weekday"));
+	AddItem(d.time_span_list, ("timespan"));
+}
+
+void SerializerConditionOrderData::DefineStruct(condition_order_config& d)
+{
+	AddItem(d.run_server, ("run_server"));
+	AddItem(d.auto_start_ctp_time, ("auto_start_ctp_time"));
+	AddItem(d.auto_close_ctp_time, ("auto_close_ctp_time"));
+	AddItem(d.auto_restart_process_time, ("auto_restart_process_time"));
+}
+
+void SerializerConditionOrderData::DefineStruct(req_ccos_status& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.run_server, ("run_server"));
+}
+
+void SerializerConditionOrderData::DefineStruct(req_start_trade_instance& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.bid, ("bid"));
+	AddItem(d.user_name, ("user_name"));
+	AddItem(d.password, ("password"));
+}
+
+void SerializerConditionOrderData::DefineStruct(req_reconnect_trade_instance& d)
+{
+	AddItem(d.aid, ("aid"));
+	AddItem(d.connIds, ("connIds"));
+}

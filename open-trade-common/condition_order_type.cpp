@@ -80,3 +80,46 @@ qry_histroy_condition_order::qry_histroy_condition_order()
 {
 
 }
+
+time_span::time_span()
+	:begin(0)
+	,end(0)
+{
+}
+
+weekday_time_span::weekday_time_span()
+	: weekday(0)
+	,time_span_list()
+{
+}
+
+condition_order_config::condition_order_config()
+	: run_server(true)
+	, auto_start_ctp_time()
+	, has_auto_start_ctp(false)
+	, auto_close_ctp_time()
+	, has_auto_close_ctp(false)
+	, auto_restart_process_time()
+{
+}
+
+req_ccos_status::req_ccos_status()
+	:aid("req_ccos_status")
+	,run_server(false)
+{
+}
+
+req_start_trade_instance::req_start_trade_instance()
+	: aid("req_start_ctp")
+	, bid("")
+	, user_name("")
+	, password("")
+{
+}
+
+req_reconnect_trade_instance::req_reconnect_trade_instance()
+	:aid("req_reconnect_trade")
+	,connIds()
+{
+
+}

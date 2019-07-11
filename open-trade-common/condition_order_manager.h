@@ -35,7 +35,9 @@ public:
 
 	void QryHisConditionOrder(const std::string& msg);
 
-	void SendAllConditionOrderDataImd(int connectId);
+	void ChangeCOSStatus(const std::string& msg);
+
+	void SendAllConditionOrderDataImd(int connectId);	
 private:
 	std::string m_userKey;
 
@@ -51,6 +53,8 @@ private:
 
 	ConditionOrderHisData m_condition_order_his_data;
 
+	bool m_run_server;
+
 	IConditionOrderCallBack& m_callBack;	
 	
 	void SendAllConditionOrderData();
@@ -62,5 +66,7 @@ private:
 	void SaveHistory();
 
 	void SaveCurrent();
+
+	void LoadConditionOrderConfig();
 };
 

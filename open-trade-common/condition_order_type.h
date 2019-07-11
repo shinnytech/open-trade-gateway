@@ -375,3 +375,72 @@ struct qry_histroy_condition_order
 	//插入条件单的日期,自然日
 	int action_day;
 };
+
+struct time_span
+{
+	time_span();
+
+	int begin;
+
+	int end;
+};
+
+struct weekday_time_span
+{
+	weekday_time_span();
+
+	int weekday;
+
+	std::vector<time_span> time_span_list;
+};
+
+struct condition_order_config
+{
+	condition_order_config();
+
+	bool run_server;
+
+	std::vector<weekday_time_span> auto_start_ctp_time;
+
+	bool has_auto_start_ctp;
+
+	std::vector<weekday_time_span> auto_close_ctp_time;
+
+	bool has_auto_close_ctp;
+
+	std::vector<weekday_time_span> auto_restart_process_time;
+
+};
+
+struct req_ccos_status
+{
+	req_ccos_status();
+
+	std::string aid;
+
+	bool run_server;
+};
+
+struct req_start_trade_instance
+{
+	req_start_trade_instance();
+
+	std::string aid;
+
+	std::string bid;
+
+	std::string user_name; 
+
+	std::string password;
+};
+
+typedef std::map<std::string, req_start_trade_instance> req_start_trade_key_map;
+
+struct req_reconnect_trade_instance
+{
+	req_reconnect_trade_instance();
+
+	std::string aid;
+
+	std::vector<int> connIds;
+};

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "connection_manager.h"
+#include "condition_order_type.h"
 
 #include <boost/asio.hpp>
 
@@ -27,6 +28,29 @@ private:
 
 	void OnAccept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
 
+	void OnCheckServerStatus();
+
+	bool LoadConditionOrderConfig(condition_order_config& tmp_co_config);
+
+	void NotifyConditionOrderServerStatus();
+
+	bool IsInTimeSpan(const std::vector<weekday_time_span>& timeSpan
+		, int weekNumber,int timeValue);
+
+	void TryStartTradeInstance();
+
+	void StartTradeInstance(const std::string& strKey
+		, req_start_trade_instance& req_start_trade);
+
+	void TryStopTradeInstance();
+
+	void StopTradeInstance(const std::string& strKey
+		, req_start_trade_instance& req_start_trade);
+
+	void TryRestartProcesses();
+
+	bool GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap);
+
 	boost::asio::io_context& io_context_;
 
 	boost::asio::ip::tcp::endpoint _endpoint;
@@ -36,4 +60,8 @@ private:
 	connection_manager connection_manager_;
 
 	int _connection_id;
+
+	boost::asio::deadline_timer _timer;
+
+	condition_order_config _co_config;
 };
