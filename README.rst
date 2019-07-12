@@ -33,9 +33,7 @@ Install
     git clone https://github.com/shinnytech/open-trade-gateway.git
 
 编译与安装::
-  cd open-trade-gateway
-  sudo make
-  sudo make install
+  cd open-trade-gateway && make && sudo make install
 
 第一次安装后需要将如下两个路径加入/etc/ld.so.conf文件中::
 	/usr/local/bin/
