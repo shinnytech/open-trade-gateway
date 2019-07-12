@@ -2773,6 +2773,57 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 			, _req_login.user_name.c_str()
 		);
 	}
+
+	if (nullptr == pInstrumentStatus)
+	{
+		return;
+	}
+
+	std::shared_ptr<CThostFtdcInstrumentStatusField> ptr1 =
+		std::make_shared<CThostFtdcInstrumentStatusField>(CThostFtdcInstrumentStatusField(*pInstrumentStatus));
+	
+	_ios.post(boost::bind(&traderctp::ProcessRtnInstrumentStatus,this,ptr1));
+}
+
+void traderctp::ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentStatusField>
+	pInstrumentStatus)
+{
+	//检验状态
+	if ((pInstrumentStatus->InstrumentStatus != THOST_FTDC_IS_AuctionOrdering)
+		&& (pInstrumentStatus->InstrumentStatus != THOST_FTDC_IS_Continous))
+	{
+		return;
+	}
+
+	//检验时间
+	std::string strEnterTime = pInstrumentStatus->EnterTime;
+	std::vector<std::string> hms;
+	boost::algorithm::split(hms,strEnterTime,boost::algorithm::is_any_of(":"));
+	if (hms.size() != 3)
+	{
+		return;
+	}
+	int serverTime = atoi(hms[0].c_str()) * 60 * 60 + atoi(hms[1].c_str()) * 60 + atoi(hms[2].c_str());
+	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+	int localTime = tm.time_of_day().hours() * 60*60 + tm.time_of_day().minutes()*60+ tm.time_of_day().seconds();
+	//服务端时间和客户端时间相差60秒以上,不是正常的状态切换
+	if (std::abs(serverTime - localTime) > 60)
+	{
+		return;
+	}
+
+	//检验品种
+	std::string strExchangeId = pInstrumentStatus->ExchangeID;
+	std::string strInstId = pInstrumentStatus->InstrumentID;
+	std::string strSymbolId = strExchangeId + "." + strInstId;
+	TInstOrderIdListMap& om = m_condition_order_manager.GetOpenmarketCoMap();
+	TInstOrderIdListMap::iterator it = om.find(strSymbolId);
+	if (it == om.end())
+	{
+		return;
+	}
+		
+	m_condition_order_manager.OnMarketOpen(strSymbolId);
 }
 
 #pragma endregion
@@ -3260,6 +3311,10 @@ void traderctp::OnIdle()
 	{
 		return;
 	}
+
+	CheckTimeConditionOrder();
+
+	CheckPriceConditionOrder();
 
 	if (m_need_save_file.load())
 	{
@@ -4956,6 +5011,45 @@ void traderctp::OutputNotifyAll(long notify_code, const std::string& ret_msg
 	, const char* level	,const char* type)
 {
 	OutputNotifyAllSycn(notify_code,ret_msg,level,type);
+}
+
+void traderctp::CheckTimeConditionOrder()
+{
+	std::set<std::string>& os = m_condition_order_manager.GetTimeCoSet();
+	if (os.empty())
+	{
+		return;
+	}
+
+	long long currentTime = GetLocalEpochMilli();
+	m_condition_order_manager.OnCheckTime(currentTime);
+}
+
+void traderctp::CheckPriceConditionOrder()
+{
+	TInstOrderIdListMap& om = m_condition_order_manager.GetPriceCoMap();
+	if (om.empty())
+	{
+		return;
+	}
+
+	m_condition_order_manager.OnCheckPrice();
+}
+
+void traderctp::OnTouchConditionOrder(const std::vector<ContingentOrder>& order_list
+	, bool is_cancel_ori_close_order)
+{
+	SerializerConditionOrderData ss;
+	ss.FromVar(order_list);
+	std::string strMsg;
+	ss.ToString(&strMsg);
+	Log(LOG_INFO,strMsg.c_str()
+		, "fun=OnTouchConditionOrder;msg=condition order is touched;key=%s;bid=%s;user_name=%s;is_cancel_ori_close_order=%s"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		,is_cancel_ori_close_order?"true":"false");
+	//TODO::发送Order
 }
 
 #pragma endregion

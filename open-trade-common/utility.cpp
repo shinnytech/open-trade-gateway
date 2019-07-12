@@ -90,3 +90,8 @@ void SplitString(const std::string& str
 		vecs.push_back(strLeave);
 	}
 }
+
+void CutDigital(std::string& instId)
+{
+	//TODO::
+}

@@ -2,6 +2,9 @@
 
 #include "condition_order_type.h"
 
+#include <set>
+
+
 struct IConditionOrderCallBack
 {	
 	virtual void SendConditionOrderData(const std::string& msg) = 0;
@@ -10,6 +13,9 @@ struct IConditionOrderCallBack
 
 	virtual void OutputNotifyAll(long notify_code, const std::string& ret_msg
 		, const char* level	, const char* type) = 0;
+
+	virtual void OnTouchConditionOrder(const std::vector<ContingentOrder>& order_list
+		, bool is_cancel_ori_close_order)=0;
 };
 
 class ConditionOrderManager
@@ -37,7 +43,19 @@ public:
 
 	void ChangeCOSStatus(const std::string& msg);
 
-	void SendAllConditionOrderDataImd(int connectId);	
+	void SendAllConditionOrderDataImd(int connectId);
+
+	void OnMarketOpen(const std::string& strSymbol);
+
+	void OnCheckTime(long long currentTime);
+
+	void OnCheckPrice();
+
+	TInstOrderIdListMap& GetOpenmarketCoMap();
+
+	std::set<std::string>& GetTimeCoSet();
+
+	TInstOrderIdListMap& GetPriceCoMap();
 private:
 	std::string m_userKey;
 
@@ -55,6 +73,12 @@ private:
 
 	bool m_run_server;
 
+	TInstOrderIdListMap m_openmarket_condition_order_map;
+
+	std::set<std::string> m_time_condition_order_set;
+
+	TInstOrderIdListMap m_price_condition_order_map;
+
 	IConditionOrderCallBack& m_callBack;	
 	
 	void SendAllConditionOrderData();
@@ -68,5 +92,10 @@ private:
 	void SaveCurrent();
 
 	void LoadConditionOrderConfig();
+
+	void BuildConditionOrderIndex();
+
+	bool IsContingentConditionTouched(std::vector<ContingentCondition>& condition_list
+		,ELogicOperator logicOperator);
 };
 

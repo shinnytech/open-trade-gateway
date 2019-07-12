@@ -60,6 +60,8 @@ void SerializerConditionOrderData::DefineStruct(ContingentCondition& d)
 	AddItem(d.contingent_price_right, ("contingent_price_right"));
 
 	AddItem(d.break_even_price, ("break_even_price"));
+
+	AddItem(d.m_has_break_event, ("m_has_break_event"));
 }
 
 void SerializerConditionOrderData::DefineStruct(ContingentOrder& d)

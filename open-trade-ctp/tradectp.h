@@ -456,11 +456,18 @@ private:
 		std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
 		, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
+	void ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentStatusField>
+		pInstrumentStatus);
+
 	void NotifyClientHisSettlementInfo(const std::string& hisSettlementInfo);
 
 	void InitPositionVolume();
 
 	void AdjustPositionByTrade(const Trade& trade);
+
+	void CheckTimeConditionOrder();
+
+	void CheckPriceConditionOrder();
 
 	virtual void SendConditionOrderData(const std::string& msg);
 
@@ -468,4 +475,7 @@ private:
 
 	virtual void OutputNotifyAll(long notify_code,const std::string& ret_msg
 		, const char* level	, const char* type);
+
+	virtual void OnTouchConditionOrder(const std::vector<ContingentOrder>& order_list
+		, bool is_cancel_ori_close_order);
 };

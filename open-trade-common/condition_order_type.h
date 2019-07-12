@@ -108,6 +108,7 @@ struct ContingentCondition
 		, contingent_price_left(0)
 		, contingent_price_right(0)
 		, break_even_price(0)
+		, m_has_break_event(false)
 	{
 	}
 
@@ -141,17 +142,11 @@ struct ContingentCondition
 	//触发价格区间右边界
 	double contingent_price_right;
 
-	//止盈价格
-	double break_even_price;
+	//止盈保本价格
+	double break_even_price;	
 
-	//更新市场状态
-	void UpdateMarketStatus(EMarketStatus marketStatus);
-
-	//更新市场时间
-	void UpdateMarketTime(int marketTime);
-
-	//更新市场价格
-	void UpdatePrice(double price);
+	//是否已经突破保本价格
+	bool m_has_break_event;
 };
 
 //条件触发后的订单
@@ -444,3 +439,5 @@ struct req_reconnect_trade_instance
 
 	std::vector<int> connIds;
 };
+
+typedef std::map<std::string, std::vector<std::string> > TInstOrderIdListMap;

@@ -6,6 +6,9 @@
 #include "numset.h"
 #include "datetime.h"
 #include <chrono>
+#include <cmath>
+
+using namespace std;
 
 const int MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY = 20;
 
@@ -21,6 +24,9 @@ ConditionOrderManager::ConditionOrderManager(const std::string& userKey
 	,m_condition_order_his_data()
 	,m_callBack(callBack)
 	,m_run_server(true)
+	,m_openmarket_condition_order_map()
+	, m_time_condition_order_set()
+	,m_price_condition_order_map()
 {
 	LoadConditionOrderConfig();
 }
@@ -283,6 +289,56 @@ void ConditionOrderManager::Load(const std::string& bid
 	SaveHistory();
 
 	SendAllConditionOrderData();
+
+	BuildConditionOrderIndex();
+}
+
+void ConditionOrderManager::BuildConditionOrderIndex()
+{
+	m_openmarket_condition_order_map.clear();
+	m_time_condition_order_set.clear();
+	m_price_condition_order_map.clear();
+
+	for (auto it : m_condition_order_data.condition_orders)
+	{
+		const std::string& order_id = it.first;
+		ConditionOrder& co = it.second;
+		if (co.status != EConditionOrderStatus::live)
+		{
+			continue;
+		}
+
+		for (auto c : co.condition_list)
+		{
+			if (c.is_touched)
+			{
+				continue;
+			}
+
+			if (c.contingent_type == EContingentType::market_open)
+			{
+				std::string strInstId = c.instrument_id;
+				CutDigital(strInstId);
+				std::string strSymbol = c.exchange_id + "." + strInstId;
+				std::vector<std::string>& orderIdList = m_openmarket_condition_order_map[strSymbol];
+				orderIdList.push_back(order_id);
+			}
+			else if (c.contingent_type == EContingentType::time)
+			{
+				if (m_time_condition_order_set.find(order_id) == m_time_condition_order_set.end())
+				{
+					m_time_condition_order_set.insert(order_id);
+				}				
+			}
+			else
+			{
+				std::string strSymbol = c.exchange_id + "." + c.instrument_id;
+				std::vector<std::string>& orderIdList = m_price_condition_order_map[strSymbol];
+				orderIdList.push_back(order_id);
+			}
+		}
+
+	}	
 }
 
 void ConditionOrderManager::SaveCurrent()
@@ -668,6 +724,8 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			, m_condition_order_data.broker_id.c_str()
 			, m_condition_order_his_data.user_id.c_str());
 		SaveCurrent();
+
+		BuildConditionOrderIndex();
 	}
 	else
 	{
@@ -769,6 +827,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	m_current_valid_condition_order_count--;
 	SaveCurrent();
 	SendConditionOrderData();
+	BuildConditionOrderIndex();
 }
 
 void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
@@ -859,6 +918,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	m_callBack.OutputNotifyAll(0, u8"条件单暂停成功", "INFO", "MESSAGE");
 	SaveCurrent();
 	SendConditionOrderData();
+	BuildConditionOrderIndex();
 }
 
 void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
@@ -923,6 +983,7 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	m_callBack.OutputNotifyAll(0, u8"条件单恢复成功", "INFO", "MESSAGE");
 	SaveCurrent();
 	SendConditionOrderData();
+	BuildConditionOrderIndex();
 }
 
 void ConditionOrderManager::QryHisConditionOrder(const std::string& msg)
@@ -1029,4 +1090,318 @@ void ConditionOrderManager::ChangeCOSStatus(const std::string& msg)
 			, m_condition_order_data.broker_id.c_str()
 			, m_condition_order_data.user_id.c_str());
 	}
+}
+
+TInstOrderIdListMap& ConditionOrderManager::GetOpenmarketCoMap()
+{
+	return m_openmarket_condition_order_map;
+}
+
+std::set<std::string>& ConditionOrderManager::GetTimeCoSet()
+{
+	return m_time_condition_order_set;
+}
+
+TInstOrderIdListMap& ConditionOrderManager::GetPriceCoMap()
+{
+	return m_price_condition_order_map;
+}
+
+void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
+{
+	TInstOrderIdListMap::iterator it = m_openmarket_condition_order_map.find(strSymbol);
+	if (it == m_openmarket_condition_order_map.end())
+	{
+		return;
+	}
+
+	bool flag = false;
+	std::vector<std::string>& orderIdList = it->second;
+	for (auto orderId : orderIdList)
+	{
+		std::map<std::string, ConditionOrder>::iterator it 
+			= m_condition_order_data.condition_orders.find(orderId);
+		if (it == m_condition_order_data.condition_orders.end())
+		{
+			continue;
+		}
+
+		ConditionOrder& conditionOrder = it->second;
+		if (conditionOrder.status != EConditionOrderStatus::live)
+		{
+			continue;
+		}
+
+		std::vector<ContingentCondition>& condition_list = conditionOrder.condition_list;
+		for (ContingentCondition& c : condition_list)
+		{
+			if (c.contingent_type != EContingentType::market_open)
+			{
+				continue;
+			}
+
+			if (c.is_touched)
+			{
+				continue;
+			}
+			std::string strInstId= c.instrument_id;
+			CutDigital(strInstId);
+			std::string symbol = c.exchange_id + "." + strInstId;
+			if (symbol != strSymbol)
+			{
+				continue;
+			}
+
+			c.is_touched = true;
+			flag = true;
+		}
+
+		if (IsContingentConditionTouched(condition_list, conditionOrder.conditions_logic_oper))
+		{
+			conditionOrder.status = EConditionOrderStatus::touched;
+			conditionOrder.changed = true;
+			//发单
+			m_callBack.OnTouchConditionOrder(conditionOrder.order_list
+				,conditionOrder.is_cancel_ori_close_order);
+			flag = true;
+		}
+		
+	}
+
+	if (flag)
+	{
+		SaveCurrent();
+		SendConditionOrderData();
+		BuildConditionOrderIndex();
+	}
+}
+
+void ConditionOrderManager::OnCheckTime(long long currentTime)
+{
+	bool flag = false;
+	for (auto orderId : m_time_condition_order_set)
+	{
+		std::map<std::string, ConditionOrder>::iterator it
+			= m_condition_order_data.condition_orders.find(orderId);
+
+		if (it == m_condition_order_data.condition_orders.end())
+		{
+			continue;
+		}
+
+		ConditionOrder& conditionOrder = it->second;
+		if (conditionOrder.status != EConditionOrderStatus::live)
+		{
+			continue;
+		}
+
+		std::vector<ContingentCondition>& condition_list = conditionOrder.condition_list;
+
+		for (ContingentCondition& c : condition_list)
+		{
+			if (c.contingent_type != EContingentType::time)
+			{
+				continue;
+			}
+
+			if (c.is_touched)
+			{
+				continue;
+			}
+
+			if (c.contingent_time <= currentTime)
+			{
+				c.is_touched = true;
+				flag = true;
+			}
+		}
+
+		if (IsContingentConditionTouched(condition_list,conditionOrder.conditions_logic_oper))
+		{
+			conditionOrder.status = EConditionOrderStatus::touched;
+			conditionOrder.changed = true;
+			//发单
+			m_callBack.OnTouchConditionOrder(conditionOrder.order_list
+				, conditionOrder.is_cancel_ori_close_order);
+			flag = true;
+		}
+	}
+	//
+	if (flag)
+	{
+		SaveCurrent();
+		SendConditionOrderData();
+		BuildConditionOrderIndex();
+	}
+}
+
+void ConditionOrderManager::OnCheckPrice()
+{
+	bool flag = false;
+	for (auto it : m_price_condition_order_map)
+	{
+		std::string strSymbol = it.first;
+		std::vector<std::string>& orderIdList = it.second;
+		Instrument* ins = GetInstrument(strSymbol);
+		if (nullptr==ins)
+		{
+			continue;
+		}
+		double last_price=ins->last_price;
+		for (auto orderId : orderIdList)
+		{
+			std::map<std::string, ConditionOrder>::iterator it
+				= m_condition_order_data.condition_orders.find(orderId);
+			if (it == m_condition_order_data.condition_orders.end())
+			{
+				continue;
+			}
+
+			ConditionOrder& conditionOrder = it->second;
+			if (conditionOrder.status != EConditionOrderStatus::live)
+			{
+				continue;
+			}
+
+			std::vector<ContingentCondition>& condition_list = conditionOrder.condition_list;
+
+			for (ContingentCondition& c : condition_list)
+			{
+				if (c.is_touched)
+				{
+					continue;
+				}
+
+				if (c.contingent_type == EContingentType::price)
+				{
+					switch (c.price_relation_type)
+					{
+						case EPriceRelationType::G:
+							if (isgreater(last_price, c.contingent_price))
+							{
+								c.is_touched = true;
+								flag = true;
+							}
+							break;
+						case EPriceRelationType::GE:
+							if (isgreaterequal(last_price, c.contingent_price))
+							{
+								c.is_touched = true;
+								flag = true;
+							}
+							break;
+						case EPriceRelationType::L:
+							if (isless(last_price, c.contingent_price))
+							{
+								c.is_touched = true;
+								flag = true;
+							}
+							break;
+						case EPriceRelationType::LE:
+							if (islessequal(last_price, c.contingent_price))
+							{
+								c.is_touched = true;
+								flag = true;
+							}
+							break;
+					default:
+							break;
+					}
+				}
+				else if (c.contingent_type == EContingentType::price_range)
+				{
+					if (
+						islessequal(last_price, c.contingent_price_right)
+						&& isgreater(last_price, c.contingent_price_left)
+						)
+					{
+						c.is_touched = true;
+						flag = true;
+					}
+				}
+				else if (c.contingent_type == EContingentType::break_even)
+				{
+					if (c.m_has_break_event)
+					{
+						if (islessequal(last_price, c.break_even_price))
+						{
+							c.is_touched = true;
+							flag = true;
+						}
+					}
+					else
+					{
+						if (isgreater(last_price, c.break_even_price))
+						{
+							c.m_has_break_event = true;
+							flag = true;
+						}
+					}
+				}
+				else
+				{
+					continue;
+				}
+				
+			}
+
+			if (IsContingentConditionTouched(condition_list, conditionOrder.conditions_logic_oper))
+			{
+				conditionOrder.status = EConditionOrderStatus::touched;
+				conditionOrder.changed = true;
+				//发单
+				m_callBack.OnTouchConditionOrder(conditionOrder.order_list
+					, conditionOrder.is_cancel_ori_close_order);
+				flag = true;
+			}
+		}
+	}
+
+	if (flag)
+	{
+		SaveCurrent();
+		SendConditionOrderData();
+		BuildConditionOrderIndex();
+	}
+}
+
+
+bool ConditionOrderManager::IsContingentConditionTouched(std::vector<ContingentCondition>& condition_list
+	,ELogicOperator logicOperator)
+{
+	if (condition_list.size() == 0)
+	{
+		return false;
+	}
+	else if (condition_list.size() == 1)
+	{
+		return condition_list[0].is_touched;
+	}
+
+	if (logicOperator == ELogicOperator::logic_and)
+	{
+		bool flag = true;
+		for (const ContingentCondition& c : condition_list)
+		{
+			flag = flag && c.is_touched;
+		}
+		return flag;
+	}
+	else if (logicOperator == ELogicOperator::logic_or)
+	{
+		bool flag = false;
+		for (const ContingentCondition& c : condition_list)
+		{
+			flag = flag || c.is_touched;
+			if (flag)
+			{
+				break;
+			}
+		}
+		return flag;
+	}
+	else
+	{
+		return false;
+	}	
 }

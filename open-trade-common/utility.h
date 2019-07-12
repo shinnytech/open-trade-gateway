@@ -29,3 +29,5 @@ std::string GuessTradingDay();
 
 void SplitString(const std::string& str
 	, std::vector<std::string>& vecs,int len);
+
+void CutDigital(std::string& instId);
