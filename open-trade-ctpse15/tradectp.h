@@ -8,6 +8,7 @@
 
 #include "ctp_define.h"
 #include "types.h"
+#include "condition_order_manager.h"
 
 #include <map>
 #include <queue>
@@ -28,6 +29,7 @@
 using namespace trader_dll;
 
 class traderctp : public CThostFtdcTraderSpi
+	,public IConditionOrderCallBack
 {
 public:
 	traderctp(boost::asio::io_context& ios
@@ -199,7 +201,7 @@ private:
 	std::string m_his_settlement_info;
 
 	std::list<int> m_qry_his_settlement_info_trading_days;
-	
+
 	//交易账户全信息
 	User m_data;  
 
@@ -215,7 +217,7 @@ private:
 
 	std::atomic_int m_rsp_account_id;
 
-	std::map<std::string, ServerOrderInfo> m_input_order_key_map;
+	std::map<std::string,ServerOrderInfo> m_input_order_key_map;
 	
 	std::map<std::string, std::string> m_action_order_map;
 
@@ -247,7 +249,7 @@ private:
 
 	std::atomic_bool m_run_receive_msg;
 
-	std::map<std::string,std::string> m_rtn_order_log_map;
+	std::map<std::string, std::string> m_rtn_order_log_map;
 
 	std::map<std::string, std::string> m_rtn_trade_log_map;
 
@@ -262,6 +264,10 @@ private:
 	std::map<std::string, std::string> m_err_rtn_order_insert_log_map;
 
 	std::map<std::string, std::string> m_err_rtn_order_action_log_map;
+
+	ConditionOrderManager m_condition_order_manager;
+
+	std::vector<ctp_condition_order_task> m_condition_order_task;
 
 	void InitTdApi();
 
@@ -288,7 +294,7 @@ private:
 	void OutputNotifyAllSycn(long notify_code
 		, const std::string& ret_msg, const char* level = "INFO"
 		, const char* type = "MESSAGE");
-
+	
 	void SendMsgAll(std::shared_ptr<std::string> conn_str_ptr,std::shared_ptr<std::string> msg_ptr);
 
 	void SendMsg(int connId,std::shared_ptr<std::string> msg_ptr);
@@ -303,30 +309,26 @@ private:
 
 	int ReqAuthenticate();
 
-	int RegSystemInfo();
-
 	int ReqUserLogin();
 
 	void SendLoginRequest();
-
-	void ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm, bool bIsLast);
-	
-	void ReqQrySettlementInfoConfirm();
-
-	void ReqQrySettlementInfo();	
-
-	void ReqConfirmSettlement();	
-
-	void ProcessEmptySettlementInfo();
 
 	void LoadFromFile();
 
 	void SaveToFile();
 
 	void AfterLogin();
-	
+
+	void ReqConfirmSettlement();
+
+	void ProcessEmptySettlementInfo();
+
 	void ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementInfoField> pSettlementInfo,bool bIsLast);
-	
+
+	void ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm,bool bIsLast);
+
+	void ReqQrySettlementInfoConfirm();
+
 	void ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm);
 
 	void ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField> pInputOrder
@@ -388,9 +390,7 @@ private:
 
 	void ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSerialField> pTransferSerial,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);
-
-	void ProcessRspError(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
-
+	
 	void ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder);
 
 	void ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade);
@@ -408,10 +408,11 @@ private:
 	void OnClientReqQrySettlementInfo(const qry_settlement_info
 		& qrySettlementInfo);
 
-	void ReqQryHistorySettlementInfo();
+	void OnReqStartCTP(const std::string& msg);
 
-	void NotifyClientHisSettlementInfo(const std::string&
-		hisSettlementInfo);
+	void OnReqStopCTP(const std::string& msg);
+
+	void ClearOldData();
 
 	void OnIdle();
 
@@ -423,7 +424,11 @@ private:
 
 	void ReqQryBank();
 
-	void ReqQryAccountRegister();	
+	void ReqQryAccountRegister();
+
+	void ReqQrySettlementInfo();
+
+	void ReqQryHistorySettlementInfo();
 
 	bool NeedReset();
 
@@ -445,12 +450,77 @@ private:
 
 	void ProcessOnErrRtnFutureToBankByFuture(
 		std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
-		, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
+		,std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
 	void ProcessOnErrRtnBankToFutureByFuture(
 		std::shared_ptr<CThostFtdcReqTransferField> pReqTransfer
 		, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
+	void ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentStatusField>
+		pInstrumentStatus);
+
+	void NotifyClientHisSettlementInfo(const std::string& hisSettlementInfo);
+
 	void InitPositionVolume();
+
 	void AdjustPositionByTrade(const Trade& trade);
+
+	void CheckTimeConditionOrder();
+
+	void CheckPriceConditionOrder();
+
+	virtual void SendConditionOrderData(const std::string& msg);
+
+	virtual void SendConditionOrderData(int connectId, const std::string& msg);
+
+	virtual void OutputNotifyAll(long notify_code,const std::string& ret_msg
+		, const char* level	, const char* type);
+
+	virtual void OnTouchConditionOrder(const ConditionOrder& order);
+
+	bool ConditionOrder_Open(const ConditionOrder& order
+		,const ContingentOrder& co
+		,const Instrument& ins
+		,ctp_condition_order_task& task
+		,int nOrderIndex);
+
+	bool ConditionOrder_CloseToday(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseYesToday(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_Close(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_Reverse_Long(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_Reverse_Short(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	void OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d);
+
+	void OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d);
+
+	void CheckConditionOrderCancelOrderTask(const std::string& orderId);
+
+	void CheckConditionOrderSendOrderTask(const std::string& orderId);
+
+	int RegSystemInfo();
 };

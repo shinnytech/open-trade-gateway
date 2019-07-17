@@ -31,3 +31,5 @@ void SplitString(const std::string& str
 	, std::vector<std::string>& vecs,int len);
 
 void CutDigital(std::string& instId);
+
+std::string base64_decode(const std::string &in);

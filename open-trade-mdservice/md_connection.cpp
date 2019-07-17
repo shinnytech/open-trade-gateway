@@ -202,9 +202,9 @@ void md_connection::OnRead(boost::system::error_code ec
 
 void  md_connection::OnMessage(const std::string &json_str)
 {
-	/*Log(LOG_INFO,nullptr
+	Log(LOG_INFO,nullptr
 		, "fun=OnMessage;msg=md_connection receive md message;len=%d;key=mdservice"
-		, json_str.size());*/
+		, json_str.size());
 
 	SendTextMsg(m_req_peek_message);
 

@@ -46,11 +46,11 @@ namespace trader_dll
 	{
 		ServerOrderInfo()
 			:ExchangeId("")
-			, InstrumentId("")
-			, VolumeOrigin(0)
-			, VolumeLeft(0)
-			, OrderLocalID("")
-			, OrderSysID("")
+			,InstrumentId("")
+			,VolumeOrigin(0)
+			,VolumeLeft(0)
+			,OrderLocalID("")
+			,OrderSysID("")
 		{
 		}
 
@@ -61,7 +61,7 @@ namespace trader_dll
 		int VolumeOrigin;
 
 		int VolumeLeft;
-
+		
 		std::string	OrderLocalID;
 
 		std::string	OrderSysID;
@@ -70,6 +70,7 @@ namespace trader_dll
 	struct OrderKeyPair
 	{
 		LocalOrderKey local_key;
+
 		RemoteOrderKey remote_key;
 	};
 
@@ -99,7 +100,7 @@ namespace trader_dll
 		LocalOrderKey local_key;
 		CThostFtdcInputOrderActionField f;
 	};
-
+	
 	class SerializerCtp
 		: public RapidSerialize::Serializer<SerializerCtp>
 	{
@@ -107,14 +108,22 @@ namespace trader_dll
 		using RapidSerialize::Serializer<SerializerCtp>::Serializer;
 
 		void DefineStruct(OrderKeyFile& d);
+
 		void DefineStruct(OrderKeyPair& d);
+
 		void DefineStruct(LocalOrderKey& d);
+
 		void DefineStruct(RemoteOrderKey& d);
+
 		void DefineStruct(CtpActionInsertOrder& d);
+
 		void DefineStruct(CtpActionCancelOrder& d);
+
 		void DefineStruct(CThostFtdcUserPasswordUpdateField& d);
+
 		void DefineStruct(CThostFtdcReqTransferField& d);
-		void DefineStruct(CThostFtdcTransferSerialField& d);
+
+		void DefineStruct(CThostFtdcTransferSerialField& d);		
 	};
 
 	class SerializerLogCtp
@@ -161,6 +170,23 @@ namespace trader_dll
 
 		void DefineStruct(CThostFtdcTradingNoticeInfoField& d);
 
-		void DefineStruct(CThostFtdcInstrumentStatusField& d);
+		void DefineStruct(CThostFtdcInstrumentStatusField& d);		
+	};
+
+	struct ctp_condition_order_task
+	{
+		ctp_condition_order_task();
+
+		bool has_order_to_cancel;
+
+		std::vector<CtpActionCancelOrder> orders_to_cancel;
+
+		bool has_first_orders_to_send;
+
+		std::vector <CtpActionInsertOrder> first_orders_to_send;
+
+		bool has_second_orders_to_send;
+
+		std::vector <CtpActionInsertOrder> second_orders_to_send;
 	};
 }

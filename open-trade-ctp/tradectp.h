@@ -307,7 +307,7 @@ private:
 
 	int WaitLogIn();
 
-	void ReqAuthenticate();
+	int ReqAuthenticate();
 
 	int ReqUserLogin();
 
@@ -521,4 +521,6 @@ private:
 	void CheckConditionOrderCancelOrderTask(const std::string& orderId);
 
 	void CheckConditionOrderSendOrderTask(const std::string& orderId);
+
+	int RegSystemInfo();
 };

@@ -103,8 +103,17 @@ traderctp::traderctp(boost::asio::io_context& ios
 
 void traderctp::ProcessOnFrontConnected()
 {
-	ReqAuthenticate();
 	OutputNotifyAllSycn(0, u8"已经重新连接到交易前置");
+	int ret = ReqAuthenticate();
+	if (0 != ret)
+	{
+		Log(LOG_WARNING, nullptr
+			, "fun=ProcessOnFrontConnected;msg=ctp ReqAuthenticate;key=%s;bid=%s;user_name=%s;ret=%d"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str()
+			, ret);
+	}
 }
 
 void traderctp::OnFrontConnected()
@@ -118,8 +127,14 @@ void traderctp::OnFrontConnected()
 	if (!m_b_login.load())
 	{
 		//这时是安全的
-		ReqAuthenticate();		
 		OutputNotifySycn(m_loging_connectId, 0, u8"已经连接到交易前置");
+		int ret = ReqAuthenticate();
+		if (0 != ret)
+		{
+			boost::unique_lock<boost::mutex> lock(_logInmutex);
+			_logIn_status = 0;
+			_logInCondition.notify_all();
+		}		
 	}
 	else
 	{
@@ -2819,51 +2834,6 @@ void traderctp::ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentS
 
 #pragma region ctp_request
 
-void traderctp::ReqAuthenticate()
-{
-	if (m_try_req_authenticate_times > 0)
-	{
-		int nSeconds = 10 + m_try_req_authenticate_times * 1;
-		if (nSeconds > 60)
-		{
-			nSeconds = 60;
-		}
-		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
-	}
-	m_try_req_authenticate_times++;
-	if (_req_login.broker.auth_code.empty())
-	{
-		Log(LOG_INFO,nullptr
-			, "fun=ReqAuthenticate;msg=_req_login.broker.auth_code.empty();key=%s;bid=%s;user_name=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str());
-		SendLoginRequest();
-		return;
-	}
-	CThostFtdcReqAuthenticateField field;
-	memset(&field, 0, sizeof(field));
-	strcpy_x(field.BrokerID, m_broker_id.c_str());
-	strcpy_x(field.UserID, _req_login.user_name.c_str());
-	strcpy_x(field.UserProductInfo, _req_login.broker.product_info.c_str());
-	strcpy_x(field.AuthCode, _req_login.broker.auth_code.c_str());
-	int ret = m_pTdApi->ReqAuthenticate(&field, ++_requestID);
-	if (0 != ret)
-	{
-		Log(LOG_INFO, nullptr
-			, "fun=ReqAuthenticate;msg=ctp ReqAuthenticate fail;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, _req_login.broker.product_info.c_str()
-			, _req_login.broker.auth_code.c_str()
-			, ret);
-		boost::unique_lock<boost::mutex> lock(_logInmutex);
-		_logIn_status = 0;
-		_logInCondition.notify_all();
-	}
-}
-
 int traderctp::ReqUserLogin()
 {
 	CThostFtdcReqUserLoginField field;
@@ -2900,14 +2870,49 @@ void traderctp::SendLoginRequest()
 		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
 	}
 	m_try_req_login_times++;
+	Log(LOG_INFO, nullptr
+		, "fun=SendLoginRequest;msg=ctp SendLoginRequest;key=%s;bid=%s;user_name=%s;client_app_id=%s;client_system_info_len=%d"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, _req_login.client_app_id.c_str()
+		, _req_login.client_system_info.length());
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
-	int ret = ReqUserLogin();
-	if (0 != ret)
-	{		
-		boost::unique_lock<boost::mutex> lock(_logInmutex);
-		_logIn_status = 0;
-		_logInCondition.notify_all();
+	//提交终端信息
+	if ((!_req_login.client_system_info.empty())
+		&& (_req_login.bid.find("simnow", 0) == std::string::npos))
+	{
+		int ret = RegSystemInfo();
+		if (0 != ret)
+		{
+			boost::unique_lock<boost::mutex> lock(_logInmutex);
+			_logIn_status = 0;
+			_logInCondition.notify_all();
+			return;
+		}
+		else
+		{
+			ret = ReqUserLogin();
+			if (0 != ret)
+			{
+				boost::unique_lock<boost::mutex> lock(_logInmutex);
+				_logIn_status = 0;
+				_logInCondition.notify_all();
+				return;
+			}
+		}
+	}
+	else
+	{
+		int ret = ReqUserLogin();
+		if (0 != ret)
+		{
+			boost::unique_lock<boost::mutex> lock(_logInmutex);
+			_logIn_status = 0;
+			_logInCondition.notify_all();
+			return;
+		}
 	}
 }
 
@@ -7027,6 +7032,57 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 		, d.f.VolumeCondition
 		, d.f.TimeCondition);
 	m_need_save_file.store(true);
+}
+
+#pragma endregion
+
+#pragma region ctpse
+
+int traderctp::RegSystemInfo()
+{
+	return 0;
+}
+
+int traderctp::ReqAuthenticate()
+{
+	if (m_try_req_authenticate_times > 0)
+	{
+		int nSeconds = 10 + m_try_req_authenticate_times * 1;
+		if (nSeconds > 60)
+		{
+			nSeconds = 60;
+		}
+		boost::this_thread::sleep_for(boost::chrono::seconds(nSeconds));
+	}
+
+	m_try_req_authenticate_times++;
+	if (_req_login.broker.auth_code.empty())
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=ReqAuthenticate;msg=_req_login.broker.auth_code.empty();key=%s;bid=%s;user_name=%s"
+			, _key.c_str()
+			, _req_login.bid.c_str()
+			, _req_login.user_name.c_str());
+		SendLoginRequest();
+		return 0;
+	}
+
+	CThostFtdcReqAuthenticateField field;
+	memset(&field, 0, sizeof(field));
+	strcpy_x(field.BrokerID, m_broker_id.c_str());
+	strcpy_x(field.UserID, _req_login.user_name.c_str());
+	strcpy_x(field.UserProductInfo, _req_login.broker.product_info.c_str());
+	strcpy_x(field.AuthCode, _req_login.broker.auth_code.c_str());
+	int ret = m_pTdApi->ReqAuthenticate(&field, ++_requestID);
+	Log(LOG_INFO, nullptr
+		, "fun=ReqAuthenticate;msg=ctp ReqAuthenticate;key=%s;bid=%s;user_name=%s;UserProductInfo=%s;AuthCode=%s;ret=%d"
+		, _key.c_str()
+		, _req_login.bid.c_str()
+		, _req_login.user_name.c_str()
+		, _req_login.broker.product_info.c_str()
+		, _req_login.broker.auth_code.c_str()
+		, ret);
+	return ret;
 }
 
 #pragma endregion

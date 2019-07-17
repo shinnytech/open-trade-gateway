@@ -1077,12 +1077,23 @@ namespace trader_dll
 	{
 		AddItem(d.ExchangeID, ("ExchangeID"));
 		AddItem(d.ExchangeInstID, ("ExchangeInstID"));
-		std::string strSettlementGroupID = GBKToUTF8(d.SettlementGroupID);
+		std::string strSettlementGroupID= GBKToUTF8(d.SettlementGroupID);
 		AddItem(strSettlementGroupID, ("SettlementGroupID"));
 		AddItem(d.InstrumentID, ("InstrumentID"));
 		AddItem(d.InstrumentStatus, ("InstrumentStatus"));
 		AddItem(d.TradingSegmentSN, ("TradingSegmentSN"));
 		AddItem(d.EnterTime, ("EnterTime"));
-		AddItem(d.EnterReason, ("EnterReason"));
+		AddItem(d.EnterReason, ("EnterReason"));		
 	}
+
+	ctp_condition_order_task::ctp_condition_order_task()
+		: has_order_to_cancel(false)
+		, orders_to_cancel()
+		, has_first_orders_to_send(false)
+		, first_orders_to_send()
+		, has_second_orders_to_send(false)
+		, second_orders_to_send()
+	{
+	}
+
 }

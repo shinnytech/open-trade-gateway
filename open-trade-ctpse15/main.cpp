@@ -26,22 +26,12 @@ int main(int argc, char* argv[])
 		}
 		std::string key = argv[1];
 		
-		Log(LOG_INFO,nullptr
-			,"msg=trade ctpse init;key=%s"
-			, key.c_str());
-
-		Log(LOG_INFO,nullptr
-			,"msg=trade ctpse ctp version,%s;key=%s"
-			, CThostFtdcTraderApi::GetApiVersion()
-			, key.c_str());
-
 		//加载配置文件
 		if (!LoadConfig())
 		{
 			Log(LOG_WARNING,nullptr
-				,"msg=trade ctpse load config failed!;key=%s"
-				, key.c_str());
-		
+				,"msg=trade ctp load config failed!;key=%s"
+				,key.c_str());
 			return -1;
 		}
 
@@ -49,11 +39,11 @@ int main(int argc, char* argv[])
 		if (!GenInstrumentExchangeIdMap())
 		{
 			Log(LOG_WARNING, nullptr
-				, "msg=trade ctpse load instrument exchange id map failed!;key=%s"
+				, "msg=trade ctp load instrument exchange id map failed!;key=%s"
 				, key.c_str());
 			return -1;
 		}
-		
+
 		boost::asio::io_context ioc;
 
 		std::atomic_bool flag;
@@ -63,26 +53,28 @@ int main(int argc, char* argv[])
 
 		signals_.add(SIGINT);
 		signals_.add(SIGTERM);
-#if defined(SIGQUIT)
-		signals_.add(SIGQUIT);
-#endif 
+		#if defined(SIGQUIT)
+			signals_.add(SIGQUIT);
+		#endif 
 
 		traderctp tradeCtp(ioc, key);
 		tradeCtp.Start();
 		signals_.async_wait(
-			[&ioc, &tradeCtp, &key,&flag](boost::system::error_code, int sig)
+			[&ioc, &tradeCtp, &key, &flag](boost::system::error_code, int sig)
 		{
 			tradeCtp.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO, nullptr
-				,"msg=trade ctpse got sig %d;key=%s"
-				,sig,key.c_str());
-			Log(LOG_INFO, nullptr
-				,"msg=trade ctpse exit;key=%s"
+			Log(LOG_INFO,nullptr
+				,"msg=trade ctp got sig %d;key=%s"
+				,sig
+				,key.c_str());
+
+			Log(LOG_INFO,nullptr
+				,"msg=trade ctp exit;key=%s"
 				,key.c_str());
 		});
-		
+
 		while (flag.load())
 		{
 			try
@@ -93,14 +85,14 @@ int main(int argc, char* argv[])
 			catch (std::exception& ex)
 			{
 				Log(LOG_ERROR,nullptr
-					,"msg=trade ctpse ioc run exception,%s;key=%s"					
-					,ex.what()
-					,key.c_str());
+					,"msg=trade ctp ioc run exception,%s;key=%s"					
+					, ex.what()
+					, key.c_str());
 			}
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << "trade ctpse " << argv[1] << " exception: " << e.what() << std::endl;
-	}	
+		std::cerr << "trade ctp "<< argv[1] <<" exception: " << e.what() << std::endl;
+	}
 }
