@@ -2627,7 +2627,19 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	trade.price = pTrade->Price;
 	DateTime dt;
 	dt.time.microsecond = 0;
-	sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
+
+	bool b_is_dce_or_czce = (exchangeId == "CZCE") || (exchangeId == "DCE");
+	if (b_is_dce_or_czce)
+	{
+		boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+		dt.date.year = tm.date().year();
+		dt.date.month = tm.date().month();
+		dt.date.day = tm.date().day();
+	}
+	else
+	{
+		sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
+	}	
 	sscanf(pTrade->TradeTime, "%02d:%02d:%02d", &dt.time.hour, &dt.time.minute, &dt.time.second);
 	trade.trade_date_time = DateTimeToEpochNano(&dt);
 	trade.commission = 0.0;
