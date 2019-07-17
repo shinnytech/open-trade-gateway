@@ -1161,8 +1161,7 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
 			conditionOrder.status = EConditionOrderStatus::touched;
 			conditionOrder.changed = true;
 			//发单
-			m_callBack.OnTouchConditionOrder(conditionOrder.order_list
-				,conditionOrder.is_cancel_ori_close_order);
+			m_callBack.OnTouchConditionOrder(conditionOrder);
 			flag = true;
 		}
 		
@@ -1221,8 +1220,7 @@ void ConditionOrderManager::OnCheckTime(long long currentTime)
 			conditionOrder.status = EConditionOrderStatus::touched;
 			conditionOrder.changed = true;
 			//发单
-			m_callBack.OnTouchConditionOrder(conditionOrder.order_list
-				, conditionOrder.is_cancel_ori_close_order);
+			m_callBack.OnTouchConditionOrder(conditionOrder);
 			flag = true;
 		}
 	}
@@ -1350,8 +1348,7 @@ void ConditionOrderManager::OnCheckPrice()
 				conditionOrder.status = EConditionOrderStatus::touched;
 				conditionOrder.changed = true;
 				//发单
-				m_callBack.OnTouchConditionOrder(conditionOrder.order_list
-					, conditionOrder.is_cancel_ori_close_order);
+				m_callBack.OnTouchConditionOrder(conditionOrder);
 				flag = true;
 			}
 		}

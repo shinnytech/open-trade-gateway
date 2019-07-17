@@ -267,6 +267,8 @@ private:
 
 	ConditionOrderManager m_condition_order_manager;
 
+	std::vector<ctp_condition_order_task> m_condition_order_task;
+
 	void InitTdApi();
 
 	void StopTdApi();
@@ -388,9 +390,7 @@ private:
 
 	void ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSerialField> pTransferSerial,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);
-
-	void ProcessRspError(std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
-
+	
 	void ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder);
 
 	void ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade);
@@ -476,6 +476,49 @@ private:
 	virtual void OutputNotifyAll(long notify_code,const std::string& ret_msg
 		, const char* level	, const char* type);
 
-	virtual void OnTouchConditionOrder(const std::vector<ContingentOrder>& order_list
-		, bool is_cancel_ori_close_order);
+	virtual void OnTouchConditionOrder(const ConditionOrder& order);
+
+	bool ConditionOrder_Open(const ConditionOrder& order
+		,const ContingentOrder& co
+		,const Instrument& ins
+		,ctp_condition_order_task& task
+		,int nOrderIndex);
+
+	bool ConditionOrder_CloseToday(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseYesToday(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_Close(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_Reverse_Long(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_Reverse_Short(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	void OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d);
+
+	void OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d);
+
+	void CheckConditionOrderCancelOrderTask(const std::string& orderId);
+
+	void CheckConditionOrderSendOrderTask(const std::string& orderId);
 };

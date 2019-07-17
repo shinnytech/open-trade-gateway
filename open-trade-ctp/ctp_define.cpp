@@ -1086,4 +1086,14 @@ namespace trader_dll
 		AddItem(d.EnterReason, ("EnterReason"));		
 	}
 
+	ctp_condition_order_task::ctp_condition_order_task()
+		: has_order_to_cancel(false)
+		, orders_to_cancel()
+		, has_first_orders_to_send(false)
+		, first_orders_to_send()
+		, has_second_orders_to_send(false)
+		, second_orders_to_send()
+	{
+	}
+
 }

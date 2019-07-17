@@ -14,8 +14,7 @@ struct IConditionOrderCallBack
 	virtual void OutputNotifyAll(long notify_code, const std::string& ret_msg
 		, const char* level	, const char* type) = 0;
 
-	virtual void OnTouchConditionOrder(const std::vector<ContingentOrder>& order_list
-		, bool is_cancel_ori_close_order)=0;
+	virtual void OnTouchConditionOrder(const ConditionOrder& order)=0;
 };
 
 class ConditionOrderManager

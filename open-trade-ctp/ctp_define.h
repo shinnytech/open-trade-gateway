@@ -100,7 +100,7 @@ namespace trader_dll
 		LocalOrderKey local_key;
 		CThostFtdcInputOrderActionField f;
 	};
-
+	
 	class SerializerCtp
 		: public RapidSerialize::Serializer<SerializerCtp>
 	{
@@ -171,5 +171,22 @@ namespace trader_dll
 		void DefineStruct(CThostFtdcTradingNoticeInfoField& d);
 
 		void DefineStruct(CThostFtdcInstrumentStatusField& d);		
+	};
+
+	struct ctp_condition_order_task
+	{
+		ctp_condition_order_task();
+
+		bool has_order_to_cancel;
+
+		std::vector<CtpActionCancelOrder> orders_to_cancel;
+
+		bool has_first_orders_to_send;
+
+		std::vector <CtpActionInsertOrder> first_orders_to_send;
+
+		bool has_second_orders_to_send;
+
+		std::vector <CtpActionInsertOrder> second_orders_to_send;
 	};
 }

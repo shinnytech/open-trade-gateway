@@ -93,6 +93,18 @@ enum class EMarketStatus
 	is_closed//收盘
 };
 
+//需要撤单的类型
+enum class ENeedCancelOrderType
+{
+	not_need,//不需要撤
+	today_buy,//需要撤今买
+	today_sell,//需要撤今卖
+	yestoday_buy,//需要撤昨买
+	yestoday_sell,//需要撤昨卖
+	all_buy,//需要撤所有买
+	all_sell//需要撤所有卖
+};
+
 //触发条件
 struct ContingentCondition
 {
@@ -148,6 +160,8 @@ struct ContingentCondition
 	//是否已经突破保本价格
 	bool m_has_break_event;
 };
+
+
 
 //条件触发后的订单
 struct ContingentOrder
@@ -441,3 +455,4 @@ struct req_reconnect_trade_instance
 };
 
 typedef std::map<std::string, std::vector<std::string> > TInstOrderIdListMap;
+
