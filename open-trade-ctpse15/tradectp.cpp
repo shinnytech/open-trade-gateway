@@ -2629,18 +2629,42 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	dt.time.microsecond = 0;
 
 	bool b_is_dce_or_czce = (exchangeId == "CZCE") || (exchangeId == "DCE");
+	sscanf(pTrade->TradeTime, "%02d:%02d:%02d", &dt.time.hour, &dt.time.minute, &dt.time.second);
 	if (b_is_dce_or_czce)
 	{
-		boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
-		dt.date.year = tm.date().year();
-		dt.date.month = tm.date().month();
-		dt.date.day = tm.date().day();
+		int nTime = dt.time.hour * 100 + dt.time.minute;
+		//夜盘
+		if ((nTime > 2030) && (nTime < 2359))
+		{
+			boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+			int nLocalTime = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
+			//现在还是夜盘时间
+			if ((nLocalTime > 2030) && (nLocalTime < 2359))
+			{
+				dt.date.year = tm.date().year();
+				dt.date.month = tm.date().month();
+				dt.date.day = tm.date().day();
+			}
+			//现在已经是白盘时间了
+			else
+			{
+				dt.date.year = tm.date().year();
+				dt.date.month = tm.date().month();
+				dt.date.day = tm.date().day();
+				//跳到上一个工作日
+				MoveDateByWorkday(&dt.date, -1);	
+			}
+		}
+		//白盘
+		else
+		{
+			sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
+		}		
 	}
 	else
 	{
 		sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
 	}	
-	sscanf(pTrade->TradeTime, "%02d:%02d:%02d", &dt.time.hour, &dt.time.minute, &dt.time.second);
 	trade.trade_date_time = DateTimeToEpochNano(&dt);
 	trade.commission = 0.0;
 	trade.changed = true;
