@@ -2639,7 +2639,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 			boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
 			int nLocalTime = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
 			//现在还是夜盘时间
-			if ((nLocalTime > 2030) && (nLocalTime < 2359))
+			if ((nLocalTime > 2030) && (nLocalTime <= 2359))
 			{
 				dt.date.year = tm.date().year();
 				dt.date.month = tm.date().month();
