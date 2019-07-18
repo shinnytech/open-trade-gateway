@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <cassert>
 #include <algorithm>
+#include <vector>
+
+#include <boost/algorithm/string.hpp>
+
 
 static const long _DAYS_IN_MONTH[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static const long _DAYS_BEFORE_MONTH[13] = {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
@@ -714,4 +718,34 @@ long long DateTimeToEpochNano(const struct DateTime* dt)
     t = mktime(&p);
     nano = (long long)t * 1000000000 + dt->time.microsecond * 1000;
     return nano;
+}
+
+int DateTimeToEpochSeconds(const DateTime& dt)
+{
+	struct tm p;
+	time_t t;
+	p.tm_year = dt.date.year - 1900;
+	p.tm_mon = dt.date.month - 1;
+	p.tm_mday = dt.date.day;
+	p.tm_hour = dt.time.hour;
+	p.tm_min = dt.time.minute;
+	p.tm_sec = dt.time.second;
+	p.tm_isdst = 0;
+	t = mktime(&p);
+	return t;
+}
+
+void GetTimeFromString(const std::string& str, Time& time)
+{
+	std::vector<std::string> hms;
+	boost::algorithm::split(hms,str,boost::algorithm::is_any_of(":"));
+	if (hms.size() != 3)
+	{
+		return;
+	}
+
+	time.hour = atoi(hms[0].c_str());
+	time.minute= atoi(hms[1].c_str());
+	time.second= atoi(hms[2].c_str());
+	time.microsecond = 0;
 }

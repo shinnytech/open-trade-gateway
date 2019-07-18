@@ -115,5 +115,25 @@ std::string base64_decode(const std::string &in)
 
 void CutDigital(std::string& instId)
 {
-	//TODO::
+	if (instId.empty())
+	{
+		return;
+	}
+	
+	unsigned int i = 0;
+	bool flag = false;
+	while (i < instId.length())
+	{
+		if ('0' <= instId.at(i) && instId.at(i) <= '9')
+		{			
+			flag = true;
+			break;
+		}
+		i++;
+	}
+
+	if (flag)
+	{
+		instId = instId.substr(0, i);
+	}	
 }

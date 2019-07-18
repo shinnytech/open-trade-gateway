@@ -31,18 +31,7 @@ void SerializerConditionOrderData::DefineStruct(ContingentCondition& d)
 	AddItem(d.instrument_id, ("instrument_id"));
 
 	AddItem(d.is_touched, ("is_touched"));
-
-	AddItemEnum(d.market_status
-		, ("market_status")
-		, { { EMarketStatus::before_trading , ("before_trading") },
-		{ EMarketStatus::no_trading, ("no_trading") },
-		{ EMarketStatus::continous, ("continous") },
-		{ EMarketStatus::auction_ordering, ("auction_ordering") },
-		{ EMarketStatus::auction_balance, ("auction_balance") },
-		{ EMarketStatus::auction_match, ("auction_match") },
-		{ EMarketStatus::is_closed, ("is_closed") },
-		});
-
+	
 	AddItem(d.contingent_price, ("contingent_price"));
 
 	AddItemEnum(d.price_relation_type
@@ -52,7 +41,7 @@ void SerializerConditionOrderData::DefineStruct(ContingentCondition& d)
 		{ EPriceRelationType::L, ("L") },
 		{ EPriceRelationType::LE, ("LE") },
 		});
-
+	   
 	AddItem(d.contingent_time, ("contingent_time"));
 
 	AddItem(d.contingent_price_left, ("contingent_price_left"));

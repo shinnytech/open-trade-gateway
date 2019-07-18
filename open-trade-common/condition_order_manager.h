@@ -46,7 +46,7 @@ public:
 
 	void OnMarketOpen(const std::string& strSymbol);
 
-	void OnCheckTime(long long currentTime);
+	void OnCheckTime();
 
 	void OnCheckPrice();
 
@@ -55,6 +55,8 @@ public:
 	std::set<std::string>& GetTimeCoSet();
 
 	TInstOrderIdListMap& GetPriceCoMap();
+
+	void SetExchangeTime(int localTime,int SHFETime, int DCETime, int INETime, int FFEXTime,int CZCETime);
 private:
 	std::string m_userKey;
 
@@ -78,7 +80,21 @@ private:
 
 	TInstOrderIdListMap m_price_condition_order_map;
 
-	IConditionOrderCallBack& m_callBack;	
+	IConditionOrderCallBack& m_callBack;
+
+	int m_localTime;
+
+	int m_SHFETime;
+
+	int m_DCETime;
+
+	int m_INETime;
+
+	int m_FFEXTime;
+
+	int m_CZCETime;
+
+	int GetExchangeTime(const std::string& exchange_id);
 	
 	void SendAllConditionOrderData();
 

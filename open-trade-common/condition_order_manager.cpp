@@ -27,7 +27,13 @@ ConditionOrderManager::ConditionOrderManager(const std::string& userKey
 	,m_openmarket_condition_order_map()
 	, m_time_condition_order_set()
 	,m_price_condition_order_map()
-{
+	,m_localTime(0)
+	,m_SHFETime(0)
+	,m_DCETime(0)
+	,m_INETime(0)
+	,m_FFEXTime(0)
+	,m_CZCETime(0)
+{	
 	LoadConditionOrderConfig();
 }
 
@@ -478,8 +484,8 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		}
 
 		if (cond.contingent_type == EContingentType::time)
-		{
-			if (cond.contingent_time <= GetLocalEpochMilli())
+		{			
+			if (cond.contingent_time <= GetExchangeTime(cond.exchange_id))
 			{
 				m_callBack.OutputNotifyAll(
 					1
@@ -653,7 +659,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			, m_condition_order_data.user_id.c_str());
 		return;
 	}
-
+	
 	if (!m_run_server)
 	{
 		m_callBack.OutputNotifyAll(
@@ -665,7 +671,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 
 	req_insert_condition_order insert_co;
 	nss.ToVar(insert_co);
-	
+
 	if (insert_co.order_id.empty())
 	{
 		insert_co.order_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
@@ -692,9 +698,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			, "WARNING", "MESSAGE");
 		return;
 	}
-
-	
-	
+		
 	ConditionOrder order;
 	order.order_id = insert_co.order_id;
 	order.trading_day = atoi(m_condition_order_data.trading_day.c_str());
@@ -1109,6 +1113,11 @@ TInstOrderIdListMap& ConditionOrderManager::GetPriceCoMap()
 
 void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
 {
+	if (!m_run_server)
+	{
+		return;
+	}
+
 	TInstOrderIdListMap::iterator it = m_openmarket_condition_order_map.find(strSymbol);
 	if (it == m_openmarket_condition_order_map.end())
 	{
@@ -1175,14 +1184,18 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
 	}
 }
 
-void ConditionOrderManager::OnCheckTime(long long currentTime)
+void ConditionOrderManager::OnCheckTime()
 {
+	if (!m_run_server)
+	{
+		return;
+	}
+
 	bool flag = false;
 	for (auto orderId : m_time_condition_order_set)
 	{
 		std::map<std::string, ConditionOrder>::iterator it
 			= m_condition_order_data.condition_orders.find(orderId);
-
 		if (it == m_condition_order_data.condition_orders.end())
 		{
 			continue;
@@ -1208,14 +1221,14 @@ void ConditionOrderManager::OnCheckTime(long long currentTime)
 				continue;
 			}
 
-			if (c.contingent_time <= currentTime)
+			if (c.contingent_time <= GetExchangeTime(c.exchange_id))
 			{
 				c.is_touched = true;
 				flag = true;
 			}
 		}
 
-		if (IsContingentConditionTouched(condition_list,conditionOrder.conditions_logic_oper))
+		if (IsContingentConditionTouched(condition_list, conditionOrder.conditions_logic_oper))
 		{
 			conditionOrder.status = EConditionOrderStatus::touched;
 			conditionOrder.changed = true;
@@ -1224,7 +1237,7 @@ void ConditionOrderManager::OnCheckTime(long long currentTime)
 			flag = true;
 		}
 	}
-	//
+
 	if (flag)
 	{
 		SaveCurrent();
@@ -1235,6 +1248,11 @@ void ConditionOrderManager::OnCheckTime(long long currentTime)
 
 void ConditionOrderManager::OnCheckPrice()
 {
+	if (!m_run_server)
+	{
+		return;
+	}
+
 	bool flag = false;
 	for (auto it : m_price_condition_order_map)
 	{
@@ -1401,4 +1419,51 @@ bool ConditionOrderManager::IsContingentConditionTouched(std::vector<ContingentC
 	{
 		return false;
 	}	
+}
+
+void  ConditionOrderManager::SetExchangeTime(int localTime, int SHFETime, int DCETime
+	, int INETime, int FFEXTime, int CZCETime)
+{
+	m_localTime = localTime;
+	m_SHFETime = SHFETime;
+	m_DCETime = DCETime;
+	m_INETime = INETime;
+	m_FFEXTime = FFEXTime;
+	m_CZCETime = CZCETime;	
+}
+
+int ConditionOrderManager::GetExchangeTime(const std::string& exchange_id)
+{
+	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+	DateTime dtLocalTime;
+	dtLocalTime.date.year = tm.date().year();
+	dtLocalTime.date.month = tm.date().month();
+	dtLocalTime.date.day = tm.date().day();
+	dtLocalTime.time.hour = tm.time_of_day().hours();
+	dtLocalTime.time.minute = tm.time_of_day().minutes();
+	dtLocalTime.time.second = tm.time_of_day().seconds();
+	dtLocalTime.time.microsecond = 0;
+
+	int nLocalTime = DateTimeToEpochSeconds(dtLocalTime);
+	int nTimeDelta = nLocalTime - m_localTime;
+	if (exchange_id == "SHFE")
+	{
+		return m_SHFETime + nTimeDelta;
+	}
+	else if (exchange_id == "INE")
+	{
+		return m_INETime + nTimeDelta;
+	}
+	else if (exchange_id == "CZCE")
+	{
+		return m_CZCETime + nTimeDelta;
+	}
+	else if (exchange_id == "DCE")
+	{
+		return m_DCETime + nTimeDelta;
+	}
+	else
+	{
+		return m_FFEXTime+ nTimeDelta;
+	}
 }

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <time.h>
+#include <string>
 
 typedef int BOOL;
 #define TRUE 1
@@ -135,3 +136,7 @@ void SetDateTimeFromTimeT(struct DateTime* datetime, time_t* src);
 const char* DateTimeGetString(const struct DateTime* v);
 void SetDateTimeFromEpochNano(struct DateTime* datetime, long long epoch_nano);
 long long DateTimeToEpochNano(const struct DateTime* dt);
+
+void GetTimeFromString(const std::string& str,Time& time);
+
+int DateTimeToEpochSeconds(const DateTime& dt);

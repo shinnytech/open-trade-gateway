@@ -340,6 +340,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_condition_order_task.clear();
 
 			AfterLogin();
+			SetExchangeTime(*pRspUserLogin);
 		}
 		else
 		{
@@ -427,6 +428,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
 			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
 			AfterLogin();
+			SetExchangeTime(*pRspUserLogin);
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
 			_logIn_status = 2;
 			_logInCondition.notify_all();
@@ -2652,14 +2654,14 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 				dt.date.month = tm.date().month();
 				dt.date.day = tm.date().day();
 				//跳到上一个工作日
-				MoveDateByWorkday(&dt.date, -1);
+				MoveDateByWorkday(&dt.date, -1);	
 			}
 		}
 		//白盘
 		else
 		{
 			sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
-		}
+		}		
 	}
 	else
 	{
@@ -5049,9 +5051,7 @@ void traderctp::CheckTimeConditionOrder()
 	{
 		return;
 	}
-
-	long long currentTime = GetLocalEpochMilli();
-	m_condition_order_manager.OnCheckTime(currentTime);
+	m_condition_order_manager.OnCheckTime();
 }
 
 void traderctp::CheckPriceConditionOrder()
@@ -7068,6 +7068,57 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 		, d.f.VolumeCondition
 		, d.f.TimeCondition);
 	m_need_save_file.store(true);
+}
+
+void traderctp::SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField)
+{
+	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+	
+	DateTime dtLocalTime;
+	dtLocalTime.date.year= tm.date().year();
+	dtLocalTime.date.month= tm.date().month();
+	dtLocalTime.date.day= tm.date().day();
+	dtLocalTime.time.hour = tm.time_of_day().hours();
+	dtLocalTime.time.minute = tm.time_of_day().minutes();
+	dtLocalTime.time.second = tm.time_of_day().seconds();
+	dtLocalTime.time.microsecond = 0;
+	
+	DateTime dtSHFETime;
+	dtSHFETime.date.year = tm.date().year();
+	dtSHFETime.date.month = tm.date().month();
+	dtSHFETime.date.day = tm.date().day();
+	GetTimeFromString(userLogInField.SHFETime, dtSHFETime.time);
+	
+	DateTime dtDCETime;
+	dtDCETime.date.year = tm.date().year();
+	dtDCETime.date.month = tm.date().month();
+	dtDCETime.date.day = tm.date().day();
+	GetTimeFromString(userLogInField.DCETime, dtDCETime.time);
+
+	DateTime dtINETime;
+	dtINETime.date.year = tm.date().year();
+	dtINETime.date.month = tm.date().month();
+	dtINETime.date.day = tm.date().day();
+	GetTimeFromString(userLogInField.INETime, dtINETime.time);
+
+	DateTime dtFFEXTime;
+	dtFFEXTime.date.year = tm.date().year();
+	dtFFEXTime.date.month = tm.date().month();
+	dtFFEXTime.date.day = tm.date().day();
+	GetTimeFromString(userLogInField.FFEXTime, dtFFEXTime.time);
+
+	DateTime dtCZCETime;
+	dtCZCETime.date.year = tm.date().year();
+	dtCZCETime.date.month = tm.date().month();
+	dtCZCETime.date.day = tm.date().day();
+	GetTimeFromString(userLogInField.CZCETime, dtCZCETime.time);	   	
+
+	m_condition_order_manager.SetExchangeTime(DateTimeToEpochSeconds(dtLocalTime),
+		DateTimeToEpochSeconds(dtSHFETime),
+		DateTimeToEpochSeconds(dtDCETime),
+		DateTimeToEpochSeconds(dtINETime),
+		DateTimeToEpochSeconds(dtFFEXTime),
+		DateTimeToEpochSeconds(dtCZCETime));
 }
 
 #pragma endregion

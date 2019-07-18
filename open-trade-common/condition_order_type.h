@@ -81,18 +81,6 @@ enum class EConditionOrderStatus
 	touched//触发
 };
 
-//市场状态
-enum class EMarketStatus
-{
-	before_trading,//开盘前
-	no_trading,//非交易
-	continous, //连续交易
-	auction_ordering,//集合竞价报单
-	auction_balance,//集合竞价价格平衡
-	auction_match,//集合竞价撮合
-	is_closed//收盘
-};
-
 //需要撤单的类型
 enum class ENeedCancelOrderType
 {
@@ -112,8 +100,7 @@ struct ContingentCondition
 		contingent_type(EContingentType::market_open)
 		, exchange_id("")
 		, instrument_id("")
-		, is_touched(false)
-		, market_status(EMarketStatus::before_trading)
+		, is_touched(false)	
 		, contingent_time(0)
 		, contingent_price(0)
 		, price_relation_type(EPriceRelationType::G)
@@ -135,10 +122,7 @@ struct ContingentCondition
 
 	//条件是否已经触发
 	bool is_touched;
-
-	//市场状态
-	EMarketStatus market_status;
-
+	
 	//触发价格
 	double contingent_price;
 
@@ -160,8 +144,6 @@ struct ContingentCondition
 	//是否已经突破保本价格
 	bool m_has_break_event;
 };
-
-
 
 //条件触发后的订单
 struct ContingentOrder

@@ -523,4 +523,6 @@ private:
 	void CheckConditionOrderSendOrderTask(const std::string& orderId);
 
 	int RegSystemInfo();
+
+	void SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField);
 };
