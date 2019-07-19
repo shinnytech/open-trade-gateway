@@ -34,8 +34,8 @@ void SerializerConditionOrderData::DefineStruct(ContingentCondition& d)
 	
 	AddItem(d.contingent_price, ("contingent_price"));
 
-	AddItemEnum(d.price_relation_type
-		, ("price_relation_type")
+	AddItemEnum(d.price_relation
+		, ("price_relation")
 		, { { EPriceRelationType::G, ("G") },
 		{ EPriceRelationType::GE, ("GE") },
 		{ EPriceRelationType::L, ("L") },
@@ -44,13 +44,17 @@ void SerializerConditionOrderData::DefineStruct(ContingentCondition& d)
 	   
 	AddItem(d.contingent_time, ("contingent_time"));
 
-	AddItem(d.contingent_price_left, ("contingent_price_left"));
+	AddItem(d.contingent_price_left, ("contingent_price_range_left"));
 
-	AddItem(d.contingent_price_right, ("contingent_price_right"));
+	AddItem(d.contingent_price_right, ("contingent_price_range_right"));
 
 	AddItem(d.break_even_price, ("break_even_price"));
-
-	AddItem(d.m_has_break_event, ("m_has_break_event"));
+	
+	AddItemEnum(d.break_even_direction
+		, ("break_even_direction")
+		, { { EOrderDirection::buy, ("BUY") },
+		{ EOrderDirection::sell, ("SELL") },
+		});	
 }
 
 void SerializerConditionOrderData::DefineStruct(ContingentOrder& d)

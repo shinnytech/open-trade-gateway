@@ -3342,11 +3342,7 @@ void traderctp::OnIdle()
 	{
 		return;
 	}
-
-	CheckTimeConditionOrder();
-
-	CheckPriceConditionOrder();
-
+	
 	if (m_need_save_file.load())
 	{
 		this->SaveToFile();
@@ -3372,6 +3368,7 @@ void traderctp::OnIdle()
 		m_next_qry_dt = now + 1100;
 		return;
 	}
+	
 
 	if (m_need_query_broker_trading_params)
 	{
@@ -3386,7 +3383,7 @@ void traderctp::OnIdle()
 		m_next_qry_dt = now + 1100;
 		return;
 	}
-
+	
 	if (m_need_query_settlement.load())
 	{
 		ReqQrySettlementInfo();
@@ -3394,6 +3391,10 @@ void traderctp::OnIdle()
 		return;
 	}
 
+	CheckTimeConditionOrder();
+
+	CheckPriceConditionOrder();
+	
 	if (m_need_query_bank.load())
 	{
 		ReqQryBank();
@@ -4026,6 +4027,11 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "req_reconnect_trade")
 		{
+			if (connId != 0)
+			{
+				return;
+			}
+
 			SerializerConditionOrderData ns;
 			if (!ns.FromString(msg.c_str()))
 			{
@@ -4124,7 +4130,11 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				, "fun=ProcessInMsg;msg=trade ctp receive ccos msg;key=%s;bid=%s;user_name=%s"
 				, _key.c_str()
 				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());			
+				, _req_login.user_name.c_str());		
+			if (connId != 0)
+			{
+				return;
+			}
 			m_condition_order_manager.ChangeCOSStatus(msg);
 		}
 		else if (aid == "req_start_ctp")
@@ -4134,6 +4144,10 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str());
+			if (connId != 0)
+			{
+				return;
+			}
 			OnReqStartCTP(msg);
 		}
 		else if (aid == "req_stop_ctp")
@@ -4143,6 +4157,10 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
+			if (connId != 0)
+			{
+				return;
+			}
 			OnReqStopCTP(msg);
 		}
 	}
@@ -6141,7 +6159,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		{
 			//找不到触发价
 			Log(LOG_WARNING, nullptr
-				, "fun=ConditionOrder_CloseYesToday;msg=can not find contingent_price;key=%s;bid=%s;user_name=%s;instrument_id=%s"
+				, "fun=ConditionOrder_Close;msg=can not find contingent_price;key=%s;bid=%s;user_name=%s;instrument_id=%s"
 				, _key.c_str()
 				, _req_login.bid.c_str()
 				, _req_login.user_name.c_str()
@@ -6807,29 +6825,29 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 
 		//开始发单
 		if (task.has_order_to_cancel)
-		{
-			for (auto oc : task.orders_to_cancel)
+		{			
+			for (CtpActionCancelOrder& oc : task.orders_to_cancel)
 			{
 				OnConditionOrderReqCancelOrder(oc);
-			}
+			}			
 			m_condition_order_task.push_back(task);
 			continue;
 		}
 		else if (task.has_first_orders_to_send)
-		{
-			for (auto o : task.first_orders_to_send)
+		{			
+			for (CtpActionInsertOrder& o : task.first_orders_to_send)
 			{
 				OnConditionOrderReqInsertOrder(o);
-			}
+			}			
 			m_condition_order_task.push_back(task);
 			continue;
 		}
 		else if (task.has_second_orders_to_send)
-		{
-			for (auto o : task.second_orders_to_send)
+		{			
+			for (CtpActionInsertOrder& o : task.second_orders_to_send)
 			{
 				OnConditionOrderReqInsertOrder(o);
-			}
+			}			
 			m_condition_order_task.push_back(task);
 			continue;
 		}
@@ -7014,7 +7032,12 @@ void traderctp::OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d)
 	std::string strKey = ss.str();
 	m_action_order_map.insert(
 		std::map<std::string, std::string>::value_type(strKey, strKey));
-
+	
+	if (nullptr == m_pTdApi)
+	{
+		OutputNotifyAllSycn(0, u8"当前时间不支持撤单! ", "WARNING");
+		return;
+	}
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
@@ -7065,15 +7088,23 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	serverOrder.VolumeLeft = d.f.VolumeTotalOriginal;
 	m_input_order_key_map.insert(std::map<std::string
 		, ServerOrderInfo>::value_type(strKey, serverOrder));
-	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
+	
+	if (nullptr == m_pTdApi)
+	{
+		OutputNotifyAllSycn(0, u8"当前时间不支持下单! ", "WARNING");
+		return;
+	}
+	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);	
 	if (0 != r)
 	{		
+		OutputNotifyAllSycn(1, u8"下单请求发送失败!", "WARNING");
 		Log(LOG_WARNING, nullptr
 			, "fun=OnClientReqInsertConditionOrder;msg=send order request is fail;key=%s;bid=%s;user_name=%s"
 			, _key.c_str()
 			, _req_login.bid.c_str()
 			, _req_login.user_name.c_str());
 	}
+
 	Log(LOG_INFO, nullptr
 		, "fun=OnClientReqInsertConditionOrder;key=%s;orderid=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
 		, _key.c_str()
@@ -7090,6 +7121,7 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 		, d.f.VolumeTotalOriginal
 		, d.f.VolumeCondition
 		, d.f.TimeCondition);
+
 	m_need_save_file.store(true);
 }
 

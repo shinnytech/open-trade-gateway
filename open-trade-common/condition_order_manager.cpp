@@ -1221,7 +1221,10 @@ void ConditionOrderManager::OnCheckTime()
 				continue;
 			}
 
-			if (c.contingent_time <= GetExchangeTime(c.exchange_id))
+			int exchangeTime = GetExchangeTime(c.exchange_id);
+
+			if ((exchangeTime>=c.contingent_time)
+				&&(exchangeTime< c.contingent_time+100))//时间离的比较远就不会触发,考虑到时钟的差异
 			{
 				c.is_touched = true;
 				flag = true;
@@ -1290,7 +1293,7 @@ void ConditionOrderManager::OnCheckPrice()
 
 				if (c.contingent_type == EContingentType::price)
 				{
-					switch (c.price_relation_type)
+					switch (c.price_relation)
 					{
 						case EPriceRelationType::G:
 							if (isgreater(last_price, c.contingent_price))
@@ -1337,22 +1340,50 @@ void ConditionOrderManager::OnCheckPrice()
 				}
 				else if (c.contingent_type == EContingentType::break_even)
 				{
-					if (c.m_has_break_event)
+					//多头
+					if (c.break_even_direction == EOrderDirection::buy)
 					{
-						if (islessequal(last_price, c.break_even_price))
+						if (c.m_has_break_event)
 						{
-							c.is_touched = true;
-							flag = true;
+							//又向下回到保本价
+							if (islessequal(last_price, c.break_even_price))
+							{
+								c.is_touched = true;
+								flag = true;
+							}
+						}
+						//先向上突破止盈价
+						else
+						{
+							if (isgreater(last_price, c.break_even_price))
+							{
+								c.m_has_break_event = true;
+								flag = true;
+							}
 						}
 					}
-					else
+					//空头
+					else if (c.break_even_direction == EOrderDirection::sell)
 					{
-						if (isgreater(last_price, c.break_even_price))
+						if (c.m_has_break_event)
 						{
-							c.m_has_break_event = true;
-							flag = true;
+							//又向上回到保本价
+							if (isgreaterequal(last_price, c.break_even_price))
+							{
+								c.is_touched = true;
+								flag = true;
+							}
 						}
-					}
+						else
+						{
+							//先向下突破止盈价
+							if (isless(last_price, c.break_even_price))
+							{
+								c.m_has_break_event = true;
+								flag = true;
+							}
+						}
+					}					
 				}
 				else
 				{

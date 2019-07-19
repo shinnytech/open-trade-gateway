@@ -103,11 +103,12 @@ struct ContingentCondition
 		, is_touched(false)	
 		, contingent_time(0)
 		, contingent_price(0)
-		, price_relation_type(EPriceRelationType::G)
+		, price_relation(EPriceRelationType::G)
 		, contingent_price_left(0)
 		, contingent_price_right(0)
 		, break_even_price(0)
 		, m_has_break_event(false)
+		, break_even_direction(EOrderDirection::buy)
 	{
 	}
 
@@ -127,7 +128,7 @@ struct ContingentCondition
 	double contingent_price;
 
 	//触发价格关系
-	EPriceRelationType price_relation_type;
+	EPriceRelationType price_relation;
 
 	//触发时间
 	int contingent_time;
@@ -143,6 +144,9 @@ struct ContingentCondition
 
 	//是否已经突破保本价格
 	bool m_has_break_event;
+
+	//被止盈仓位的方向
+	EOrderDirection break_even_direction;
 };
 
 //条件触发后的订单
