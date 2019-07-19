@@ -28,6 +28,20 @@
 
 using namespace trader_dll;
 
+enum class ECTPLoginStatus
+{
+	init=800,
+	reqAuthenFail=801,
+	rspAuthenFail=802,
+	regSystemInfoFail = 803,
+	reqUserLoginFail = 804,
+	rspLoginFail=805,
+	rspLoginFailNeedModifyPassword = 806,	
+	reqLoginTimeOut = 807,
+	reqLoginDiffPass=808,
+	rspLoginSuccess=810
+};
+
 class traderctp : public CThostFtdcTraderSpi
 	,public IConditionOrderCallBack
 {
@@ -167,7 +181,7 @@ private:
 
 	std::atomic_int _requestID;;
 
-	int _logIn_status;
+	ECTPLoginStatus _logIn_status;
 
 	boost::mutex _logInmutex;
 
@@ -305,7 +319,7 @@ private:
 
 	std::string GetConnectionStr();
 
-	int WaitLogIn();
+	ECTPLoginStatus WaitLogIn();
 
 	int ReqAuthenticate();
 

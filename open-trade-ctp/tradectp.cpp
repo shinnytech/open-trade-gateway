@@ -43,7 +43,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, m_input_order_key_map()
 	, m_action_order_map()
 	, m_req_transfer_list()
-	, _logIn_status(0)
+	, _logIn_status(ECTPLoginStatus::init)
 	, _logInmutex()
 	, _logInCondition()
 	, m_loging_connectId(-1)
@@ -132,7 +132,7 @@ void traderctp::OnFrontConnected()
 		if (0 != ret)
 		{
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn_status = 0;
+			_logIn_status = ECTPLoginStatus::reqAuthenFail;
 			_logInCondition.notify_all();
 		}		
 	}
@@ -230,7 +230,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 				, pRspInfo->ErrorID,
 				u8"交易服务器认证失败," + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn_status = 0;
+			_logIn_status = ECTPLoginStatus::rspAuthenFail;
 			_logInCondition.notify_all();
 			return;
 		}
@@ -348,7 +348,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
-			OutputNotifyAllSycn(0, u8"交易服务器重登录成功");
+			OutputNotifyAllSycn(810, u8"交易服务器重登录成功");
 
 			m_req_position_id++;
 			m_req_account_id++;
@@ -404,11 +404,11 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 				|| (pRspInfo->ErrorID == 131)
 				|| (pRspInfo->ErrorID == 141))
 			{
-				_logIn_status = 1;
+				_logIn_status = ECTPLoginStatus::rspLoginFailNeedModifyPassword;
 			}
 			else
 			{
-				_logIn_status = 0;
+				_logIn_status = ECTPLoginStatus::rspLoginFail;
 			}
 			_logInCondition.notify_all();
 			return;
@@ -426,11 +426,11 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
-			OutputNotifySycn(m_loging_connectId, 0, u8"登录成功");
+			OutputNotifySycn(m_loging_connectId,810,u8"登录成功");
 			AfterLogin();
 			SetExchangeTime(*pRspUserLogin);
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn_status = 2;
+			_logIn_status = ECTPLoginStatus::rspLoginSuccess;
 			_logInCondition.notify_all();
 		}
 	}
@@ -2925,7 +2925,7 @@ void traderctp::SendLoginRequest()
 		if (0 != ret)
 		{
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn_status = 0;
+			_logIn_status = ECTPLoginStatus::regSystemInfoFail;
 			_logInCondition.notify_all();
 			return;
 		}
@@ -2935,7 +2935,7 @@ void traderctp::SendLoginRequest()
 			if (0 != ret)
 			{
 				boost::unique_lock<boost::mutex> lock(_logInmutex);
-				_logIn_status = 0;
+				_logIn_status = ECTPLoginStatus::reqUserLoginFail;
 				_logInCondition.notify_all();
 				return;
 			}
@@ -2947,7 +2947,7 @@ void traderctp::SendLoginRequest()
 		if (0 != ret)
 		{
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
-			_logIn_status = 0;
+			_logIn_status = ECTPLoginStatus::reqUserLoginFail;
 			_logInCondition.notify_all();
 			return;
 		}
@@ -4157,7 +4157,7 @@ void traderctp::ClearOldData()
 
 	StopTdApi();
 	m_b_login.store(false);
-	_logIn_status = 0;
+	_logIn_status = ECTPLoginStatus::init;
 	m_try_req_authenticate_times = 0;
 	m_try_req_login_times = 0;
 	m_ordermap_local_remote.clear();
@@ -4383,7 +4383,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			{
 				//加入登录客户端列表
 				m_logined_connIds.push_back(connId);
-				OutputNotifySycn(connId, 0, u8"登录成功");
+				OutputNotifySycn(connId, 810, u8"登录成功");
 
 				char json_str[1024];
 				sprintf(json_str, (u8"{"\
@@ -4411,12 +4411,17 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			if (0 != connId)
 			{
-				OutputNotifySycn(connId, 0, u8"用户登录失败!");
+				OutputNotifySycn(connId,808,u8"用户登录失败!");
 			}			
 		}
 	}
 	else
 	{
+		if ((0 == connId)&&(!g_config.auto_confirm_settlement))
+		{
+			g_config.auto_confirm_settlement = true;
+		}
+
 		_req_login = req;
 		auto it = g_config.brokers.find(_req_login.bid);
 		_req_login.broker = it->second;
@@ -4451,24 +4456,49 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			StopTdApi();
 		}
 		InitTdApi();
-		int login_status = WaitLogIn();
-		if (0 == login_status)
+		ECTPLoginStatus login_status = WaitLogIn();	
+		long status_code = static_cast<long>(login_status);
+		if ((ECTPLoginStatus::init == login_status)
+			||(ECTPLoginStatus::reqAuthenFail== login_status)
+			|| (ECTPLoginStatus::rspAuthenFail == login_status)
+			||(ECTPLoginStatus::regSystemInfoFail== login_status)
+			|| (ECTPLoginStatus::reqUserLoginFail == login_status)
+			|| (ECTPLoginStatus::rspLoginFail == login_status)			
+			)
 		{
 			m_b_login.store(false);
 			StopTdApi();
-		}
-		else if (1 == login_status)
+			if (connId != 0)
+			{
+				m_loging_connectId = connId;
+				OutputNotifySycn(connId, status_code, u8"用户登录失败!");
+			}
+			return;
+		}		
+		else if (ECTPLoginStatus::rspLoginFailNeedModifyPassword == login_status)
 		{
 			m_b_login.store(false);
+			if (connId != 0)
+			{
+				m_loging_connectId = connId;
+				OutputNotifySycn(connId, status_code, u8"用户登录失败!");
+			}
+			return;
 		}
-		else if (2 == login_status)
+		else if (ECTPLoginStatus::reqLoginTimeOut == login_status)
+		{
+			m_b_login.store(false);
+			if (connId != 0)
+			{
+				m_loging_connectId = connId;
+				OutputNotifySycn(connId, status_code, u8"用户登录超时!");
+			}
+			return;
+		}
+		else if (ECTPLoginStatus::rspLoginSuccess == login_status)
 		{
 			m_b_login.store(true);
-		}
 
-		//如果登录成功
-		if (m_b_login.load())
-		{
 			//加入登录客户端列表
 			if (connId != 0)
 			{
@@ -4487,34 +4517,27 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 				std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 				_ios.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
 			}
-			
+
 			//加载条件单数据
 			m_condition_order_manager.Load(_req_login.bid,
 				_req_login.user_name,
 				_req_login.password,
 				m_trading_day);
-		}
-		else
-		{
-			if (connId != 0)
-			{
-				m_loging_connectId = connId;
-				OutputNotifySycn(connId, 0, u8"用户登录失败!");
-			}			
-		}
+		}		
 	}
 }
 
-int traderctp::WaitLogIn()
+ECTPLoginStatus traderctp::WaitLogIn()
 {
 	boost::unique_lock<boost::mutex> lock(_logInmutex);
-	_logIn_status = 0;
+	_logIn_status = ECTPLoginStatus::init;
 	m_pTdApi->Init();
 	bool notify = _logInCondition.timed_wait(lock, boost::posix_time::seconds(15));
-	if (0 == _logIn_status)
+	if (ECTPLoginStatus::init == _logIn_status)
 	{
 		if (!notify)
 		{
+			_logIn_status = ECTPLoginStatus::reqLoginTimeOut;
 			Log(LOG_WARNING,nullptr
 				, "fun=WaitLogIn;msg=CTP login timeout,trading fronts is closed or trading fronts config is error;key=%s;bid=%s;user_name=%s"
 				, _key.c_str()
@@ -5240,7 +5263,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 			, co.instrument_id.c_str());
 		return false;
 	}
-	
+		
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	
 	CThostFtdcInputOrderField f;
@@ -5273,7 +5296,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 			else if (co.volume <= pos.pos_short_today)
 			{
 				if (order.is_cancel_ori_close_order)
-				{
+				{		
 					f.VolumeTotalOriginal = co.volume;
 					f.VolumeCondition = THOST_FTDC_VC_AV;
 					needCancelOrderType = ENeedCancelOrderType::today_buy;
@@ -5305,7 +5328,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 			Position& position = GetPosition(symbol);
 			//如果可平手数大于零
 			if (pos.pos_short_today - pos.volume_short_frozen_today>0)
-			{
+			{				
 				f.VolumeTotalOriginal = pos.pos_short_today - pos.volume_short_frozen_today;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
@@ -5340,7 +5363,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 			else if (co.volume <= pos.pos_long_today)
 			{
 				if (order.is_cancel_ori_close_order)
-				{
+				{					
 					//需要先撤掉所有平今空仓的单子,然后再发送该订单
 					f.VolumeTotalOriginal = co.volume;
 					f.VolumeCondition = THOST_FTDC_VC_AV;
