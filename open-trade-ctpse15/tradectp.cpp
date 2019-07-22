@@ -3391,6 +3391,13 @@ void traderctp::OnIdle()
 		return;
 	}
 
+	if (m_confirm_settlement_status.load() == 1)
+	{
+		ReqConfirmSettlement();
+		m_next_qry_dt = now + 1100;
+		return;
+	}
+
 	CheckTimeConditionOrder();
 
 	CheckPriceConditionOrder();
@@ -3407,14 +3414,7 @@ void traderctp::OnIdle()
 		ReqQryAccountRegister();
 		m_next_qry_dt = now + 1100;
 		return;
-	}
-
-	if (m_confirm_settlement_status.load() == 1)
-	{
-		ReqConfirmSettlement();
-		m_next_qry_dt = now + 1100;
-		return;
-	}
+	}	
 
 	if (!m_qry_his_settlement_info_trading_days.empty())
 	{

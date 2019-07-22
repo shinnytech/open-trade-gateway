@@ -72,14 +72,7 @@ void ConditionOrderManager::Load(const std::string& bid
 	{
 		m_user_file_path = "/var/local/lib/open-trade-gateway/" + bid;
 	}
-
-	Log(LOG_INFO, nullptr
-		, "fun=Load;key=%s;bid=%s;user_name=%s;fpath=%s;msg=ConditionOrderManager try to load condition order data!"
-		, m_userKey.c_str()
-		, bid.c_str()
-		, user_id.c_str()
-		, m_user_file_path.c_str());
-
+		
 	//加载条件单数据
 	std::vector<ConditionOrder> tmp_his_condition_orders;
 	std::string fn = m_user_file_path + "/" + m_userKey +".co";
@@ -1331,7 +1324,7 @@ void ConditionOrderManager::OnCheckPrice()
 				{
 					if (
 						islessequal(last_price, c.contingent_price_right)
-						&& isgreater(last_price, c.contingent_price_left)
+						&& isgreaterequal(last_price, c.contingent_price_left)
 						)
 					{
 						c.is_touched = true;
