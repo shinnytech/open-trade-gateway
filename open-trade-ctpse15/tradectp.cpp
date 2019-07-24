@@ -5040,7 +5040,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		, r
 		, d.f.OrderPriceType
 		, d.f.Direction
-		, d.f.CombHedgeFlag[0]
+		, d.f.CombOffsetFlag[0]
 		, d.f.LimitPrice
 		, d.f.VolumeTotalOriginal
 		, d.f.VolumeCondition
@@ -5054,8 +5054,6 @@ void traderctp::OnClientPeekMessage()
 	//向客户端发送账户信息
 	SendUserData();
 }
-
-
 
 #pragma endregion
 
@@ -7116,7 +7114,7 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 		, r
 		, d.f.OrderPriceType
 		, d.f.Direction
-		, d.f.CombHedgeFlag[0]
+		, d.f.CombOffsetFlag[0]
 		, d.f.LimitPrice
 		, d.f.VolumeTotalOriginal
 		, d.f.VolumeCondition
