@@ -7,6 +7,7 @@
 #pragma once
 
 #include "types.h"
+#include "condition_order_manager.h"
 
 #include <map>
 #include <queue>
@@ -71,7 +72,7 @@ public:
 	void DefineStruct(ActionTransfer& d);
 };
 
-class tradersim
+class tradersim: public IConditionOrderCallBack
 {
 public:
 	tradersim(boost::asio::io_context& ios, const std::string& logFileName);
@@ -131,6 +132,8 @@ private:
 	int m_transfer_seq;
 
 	std::atomic_bool m_run_receive_msg;
+
+	ConditionOrderManager m_condition_order_manager;
 	
 	void ReceiveMsg(const std::string& key);
 
@@ -192,6 +195,8 @@ private:
 
 	void TryOrderMatch();
 
+	void RecaculatePositionAndFloatProfit();
+
 	void CheckOrderTrade(Order* order);
 
 	void DoTrade(Order* order, int volume, double price);
@@ -199,4 +204,53 @@ private:
 	void OnClientPeekMessage();
 
 	TransferLog& GetTransferLog(const std::string& seq_id);
+
+	void CheckTimeConditionOrder();
+
+	void SetExchangeTime();
+
+	void CheckPriceConditionOrder();
+	
+	virtual void SendConditionOrderData(const std::string& msg);
+
+	virtual void SendConditionOrderData(int connectId, const std::string& msg);
+
+	virtual void OutputNotifyAll(long notify_code, const std::string& ret_msg
+		, const char* level, const char* type);
+
+	virtual void OnTouchConditionOrder(const ConditionOrder& order);
+
+	bool ConditionOrder_Open(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins		
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseToday(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins		
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseYesToday(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins	
+		, int nOrderIndex);
+
+	bool ConditionOrder_Close(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins	
+		, int nOrderIndex);
+
+	bool ConditionOrder_Reverse_Long(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins		
+		, int nOrderIndex);
+
+	bool ConditionOrder_Reverse_Short(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins		
+		, int nOrderIndex);
+	
+	void OnConditionOrderReqInsertOrder(ActionOrder action_insert_order);
+
+	void OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order);
 };
