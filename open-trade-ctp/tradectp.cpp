@@ -704,6 +704,7 @@ void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPas
 		if (_req_login.password == strOldPassword)
 		{
 			_req_login.password = strNewPassword;
+			m_condition_order_manager.NotifyPasswordUpdate(strOldPassword,strNewPassword);
 		}
 	}
 	else
@@ -4429,7 +4430,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			if (0 != connId)
 			{
-				OutputNotifySycn(connId,808,u8"用户登录失败!");
+				OutputNotifySycn(connId,808,u8"账户和密码不匹配!");
 			}			
 		}
 	}
@@ -5030,7 +5031,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		OutputNotifyAllSycn(1, u8"下单请求发送失败!", "WARNING");
 	}
 	Log(LOG_INFO, nullptr
-		, "fun=OnClientReqInsertOrder;key=%s;orderid=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c"
+		, "fun=OnClientReqInsertOrder;key=%s;orderid=%s;bid=%s;user_name=%s;InstrumentID=%s;OrderRef=%s;ret=%d;OrderPriceType=%c;Direction=%c;CombOffsetFlag=%c;LimitPrice=%f;VolumeTotalOriginal=%d;VolumeCondition=%c;TimeCondition=%c;FrontID=%d;SessionID=%d"
 		, _key.c_str()
 		, d.local_key.order_id.c_str()
 		, _req_login.bid.c_str()
@@ -5044,7 +5045,10 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		, d.f.LimitPrice
 		, d.f.VolumeTotalOriginal
 		, d.f.VolumeCondition
-		, d.f.TimeCondition);
+		, d.f.TimeCondition
+		,m_front_id
+		,m_session_id);
+	
 	m_need_save_file.store(true);
 }
 

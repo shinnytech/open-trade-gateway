@@ -56,6 +56,24 @@ ConditionOrderManager::~ConditionOrderManager()
 {
 }
 
+void ConditionOrderManager::NotifyPasswordUpdate(const std::string& strOldPassword,
+	const std::string& strNewPassword)
+{
+	if ((strOldPassword == m_condition_order_data.user_password) 
+		&& (strNewPassword!= m_condition_order_data.user_password))
+	{
+		m_condition_order_data.user_password = strNewPassword;
+		SaveCurrent();
+	}
+
+	if ((strOldPassword == m_condition_order_his_data.user_password)
+		&& (strNewPassword != m_condition_order_his_data.user_password))
+	{
+		m_condition_order_his_data.user_password = strNewPassword;
+		SaveHistory();
+	}
+}
+
 void ConditionOrderManager::Load(const std::string& bid
 	, const std::string& user_id
 	, const std::string& user_password

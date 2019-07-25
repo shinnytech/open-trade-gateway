@@ -29,6 +29,9 @@ public:
 		, const std::string& user_id
 		, const std::string& user_password
 		, const std::string& trading_day);
+
+	void NotifyPasswordUpdate(const std::string& strOldPassword,
+		const std::string& strNewPassword);
 	
 	void InsertConditionOrder(const std::string& msg);
 
