@@ -580,7 +580,7 @@ struct User
 	std::map<std::string, Order> m_orders;
 	std::map<std::string, Trade> m_trades;
 	std::map<std::string, Bank> m_banks;
-	std::map<std::string, TransferLog> m_transfers;
+	std::map<std::string, TransferLog> m_transfers;	
 };
 
 struct ActionInsertOrder 

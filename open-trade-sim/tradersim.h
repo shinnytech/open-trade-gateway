@@ -133,6 +133,10 @@ private:
 
 	std::atomic_bool m_run_receive_msg;
 
+	ConditionOrderData m_condition_order_data;
+
+	ConditionOrderHisData m_condition_order_his_data;
+
 	ConditionOrderManager m_condition_order_manager;
 	
 	void ReceiveMsg(const std::string& key);
@@ -211,9 +215,7 @@ private:
 
 	void CheckPriceConditionOrder();
 	
-	virtual void SendConditionOrderData(const std::string& msg);
-
-	virtual void SendConditionOrderData(int connectId, const std::string& msg);
+	virtual void OnUserDataChange();
 
 	virtual void OutputNotifyAll(long notify_code, const std::string& ret_msg
 		, const char* level, const char* type);
@@ -253,4 +255,6 @@ private:
 	void OnConditionOrderReqInsertOrder(ActionOrder action_insert_order);
 
 	void OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order);
+
+	virtual void SendDataDirect(int connId, const std::string& msg);
 };

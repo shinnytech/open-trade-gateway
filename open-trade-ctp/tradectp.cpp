@@ -65,7 +65,11 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, m_rtn_from_future_to_bank_by_future_log_map()
 	, m_err_rtn_order_insert_log_map()
 	, m_err_rtn_order_action_log_map()
-	, m_condition_order_manager(_key,*this)
+	, m_condition_order_data()
+	, m_condition_order_his_data()
+	, m_condition_order_manager(_key
+		,m_condition_order_data
+		,m_condition_order_his_data,*this)
 	, m_condition_order_task()
 {
 	_requestID.store(0);
@@ -3432,146 +3436,189 @@ void traderctp::SendUserData()
 		return;
 	}
 
-	if (m_data.m_accounts.size() == 0)
-		return;
+	if (m_data.m_accounts.size() != 0)
+	{
+		if (m_position_ready)
+		{
+			//重算所有持仓项的持仓盈亏和浮动盈亏
+			double total_position_profit = 0;
+			double total_float_profit = 0;
+			for (auto it = m_data.m_positions.begin();
+				it != m_data.m_positions.end(); ++it)
+			{
+				const std::string& symbol = it->first;
+				Position& ps = it->second;
+				if (nullptr == ps.ins)
+				{
+					ps.ins = GetInstrument(symbol);
+				}
+				if (nullptr == ps.ins)
+				{
+					Log(LOG_ERROR, nullptr
+						, "fun=SendUserData;msg=ctp miss symbol %s when processing position;key=%s;bid=%s;user_name=%s"
+						, symbol.c_str()
+						, _key.c_str()
+						, _req_login.bid.c_str()
+						, _req_login.user_name.c_str()
+					);
+					continue;
+				}
+				ps.volume_long = ps.volume_long_his + ps.volume_long_today;
+				ps.volume_short = ps.volume_short_his + ps.volume_short_today;
+				ps.volume_long_frozen = ps.volume_long_frozen_today + ps.volume_long_frozen_his;
+				ps.volume_short_frozen = ps.volume_short_frozen_today + ps.volume_short_frozen_his;
+				ps.margin = ps.margin_long + ps.margin_short;
+				double last_price = ps.ins->last_price;
+				if (!IsValid(last_price))
+					last_price = ps.ins->pre_settlement;
+				if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
+				{
+					ps.last_price = last_price;
+					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+					if (ps.volume_long > 0)
+					{
+						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					}
+					if (ps.volume_short > 0)
+					{
+						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+					}
+					ps.changed = true;
+					m_something_changed = true;
+				}
+				if (IsValid(ps.position_profit))
+					total_position_profit += ps.position_profit;
+				if (IsValid(ps.float_profit))
+					total_float_profit += ps.float_profit;
+			}
 
-	if (!m_position_ready)
-		return;
+			//重算资金账户
+			if (m_something_changed)
+			{
+				Account& acc = GetAccount("CNY");
+				double dv = total_position_profit - acc.position_profit;
+				double po_ori = 0;
+				double po_curr = 0;
+				double av_diff = 0;
+				switch (m_Algorithm_Type)
+				{
+				case THOST_FTDC_AG_All:
+					po_ori = acc.position_profit;
+					po_curr = total_position_profit;
+					break;
+				case THOST_FTDC_AG_OnlyLost:
+					if (acc.position_profit < 0)
+					{
+						po_ori = acc.position_profit;
+					}
+					if (total_position_profit < 0)
+					{
+						po_curr = total_position_profit;
+					}
+					break;
+				case THOST_FTDC_AG_OnlyGain:
+					if (acc.position_profit > 0)
+					{
+						po_ori = acc.position_profit;
+					}
+					if (total_position_profit > 0)
+					{
+						po_curr = total_position_profit;
+					}
+					break;
+				case THOST_FTDC_AG_None:
+					po_ori = 0;
+					po_curr = 0;
+					break;
+				default:
+					break;
+				}
+				av_diff = po_curr - po_ori;
+				acc.position_profit = total_position_profit;
+				acc.float_profit = total_float_profit;
+				acc.available += av_diff;
+				acc.balance += dv;
+				if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
+					acc.risk_ratio = 1.0 - acc.available / acc.balance;
+				else
+					acc.risk_ratio = NAN;
+				acc.changed = true;
+			}
 
-	//重算所有持仓项的持仓盈亏和浮动盈亏
-	double total_position_profit = 0;
-	double total_float_profit = 0;
-	for (auto it = m_data.m_positions.begin();
-		it != m_data.m_positions.end(); ++it)
-	{
-		const std::string& symbol = it->first;
-		Position& ps = it->second;
-		if (nullptr == ps.ins)
-		{
-			ps.ins = GetInstrument(symbol);
-		}
-		if (nullptr == ps.ins)
-		{
-			Log(LOG_ERROR,nullptr
-				,"fun=SendUserData;msg=ctp miss symbol %s when processing position;key=%s;bid=%s;user_name=%s"
-				, symbol.c_str()
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-			);
-			continue;
-		}
-		ps.volume_long = ps.volume_long_his + ps.volume_long_today;
-		ps.volume_short = ps.volume_short_his + ps.volume_short_today;
-		ps.volume_long_frozen = ps.volume_long_frozen_today + ps.volume_long_frozen_his;
-		ps.volume_short_frozen = ps.volume_short_frozen_today + ps.volume_short_frozen_his;
-		ps.margin = ps.margin_long + ps.margin_short;
-		double last_price = ps.ins->last_price;
-		if (!IsValid(last_price))
-			last_price = ps.ins->pre_settlement;
-		if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
-		{
-			ps.last_price = last_price;
-			ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-			ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-			ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-			ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
-			ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-			ps.float_profit = ps.float_profit_long + ps.float_profit_short;
-			if (ps.volume_long > 0)
+			//发送交易截面数据
+			if (m_something_changed)
 			{
-				ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-				ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+				//构建数据包	
+				m_data.m_trade_more_data = false;
+				SerializerTradeBase nss;
+				rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+				rapidjson::Value node_data;
+				nss.FromVar(m_data, &node_data);
+				rapidjson::Value node_user_id;
+				node_user_id.SetString(_req_login.user_name, nss.m_doc->GetAllocator());
+				rapidjson::Value node_user;
+				node_user.SetObject();
+				node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
+				rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
+				std::string json_str;
+				nss.ToString(&json_str);
+				//发送		
+				std::string str = GetConnectionStr();
+				if (!str.empty())
+				{
+					std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
+					std::shared_ptr<std::string> conn_ptr(new std::string(str));
+					_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+				}						
 			}
-			if (ps.volume_short > 0)
-			{
-				ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-				ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-			}
-			ps.changed = true;
-			m_something_changed = true;
 		}
-		if (IsValid(ps.position_profit))
-			total_position_profit += ps.position_profit;
-		if (IsValid(ps.float_profit))
-			total_float_profit += ps.float_profit;
 	}
-	//重算资金账户
-	if (m_something_changed)
+			
+	//发送条件单数据
+	SerializerConditionOrderData coss;
+	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
+	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
+	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
+	std::vector<ConditionOrder> condition_orders;
+	bool flag = false;
+	for (auto& it : m_condition_order_data.condition_orders)
 	{
-		Account& acc = GetAccount("CNY");
-		double dv = total_position_profit - acc.position_profit;
-		double po_ori = 0;
-		double po_curr = 0;
-		double av_diff = 0;		
-		switch (m_Algorithm_Type)
+		if (it.second.changed)
 		{
-		case THOST_FTDC_AG_All:
-			po_ori = acc.position_profit;
-			po_curr = total_position_profit;
-			break;
-		case THOST_FTDC_AG_OnlyLost:
-			if (acc.position_profit < 0)
-			{
-				po_ori = acc.position_profit;
-			}
-			if (total_position_profit < 0)
-			{
-				po_curr = total_position_profit;
-			}
-			break;
-		case THOST_FTDC_AG_OnlyGain:
-			if (acc.position_profit > 0)
-			{
-				po_ori = acc.position_profit;
-			}
-			if (total_position_profit > 0)
-			{
-				po_curr = total_position_profit;
-			}
-			break;
-		case THOST_FTDC_AG_None:
-			po_ori = 0;
-			po_curr = 0;
-			break;
-		default:
-			break;
+			flag = true;
+			condition_orders.push_back(it.second);
+			it.second.changed = false;
 		}
-		av_diff = po_curr - po_ori;
-		acc.position_profit = total_position_profit;
-		acc.float_profit = total_float_profit;
-		acc.available += av_diff;
-		acc.balance += dv;
-		if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
-			acc.risk_ratio = 1.0 - acc.available / acc.balance;
-		else
-			acc.risk_ratio = NAN;
-		acc.changed = true;
 	}
-	if (!m_something_changed)
+	if (flag)
+	{
+		rapidjson::Value co_node_data;
+		coss.FromVar(condition_orders, &co_node_data);
+		rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
+		std::string json_str;
+		coss.ToString(&json_str);
+		//发送		
+		std::string str = GetConnectionStr();
+		if (!str.empty())
+		{
+			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
+			std::shared_ptr<std::string> conn_ptr(new std::string(str));
+			_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+		}
+	}
+	
+	if ((!m_something_changed) && (!flag))
+	{
 		return;
-	//构建数据包	
-	m_data.m_trade_more_data = false;
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
-	rapidjson::Value node_data;
-	nss.FromVar(m_data, &node_data);
-	rapidjson::Value node_user_id;
-	node_user_id.SetString(_req_login.user_name, nss.m_doc->GetAllocator());
-	rapidjson::Value node_user;
-	node_user.SetObject();
-	node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
-	std::string json_str;
-	nss.ToString(&json_str);
-	//发送		
-	std::string str = GetConnectionStr();
-	if (!str.empty())
-	{
-		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-		std::shared_ptr<std::string> conn_ptr(new std::string(str));
-		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
 	}
+
 	m_something_changed = false;
 	m_peeking_message = false;
 }
@@ -3696,21 +3743,49 @@ void traderctp::SendUserDataImd(int connectId)
 	SerializerTradeBase nss;
 	nss.dump_all = true;
 	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+
 	rapidjson::Value node_data;
 	nss.FromVar(m_data, &node_data);
+
 	rapidjson::Value node_user_id;
 	node_user_id.SetString(_req_login.user_name, nss.m_doc->GetAllocator());
+	
 	rapidjson::Value node_user;
 	node_user.SetObject();
 	node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
 	rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
-
+		
 	std::string json_str;
 	nss.ToString(&json_str);
 
 	//发送	
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	_ios.post(boost::bind(&traderctp::SendMsg, this, connectId, msg_ptr));
+
+	//发送条件单数据
+	SerializerConditionOrderData coss;
+	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
+	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
+	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);	
+	std::vector<ConditionOrder> condition_orders;
+	bool flag = false;
+	for (auto& it : m_condition_order_data.condition_orders)
+	{		
+		flag = true;
+		condition_orders.push_back(it.second);
+	}
+
+	if (!flag)
+	{
+		return;
+	}
+
+	rapidjson::Value co_node_data;
+	coss.FromVar(condition_orders,&co_node_data);
+	rapidjson::Pointer("/condition_orders").Set(*coss.m_doc,co_node_data);
+	coss.ToString(&json_str);
+	std::shared_ptr<std::string> msg_ptr2(new std::string(json_str));
+	_ios.post(boost::bind(&traderctp::SendMsg, this, connectId,msg_ptr2));
 }
 
 void traderctp::AfterLogin()
@@ -4123,7 +4198,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "qry_his_condition_order")
 		{
-			m_condition_order_manager.QryHisConditionOrder(msg);
+			m_condition_order_manager.QryHisConditionOrder(connId,msg);
 		}
 		else if (aid == "req_ccos_status")
 		{
@@ -4419,9 +4494,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 
 				//发送用户数据
 				SendUserDataImd(connId);
-
-				m_condition_order_manager.SendAllConditionOrderDataImd(connId);
-
+				
 				//重发结算结果确认信息
 				ReSendSettlementInfo(connId);
 			}
@@ -5063,23 +5136,10 @@ void traderctp::OnClientPeekMessage()
 
 #pragma region ConditionOrderCallBack
 
-void traderctp::SendConditionOrderData(const std::string& msg)
+void traderctp::OnUserDataChange()
 {
-	std::string str = GetConnectionStr();
-	if (!str.empty())
-	{
-		std::shared_ptr<std::string> msg_ptr(new std::string(msg));
-		std::shared_ptr<std::string> conn_ptr(new std::string(str));
-		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
-	}
+	SendUserData();
 }
-
-void traderctp::SendConditionOrderData(int connectId, const std::string& msg)
-{
-	std::shared_ptr<std::string> msg_ptr(new std::string(msg));
-	_ios.post(boost::bind(&traderctp::SendMsg, this, connectId, msg_ptr));
-}
-
 
 void traderctp::OutputNotifyAll(long notify_code, const std::string& ret_msg
 	, const char* level	,const char* type)
@@ -7176,6 +7236,12 @@ void traderctp::SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField)
 		DateTimeToEpochSeconds(dtINETime),
 		DateTimeToEpochSeconds(dtFFEXTime),
 		DateTimeToEpochSeconds(dtCZCETime));
+}
+
+void traderctp::SendDataDirect(int connId, const std::string& msg)
+{
+	std::shared_ptr<std::string> msg_ptr(new std::string(msg));
+	_ios.post(boost::bind(&traderctp::SendMsg,this,connId, msg_ptr));
 }
 
 #pragma endregion

@@ -48,7 +48,11 @@ tradersim::tradersim(boost::asio::io_context& ios
 ,m_next_send_dt(0)
 ,m_transfer_seq(0)
 ,m_run_receive_msg(false)
-, m_condition_order_manager(_key, *this)
+, m_condition_order_data()
+, m_condition_order_his_data()
+, m_condition_order_manager(_key
+	, m_condition_order_data
+	, m_condition_order_his_data, *this)
 {
 }
 
@@ -226,10 +230,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				SendMsg(connId, msg_ptr);
 
 				//发送用户数据
-				SendUserDataImd(connId);
-
-				//发送条件单数据
-				m_condition_order_manager.SendAllConditionOrderDataImd(connId);
+				SendUserDataImd(connId);			
 			}
 		}
 		else
@@ -516,7 +517,7 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "qry_his_condition_order")
 		{
-			m_condition_order_manager.QryHisConditionOrder(msg);
+			m_condition_order_manager.QryHisConditionOrder(connId,msg);
 		}
 		else if (aid == "req_ccos_status")
 		{
@@ -820,6 +821,31 @@ void tradersim::SendUserDataImd(int connectId)
 	//发送	
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	SendMsg(connectId, msg_ptr);
+
+	//发送条件单数据
+	SerializerConditionOrderData coss;
+	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
+	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
+	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
+	std::vector<ConditionOrder> condition_orders;
+	bool flag = false;
+	for (auto& it : m_condition_order_data.condition_orders)
+	{
+		flag = true;
+		condition_orders.push_back(it.second);
+	}
+
+	if (!flag)
+	{
+		return;
+	}
+
+	rapidjson::Value co_node_data;
+	coss.FromVar(condition_orders, &co_node_data);
+	rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
+	coss.ToString(&json_str);
+	std::shared_ptr<std::string> msg_ptr2(new std::string(json_str));
+	_ios.post(boost::bind(&tradersim::SendMsg, this, connectId, msg_ptr2));
 }
 
 void tradersim::SendUserData()
@@ -829,28 +855,60 @@ void tradersim::SendUserData()
 		return;
 	}
 
-	if (!m_something_changed)
+	if (m_something_changed)
+	{
+		//构建数据包
+		m_data.m_trade_more_data = false;
+		SerializerTradeBase nss;
+		rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+		rapidjson::Value node_data;
+		nss.FromVar(m_data, &node_data);
+		rapidjson::Value node_user_id;
+		node_user_id.SetString(m_user_id, nss.m_doc->GetAllocator());
+		rapidjson::Value node_user;
+		node_user.SetObject();
+		node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
+		rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
+		std::string json_str;
+		nss.ToString(&json_str);
+		//发送
+		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
+		SendMsgAll(msg_ptr);		
+	}
+
+	//发送条件单数据
+	SerializerConditionOrderData coss;
+	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
+	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
+	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
+	std::vector<ConditionOrder> condition_orders;
+	bool flag = false;
+	for (auto& it : m_condition_order_data.condition_orders)
+	{
+		if (it.second.changed)
+		{
+			flag = true;
+			condition_orders.push_back(it.second);
+			it.second.changed = false;
+		}
+	}
+	if (flag)
+	{
+		rapidjson::Value co_node_data;
+		coss.FromVar(condition_orders, &co_node_data);
+		rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
+		std::string json_str;
+		coss.ToString(&json_str);		
+		//发送
+		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
+		SendMsgAll(msg_ptr);		
+	}
+		
+	if ((!m_something_changed) && (!flag))
 	{
 		return;
 	}
 
-	//构建数据包
-	m_data.m_trade_more_data = false;
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
-	rapidjson::Value node_data;
-	nss.FromVar(m_data, &node_data);
-	rapidjson::Value node_user_id;
-	node_user_id.SetString(m_user_id, nss.m_doc->GetAllocator());
-	rapidjson::Value node_user;
-	node_user.SetObject();
-	node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
-	std::string json_str;
-	nss.ToString(&json_str);
-	//发送
-	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	SendMsgAll(msg_ptr);
 	m_something_changed = false;
 	m_peeking_message = false;
 }
@@ -2120,19 +2178,9 @@ void tradersim::CheckPriceConditionOrder()
 	m_condition_order_manager.OnCheckPrice();
 }
 
-void tradersim::SendConditionOrderData(const std::string& msg)
+void tradersim::OnUserDataChange()
 {
-	if (!msg.empty())
-	{
-		std::shared_ptr<std::string> msg_ptr(new std::string(msg));
-		_ios.post(boost::bind(&tradersim::SendMsgAll,this,msg_ptr));
-	}	
-}
-
-void tradersim::SendConditionOrderData(int connectId, const std::string& msg)
-{
-	std::shared_ptr<std::string> msg_ptr(new std::string(msg));
-	_ios.post(boost::bind(&tradersim::SendMsg, this, connectId, msg_ptr));
+	SendUserData();
 }
 
 void tradersim::OutputNotifyAll(long notify_code, const std::string& ret_msg
@@ -3861,6 +3909,12 @@ void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 	OutputNotifyAllSycn(1
 		, u8"要撤销的单不存在"
 		, "WARNING");
+}
+
+void tradersim::SendDataDirect(int connId, const std::string& msg)
+{
+	std::shared_ptr<std::string> msg_ptr(new std::string(msg));
+	_ios.post(boost::bind(&tradersim::SendMsg, this, connId, msg_ptr));
 }
 
 #pragma endregion

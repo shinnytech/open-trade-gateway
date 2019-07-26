@@ -15,13 +15,15 @@ const int MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY = 20;
 const int MAX_VALID_CONDITION_ORDER_COUNT_ALL = 50;
 
 ConditionOrderManager::ConditionOrderManager(const std::string& userKey
+	, ConditionOrderData& condition_order_data
+	, ConditionOrderHisData& condition_order_his_data
 	, IConditionOrderCallBack& callBack)
 	:m_userKey(userKey)
 	,m_user_file_path("")
-	,m_condition_order_data()
+	,m_condition_order_data(condition_order_data)
 	,m_current_day_condition_order_count(0)
 	,m_current_valid_condition_order_count(0)
-	,m_condition_order_his_data()
+	,m_condition_order_his_data(condition_order_his_data)
 	,m_callBack(callBack)
 	,m_run_server(true)
 	,m_openmarket_condition_order_map()
@@ -217,6 +219,8 @@ void ConditionOrderManager::Load(const std::string& bid
 		{
 			ConditionOrder& order = it->second;
 
+			order.changed = true;
+
 			if (order.trading_day == atoi(trading_day.c_str()))
 			{
 				m_current_day_condition_order_count++;
@@ -304,10 +308,10 @@ void ConditionOrderManager::Load(const std::string& bid
 	SaveCurrent();
 
 	SaveHistory();
-
-	SendAllConditionOrderData();
-
+	
 	BuildConditionOrderIndex();
+
+	m_callBack.OnUserDataChange();
 }
 
 void ConditionOrderManager::BuildConditionOrderIndex()
@@ -400,82 +404,6 @@ void ConditionOrderManager::SaveHistory()
 			, m_condition_order_his_data.user_id.c_str()
 			, fn.c_str());
 	}
-}
-
-void ConditionOrderManager::SendAllConditionOrderData()
-{
-	SerializerConditionOrderData nss;
-
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_condition_orders");
-	rapidjson::Pointer("/user_id").Set(*nss.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/trading_day").Set(*nss.m_doc, m_condition_order_data.trading_day);
-
-	std::vector<ConditionOrder> condition_orders;
-	for (auto it : m_condition_order_data.condition_orders)
-	{
-		condition_orders.push_back(it.second);
-	}
-
-	rapidjson::Value node_data;
-	nss.FromVar(condition_orders, &node_data);
-	rapidjson::Pointer("/condition_orders").Set(*nss.m_doc, node_data);
-
-	std::string json_str;
-	nss.ToString(&json_str);
-
-	m_callBack.SendConditionOrderData(json_str);
-}
-
-void ConditionOrderManager::SendAllConditionOrderDataImd(int connectId)
-{
-	SerializerConditionOrderData nss;
-
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_condition_orders");
-	rapidjson::Pointer("/user_id").Set(*nss.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/trading_day").Set(*nss.m_doc, m_condition_order_data.trading_day);
-
-	std::vector<ConditionOrder> condition_orders;
-	for (auto it : m_condition_order_data.condition_orders)
-	{
-		condition_orders.push_back(it.second);
-	}
-
-	rapidjson::Value node_data;
-	nss.FromVar(condition_orders, &node_data);
-	rapidjson::Pointer("/condition_orders").Set(*nss.m_doc, node_data);
-
-	std::string json_str;
-	nss.ToString(&json_str);
-
-	m_callBack.SendConditionOrderData(connectId, json_str);
-}
-
-void ConditionOrderManager::SendConditionOrderData()
-{
-	SerializerConditionOrderData nss;
-
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_condition_orders");
-	rapidjson::Pointer("/user_id").Set(*nss.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/trading_day").Set(*nss.m_doc, m_condition_order_data.trading_day);
-
-	std::vector<ConditionOrder> condition_orders;
-	for (auto it : m_condition_order_data.condition_orders)
-	{
-		if (it.second.changed)
-		{
-			condition_orders.push_back(it.second);
-			it.second.changed = false;
-		}
-	}
-
-	rapidjson::Value node_data;
-	nss.FromVar(condition_orders, &node_data);
-	rapidjson::Pointer("/condition_orders").Set(*nss.m_doc, node_data);
-
-	std::string json_str;
-	nss.ToString(&json_str);
-
-	m_callBack.SendConditionOrderData(json_str);
 }
 
 bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
@@ -757,8 +685,8 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			, m_condition_order_his_data.user_id.c_str());
 		SaveCurrent();
 	}
-	   
-	SendConditionOrderData();	
+
+	m_callBack.OnUserDataChange();
 }
 
 void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
@@ -841,8 +769,8 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	m_current_day_condition_order_count--;
 	m_current_valid_condition_order_count--;
 	SaveCurrent();
-	SendConditionOrderData();
 	BuildConditionOrderIndex();
+	m_callBack.OnUserDataChange();
 }
 
 void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
@@ -931,9 +859,9 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	it->second.status = EConditionOrderStatus::suspend;
 	it->second.changed = true;
 	m_callBack.OutputNotifyAll(0, u8"条件单暂停成功", "INFO", "MESSAGE");
-	SaveCurrent();
-	SendConditionOrderData();
+	SaveCurrent();	
 	BuildConditionOrderIndex();
+	m_callBack.OnUserDataChange();
 }
 
 void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
@@ -996,81 +924,9 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	it->second.status = EConditionOrderStatus::live;
 	it->second.changed = true;
 	m_callBack.OutputNotifyAll(0, u8"条件单恢复成功", "INFO", "MESSAGE");
-	SaveCurrent();
-	SendConditionOrderData();
+	SaveCurrent();	
 	BuildConditionOrderIndex();
-}
-
-void ConditionOrderManager::QryHisConditionOrder(const std::string& msg)
-{
-	SerializerConditionOrderData nss;
-	if (!nss.FromString(msg.c_str()))
-	{
-		Log(LOG_INFO, nullptr
-			, "fun=QryHisConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid QryHisConditionOrder msg!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
-		return;
-	}
-
-	if (!m_run_server)
-	{
-		m_callBack.OutputNotifyAll(
-			1
-			, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
-			, "WARNING", "MESSAGE");
-		return;
-	}
-
-	qry_histroy_condition_order qry_his_co;
-	nss.ToVar(qry_his_co);
-
-	if (qry_his_co.user_id.substr(0, m_condition_order_his_data.user_id.size())
-		!= m_condition_order_his_data.user_id)
-	{
-		m_callBack.OutputNotifyAll(
-			1
-			, u8"历史条件单查询请求已被服务器拒绝,原因:查询请求中的用户名错误"
-			, "WARNING", "MESSAGE");
-		return;
-	}
-
-	if (qry_his_co.action_day <= 0)
-	{
-		m_callBack.OutputNotifyAll(
-			1
-			, u8"历史条件单查询请求已被服务器拒绝,原因:查询请求中的日期输入有误"
-			, "WARNING", "MESSAGE");
-		return;
-	}
-
-	std::vector<ConditionOrder> condition_orders;
-	for (auto order : m_condition_order_his_data.his_condition_orders)
-	{
-		DateTime dt;
-		SetDateTimeFromEpochNano(&dt,order.insert_date_time);
-		int insert_day = dt.date.year * 10000 + dt.date.month * 100 + dt.date.day;
-		if (insert_day == qry_his_co.action_day)
-		{
-			condition_orders.push_back(order);
-		}		
-	}
-
-	SerializerConditionOrderData nss_his;
-
-	rapidjson::Pointer("/aid").Set(*nss_his.m_doc, "rtn_his_condition_orders");
-	rapidjson::Pointer("/user_id").Set(*nss_his.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/action_day").Set(*nss_his.m_doc,qry_his_co.action_day);
-
-	rapidjson::Value node_data;
-	nss_his.FromVar(condition_orders, &node_data);
-	rapidjson::Pointer("/his_condition_orders").Set(*nss_his.m_doc, node_data);
-
-	std::string json_str;
-	nss_his.ToString(&json_str);
-
-	m_callBack.SendConditionOrderData(json_str);
+	m_callBack.OnUserDataChange();
 }
 
 void ConditionOrderManager::ChangeCOSStatus(const std::string& msg)
@@ -1189,9 +1045,9 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
 
 	if (flag)
 	{
-		SaveCurrent();
-		SendConditionOrderData();
+		SaveCurrent();		
 		BuildConditionOrderIndex();
+		m_callBack.OnUserDataChange();
 	}
 }
 
@@ -1254,9 +1110,9 @@ void ConditionOrderManager::OnCheckTime()
 
 	if (flag)
 	{
-		SaveCurrent();
-		SendConditionOrderData();
+		SaveCurrent();		
 		BuildConditionOrderIndex();
+		m_callBack.OnUserDataChange();
 	}
 }
 
@@ -1416,9 +1272,9 @@ void ConditionOrderManager::OnCheckPrice()
 
 	if (flag)
 	{
-		SaveCurrent();
-		SendConditionOrderData();
+		SaveCurrent();		
 		BuildConditionOrderIndex();
+		m_callBack.OnUserDataChange();
 	}
 }
 
@@ -1508,4 +1364,76 @@ int ConditionOrderManager::GetExchangeTime(const std::string& exchange_id)
 	{
 		return m_FFEXTime+ nTimeDelta;
 	}
+}
+
+void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& msg)
+{
+	SerializerConditionOrderData nss;
+	if (!nss.FromString(msg.c_str()))
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=QryHisConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid QryHisConditionOrder msg!"
+			, m_userKey.c_str()
+			, m_condition_order_his_data.broker_id.c_str()
+			, m_condition_order_his_data.user_id.c_str());
+		return;
+	}
+
+	if (!m_run_server)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			, "WARNING", "MESSAGE");
+		return;
+	}
+
+	qry_histroy_condition_order qry_his_co;
+	nss.ToVar(qry_his_co);
+
+	if (qry_his_co.user_id.substr(0, m_condition_order_his_data.user_id.size())
+		!= m_condition_order_his_data.user_id)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"历史条件单查询请求已被服务器拒绝,原因:查询请求中的用户名错误"
+			, "WARNING", "MESSAGE");
+		return;
+	}
+
+	if (qry_his_co.action_day <= 0)
+	{
+		m_callBack.OutputNotifyAll(
+			1
+			, u8"历史条件单查询请求已被服务器拒绝,原因:查询请求中的日期输入有误"
+			, "WARNING", "MESSAGE");
+		return;
+	}
+
+	std::vector<ConditionOrder> condition_orders;
+	for (auto order : m_condition_order_his_data.his_condition_orders)
+	{
+		DateTime dt;
+		SetDateTimeFromEpochNano(&dt, order.insert_date_time);
+		int insert_day = dt.date.year * 10000 + dt.date.month * 100 + dt.date.day;
+		if (insert_day == qry_his_co.action_day)
+		{
+			condition_orders.push_back(order);
+		}
+	}
+
+	SerializerConditionOrderData nss_his;
+
+	rapidjson::Pointer("/aid").Set(*nss_his.m_doc, "rtn_his_condition_orders");
+	rapidjson::Pointer("/user_id").Set(*nss_his.m_doc, m_condition_order_data.user_id);
+	rapidjson::Pointer("/action_day").Set(*nss_his.m_doc, qry_his_co.action_day);
+
+	rapidjson::Value node_data;
+	nss_his.FromVar(condition_orders, &node_data);
+	rapidjson::Pointer("/his_condition_orders").Set(*nss_his.m_doc, node_data);
+
+	std::string json_str;
+	nss_his.ToString(&json_str);
+
+	m_callBack.SendDataDirect(connId,json_str);
 }

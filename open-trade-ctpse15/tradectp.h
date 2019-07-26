@@ -279,6 +279,10 @@ private:
 
 	std::map<std::string, std::string> m_err_rtn_order_action_log_map;
 
+	ConditionOrderData m_condition_order_data;
+
+	ConditionOrderHisData m_condition_order_his_data;
+
 	ConditionOrderManager m_condition_order_manager;
 
 	std::vector<ctp_condition_order_task> m_condition_order_task;
@@ -483,9 +487,7 @@ private:
 
 	void CheckPriceConditionOrder();
 
-	virtual void SendConditionOrderData(const std::string& msg);
-
-	virtual void SendConditionOrderData(int connectId, const std::string& msg);
+	virtual void OnUserDataChange();
 
 	virtual void OutputNotifyAll(long notify_code,const std::string& ret_msg
 		, const char* level	, const char* type);
@@ -538,5 +540,7 @@ private:
 
 	int RegSystemInfo();
 
-	void SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField);
+	void SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField);	
+
+	virtual void SendDataDirect(int connId, const std::string& msg);
 };
