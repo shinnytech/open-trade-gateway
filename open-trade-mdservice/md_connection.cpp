@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file md_connection.cpp
-///@brief	ĞĞÇéÁ¬½Ó¹ÜÀí
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	è¡Œæƒ…è¿æ¥ç®¡ç†
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #include "md_connection.h"
@@ -49,17 +49,29 @@ md_connection::md_connection(boost::asio::io_context& ios
 {
 }
 
+md_connection::~md_connection()
+{
+	Log(LOG_INFO, nullptr
+		, "fun=~md_connection();msg=md_connection is deleted;key=mdservice");
+	if (m_ws_socket.next_layer().is_open())
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=~md_connection();msg=m_ws_socket.next_layer() is still open();key=mdservice");
+	}
+	else
+	{
+		Log(LOG_INFO, nullptr
+			, "fun=~md_connection();msg=m_ws_socket.next_layer() is closed;key=mdservice");
+	}
+}
+
 void md_connection::Start()
 {
 	DoResolve();
 }
 
 void md_connection::Stop()
-{
-	if (!m_connect_to_server)
-	{
-		return;
-	}
+{	
 	boost::system::error_code ec;
 	m_ws_socket.next_layer().close(ec);
 	if (ec)
@@ -89,7 +101,7 @@ void md_connection::OnResolve(boost::system::error_code ec
 		Log(LOG_ERROR, nullptr
 			, "fun=OnResolve;msg=md_connection resolve fail;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
-		//Á¬½Ó´íÎó
+		//è¿æ¥é”™è¯¯
 		OnConnectionnError();
 		return;
 	}
@@ -110,7 +122,7 @@ void md_connection::OnConnect(boost::system::error_code ec)
 		Log(LOG_ERROR, nullptr
 			, "fun=OnConnect;msg=md_connection connect fail;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
-		//Á¬½Ó´íÎó
+		//è¿æ¥é”™è¯¯
 		OnConnectionnError();
 		return;
 	}
@@ -137,7 +149,7 @@ void md_connection::OnHandshake(boost::system::error_code ec)
 		Log(LOG_ERROR, nullptr
 			, "fun=OnHandshake;msg=md_connection handshake fail;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
-		//Á¬½Ó´íÎó
+		//è¿æ¥é”™è¯¯
 		OnConnectionnClose();
 		return;
 	}
@@ -191,7 +203,7 @@ void md_connection::OnRead(boost::system::error_code ec
 			, "fun=OnRead;msg=md service read fail;errmsg=%s;key=mdservice"
 			, ec.message().c_str());
 
-		//Á¬½Ó¹Ø±Õ
+		//è¿æ¥å…³é—­
 		OnConnectionnClose();
 		return;
 	}
@@ -252,7 +264,7 @@ void md_connection::OnWrite(boost::system::error_code ec
 			, m_ws_socket.next_layer().native_handle()
 			, ec.message().c_str());
 
-		//Á¬½Ó¹Ø±Õ
+		//è¿æ¥å…³é—­
 		OnConnectionnClose();
 		return;
 	}
@@ -276,5 +288,6 @@ void md_connection::OnConnectionnClose()
 
 void md_connection::OnConnectionnError()
 {
+	Stop();
 	m_mds.OnConnectionnError();
 }

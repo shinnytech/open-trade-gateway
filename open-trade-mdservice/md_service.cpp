@@ -63,6 +63,7 @@ mdservice::mdservice(boost::asio::io_context& ios)
 	,m_req_peek_message("")
 	,m_md_connection_ptr()
 	,m_stop_reconnect(false)
+	,m_need_reconnect(false)
 	,_timer(io_context_)
 {
 }
@@ -94,6 +95,12 @@ bool mdservice::init()
 		m_req_subscribe_quote = "{\"aid\": \"subscribe_quote\", \"ins_list\": \"" + ins_list + "\"}";
 
 		StartConnect();
+
+		//10秒后尝试重连
+		_timer.expires_from_now(boost::posix_time::seconds(10));
+		_timer.async_wait(std::bind(
+			&mdservice::ReStartConnect
+			, this));
 
 		return true;
 	}
@@ -183,6 +190,8 @@ bool mdservice::LoadInsList()
 void mdservice::stop()
 {
 	m_stop_reconnect = true;
+	m_need_reconnect = false;
+
 	if (nullptr != m_md_connection_ptr)
 	{		
 		m_md_connection_ptr->Stop();
@@ -232,9 +241,24 @@ void mdservice::ReStartConnect()
 {
 	try
 	{
+		if (m_stop_reconnect)
+		{
+			return;
+		}
+
+		if (!m_need_reconnect)
+		{
+			//10秒后尝试重连
+			_timer.expires_from_now(boost::posix_time::seconds(10));
+			_timer.async_wait(std::bind(
+				&mdservice::ReStartConnect
+				, this));
+			return;
+		}
+
 		Log(LOG_INFO, nullptr
 			, "fun=ReStartConnect;msg=mdservice ReStartConnect openmd service;key=mdservice");
-
+		
 		if (nullptr != m_md_connection_ptr)
 		{
 			m_md_connection_ptr.reset();
@@ -249,6 +273,13 @@ void mdservice::ReStartConnect()
 		{
 			m_md_connection_ptr->Start();
 		}
+
+		//10秒后尝试重连
+		m_need_reconnect = false;
+		_timer.expires_from_now(boost::posix_time::seconds(10));
+		_timer.async_wait(std::bind(
+			&mdservice::ReStartConnect
+			, this));
 	}
 	catch (std::exception& ex)
 	{
@@ -260,26 +291,10 @@ void mdservice::ReStartConnect()
 
 void mdservice::OnConnectionnClose()
 {
-	if (m_stop_reconnect)
-	{
-		return;
-	}
-	//10秒后重连
-	_timer.expires_from_now(boost::posix_time::seconds(10));
-	_timer.async_wait(std::bind(
-		&mdservice::ReStartConnect
-		, this));
+	m_need_reconnect = true;	
 }
 
 void mdservice::OnConnectionnError()
 {
-	if (m_stop_reconnect)
-	{
-		return;
-	}
-	//30秒后重连
-	_timer.expires_from_now(boost::posix_time::seconds(30));
-	_timer.async_wait(std::bind(
-		&mdservice::ReStartConnect
-		, this));
+	m_need_reconnect = true;
 }

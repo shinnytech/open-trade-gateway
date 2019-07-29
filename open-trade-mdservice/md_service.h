@@ -43,6 +43,8 @@ private:
 	boost::asio::deadline_timer _timer;
 
 	bool m_stop_reconnect;
+
+	bool m_need_reconnect;
 	
 	bool LoadInsList();		
 

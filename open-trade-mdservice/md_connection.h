@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file md_connection.h
-///@brief	ĞĞÇéÁ¬½Ó¹ÜÀí
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ 
+///@brief	è¡Œæƒ…è¿æ¥ç®¡ç†
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰ 
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -35,6 +35,8 @@ public:
 		,const std::string& req_peek_message
 		,InsMapType* ins_map
 		,mdservice& mds);
+
+	~md_connection();
 
 	md_connection(const md_connection&) = delete;
 
