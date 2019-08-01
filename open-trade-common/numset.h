@@ -14,12 +14,21 @@ static const unsigned long __nan[2] = {0xffffffff, 0x7fffffff};
 #endif
 
 bool IsZero(double x);
+
 bool IsZero(long x);
+
 bool IsZero(long long x);
+
 bool IsValid(double x);
+
 bool IsValid(long x);
+
 bool IsValid(long long x);
+
 bool IsValid(int x);
+
 void SetInvalid(double* x);
+
 void SetInvalid(long* x);
+
 void SetInvalid(long long* x);

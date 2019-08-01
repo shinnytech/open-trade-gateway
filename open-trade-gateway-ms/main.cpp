@@ -17,14 +17,16 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		LogMs(LOG_INFO,nullptr
-			,"msg=open trade gateway master init;key=gatewayms");
-
+		LogMs().WithField("fun","main")
+			.WithField("key","gatewayms")
+			.Log(LOG_INFO,"open trade gateway master init");
+				
 		//加载配置文件
 		if (!LoadMasterConfig())
 		{
-			LogMs(LOG_WARNING,nullptr
-				,"msg=open trade gateway master load config failed!;key=gatewayms");			
+			LogMs().WithField("fun","main")
+				.WithField("key","gatewayms")
+				.Log(LOG_WARNING,"open trade gateway master load config failed!");		
 			return -1;
 		}
 
@@ -33,8 +35,9 @@ int main(int argc, char* argv[])
 		master_server s(ios,g_masterConfig);
 		if (!s.init())
 		{
-			LogMs(LOG_INFO,nullptr
-				,"msg=open trade gateway master init fail!;key=gatewayms");
+			LogMs().WithField("fun","main")
+				.WithField("key","gatewayms")
+				.Log(LOG_INFO,"open trade gateway master init fail!");			
 			return -1;
 		}
 
@@ -54,12 +57,14 @@ int main(int argc, char* argv[])
 			flag.store(false);
 			ios.stop();
 
-			LogMs(LOG_INFO,nullptr
-				, "msg=open trade gateway master got sig %d;key=gatewayms"
-				, sig);
+			LogMs().WithField("fun","main")
+				.WithField("key","gatewayms")
+				.WithField("sig",sig)
+				.Log(LOG_INFO,"open trade gateway master got sig");
 
-			LogMs(LOG_INFO,nullptr
-				, "msg=open trade gateway master exit;key=gatewayms");
+			LogMs().WithField("fun","main")
+				.WithField("key","gatewayms")				
+				.Log(LOG_INFO,"open trade gateway master exit");			
 		});
 		
 		while (flag.load())
@@ -71,9 +76,10 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				LogMs(LOG_ERROR,nullptr
-					, "msg=open trade gateway master ios run exception;errmsg=%s;key=gatewayms"
-					, ex.what());
+				LogMs().WithField("fun","main")
+					.WithField("key","gatewayms")
+					.WithField("errmsg",ex.what())
+					.Log(LOG_INFO,"open trade gateway master ios run exception");
 			}
 		}
 
@@ -81,7 +87,7 @@ int main(int argc, char* argv[])
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << "exception: " << e.what() << std::endl;
+		std::cerr << "exception:" << e.what() << std::endl;
 		return -1;
 	}
 }

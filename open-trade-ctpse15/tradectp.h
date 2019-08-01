@@ -26,8 +26,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/interprocess/ipc/message_queue.hpp>
 
-using namespace trader_dll;
-
 enum class ECTPLoginStatus
 {
 	init=800,
@@ -341,13 +339,16 @@ private:
 
 	void ProcessEmptySettlementInfo();
 
-	void ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementInfoField> pSettlementInfo,bool bIsLast);
+	void ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementInfoField> pSettlementInfo
+		,bool bIsLast);
 
-	void ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm,bool bIsLast);
+	void ProcessSettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> 
+		pSettlementInfoConfirm,bool bIsLast);
 
 	void ReqQrySettlementInfoConfirm();
 
-	void ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField> pSettlementInfoConfirm);
+	void ProcessQrySettlementInfoConfirm(std::shared_ptr<CThostFtdcSettlementInfoConfirmField>
+		pSettlementInfoConfirm);
 
 	void ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField> pInputOrder
 	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
@@ -379,8 +380,8 @@ private:
 
 	void ReSendSettlementInfo(int connectId);
 
-	void ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPasswordUpdateField> pUserPasswordUpdate,
-		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
+	void ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPasswordUpdateField>
+		pUserPasswordUpdate,std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
 	void ProcessOrderAction(std::shared_ptr<CThostFtdcInputOrderActionField> pInputOrderAction,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
@@ -397,8 +398,9 @@ private:
 	void ProcessQryTradingAccount(std::shared_ptr<CThostFtdcTradingAccountField> pRspInvestorAccount,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);
 
-	void ProcessQryBrokerTradingParams(std::shared_ptr<CThostFtdcBrokerTradingParamsField> pBrokerTradingParams,
-		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);
+	void ProcessQryBrokerTradingParams(std::shared_ptr<CThostFtdcBrokerTradingParamsField> 
+		pBrokerTradingParams,std::shared_ptr<CThostFtdcRspInfoField> pRspInfo
+		, int nRequestID, bool bIsLast);
 
 	void ProcessQryContractBank(std::shared_ptr<CThostFtdcContractBankField> pContractBank,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);

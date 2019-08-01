@@ -4,7 +4,6 @@
 ///@copyright	上海信易信息科技股份有限公司 版权所有
 /////////////////////////////////////////////////////////////////////////
 
-
 #include "utility.h"
 
 #include <string>
@@ -111,7 +110,6 @@ std::string base64_decode(const std::string &in)
 	}
 	return out;
 }
-
 
 void CutDigital(std::string& instId)
 {

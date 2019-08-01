@@ -12,13 +12,13 @@
 #include <vector>
 #include <map>
 
-
 struct Config
 {
     Config();
 
     //服务IP及端口号
     std::string host;
+
     int port;
 
     //user配置

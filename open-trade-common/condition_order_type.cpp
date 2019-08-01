@@ -18,7 +18,6 @@ req_cancel_condition_order::req_cancel_condition_order()
 	,user_id("")
 	,order_id("")
 {
-
 }
 
 req_pause_condition_order::req_pause_condition_order()
@@ -26,7 +25,6 @@ req_pause_condition_order::req_pause_condition_order()
 	, user_id("")
 	, order_id("")
 {
-
 }
 
 req_resume_condition_order::req_resume_condition_order()
@@ -34,7 +32,6 @@ req_resume_condition_order::req_resume_condition_order()
 	, user_id("")
 	, order_id("")
 {
-
 }
 
 qry_histroy_condition_order::qry_histroy_condition_order()
@@ -42,7 +39,6 @@ qry_histroy_condition_order::qry_histroy_condition_order()
 	, user_id("")
 	, action_day(0)
 {
-
 }
 
 time_span::time_span()
@@ -85,5 +81,4 @@ req_reconnect_trade_instance::req_reconnect_trade_instance()
 	:aid("req_reconnect_trade")
 	,connIds()
 {
-
 }

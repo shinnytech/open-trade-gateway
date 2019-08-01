@@ -38,16 +38,15 @@ bool GenInstrumentExchangeIdMap()
 		{
 			g_instConfig.m_segment= new  boost::interprocess::managed_shared_memory(
 				boost::interprocess::open_only,
-				"InsMapSharedMemory"
-			);
+				"InsMapSharedMemory");
 			std::pair<InsMapType*, std::size_t> p = g_instConfig.m_segment->find<InsMapType>("InsMap");
 			g_instConfig.m_ins_map = p.first;
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_FATAL, nullptr
-				, "msg=GetInstrument open InsMapSharedMemory fail;errmsg=%s"
-				, ex.what());
+			Log().WithField("fun","GenInstrumentExchangeIdMap")
+				.WithField("errmsg",ex.what()).
+				Log(LOG_FATAL,"open InsMapSharedMemory fail");			
 			return false;
 		}
 	}
@@ -101,10 +100,10 @@ Instrument* GetInstrument(const std::string& symbol)
 			g_instConfig.m_ins_map = p.first;
 		}
 		catch (const std::exception& ex)
-		{
-			Log(LOG_FATAL,nullptr
-				,"msg=GetInstrument open InsMapSharedMemory fail;errmsg=%s"
-				,ex.what());
+		{			
+			Log().WithField("fun", "GetInstrument")
+				.WithField("errmsg", ex.what()).
+				Log(LOG_FATAL,"open InsMapSharedMemory fail");
 			return nullptr;
 		}		
 	}	

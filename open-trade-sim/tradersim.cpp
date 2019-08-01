@@ -72,24 +72,24 @@ void tradersim::Start()
 	}
 	catch (const std::exception& ex)
 	{
-		Log(LOG_ERROR,nullptr
-			, "fun=Start;msg=tradersim open message queue exception;errmsg=%s;key=%s"
-			, ex.what()
-			,_key.c_str());
+		Log().WithField("fun","Start")
+			.WithField("key",_key)
+			.WithField("errmsg",ex.what())
+			.Log(LOG_ERROR,"tradersim open message queue exception");
 	}
 
 	try
 	{
 		m_run_receive_msg.store(true);
 		_thread_ptr = boost::make_shared<boost::thread>(
-			boost::bind(&tradersim::ReceiveMsg, this, _key));
+			boost::bind(&tradersim::ReceiveMsg,this,_key));
 	}
 	catch (const std::exception& ex)
 	{
-		Log(LOG_ERROR,nullptr
-			, "fun=Start;msg=tradersim start ReceiveMsg thread;errmsg=%s;key=%s"
-			, ex.what()
-			, _key.c_str());
+		Log().WithField("fun","Start")
+			.WithField("key",_key)
+			.WithField("errmsg",ex.what())
+			.Log(LOG_ERROR,"tradersim start ReceiveMsg thread exception");	
 	}
 }
 
@@ -137,10 +137,10 @@ void tradersim::ReceiveMsg(const std::string& key)
 			int nPos = line.find_first_of('|');
 			if ((nPos <= 0) || (nPos + 1 >= line.length()))
 			{
-				Log(LOG_WARNING,nullptr
-					, "fun=ReceiveMsg;msg=tradersim ReceiveMsg is invalid!;key=%s;msgcontent=%s"
-					, _key.c_str()
-					, line.c_str());
+				Log().WithField("fun","ReceiveMsg")
+					.WithField("key",_key)
+					.WithField("msgcontent",line)
+					.Log(LOG_ERROR,"tradersim ReceiveMsg is invalid!");				
 				continue;
 			}
 			else
@@ -155,28 +155,28 @@ void tradersim::ReceiveMsg(const std::string& key)
 		}
 		catch (const std::exception& ex)
 		{
-			Log(LOG_ERROR,nullptr
-				, "fun=ReceiveMsg;msg=ReceiveMsg exception;errmsg=%s;key=%s"
-				, ex.what()
-				, _key.c_str());
+			Log().WithField("fun","ReceiveMsg")
+				.WithField("key",_key)
+				.WithField("errmsg",ex.what())
+				.Log(LOG_ERROR,"tradersim ReceiveMsg exception!");			
 		}
 	}
 }
 
 void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 {
-	Log(LOG_INFO, nullptr
-		, "fun=ProcessReqLogIn;msg=tradersim ProcessReqLogIn;key=%s;bid=%s;user_name=%s;client_ip=%s;client_port=%d;client_app_id=%s;client_system_info_length=%d;front=%s;broker_id=%s;connId=%d"
-		, _key.c_str()
-		, req.bid.c_str()
-		, req.user_name.c_str()
-		, req.client_ip.c_str()
-		, req.client_port
-		, req.client_app_id.c_str()
-		, req.client_system_info.length()
-		, req.front.c_str()
-		, req.broker_id.c_str()
-		, connId);
+	Log().WithField("fun","ProcessReqLogIn")
+		.WithField("key",_key)
+		.WithField("bid",req.bid)
+		.WithField("user_name",req.user_name)
+		.WithField("client_ip",req.client_ip)
+		.WithField("client_port",req.client_port)
+		.WithField("client_app_id",req.client_app_id)
+		.WithField("client_system_info_length",(int)req.client_system_info.length())
+		.WithField("front",req.front)
+		.WithField("broker_id",req.broker_id)
+		.WithField("connId",connId)
+		.Log(LOG_INFO,"tradersim ProcessReqLogIn");
 
 	//如果已经登录成功
 	if (m_b_login)
@@ -194,7 +194,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				
 		if (flag)
 		{
-			OutputNotifySycn(connId, 0, u8"重复发送登录请求!");
+			OutputNotifySycn(connId,0,u8"重复发送登录请求!");
 			return;
 		}
 		
@@ -203,18 +203,19 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 			&& (_req_login.user_name == req.user_name)
 			&& (_req_login.password == req.password))
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=true;msg=m_b_login is true"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)
+				.WithField("loginresult",true)
+				.Log(LOG_INFO,"m_b_login is true");
 
 			if (0 != connId)
 			{
 				//加入登录客户端列表
 				m_logined_connIds.push_back(connId);
 
-				OutputNotifySycn(connId, 0, u8"登录成功");
+				OutputNotifySycn(connId,0,u8"登录成功");
 
 				char json_str[1024];
 				sprintf(json_str, (u8"{"\
@@ -226,6 +227,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 					, _req_login.user_name.c_str()
 					, _req_login.user_name.c_str()
 					, g_config.trading_day.c_str());
+				
 				std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 				SendMsg(connId, msg_ptr);
 
@@ -235,15 +237,16 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		}
 		else
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=false;msg=m_b_login is true"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)
+				.WithField("loginresult",false)
+				.Log(LOG_INFO,"m_b_login is true");			
 
 			if (0 != connId)
 			{
-				OutputNotifySycn(connId, 0, u8"账户和密码不匹配!");
+				OutputNotifySycn(connId,0,u8"账户和密码不匹配!");
 			}			
 		}
 	}
@@ -256,21 +259,22 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		if (!g_config.user_file_path.empty())
 		{
 			m_user_file_path = g_config.user_file_path + "/" + _req_login.bid;
-			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;msg=g_config user_file_path is not empty"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, m_user_file_path.c_str());
+
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)
+				.WithField("m_user_file_path",m_user_file_path)
+				.Log(LOG_INFO,"g_config user_file_path is not empty");			
 		}
 		else
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;msg=g_config user_file_path is empty"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, m_user_file_path.c_str());
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)
+				.WithField("m_user_file_path",m_user_file_path)
+				.Log(LOG_INFO,"g_config user_file_path is empty");			
 		}
 
 		m_user_id = _req_login.user_name;
@@ -280,22 +284,23 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		m_b_login = WaitLogIn();
 		if (m_b_login.load())
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=true"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)
+				.WithField("loginresult",true)
+				.Log(LOG_INFO,"trade sim login success");			
+
+			OnInit();
 
 			SetExchangeTime();
-
+			
 			if (connId != 0)
 			{
 				//加入登录客户端列表
 				m_logined_connIds.push_back(connId);
 
-				OutputNotifySycn(connId, 0, u8"登录成功");
-
-				OnInit();
+				OutputNotifySycn(connId,0,u8"登录成功");
 
 				char json_str[1024];
 				sprintf(json_str, (u8"{"\
@@ -309,7 +314,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 					, g_config.trading_day.c_str());
 
 				std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-				SendMsg(connId, msg_ptr);
+				SendMsg(connId,msg_ptr);
 			}
 			
 			//加载条件单数据
@@ -317,14 +322,21 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				_req_login.user_name,
 				_req_login.password,
 				g_config.trading_day);
+
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)				
+				.Log(LOG_INFO,"load condition order success");
 		}
 		else
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=ProcessReqLogIn;key=%s;bid=%s;user_name=%s;loginresult=false"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
+			Log().WithField("fun","ProcessReqLogIn")
+				.WithField("key",_key)
+				.WithField("bid",req.bid)
+				.WithField("user_name",req.user_name)
+				.WithField("loginresult",false)
+				.Log(LOG_INFO,"trade sim login fail");		
 
 			if (connId != 0)
 			{
@@ -341,12 +353,12 @@ bool tradersim::WaitLogIn()
 
 void tradersim::CloseConnection(int nId)
 {
-	Log(LOG_INFO,nullptr
-		, "fun=CloseConnection;msg=tradersim CloseConnection;key=%s;bid=%s;user_name=%s;connid=%d"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, nId);
+	Log().WithField("fun","CloseConnection")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("connid",nId)
+		.Log(LOG_INFO,"tradersim CloseConnection");
 
 	for (std::vector<int>::iterator it = m_logined_connIds.begin();
 		it != m_logined_connIds.end(); it++)
@@ -391,13 +403,13 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 	SerializerTradeBase ss;
 	if (!ss.FromString(msg.c_str()))
 	{
-		Log(LOG_WARNING,nullptr
-			, "fun=ProcessInMsg;msg=tradersim parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, connId
-			, msg.c_str());
+		Log().WithField("fun","ProcessInMsg")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("connId",connId)
+			.WithField("msgcontent",msg)
+			.Log(LOG_WARNING,"tradersim parse json msg fail");		
 		return;
 	}
 	
@@ -411,49 +423,49 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 	{
 		if (!m_b_login)
 		{
-			Log(LOG_WARNING,msg.c_str()
-				, "fun=ProcessInMsg;msg=trade sim receive other msg before login;key=%s;bid=%s;user_name=%s;connid=%d"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, connId);
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connId",connId)				
+				.Log(LOG_WARNING,"trade sim receive other msg before login");			
 			return;
 		}
 
 		if (!IsConnectionLogin(connId)
 			&& (connId != 0))
 		{
-			Log(LOG_WARNING,msg.c_str()
-				, "fun=ProcessInMsg;msg=trade sim receive other msg which from not login connecion;key=%s;bid=%s;user_name=%s;connid=%d"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, connId);
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connId",connId)
+				.Log(LOG_WARNING,"trade sim receive other msg which from not login connecion");		
 			return;
 		}
 
 		SerializerSim ss;
 		if (!ss.FromString(msg.c_str()))
 		{
-			Log(LOG_WARNING, nullptr
-				, "fun=ProcessInMsg;msg=tradersim parse json fail;key=%s;bid=%s;user_name=%s;connid=%d;msgcontent=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, connId
-				, msg.c_str());
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connId",connId)
+				.WithField("msgcontent",msg)
+				.Log(LOG_WARNING,"tradersim parse json fail");			
 			return;
 		}
 			
 		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ss.m_doc));
 		if (!dt || !dt->IsString())
 		{
-			Log(LOG_WARNING,msg.c_str()
-				, "fun=ProcessInMsg;msg=tradersim receive invalid json fail;key=%s;bid=%s;user_name=%s;connid=%d"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, connId);
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connId",connId)			
+				.Log(LOG_WARNING,"tradersim receive invalid json fail");			
 			return;
 		}
 			
@@ -521,11 +533,12 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "req_ccos_status")
 		{
-			Log(LOG_INFO, msg.c_str()
-				, "fun=ProcessInMsg;msg=trade sim receive ccos msg;key=%s;bid=%s;user_name=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connId",connId)
+				.Log(LOG_INFO,"trade sim receive ccos msg");			
 			if (connId != 0)
 			{
 				return;
@@ -534,19 +547,21 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		else if (aid == "req_start_ctp")
 		{
-			Log(LOG_INFO, msg.c_str()
-				, "fun=ProcessInMsg;msg=trade sim receive req_start_ctp msg;key=%s;bid=%s;user_name=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());			
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connId",connId)
+				.Log(LOG_INFO,"trade sim receive req_start_ctp msg");			
 		}
 		else if (aid == "req_stop_ctp")
 		{
-			Log(LOG_INFO, msg.c_str()
-				, "fun=ProcessInMsg;msg=trade sim receive req_stop_ctp msg;key=%s;bid=%s;user_name=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str());			
+			Log().WithField("fun","ProcessInMsg")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("connid",connId)
+				.Log(LOG_INFO,"trade sim receive req_stop_ctp msg");					
 		}
 	}
 }
@@ -578,18 +593,22 @@ void tradersim::OutputNotifyAsych(int connId, long notify_code, const std::strin
 {
 	//构建数据包
 	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
+	
 	rapidjson::Value node_message;
 	node_message.SetObject();
-	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	node_message.AddMember("type",rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+	node_message.AddMember("level",rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+	node_message.AddMember("code",notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("content",rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(),nss.m_doc->GetAllocator());
+	
+	rapidjson::Pointer("/data/0/notify/N"+std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	
 	std::string json_str;
 	nss.ToString(&json_str);
+	
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios.post(boost::bind(&tradersim::SendMsg, this, connId, msg_ptr));
+	_ios.post(boost::bind(&tradersim::SendMsg,this,connId, msg_ptr));
 }
 
 void tradersim::OutputNotifySycn(int connId, long notify_code
@@ -598,16 +617,21 @@ void tradersim::OutputNotifySycn(int connId, long notify_code
 {
 	//构建数据包
 	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
+
 	rapidjson::Value node_message;
 	node_message.SetObject();
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str()
+		, nss.m_doc->GetAllocator()).Move()
+		, nss.m_doc->GetAllocator());
+	
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
 	std::string json_str;
 	nss.ToString(&json_str);
+
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	SendMsg(connId, msg_ptr);
 }
@@ -618,16 +642,21 @@ void tradersim::OutputNotifyAllAsych(long notify_code
 {
 	//构建数据包
 	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
+
 	rapidjson::Value node_message;
 	node_message.SetObject();
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str()
+		,nss.m_doc->GetAllocator()).Move()
+		,nss.m_doc->GetAllocator());
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	
 	std::string json_str;
 	nss.ToString(&json_str);
+
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	_ios.post(boost::bind(&tradersim::SendMsgAll, this, msg_ptr));
 }
@@ -638,16 +667,21 @@ void tradersim::OutputNotifyAllSycn(long notify_code
 {
 	//构建数据包
 	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
+
 	rapidjson::Value node_message;
 	node_message.SetObject();
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str()
+		, nss.m_doc->GetAllocator()).Move()
+		, nss.m_doc->GetAllocator());
+	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc,node_message);
+
 	std::string json_str;
 	nss.ToString(&json_str);
+
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	SendMsgAll(msg_ptr);
 }
@@ -712,11 +746,11 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR,nullptr
-				, "fun=SendMsgAll;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
-				, ex.what()
-				, msg.length()
-				,_key.c_str());
+			Log().WithField("fun","SendMsgAll")
+				.WithField("key",_key)
+				.WithField("length",(int)msg.length())
+				.WithField("errmsg",ex.what())				
+				.Log(LOG_ERROR,"SendMsg exception");
 		}
 	}
 	else
@@ -727,11 +761,11 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR,msg.c_str()
-				, "fun=SendMsgAll;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
-				, ex.what()				
-				, totalLength
-				, _key.c_str());
+			Log().WithField("fun","SendMsgAll")
+				.WithField("key",_key)
+				.WithField("length",(int)totalLength)
+				.WithField("errmsg",ex.what())
+				.Log(LOG_ERROR,"SendMsg exception");
 		}
 	}
 }
@@ -778,26 +812,26 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR, nullptr
-				,"fun=SendMsg;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
-				,ex.what()
-				,msg.length()
-				,_key.c_str());
+			Log().WithField("fun","SendMsg")
+				.WithField("key",_key)
+				.WithField("msglen",(int)msg.length())
+				.WithField("errmsg",ex.what())
+				.Log(LOG_ERROR,"SendMsg exception");			
 		}
 	}
 	else
 	{
 		try
 		{
-			_out_mq_ptr->send(msg.c_str(), totalLength, 0);
+			_out_mq_ptr->send(msg.c_str(),totalLength,0);
 		}
 		catch (std::exception& ex)
 		{
-			Log(LOG_ERROR,msg.c_str()
-				,"fun=SendMsg;msg=SendMsg exception;errmsg=%s;length=%d;key=%s"
-				, ex.what()
-				,totalLength
-				,_key.c_str());
+			Log().WithField("fun","SendMsg")
+				.WithField("key",_key)
+				.WithField("msglen",(int)totalLength)
+				.WithField("errmsg",ex.what())
+				.Log(LOG_ERROR,"SendMsg exception");			
 		}
 	}
 }
@@ -824,9 +858,9 @@ void tradersim::SendUserDataImd(int connectId)
 
 	//发送条件单数据
 	SerializerConditionOrderData coss;
-	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
-	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
+	rapidjson::Pointer("/aid").Set(*coss.m_doc,"rtn_condition_orders");
+	rapidjson::Pointer("/user_id").Set(*coss.m_doc,m_condition_order_data.user_id);
+	rapidjson::Pointer("/trading_day").Set(*coss.m_doc,m_condition_order_data.trading_day);
 	std::vector<ConditionOrder> condition_orders;
 	bool flag = false;
 	for (auto& it : m_condition_order_data.condition_orders)
@@ -878,9 +912,9 @@ void tradersim::SendUserData()
 
 	//发送条件单数据
 	SerializerConditionOrderData coss;
-	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
+	rapidjson::Pointer("/aid").Set(*coss.m_doc,"rtn_condition_orders");
 	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
+	rapidjson::Pointer("/trading_day").Set(*coss.m_doc,m_condition_order_data.trading_day);
 	std::vector<ConditionOrder> condition_orders;
 	bool flag = false;
 	for (auto& it : m_condition_order_data.condition_orders)
@@ -896,7 +930,7 @@ void tradersim::SendUserData()
 	{
 		rapidjson::Value co_node_data;
 		coss.FromVar(condition_orders, &co_node_data);
-		rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
+		rapidjson::Pointer("/condition_orders").Set(*coss.m_doc,co_node_data);
 		std::string json_str;
 		coss.ToString(&json_str);		
 		//发送
@@ -959,8 +993,8 @@ void SerializerSim::DefineStruct(ActionOrder& d)
 
 void SerializerSim::DefineStruct(ActionTransfer& d)
 {
-	AddItem(d.currency, "currency");
-	AddItem(d.amount, "amount");
+	AddItem(d.currency,"currency");
+	AddItem(d.amount,"amount");
 }
 
 void tradersim::OnInit()
@@ -968,9 +1002,10 @@ void tradersim::OnInit()
 	m_account = &(m_data.m_accounts["CNY"]);
 	if (m_account->static_balance < 1.0)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=OnIni;msg=sim init new balance;key=%s"
-			, _key.c_str());
+		Log().WithField("fun","OnIni")
+			.WithField("key",_key)			
+			.Log(LOG_INFO,"sim init new balance");
+
 		m_account->user_id = m_user_id;
 		m_account->currency = "CNY";
 		m_account->pre_balance = 0;
@@ -994,50 +1029,50 @@ void tradersim::OnInit()
 	bank->bank_name = u8"模拟银行";
 	bank->changed = true;
 	m_something_changed = true;
-	Log(LOG_INFO,nullptr 
-		,"fun=OnInit;msg=sim OnInit;key=%s"
-		, _key.c_str());
+	Log().WithField("fun","OnIni")
+		.WithField("key",_key)
+		.Log(LOG_INFO,"sim OnInit Finish");	
 }
 
 void tradersim::LoadUserDataFile()
 {
-	Log(LOG_INFO, nullptr
-		, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;msg=ready to load user data file"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str());
+	Log().WithField("fun","LoadUserDataFile")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.Log(LOG_INFO,"ready to load user data file");
 
 	if (m_user_file_path.empty())
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;msg=m_user_file_path is empty"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str());
+		Log().WithField("fun","LoadUserDataFile")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.Log(LOG_INFO,"m_user_file_path is empty");		
 		return;
 	}
 	
 	//加载存档文件
 	std::string fn = m_user_file_path + "/" + m_user_id;
 
-	Log(LOG_INFO, nullptr
-		, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, fn.c_str());
+	Log().WithField("fun","LoadUserDataFile")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("fileName",fn)
+		.Log(LOG_INFO,"load user data file");	
 
 	//加载存档文件
 	SerializerTradeBase nss;
 	bool loadfile=nss.FromFile(fn.c_str());
 	if (!loadfile)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=load file failed!"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, fn.c_str());
+		Log().WithField("fun","LoadUserDataFile")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO,"load user data file failed!");		
 	}
 
 	nss.ToVar(m_data);
@@ -1052,24 +1087,24 @@ void tradersim::LoadUserDataFile()
 		}
 		else if (position.ins && position.ins->expired)
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=sysmbol is expired!;symbol=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, fn.c_str()
-				, position.symbol().c_str());
+			Log().WithField("fun","LoadUserDataFile")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("fileName",fn)
+				.WithField("symbol",position.symbol())
+				.Log(LOG_INFO,"sysmbol is expired!");			
 			it = m_data.m_positions.erase(it);			
 		}
 		else
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=miss sysmbol in position!;symbol=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, fn.c_str()
-				, position.symbol().c_str());			
+			Log().WithField("fun","LoadUserDataFile")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("fileName",fn)
+				.WithField("symbol",position.symbol())
+				.Log(LOG_INFO,"miss sysmbol in position!");					
 			it = m_data.m_positions.erase(it);			
 		}			
 	}
@@ -1077,14 +1112,13 @@ void tradersim::LoadUserDataFile()
 	//如果不是当天的存档文件,则需要调整
 	if (m_data.trading_day != g_config.trading_day)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=diffrent trading day!;old_trading_day=%s;trading_day=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, fn.c_str()
-			, m_data.trading_day.c_str()
-			, g_config.trading_day.c_str());
+		Log().WithField("fun","LoadUserDataFile")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("old_trading_day",m_data.trading_day)
+			.WithField("trading_day",g_config.trading_day)
+			.Log(LOG_INFO,"diffrent trading day!");		
 
 		//清空全部委托记录
 		m_data.m_orders.clear();
@@ -1258,13 +1292,13 @@ void tradersim::LoadUserDataFile()
 	}
 	else
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=LoadUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=same trading day!;trading_day=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, fn.c_str()
-			, m_data.trading_day.c_str());
+		Log().WithField("fun","LoadUserDataFile")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("fileName",fn)	
+		.WithField("trading_day",m_data.trading_day)
+		.Log(LOG_INFO,"same trading day!");		
 
 		for (auto it = m_data.m_orders.begin(); it != m_data.m_orders.end(); ++it)
 		{
@@ -1275,30 +1309,32 @@ void tradersim::LoadUserDataFile()
 
 void tradersim::SaveUserDataFile()
 {
-	Log(LOG_INFO, nullptr
-		, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;msg=ready to save user data file"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str());
+	Log().WithField("fun","SaveUserDataFile")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)		
+		.Log(LOG_INFO,"ready to save user data file");		
 
 	if (m_user_file_path.empty())
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;m_user_file_path=%s;msg=user file path is empty"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, m_user_file_path.c_str());
+		Log().WithField("fun","SaveUserDataFile")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("m_user_file_path",m_user_file_path)
+			.Log(LOG_INFO,"user file path is empty");		
 		return;
 	}
 
 	std::string fn = m_user_file_path + "/" + m_user_id;
-	Log(LOG_INFO, nullptr
-		, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str()
-		, fn.c_str());
+
+	Log().WithField("fun","SaveUserDataFile")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("fileName",fn)
+		.Log(LOG_INFO,"save user date file");
+	
 	SerializerTradeBase nss;
 	nss.dump_all = true;
 	m_data.trading_day = g_config.trading_day;
@@ -1306,12 +1342,12 @@ void tradersim::SaveUserDataFile()
 	bool saveFile=nss.ToFile(fn.c_str());
 	if (!saveFile)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=SaveUserDataFile;key=%s;bid=%s;user_name=%s;fn=%s;msg=save file failed!"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, fn.c_str());
+		Log().WithField("fun","SaveUserDataFile")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO,"save user date file fail!");		
 	}
 }
 
@@ -1319,8 +1355,16 @@ void tradersim::UpdateOrder(Order* order)
 {
 	order->seqno = m_last_seq_no++;
 	order->changed = true;
-	Position& position = GetPosition(order->symbol());
-	assert(position.ins);
+	Position& position = GetPosition(order->symbol());	
+	if (nullptr == position.ins)
+	{
+		Log().WithField("fun", "UpdateOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)			
+			.Log(LOG_ERROR,"instrument of position is null!");
+		return;
+	}
 	UpdatePositionVolume(&position);
 }
 
@@ -1512,10 +1556,12 @@ void tradersim::RecaculatePositionAndFloatProfit()
 
 		if (nullptr == ps.ins)
 		{
-			Log(LOG_ERROR, nullptr
-				, "fun=ConditionOrderDoTrade;msg=miss symbol %s when processing position;key=%s"
-				, symbol.c_str()
-				, _key.c_str());
+			Log().WithField("fun","RecaculatePositionAndFloatProfit")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("symbol",symbol)
+				.Log(LOG_ERROR,"miss symbol when processing position");			
 			continue;
 		}
 
@@ -2180,6 +2226,8 @@ void tradersim::CheckPriceConditionOrder()
 
 void tradersim::OnUserDataChange()
 {
+	Log().WithField("fun","OnUserDataChange")
+		.Log(LOG_INFO,"tradersim OnUserDataChange");
 	SendUserData();
 }
 
@@ -2195,12 +2243,14 @@ void tradersim::OnTouchConditionOrder(const ConditionOrder& order)
 	ss.FromVar(order);
 	std::string strMsg;
 	ss.ToString(&strMsg);
-	Log(LOG_INFO, strMsg.c_str()
-		, "fun=OnTouchConditionOrder;msg=condition order is touched;key=%s;bid=%s;user_name=%s"
-		, _key.c_str()
-		, _req_login.bid.c_str()
-		, _req_login.user_name.c_str());
 	
+	Log().WithField("fun","OnTouchConditionOrder")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithPack("ConditionOrder",strMsg)
+		.Log(LOG_INFO,"condition order is touched");
+
 	int nOrderIndex = 0;
 	for (const ContingentOrder& co : order.order_list)
 	{
@@ -2209,12 +2259,12 @@ void tradersim::OnTouchConditionOrder(const ConditionOrder& order)
 		Instrument* ins = GetInstrument(symbol);
 		if (nullptr == ins)
 		{
-			Log(LOG_WARNING, nullptr
-				, "fun=OnTouchConditionOrder;msg=instrument not exist;key=%s;bid=%s;user_name=%s;symbol=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, symbol.c_str());
+			Log().WithField("fun","OnTouchConditionOrder")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("symbol",symbol)
+				.Log(LOG_WARNING,"instrument not exist");		
 			continue;
 		}
 
@@ -2293,12 +2343,12 @@ bool tradersim::ConditionOrder_Open(const ConditionOrder& order
 	else
 	{
 		//开仓时必须指定具体手数
-		Log(LOG_WARNING, nullptr
-			, "fun=ConditionOrder_Open;msg=has bad volume_type;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, co.instrument_id.c_str());
+		Log().WithField("fun","ConditionOrder_Open")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("instrument_id",co.instrument_id)
+			.Log(LOG_WARNING,"has bad volume_type");
 		return false;
 	}
 
@@ -2330,12 +2380,12 @@ bool tradersim::ConditionOrder_Open(const ConditionOrder& order
 		if (!flag)
 		{
 			//找不到触发价
-			Log(LOG_WARNING, nullptr
-				, "fun=ConditionOrder_Open;msg=can not find contingent_price;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, co.instrument_id.c_str());
+			Log().WithField("fun","ConditionOrder_Open")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("instrument_id",co.instrument_id)
+				.Log(LOG_WARNING,"can not find contingent_price");			
 			return false;
 		}
 	}
@@ -2413,12 +2463,12 @@ bool tradersim::ConditionOrder_CloseToday(const ConditionOrder& order
 	bool b_has_td_yd_distinct = (co.exchange_id == "SHFE") || (co.exchange_id == "INE");
 	if (!b_has_td_yd_distinct)
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=ConditionOrder_CloseToday;msg=exchange not support close_today command;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-			, _key.c_str()
-			, _req_login.bid.c_str()
-			, _req_login.user_name.c_str()
-			, co.instrument_id.c_str());
+		Log().WithField("fun","ConditionOrder_CloseToday")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("instrument_id",co.instrument_id)
+			.Log(LOG_WARNING,"exchange not support close_today command");		
 		return false;
 	}
 
@@ -2460,23 +2510,23 @@ bool tradersim::ConditionOrder_CloseToday(const ConditionOrder& order
 				}
 				else
 				{
-					Log(LOG_WARNING, nullptr
-						, "fun=ConditionOrder_CloseToday;msg=can close short is less than will close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-						, _key.c_str()
-						, _req_login.bid.c_str()
-						, _req_login.user_name.c_str()
-						, co.instrument_id.c_str());
+					Log().WithField("fun","ConditionOrder_CloseToday")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithField("instrument_id",co.instrument_id)
+						.Log(LOG_WARNING,"can close short is less than will close short");				
 					return false;
 				}
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseToday;msg=can close short is less than will close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"can close short is less than will close short");			
 				return false;
 			}
 		}
@@ -2491,12 +2541,12 @@ bool tradersim::ConditionOrder_CloseToday(const ConditionOrder& order
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseToday;msg=have no need close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"have no need close short");				
 				return false;
 			}
 		}
@@ -2528,23 +2578,23 @@ bool tradersim::ConditionOrder_CloseToday(const ConditionOrder& order
 				}
 				else
 				{
-					Log(LOG_WARNING, nullptr
-						, "fun=ConditionOrder_CloseToday;msg=can close long is less than will close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-						, _key.c_str()
-						, _req_login.bid.c_str()
-						, _req_login.user_name.c_str()
-						, co.instrument_id.c_str());
+					Log().WithField("fun","ConditionOrder_CloseToday")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithField("instrument_id",co.instrument_id)
+						.Log(LOG_WARNING,"can close long is less than will close long");				
 					return false;
 				}
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseToday;msg=can close long is less than will close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"can close long is less than will close long");				
 			}
 		}
 		else if (EVolumeType::close_all == co.volume_type)
@@ -2558,12 +2608,12 @@ bool tradersim::ConditionOrder_CloseToday(const ConditionOrder& order
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseToday;msg=have no need close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"have no need close long");			
 				return false;
 			}
 		}
@@ -2598,13 +2648,13 @@ bool tradersim::ConditionOrder_CloseToday(const ConditionOrder& order
 		}
 		if (!flag)
 		{
-			//找不到触发价
-			Log(LOG_WARNING, nullptr
-				, "fun=ConditionOrder_CloseToday;msg=can not find contingent_price;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, co.instrument_id.c_str());
+			//找不到触发价			
+			Log().WithField("fun","ConditionOrder_CloseToday")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("instrument_id",co.instrument_id)
+				.Log(LOG_WARNING,"can not find contingent_price");
 			return false;
 		}
 	}
@@ -2772,23 +2822,23 @@ bool tradersim::ConditionOrder_CloseYesToday(const ConditionOrder& order
 				}
 				else
 				{
-					Log(LOG_WARNING, nullptr
-						, "fun=ConditionOrder_CloseYesToday;msg=can close short is less than will close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-						, _key.c_str()
-						, _req_login.bid.c_str()
-						, _req_login.user_name.c_str()
-						, co.instrument_id.c_str());
+					Log().WithField("fun","ConditionOrder_CloseYesToday")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithField("instrument_id",co.instrument_id)
+						.Log(LOG_WARNING,"can close short is less than will close short");					
 					return false;
 				}
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseYesToday;msg=can close short is less than will close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseYesToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"can close short is less than will close short");				
 				return false;
 			}
 		}
@@ -2803,12 +2853,12 @@ bool tradersim::ConditionOrder_CloseYesToday(const ConditionOrder& order
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseYesToday;msg=have no need close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseYesToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"have no need close short");				
 				return false;
 			}
 		}
@@ -2838,23 +2888,25 @@ bool tradersim::ConditionOrder_CloseYesToday(const ConditionOrder& order
 				}
 				else
 				{
-					Log(LOG_WARNING, nullptr
-						, "fun=ConditionOrder_CloseYesToday;msg=can close long is less than will close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-						, _key.c_str()
-						, _req_login.bid.c_str()
-						, _req_login.user_name.c_str()
-						, co.instrument_id.c_str());
+					Log().WithField("fun","ConditionOrder_CloseYesToday")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithField("instrument_id",co.instrument_id)
+						.Log(LOG_WARNING,"can close long is less than will close long");					
 					return false;
 				}
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseYesToday;msg=can close long is less than will close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseYesToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"can close long is less than will close long");
+
+				return false;
 			}
 		}
 		else if (EVolumeType::close_all == co.volume_type)
@@ -2868,12 +2920,12 @@ bool tradersim::ConditionOrder_CloseYesToday(const ConditionOrder& order
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_CloseYesToday;msg=have no need close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_CloseYesToday")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"have no need close long");				
 				return false;
 			}
 		}
@@ -2909,12 +2961,12 @@ bool tradersim::ConditionOrder_CloseYesToday(const ConditionOrder& order
 		if (!flag)
 		{
 			//找不到触发价
-			Log(LOG_WARNING, nullptr
-				, "fun=ConditionOrder_CloseYesToday;msg=can not find contingent_price;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, co.instrument_id.c_str());
+			Log().WithField("fun","ConditionOrder_CloseYesToday")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("instrument_id",co.instrument_id)
+				.Log(LOG_WARNING,"can not find contingent_price");		
 			return false;
 		}
 	}
@@ -3081,23 +3133,23 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 				}
 				else
 				{
-					Log(LOG_WARNING, nullptr
-						, "fun=ConditionOrder_Close;msg=can close short is less than will close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-						, _key.c_str()
-						, _req_login.bid.c_str()
-						, _req_login.user_name.c_str()
-						, co.instrument_id.c_str());
+					Log().WithField("fun","ConditionOrder_Close")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithField("instrument_id",co.instrument_id)
+						.Log(LOG_WARNING,"can close short is less than will close short");					
 					return false;
 				}
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_Close;msg=can close short is less than will close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_Close")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"can close short is less than will close short");				
 				return false;
 			}
 		}
@@ -3112,12 +3164,12 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_Close;msg=have no need close short;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_Close")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"have no need close short");			
 				return false;
 			}
 		}
@@ -3148,23 +3200,25 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 				}
 				else
 				{
-					Log(LOG_WARNING, nullptr
-						, "fun=ConditionOrder_Close;msg=can close long is less than will close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-						, _key.c_str()
-						, _req_login.bid.c_str()
-						, _req_login.user_name.c_str()
-						, co.instrument_id.c_str());
+					Log().WithField("fun","ConditionOrder_Close")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithField("instrument_id",co.instrument_id)
+						.Log(LOG_WARNING,"can close long is less than will close long");				
 					return false;
 				}
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_Close;msg=can close long is less than will close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_Close")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING, "can close long is less than will close long");
+
+				return false;
 			}
 		}
 		else if (EVolumeType::close_all == co.volume_type)
@@ -3178,12 +3232,12 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 			}
 			else
 			{
-				Log(LOG_WARNING, nullptr
-					, "fun=ConditionOrder_Close;msg=have no need close long;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-					, _key.c_str()
-					, _req_login.bid.c_str()
-					, _req_login.user_name.c_str()
-					, co.instrument_id.c_str());
+				Log().WithField("fun","ConditionOrder_Close")
+					.WithField("key",_key)
+					.WithField("bid",_req_login.bid)
+					.WithField("user_name",_req_login.user_name)
+					.WithField("instrument_id",co.instrument_id)
+					.Log(LOG_WARNING,"have no need close long");				
 				return false;
 			}
 		}
@@ -3219,12 +3273,12 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		if (!flag)
 		{
 			//找不到触发价
-			Log(LOG_WARNING, nullptr
-				, "fun=ConditionOrder_Close;msg=can not find contingent_price;key=%s;bid=%s;user_name=%s;instrument_id=%s"
-				, _key.c_str()
-				, _req_login.bid.c_str()
-				, _req_login.user_name.c_str()
-				, co.instrument_id.c_str());
+			Log().WithField("fun","ConditionOrder_Close")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("instrument_id",co.instrument_id)
+				.Log(LOG_WARNING,"can not find contingent_price");		
 			return false;
 		}
 	}
@@ -3342,7 +3396,6 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 			}
 		}
 	}
-
 
 	OnConditionOrderReqInsertOrder(action_insert_order);
 

@@ -5,8 +5,10 @@
 #include "ins_list.h"
 #include "numset.h"
 #include "datetime.h"
+
 #include <chrono>
 #include <cmath>
+#include <boost/date_time.hpp>
 
 using namespace std;
 
@@ -45,11 +47,12 @@ void ConditionOrderManager::LoadConditionOrderConfig()
 	SerializerConditionOrderData ss;
 	if (!ss.FromFile("/etc/open-trade-gateway/config-condition-order.json"))
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=LoadConditionOrderConfig;key=%s;msg=load /etc/open-trade-gateway/config-condition-order.json file fail!"
-			, m_userKey.c_str());
+		Log().WithField("fun","LoadConditionOrderConfig")
+			.WithField("fileName","/etc/open-trade-gateway/config-condition-order.json")
+			.Log(LOG_INFO, "load condition order config  json file fail!");
 		return;
 	}
+
 	ss.ToVar(tmp_co_config);
 	m_run_server = tmp_co_config.run_server;
 }
@@ -100,12 +103,12 @@ void ConditionOrderManager::Load(const std::string& bid
 	bool loadfile = nss.FromFile(fn.c_str());
 	if (!loadfile)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=Load;key=%s;bid=%s;user_name=%s;fn=%s;msg=ConditionOrderManager load condition order data failed!"
-			, m_userKey.c_str()
-			, bid.c_str()
-			, user_id.c_str()
-			, fn.c_str());
+		Log().WithField("fun","Load")
+			.WithField("key",m_userKey)
+			.WithField("bid",bid)
+			.WithField("user_name",user_id)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO, "ConditionOrderManager load condition order data file failed!");			
 		
 		m_condition_order_data.broker_id = bid;
 		m_condition_order_data.user_id = user_id;
@@ -116,12 +119,12 @@ void ConditionOrderManager::Load(const std::string& bid
 	}
 	else
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=Load;key=%s;bid=%s;user_name=%s;fn=%s;msg=ConditionOrderManager load condition order data success!"
-			, m_userKey.c_str()
-			, bid.c_str()
-			, user_id.c_str()
-			, fn.c_str());
+		Log().WithField("fun","Load")
+			.WithField("key",m_userKey)
+			.WithField("bid",bid)
+			.WithField("user_name",user_id)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO, "ConditionOrderManager load condition order data file success!");
 
 		nss.ToVar(m_condition_order_data);
 
@@ -137,7 +140,7 @@ void ConditionOrderManager::Load(const std::string& bid
 				ConditionOrder& order = it->second;
 
 				//校验触发条件的合约状态
-				for (auto cond : order.condition_list)
+				for (auto& cond : order.condition_list)
 				{
 					std::string strSymbol = cond.exchange_id + "." + cond.instrument_id;
 					Instrument* inst=GetInstrument(strSymbol);
@@ -149,7 +152,7 @@ void ConditionOrderManager::Load(const std::string& bid
 				}
 
 				//校验订单的合约状态
-				for (auto o : order.order_list)
+				for (auto& o : order.order_list)
 				{
 					std::string strSymbol = o.exchange_id + "." + o.instrument_id;
 					Instrument* inst = GetInstrument(strSymbol);
@@ -239,13 +242,13 @@ void ConditionOrderManager::Load(const std::string& bid
 	loadfile = nss_his.FromFile(fn.c_str());
 	if (!loadfile)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=Load;key=%s;bid=%s;user_name=%s;fn=%s;msg=ConditionOrderManager load history condition order file failed!"
-			, m_userKey.c_str()
-			, bid.c_str()
-			, user_id.c_str()
-			, fn.c_str());
-
+		Log().WithField("fun","Load")
+			.WithField("key",m_userKey)
+			.WithField("bid",bid)
+			.WithField("user_name",user_id)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO, "ConditionOrderManager load history condition order file failed!");
+		
 		m_condition_order_his_data.broker_id = bid;
 		m_condition_order_his_data.user_id = user_id;
 		m_condition_order_his_data.user_password = user_password;
@@ -260,13 +263,13 @@ void ConditionOrderManager::Load(const std::string& bid
 	}
 	else
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=Load;key=%s;bid=%s;user_name=%s;fn=%s;msg=ConditionOrderManager load history condition order file success!"
-			, m_userKey.c_str()
-			, bid.c_str()
-			, user_id.c_str()
-			, fn.c_str());
-
+		Log().WithField("fun","Load")
+			.WithField("key",m_userKey)
+			.WithField("bid",bid)
+			.WithField("user_name",user_id)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO, "ConditionOrderManager load history condition order file success!");
+		
 		nss_his.ToVar(m_condition_order_his_data);
 		m_condition_order_his_data.broker_id = bid;
 		m_condition_order_his_data.user_id = user_id;
@@ -329,7 +332,7 @@ void ConditionOrderManager::BuildConditionOrderIndex()
 			continue;
 		}
 
-		for (auto c : co.condition_list)
+		for (auto& c : co.condition_list)
 		{
 			if (c.is_touched)
 			{
@@ -366,24 +369,26 @@ void ConditionOrderManager::SaveCurrent()
 {
 	//保存条件单数据
 	std::string fn = m_user_file_path + "/" + m_userKey + ".co";
-	Log(LOG_INFO, nullptr
-		, "fun=SaveCurrent;key=%s;bid=%s;user_name=%s;fn=%s"
-		, m_userKey.c_str()
-		, m_condition_order_data.broker_id.c_str()
-		, m_condition_order_his_data.user_id.c_str()
-		, fn.c_str());
+
+	Log().WithField("fun","SaveCurrent")
+		.WithField("key",m_userKey)
+		.WithField("bid",m_condition_order_data.broker_id)
+		.WithField("user_name", m_condition_order_data.user_id)
+		.WithField("fileName", fn)
+		.Log(LOG_INFO, "try to save current condition order file!");
+	
 	SerializerConditionOrderData nss;
 	nss.dump_all = true;
 	nss.FromVar(m_condition_order_data);
 	bool saveFile = nss.ToFile(fn.c_str());
 	if (!saveFile)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=SaveCurrent;key=%s;bid=%s;user_name=%s;fn=%s;msg=save condition order data failed!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_his_data.user_id.c_str()
-			, fn.c_str());
+		Log().WithField("fun","SaveCurrent")
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO, "save condition order data file failed!");	
 	}
 }
 
@@ -397,19 +402,19 @@ void ConditionOrderManager::SaveHistory()
 	bool saveFile = nss_his.ToFile(fn.c_str());
 	if (!saveFile)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=SaveHistory;key=%s;bid=%s;user_name=%s;fn=%s;msg=save history condition order data failed!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_his_data.user_id.c_str()
-			, fn.c_str());
+		Log().WithField("fun","SaveHistory")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithField("fileName", fn)
+			.Log(LOG_INFO, "save history condition order data file failed!");		
 	}
 }
 
 bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 {
 	//检验条件	
-	for (auto cond : order.condition_list)
+	for (auto& cond : order.condition_list)
 	{
 		std::string symbol = cond.exchange_id + "." + cond.instrument_id;
 		Instrument* ins = GetInstrument(symbol);
@@ -478,7 +483,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 	}
 
 	//检验订单
-	for (auto co : order.order_list)
+	for (auto& co : order.order_list)
 	{
 		std::string symbol = co.exchange_id + "." + co.instrument_id;
 		Instrument* ins = GetInstrument(symbol);
@@ -591,11 +596,11 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log(LOG_INFO,nullptr
-			, "fun=InsertConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid InsertConditionOrder msg!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun","InsertConditionOrder")
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "not invalid InsertConditionOrder msg!");		
 		return;
 	}
 	
@@ -661,11 +666,13 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		m_current_day_condition_order_count++;
 		m_current_valid_condition_order_count++;
 		m_callBack.OutputNotifyAll(0, u8"条件单下单成功","INFO","MESSAGE");
-		Log(LOG_INFO, nullptr
-			, "fun=InsertConditionOrder;key=%s;bid=%s;user_name=%s;msg=insert condition order ok"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_his_data.user_id.c_str());
+		
+		Log().WithField("fun","InsertConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "insert condition order ok");
+
 		SaveCurrent();
 
 		BuildConditionOrderIndex();
@@ -678,11 +685,12 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			std::map<std::string,ConditionOrder>::value_type(order.order_id
 			,order));
 
-		Log(LOG_INFO, nullptr
-			, "fun=InsertConditionOrder;key=%s;bid=%s;user_name=%s;msg=insert condition order fail"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_his_data.user_id.c_str());
+		Log().WithField("fun", "InsertConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "insert condition order fail");
+
 		SaveCurrent();
 	}
 
@@ -694,11 +702,11 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log(LOG_INFO,nullptr
-			, "fun=CancelConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid CancelConditionOrder msg!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "not invalid CancelConditionOrder msg!");		
 		return;
 	}
 
@@ -778,11 +786,11 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log(LOG_INFO,nullptr
-			, "fun=PauseConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid PauseConditionOrder msg!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "not invalid PauseConditionOrder msg!");		
 		return;
 	}
 
@@ -869,11 +877,11 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log(LOG_INFO,nullptr
-			, "fun=ResumeConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid ResumeConditionOrder msg!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun", "ResumeConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "not invalid ResumeConditionOrder msg!");	
 		return;
 	}
 
@@ -934,11 +942,11 @@ void ConditionOrderManager::ChangeCOSStatus(const std::string& msg)
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=ChangeCOSStatus;key=%s;bid=%s;user_name=%s;msg=not invalid ChangeCOSStatus msg!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun", "ChangeCOSStatus")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "not invalid ChangeCOSStatus msg!");		
 		return;
 	}
 
@@ -947,19 +955,19 @@ void ConditionOrderManager::ChangeCOSStatus(const std::string& msg)
 	m_run_server = req.run_server;
 	if (!m_run_server)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=ChangeCOSStatus;key=%s;bid=%s;user_name=%s;msg=cos is stoped!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun", "ChangeCOSStatus")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, "cos is stoped!");		
 	}
 	else
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=ChangeCOSStatus;key=%s;bid=%s;user_name=%s;msg=cos is started!"
-			, m_userKey.c_str()
-			, m_condition_order_data.broker_id.c_str()
-			, m_condition_order_data.user_id.c_str());
+		Log().WithField("fun", "ChangeCOSStatus")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO,"cos is started!");
 	}
 }
 
@@ -1371,11 +1379,11 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=QryHisConditionOrder;key=%s;bid=%s;user_name=%s;msg=not invalid QryHisConditionOrder msg!"
-			, m_userKey.c_str()
-			, m_condition_order_his_data.broker_id.c_str()
-			, m_condition_order_his_data.user_id.c_str());
+		Log().WithField("fun", "QryHisConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_his_data.broker_id)
+			.WithField("user_name", m_condition_order_his_data.user_id)
+			.Log(LOG_INFO, "not invalid QryHisConditionOrder msg!");		
 		return;
 	}
 

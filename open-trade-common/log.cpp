@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 #include "log.h"
-#include "SerializerTradeBase.h"
+#include "rapid_serialize.h"
 
 #include <stdarg.h>
 #include <mutex>
@@ -22,220 +22,386 @@
 
 #include <boost/algorithm/string.hpp>
 
-struct LogContext
+using namespace std;
+
+class LogContextImp:public LogContext
 {
+public:
+	LogContextImp()
+		:m_local_host_name("")
+		,m_log_file_name("")
+		, m_log_file_mutex()
+	{
+		char hostname[128];
+		if (gethostname(hostname,sizeof(hostname)))
+		{
+			m_local_host_name = "unknown";
+		}
+		else
+		{
+			m_local_host_name = hostname;
+		}
+	}
+
+	virtual ~LogContextImp()
+	{
+	}
+
+	virtual LogContext& WithField(const std::string& key, bool value)
+	{
+		boolMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, char value)
+	{
+		charMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, unsigned char value)
+	{
+		ucharMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, int value)
+	{
+		intMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, unsigned int value)
+	{
+		uintMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, short value)
+	{
+		shortMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, unsigned short value)
+	{
+		ushortMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, long value)
+	{
+		longMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, unsigned long value)
+	{
+		ulongMap[key] = value;
+		return *this;
+	}
+		
+	virtual LogContext& WithField(const std::string& key, float value)
+	{
+		floatMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, double value)
+	{
+		doubleMap[key] = value;
+		return *this;
+	}
+		
+	virtual LogContext& WithField(const std::string& key, const std::string& value)
+	{
+		stringMap[key] = value;
+		return *this;
+	}
+
+	virtual LogContext& WithField(const std::string& key, const char* value)
+	{
+		stringMap[key] = value;
+		return *this;
+	}
+	
+	virtual LogContext& WithPack(const std::string& key, const std::string& json_str)
+	{
+		packMap[key] = json_str;
+		return *this;
+	}
+
+	virtual LogContext& WithPack(const std::string& key, const char* json_str)
+	{
+		packMap[key] = json_str;
+		return *this;
+	}
+		
+	bool FromString(const std::string& jsonStr,rapidjson::Document& doc)
+	{
+		rapidjson::StringStream buffer(jsonStr.c_str());
+		typedef rapidjson::EncodedInputStream<rapidjson::UTF8<>, rapidjson::StringStream> InputStream;
+		InputStream os(buffer);
+		doc.ParseStream<rapidjson::kParseNanAndInfFlag,rapidjson::UTF8<> >(os);
+		if (doc.HasParseError())
+		{			
+			return false;
+		}
+		return true;
+	}
+
+	bool ToString(rapidjson::Document& rootDoc,std::string& jsonStr)
+	{
+		rapidjson::StringBuffer buffer(0,2048);
+		typedef rapidjson::EncodedOutputStream<rapidjson::UTF8<>,rapidjson::StringBuffer> OutputStream;
+		OutputStream os(buffer, false);
+		rapidjson::Writer<OutputStream
+			,rapidjson::UTF8<>
+			,rapidjson::UTF8<>
+			,rapidjson::CrtAllocator
+			,rapidjson::kWriteNanAndInfFlag> writer(os);
+		rootDoc.Accept(writer);
+		jsonStr = std::string(buffer.GetString());
+		return true;
+	}
+
+	virtual void Log(LogLevel level, const std::string& msg)
+	{
+		rapidjson::Document rootDoc;
+
+		rapidjson::Pointer("/time").Set(rootDoc, CurrentDateTimeStr().c_str());
+		rapidjson::Pointer("/level").Set(rootDoc, Level2String(level).c_str());
+		int pid = (int)getpid();
+		rapidjson::Pointer("/pid").Set(rootDoc,pid);
+		std::stringstream ss;
+		ss << std::this_thread::get_id();		
+		rapidjson::Pointer("/tid").Set(rootDoc,ss.str().c_str());
+		rapidjson::Pointer("/node").Set(rootDoc,m_local_host_name.c_str());
+		rapidjson::Pointer("/msg").Set(rootDoc,msg.c_str());		
+
+		for (auto& kv : boolMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+
+		for (auto& kv : charMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+
+		for (auto& kv : ucharMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc, kv.second);
+		}
+
+		for (auto& kv : intMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc, kv.second);
+		}
+
+		for (auto& kv : uintMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+
+		for (auto& kv : shortMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc, kv.second);
+		}
+
+		for (auto& kv : ushortMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc, kv.second);
+		}
+
+		for (auto& kv : longMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+
+		for (auto& kv : ulongMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+		
+		for (auto& kv : floatMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+
+		for (auto& kv : doubleMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second);
+		}
+		
+		for (auto& kv : stringMap)
+		{
+			std::string strKey = "/" + kv.first;
+			rapidjson::Pointer(strKey.c_str()).Set(rootDoc,kv.second.c_str());
+		}
+					   		
+		for (auto& kv : packMap)
+		{			
+			rapidjson::Document doc;
+			rapidjson::Value packValue;
+			if (FromString(kv.second,doc))
+			{
+				rapidjson::Document::AllocatorType& a = rootDoc.GetAllocator();
+				packValue.CopyFrom(doc,a);
+				std::string strKey = "/" + kv.first;
+				rapidjson::Pointer(strKey.c_str()).Set(rootDoc,packValue);				
+			}
+		}
+		
+		std::string str;
+		if (ToString(rootDoc, str))
+		{
+			str += "\n";
+
+			std::lock_guard<std::mutex> lock(m_log_file_mutex);
+			int log_file_fd = open(m_log_file_name.c_str()
+				, O_WRONLY | O_APPEND | O_CREAT
+				, S_IRUSR | S_IWUSR);
+			if (log_file_fd == -1)
+			{
+				printf("can't open log file:%s", m_log_file_name.c_str());				
+			}
+			else
+			{
+				write(log_file_fd,str.c_str(),str.length());
+				close(log_file_fd);
+			}			
+		}	
+		
+		boolMap.clear();
+		charMap.clear();
+		ucharMap.clear();
+		intMap.clear();
+		uintMap.clear();
+		shortMap.clear();
+		ushortMap.clear();
+		longMap.clear();
+		ulongMap.clear();	
+		floatMap.clear();
+		doubleMap.clear();		
+		stringMap.clear();
+		packMap.clear();
+	}
+protected:
+	std::string m_local_host_name;
+
+	std::string m_log_file_name;
+
 	std::mutex m_log_file_mutex;
 
-	int m_log_file_fd;  	
+	std::map<std::string, bool> boolMap;
 
-	std::string m_local_host_name;
-} log_context;
+	std::map<std::string, char> charMap;
 
-void GetLocalHostName()
-{
-	char hostname[128];
-	if (gethostname(hostname, sizeof(hostname)))
-	{
-		log_context.m_local_host_name = "unknown";
-	}
-	log_context.m_local_host_name = hostname;
-}
+	std::map<std::string, unsigned char> ucharMap;
 
-const char* Level2String(LogLevel level)
-{
-    switch (level) 
-	{
-        case LogLevel::LOG_DEBUG:
-            return "debug";
-        case LogLevel::LOG_INFO:
-            return "info";
-        case LogLevel::LOG_WARNING:
-            return "warning";
-        case LogLevel::LOG_ERROR:
-            return "error";
-        case LogLevel::LOG_FATAL:
-            return "fatal";
-        default:
-            return "info";
-    }
-}
+	std::map<std::string,int> intMap;
 
-const char* CurrentDateTimeStr()
-{
-    //2018-08-29T09:41:37.532100652+08:00
-    static char dtstr[128];
-    auto now = std::chrono::high_resolution_clock::now();
-    std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
-    std::size_t fractional_seconds = ns.count() % 1000000000LL;
-    std::chrono::seconds s = std::chrono::duration_cast<std::chrono::seconds>(ns);
-    std::time_t t = s.count();
-    std::tm* tm = std::localtime(&t);
-    sprintf(dtstr, "%04d-%02d-%02dT%02d:%02d:%02d.%09lu+08:00"
-    , tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday
-    , tm->tm_hour, tm->tm_min, tm->tm_sec
-    , fractional_seconds);
-    return dtstr;
-}
+	std::map<std::string, unsigned int> uintMap;
 
+	std::map<std::string, short> shortMap;
 
-void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...)
-{
-	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
+	std::map<std::string, unsigned short> ushortMap;
+
+	std::map<std::string, long> longMap;
+
+	std::map<std::string, unsigned long> ulongMap;
 	
-	if (log_context.m_local_host_name.empty())
-	{
-		GetLocalHostName();
-	}
+	std::map<std::string, float> floatMap;
 
-	const char* level_str = Level2String(level);
-	const char* datetime_str = CurrentDateTimeStr();
+	std::map<std::string, double> doubleMap;	
 
-	SerializerTradeBase nss;	
-	rapidjson::Pointer("/time").Set(*nss.m_doc,datetime_str);	
-	rapidjson::Pointer("/level").Set(*nss.m_doc,level_str);
-	if (!log_context.m_local_host_name.empty())
-	{
-		rapidjson::Pointer("/node").Set(*nss.m_doc
-			,log_context.m_local_host_name.c_str());
-	}
+	std::map<std::string, std::string> stringMap;
 
-	SerializerTradeBase nss_pack;
-	if (nullptr != pack_str)
-	{
-		if (nss_pack.FromString(pack_str))
-		{
-			rapidjson::Value packValue;
-			rapidjson::Document::AllocatorType& a = nss_pack.m_doc->GetAllocator();
-			packValue.CopyFrom(*nss_pack.m_doc, a);
-			rapidjson::Pointer("/pack").Set(*nss.m_doc, packValue);
-		}
-	}
+	std::map<std::string, std::string> packMap;		
 	
-	char buf[1024 * 5];
-	memset(buf, 0, sizeof(buf));
-	va_list arglist;
-	va_start(arglist, message_fmt);
-	vsnprintf(buf, 1024 * 5, message_fmt, arglist);
-	va_end(arglist);
-
-	std::vector<std::string> kvs;
-	boost::algorithm::split(kvs, buf, boost::algorithm::is_any_of(";"));
-
-	if (kvs.empty())
+	std::string Level2String(LogLevel level)
 	{
-		rapidjson::Pointer("/msg").Set(*nss.m_doc,buf);
-	}
-	else
-	{
-		for (int i = 0; i < kvs.size(); ++i)
+		std::string strLevel = "";
+		switch (level)
 		{
-			std::string& kv = kvs[i];
-			std::vector<std::string> kvp;
-			boost::algorithm::split(kvp, kv, boost::algorithm::is_any_of("="));
-			if (kvp.size() != 2)
-			{
-				if (0 == i)
-				{
-					rapidjson::Pointer("/msg").Set(*nss.m_doc,kv.c_str());
-				}
-				continue;
-			}
-			std::string strKey = "/" + kvp[0];
-			rapidjson::Pointer(strKey.c_str()).Set(*nss.m_doc, kvp[1].c_str());
+		case LogLevel::LOG_DEBUG:
+			strLevel="debug";
+			break;
+		case LogLevel::LOG_INFO:
+			strLevel = "info";
+			break;
+		case LogLevel::LOG_WARNING:
+			strLevel = "warning";
+			break;
+		case LogLevel::LOG_ERROR:
+			strLevel = "error";
+			break;
+		case LogLevel::LOG_FATAL:
+			strLevel = "fatal";
+			break;
+		default:
+			strLevel = "info";
 		}
+		return strLevel;
 	}
 
-	std::string str;
-	nss.ToString(&str);
-	str += "\n";
-	std::string logFileName = "/var/log/open-trade-gateway/open-trade-gateway.log";
-	log_context.m_log_file_fd = open(logFileName.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
-	if (log_context.m_log_file_fd == -1)
+	std::string CurrentDateTimeStr()
 	{
-		printf("can't open log file:%s", logFileName.c_str());
-		return;
+		//2018-08-29T09:41:37.532100652+08:00
+		char dtstr[128];
+		auto now = std::chrono::high_resolution_clock::now();
+		std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
+		std::size_t fractional_seconds = ns.count() % 1000000000LL;
+		std::chrono::seconds s = std::chrono::duration_cast<std::chrono::seconds>(ns);
+		std::time_t t = s.count();
+		std::tm* tm = std::localtime(&t);
+		sprintf(dtstr, "%04d-%02d-%02dT%02d:%02d:%02d.%09lu+08:00"
+			, tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday
+			, tm->tm_hour, tm->tm_min, tm->tm_sec
+			, fractional_seconds);
+		return dtstr;
 	}
-	write(log_context.m_log_file_fd, str.c_str(), str.length());
-	close(log_context.m_log_file_fd);	
+};
+
+class GateWayLogContext :public LogContextImp
+{
+public:
+	GateWayLogContext()
+		:LogContextImp()
+	{
+		m_log_file_name = "/var/log/open-trade-gateway/open-trade-gateway.log";
+	}
+};
+
+class GateWayMsLogContext :public LogContextImp
+{
+public:
+	GateWayMsLogContext()
+	{
+		m_log_file_name = "/var/log/open-trade-gateway/open-trade-gateway-ms.log";
+	}
+};
+
+LogContext& Log()
+{
+	static std::map<std::thread::id, GateWayLogContext> loggerMap;
+	return loggerMap[std::this_thread::get_id()];
 }
 
-void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...)
+LogContext& LogMs()
 {
-	std::lock_guard<std::mutex> lock(log_context.m_log_file_mutex);
-
-	if (log_context.m_local_host_name.empty())
-	{
-		GetLocalHostName();
-	}
-
-	const char* level_str = Level2String(level);
-	const char* datetime_str = CurrentDateTimeStr();
-
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/time").Set(*nss.m_doc, datetime_str);
-	rapidjson::Pointer("/level").Set(*nss.m_doc, level_str);
-	if (!log_context.m_local_host_name.empty())
-	{
-		rapidjson::Pointer("/node").Set(*nss.m_doc
-			, log_context.m_local_host_name.c_str());
-	}
-	
-	SerializerTradeBase nss_pack;
-	if (nullptr != pack_str)
-	{		
-		if (nss_pack.FromString(pack_str))
-		{
-			rapidjson::Value packValue; 
-			rapidjson::Document::AllocatorType& a = nss_pack.m_doc->GetAllocator();
-			packValue.CopyFrom(*nss_pack.m_doc,a);
-			rapidjson::Pointer("/pack").Set(*nss.m_doc, packValue);
-		}
-	}		
-
-	char buf[1024 * 5];
-	memset(buf, 0, sizeof(buf));
-	va_list arglist;
-	va_start(arglist, message_fmt);
-	vsnprintf(buf, 1024 * 5, message_fmt, arglist);
-	va_end(arglist);
-
-	std::vector<std::string> kvs;
-	boost::algorithm::split(kvs, buf, boost::algorithm::is_any_of(";"));
-
-	if (kvs.empty())
-	{
-		rapidjson::Pointer("/msg").Set(*nss.m_doc, buf);
-	}
-	else
-	{
-		for (int i = 0; i < kvs.size(); ++i)
-		{
-			std::string& kv = kvs[i];
-			std::vector<std::string> kvp;
-			boost::algorithm::split(kvp, kv, boost::algorithm::is_any_of("="));
-			if (kvp.size() != 2)
-			{
-				if (0 == i)
-				{
-					rapidjson::Pointer("/msg").Set(*nss.m_doc, kv.c_str());
-				}
-				continue;
-			}
-			std::string strKey = "/" + kvp[0];
-			rapidjson::Pointer(strKey.c_str()).Set(*nss.m_doc, kvp[1].c_str());
-		}
-	}
-
-	std::string str;
-	nss.ToString(&str);
-	str += "\n";
-	std::string logFileName = "/var/log/open-trade-gateway/open-trade-gateway-ms.log";
-	log_context.m_log_file_fd = open(logFileName.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
-	if (log_context.m_log_file_fd == -1)
-	{
-		printf("can't open log file:%s", logFileName.c_str());
-		return;
-	}
-	write(log_context.m_log_file_fd, str.c_str(), str.length());
-	close(log_context.m_log_file_fd);
+	static std::map<std::thread::id, GateWayMsLogContext> loggerMap;
+	return loggerMap[std::this_thread::get_id()];
 }

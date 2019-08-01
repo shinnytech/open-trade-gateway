@@ -43,8 +43,10 @@ bool LoadMasterConfig()
 	MasterSerializerConfig ss;
 	if (!ss.FromFile("/etc/open-trade-gateway/config-ms.json"))
 	{
-		LogMs(LOG_FATAL,nullptr
-			, "msg=load /etc/open-trade-gateway/config-ms.json file fail;key=gatewayms");
+		LogMs().WithField("fun","LoadMasterConfig")
+			.WithField("key","gatewayms")
+			.WithField("fileName","/etc/open-trade-gateway/config-ms.json")
+			.Log(LOG_WARNING,"load gatewayms config file fail");
 		return false;
 	}
 
@@ -55,9 +57,9 @@ bool LoadMasterConfig()
 
 void MasterSerializerConfig::DefineStruct(MasterConfig& c)
 {
-	AddItem(c.host, "host");
-	AddItem(c.port, "port");
-	AddItem(c.slaveNodeList, "slaveNodeList");
+	AddItem(c.host,"host");
+	AddItem(c.port,"port");
+	AddItem(c.slaveNodeList,"slaveNodeList");
 }
 
 void MasterSerializerConfig::DefineStruct(SlaveNodeInfo& s)

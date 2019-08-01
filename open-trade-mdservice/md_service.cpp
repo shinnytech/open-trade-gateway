@@ -38,7 +38,8 @@ public:
 	void DefineStruct(Instrument& d)
 	{
 		AddItem(d.expired, ("expired"));
-		AddItemEnum(d.product_class, ("class"), {
+		AddItemEnum(d.product_class,("class"), 
+		{
 			{ kProductClassFutures, ("FUTURE") },
 			{ kProductClassOptions, ("OPTION") },
 			{ kProductClassCombination, ("FUTURE_COMBINE") },
@@ -46,7 +47,7 @@ public:
 			{ kProductClassFutureIndex, ("FUTURE_INDEX") },
 			{ kProductClassFutureContinuous, ("FUTURE_CONT") },
 			{ kProductClassStock, ("STOCK") },
-			});
+		});
 		AddItem(d.volume_multiple, ("volume_multiple"));
 		AddItem(d.price_tick, ("price_tick"));
 		AddItem(d.margin, ("margin"));
@@ -106,8 +107,9 @@ bool mdservice::init()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, nullptr
-			, "fun=Init;msg=mdservice Init exception;key=mdservice");
+		Log().WithField("fun","Init")
+			.WithField("key","mdservice")			
+			.Log(LOG_WARNING,"mdservice Init exception");	
 		return false;
 	}
 }
@@ -139,9 +141,10 @@ bool mdservice::LoadInsList()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_FATAL, nullptr
-			, "fun=LoadInsList;msg=mdservice construct m_ins_map fail;errmsg=%s;key=mdservice"
-			, ex.what());
+		Log().WithField("fun","LoadInsList")
+			.WithField("key","mdservice")
+			.WithField("errmsg",ex.what())
+			.Log(LOG_FATAL,"mdservice construct m_ins_map fail");		
 		return false;
 	}
 
@@ -151,20 +154,23 @@ bool mdservice::LoadInsList()
 		std::string content;
 		if (HttpGet(ins_file_url, &content) != 0)
 		{
-			Log(LOG_FATAL, nullptr
-				, "fun=LoadInsList;msg=md service download ins file fail;key=mdservice");
+			Log().WithField("fun","LoadInsList")
+				.WithField("key","mdservice")			
+				.Log(LOG_FATAL,"md service download ins file fail");			
 			return false;
 		}
 
-		Log(LOG_INFO,nullptr
-			, "fun=LoadInsList;msg=mdservice download ins file success;key=mdservice;contentlen=%d"
-			, content.length());
+		Log().WithField("fun","LoadInsList")
+			.WithField("key","mdservice")
+			.WithField("contentlen",(int)content.length())
+			.Log(LOG_INFO,"mdservice download ins file success");
 
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str()))
 		{
-			Log(LOG_FATAL, nullptr,
-				"fun=LoadInsList;msg=md service parse downloaded ins file fail;key=mdservice");
+			Log().WithField("fun","LoadInsList")
+				.WithField("key","mdservice")				
+				.Log(LOG_FATAL,"md service parse downloaded ins file fail");			
 			return false;
 		}
 
@@ -174,13 +180,13 @@ bool mdservice::LoadInsList()
 			strncpy(key.data(), m.name.GetString(), 64);
 			ss.ToVar((*m_ins_map)[key], &m.value);
 		}
-
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_FATAL, nullptr
-			, "fun=LoadInsList;msg=get inst list fail;errmsg=%s;key=mdservice"
-			, ex.what());
+		Log().WithField("fun","LoadInsList")
+			.WithField("key","mdservice")
+			.WithField("errmsg",ex.what())
+			.Log(LOG_FATAL,"get inst list fail");		
 		return false;
 	}
 	
@@ -198,8 +204,9 @@ void mdservice::stop()
 	}
 	m_md_connection_ptr.reset();
 	
-	Log(LOG_INFO, nullptr
-		, "fun=stop;msg=mdservice stop;key=mdservice");
+	Log().WithField("fun","stop")
+		.WithField("key","mdservice")		
+		.Log(LOG_INFO,"mdservice stop");	
 
 	//TODO::先不释放如下资源,反正进程要退出
 	//m_segment
@@ -211,9 +218,10 @@ void mdservice::StartConnect()
 {
 	try
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=StartConnect;msg=mdservice StartConnect openmd service;key=mdservice");
-
+		Log().WithField("fun","StartConnect")
+			.WithField("key","mdservice")
+			.Log(LOG_INFO,"mdservice StartConnect openmd service");
+			
 		if (nullptr != m_md_connection_ptr)
 		{
 			m_md_connection_ptr.reset();
@@ -231,9 +239,10 @@ void mdservice::StartConnect()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_FATAL,nullptr
-			, "fun=StartConnect;msg=mdservice StartConnect fail;errmsg=%s;key=mdservice"
-			, ex.what());
+		Log().WithField("fun","StartConnect")
+			.WithField("key","mdservice")
+			.WithField("errmsg",ex.what())
+			.Log(LOG_FATAL,"mdservice StartConnect fail");
 	}
 }
 
@@ -256,9 +265,10 @@ void mdservice::ReStartConnect()
 			return;
 		}
 
-		Log(LOG_INFO, nullptr
-			, "fun=ReStartConnect;msg=mdservice ReStartConnect openmd service;key=mdservice");
-		
+		Log().WithField("fun","ReStartConnect")
+			.WithField("key","mdservice")			
+			.Log(LOG_INFO,"mdservice ReStartConnect openmd service");
+				
 		if (nullptr != m_md_connection_ptr)
 		{
 			m_md_connection_ptr.reset();
@@ -283,9 +293,10 @@ void mdservice::ReStartConnect()
 	}
 	catch (std::exception& ex)
 	{
-		Log(LOG_FATAL, nullptr
-			, "fun=ReStartConnect;msg=mdservice ReStartConnect fail;errmsg=%s;key=mdservice"
-			, ex.what());
+		Log().WithField("fun", "ReStartConnect")
+			.WithField("key", "mdservice")
+			.WithField("errmsg",ex.what())
+			.Log(LOG_FATAL, "mdservice ReStartConnect fail");
 	}
 }
 

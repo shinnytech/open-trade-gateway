@@ -29,18 +29,18 @@ int main(int argc, char* argv[])
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,nullptr
-				,"msg=trade ctp load config failed!;key=%s"
-				,key.c_str());
+			Log().WithField("fun","main")
+				.WithField("key",key)
+				.Log(LOG_WARNING,"trade ctp load config failed!");			
 			return -1;
 		}
 
 		//加载合约映射
 		if (!GenInstrumentExchangeIdMap())
 		{
-			Log(LOG_WARNING, nullptr
-				, "msg=trade ctp load instrument exchange id map failed!;key=%s"
-				, key.c_str());
+			Log().WithField("fun","main")
+				.WithField("key",key)
+				.Log(LOG_WARNING,"trade ctp load instrument exchange id map failed!");
 			return -1;
 		}
 
@@ -65,14 +65,15 @@ int main(int argc, char* argv[])
 			tradeCtp.Stop();
 			flag.store(false);
 			ioc.stop();
-			Log(LOG_INFO,nullptr
-				,"msg=trade ctp got sig %d;key=%s"
-				,sig
-				,key.c_str());
 
-			Log(LOG_INFO,nullptr
-				,"msg=trade ctp exit;key=%s"
-				,key.c_str());
+			Log().WithField("fun","main")
+				.WithField("key",key)
+				.WithField("sig",sig)
+				.Log(LOG_INFO,"trade ctp got sig");			
+
+			Log().WithField("fun","main")
+				.WithField("key",key)				
+				.Log(LOG_INFO,"trade ctp exit");			
 		});
 
 		while (flag.load())
@@ -84,15 +85,15 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR,nullptr
-					,"msg=trade ctp ioc run exception,%s;key=%s"					
-					, ex.what()
-					, key.c_str());
+				Log().WithField("fun","main")
+					.WithField("key",key)
+					.WithField("errmsg",ex.what())
+					.Log(LOG_ERROR,"trade ctp ioc run exception");			
 			}
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << "trade ctp "<< argv[1] <<" exception: " << e.what() << std::endl;
+		std::cerr << "trade ctp "<< argv[1] <<" exception:" << e.what() << std::endl;
 	}
 }

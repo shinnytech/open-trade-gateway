@@ -7,7 +7,8 @@
 #pragma once
 
 #include <string>
-#include <boost/asio.hpp>
+#include <thread>
+#include <mutex>
 
 typedef enum 
 {
@@ -18,6 +19,44 @@ typedef enum
     LOG_DEBUG
 } LogLevel;
 
-void Log(LogLevel level,const char* pack_str,const char* message_fmt, ...);
+class LogContext
+{
+public:
+	virtual LogContext& WithField(const std::string& key, bool value) = 0;
 
-void LogMs(LogLevel level, const char* pack_str, const char* message_fmt, ...);
+	virtual LogContext& WithField(const std::string& key, char value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, unsigned char value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, int value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, unsigned int value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, short value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, unsigned short value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, long value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, unsigned long value) = 0;
+	
+	virtual LogContext& WithField(const std::string& key, float value) = 0;
+
+	virtual LogContext& WithField(const std::string& key, double value) = 0;
+	
+	virtual LogContext& WithField(const std::string& key,const std::string& value)=0;	
+
+	virtual LogContext& WithField(const std::string& key, const char* value) = 0;
+
+	virtual LogContext& WithPack(const std::string& key, const std::string& json_str) = 0;
+
+	virtual LogContext& WithPack(const std::string& key, const char* json_str) = 0;
+
+	virtual void Log(LogLevel level, const std::string& msg) = 0;
+};
+
+LogContext& Log();
+
+LogContext& LogMs();
+
+

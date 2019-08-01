@@ -17,14 +17,16 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		Log(LOG_INFO,nullptr
-			,"msg=trade server init;key=gateway");
-
+		Log().WithField("fun","main")
+			.WithField("key","gateway")
+			.Log(LOG_INFO,"trade server init");
+			
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING,nullptr
-				,"msg=trade_server load config failed!;key=gateway");
+			Log().WithField("fun","main")
+				.WithField("key","gateway")
+				.Log(LOG_WARNING,"trade_server load config failed!");			
 			return -1;
 		}
 
@@ -38,8 +40,9 @@ int main(int argc, char* argv[])
 		{
 			md_child.terminate();
 			md_child.wait();
-			Log(LOG_INFO, nullptr
-				,"msg=trade_server init fail!;key=gateway");
+			Log().WithField("fun","main")
+				.WithField("key","gateway")
+				.Log(LOG_INFO,"trade_server init fail!");			
 			return -1;
 		}
 		
@@ -54,10 +57,12 @@ int main(int argc, char* argv[])
 		#endif 
 		signals_.async_wait(
 			[&s,&ios,&md_child,&flag](boost::system::error_code, int sig)
-		{						
-			Log(LOG_INFO, nullptr
-				, "msg=trade_server got sig %d;key=gateway", sig);
-						
+		{				
+			Log().WithField("fun","main")
+				.WithField("key","gateway")
+				.WithField("sig",sig)
+				.Log(LOG_INFO,"trade_server got sig");
+
 			s.stop();	
 			flag.store(false);
 			ios.stop();
@@ -65,8 +70,9 @@ int main(int argc, char* argv[])
 			md_child.terminate();
 			md_child.wait();
 			
-			Log(LOG_INFO, nullptr
-				,"msg=trade_server exit;key=gateway");
+			Log().WithField("fun","main")
+				.WithField("key","gateway")				
+				.Log(LOG_INFO,"trade_server exit");			
 		});
 		
 		while (flag.load())
@@ -78,9 +84,10 @@ int main(int argc, char* argv[])
 			}
 			catch(std::exception& ex)
 			{
-				Log(LOG_ERROR,nullptr
-					,"msg=ios run exception;errmsg=%s;key=gateway"
-					,ex.what());
+				Log().WithField("fun","main")
+					.WithField("key","gateway")
+					.WithField("errmsg",ex.what())
+					.Log(LOG_WARNING,"ios run exception");				
 			}
 		}
 
@@ -88,6 +95,6 @@ int main(int argc, char* argv[])
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << "exception: " << e.what() << std::endl;
+		std::cerr << "exception:" << e.what() << std::endl;
 	}
 }

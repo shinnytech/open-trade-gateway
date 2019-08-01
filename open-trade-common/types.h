@@ -87,7 +87,6 @@ struct Instrument
 	volatile double bid_price1;
 };
 
-
 const int kNotifyTypeMessage = 1;
 const int kNotifyTypeText = 2;
 

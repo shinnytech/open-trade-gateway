@@ -54,9 +54,9 @@ bool trade_server::init()
 	acceptor_.open(_endpoint.protocol(), ec);
 	if (ec)
 	{
-		Log(LOG_ERROR,nullptr
-			,"msg=trade server acceptor open fail;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log().WithField("fun","init")
+			.WithField("key","gateway")
+			.Log(LOG_ERROR,"trade server acceptor open fail");		
 		return false;
 	}
 
@@ -64,9 +64,10 @@ bool trade_server::init()
 	acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
 	if (ec)
 	{
-		Log(LOG_ERROR,nullptr
-			,"msg=trade server acceptor set option fail;errmsg=%s;key=gateway"
-			,ec.message().c_str());
+		Log().WithField("fun","init")
+			.WithField("key","gateway")
+			.WithField("errmsg",ec.message())
+			.Log(LOG_ERROR,"trade server acceptor set option fail");		
 		return false;
 	}
 
@@ -74,9 +75,10 @@ bool trade_server::init()
 	acceptor_.bind(_endpoint, ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			,"msg=trade server acceptor bind fail;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log().WithField("fun","init")
+			.WithField("key","gateway")
+			.WithField("errmsg",ec.message())
+			.Log(LOG_ERROR,"trade server acceptor bind fail");		
 		return false;
 	}
 
@@ -85,9 +87,10 @@ bool trade_server::init()
 		, ec);
 	if (ec)
 	{
-		Log(LOG_ERROR, nullptr
-			,"msg=trade server acceptor listen fail;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log().WithField("fun","init")
+			.WithField("key","gateway")
+			.WithField("errmsg",ec.message())
+			.Log(LOG_ERROR,"trade server acceptor listen fail");		
 		return false;
 	}
 
@@ -123,9 +126,10 @@ void trade_server::OnAccept(boost::system::error_code ec
 
 	if (ec)
 	{
-		Log(LOG_WARNING, nullptr
-			,"msg=trade_server accept error;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log().WithField("fun","OnAccept")
+			.WithField("key","gateway")
+			.WithField("errmsg",ec.message())
+			.Log(LOG_WARNING,"trade_server accept error");		
 		do_accept();
 		return;
 	}	
@@ -143,9 +147,10 @@ void trade_server::stop()
 	_timer.cancel(ec);
 	if (ec)
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=stop;msg=open trade gateway cancel timer fail!;errmsg=%s;key=gateway"
-			, ec.message().c_str());
+		Log().WithField("fun","stop")
+			.WithField("key","gateway")
+			.WithField("errmsg",ec.message())
+			.Log(LOG_WARNING,"open trade gateway cancel timer fail!");	
 	}
 
 	acceptor_.close();
@@ -165,16 +170,18 @@ void trade_server::stop()
 
 void trade_server::OnCheckServerStatus()
 {
-	Log(LOG_INFO,nullptr
-		, "fun=OnCheckServerStatus;msg=on check server status;key=gateway");
+	Log().WithField("fun","OnCheckServerStatus")
+		.WithField("key","gateway")
+		.Log(LOG_INFO,"on check server status");
 
 	condition_order_config tmp_co_config;
 	if (LoadConditionOrderConfig(tmp_co_config))
 	{
 		if (tmp_co_config.run_server != _co_config.run_server)
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=OnCheckServerStatus;msg=condition server status changed;key=gateway");
+			Log().WithField("fun","OnCheckServerStatus")
+				.WithField("key","gateway")
+				.Log(LOG_INFO,"condition server status changed");
 
 			_co_config.run_server = tmp_co_config.run_server;
 			NotifyConditionOrderServerStatus();
@@ -192,9 +199,9 @@ void trade_server::OnCheckServerStatus()
 		{
 			if (!_co_config.has_auto_start_ctp)
 			{
-				Log(LOG_INFO, nullptr
-					, "fun=OnCheckServerStatus;msg=auto start ctp;key=gateway");
-
+				Log().WithField("fun","OnCheckServerStatus")
+					.WithField("key","gateway")
+					.Log(LOG_INFO,"auto start ctp");				
 				_co_config.has_auto_start_ctp = true;
 				TryStartTradeInstance();
 			}
@@ -208,8 +215,9 @@ void trade_server::OnCheckServerStatus()
 		{
 			if (!_co_config.has_auto_close_ctp)
 			{
-				Log(LOG_INFO, nullptr
-					, "fun=OnCheckServerStatus;msg=auto stop ctp;key=gateway");
+				Log().WithField("fun","OnCheckServerStatus")
+					.WithField("key","gateway")
+					.Log(LOG_INFO,"auto stop ctp");				
 				_co_config.has_auto_close_ctp = true;
 				TryStopTradeInstance();
 			}
@@ -302,8 +310,9 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 
 void trade_server::TryStartTradeInstance()
 {
-	Log(LOG_INFO, nullptr
-		, "fun=TryStartTradeInstance;msg=try to start trade instance;key=gateway");
+	Log().WithField("fun","TryStartTradeInstance")
+		.WithField("key","gateway")
+		.Log(LOG_INFO,"try to start trade instance");
 
 	req_start_trade_key_map rsckMap;
 	if (!GetReqStartTradeKeyMap(rsckMap))
@@ -321,9 +330,10 @@ void trade_server::TryStartTradeInstance()
 		const std::string& strKey = a.first;
 		req_start_trade_instance& req_start_trade = a.second;
 		
-		Log(LOG_INFO, nullptr
-			, "fun=TryStartTradeInstance;msg=start trade instance;key=gateway;instancekey=%s"
-			, strKey.c_str());
+		Log().WithField("fun", "TryStartTradeInstance")
+			.WithField("key", "gateway")
+			.WithField("user_key",strKey)
+			.Log(LOG_INFO, "start trade instance");		
 
 		StartTradeInstance(strKey, req_start_trade);
 	}
@@ -335,9 +345,10 @@ void trade_server::StartTradeInstance(const std::string& strKey
 	auto it = g_config.brokers.find(req_start_trade.bid);
 	if (it == g_config.brokers.end())
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=StartTradeInstance;msg=invalid bid;key=gateway;bid=%s"			
-			, req_start_trade.bid.c_str());
+		Log().WithField("fun","StartTradeInstance")
+			.WithField("key","gateway")
+			.WithField("bid",req_start_trade.bid)
+			.Log(LOG_WARNING,"invalid bid");		
 		return;
 	}
 	
@@ -366,10 +377,11 @@ void trade_server::StartTradeInstance(const std::string& strKey
 	
 	if (!flag)
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=StartTradeInstance;msg=invalid bid type;key=gateway;bid=%s;bidtype=%s"
-			, req_start_trade.bid.c_str()
-			, broker_type.c_str());
+		Log().WithField("fun","StartTradeInstance")
+			.WithField("key","gateway")
+			.WithField("bid",req_start_trade.bid)
+			.WithField("bidtype",broker_type)
+			.Log(LOG_WARNING,"invalid bid type");	
 		return;
 	}
 	   
@@ -377,9 +389,10 @@ void trade_server::StartTradeInstance(const std::string& strKey
 	//如果用户进程没有启动,启动用户进程处理
 	if (userIt == g_userProcessInfoMap.end())
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=StartTradeInstance;msg=start not started trade instance;key=gateway;instancekey=%s"
-			, strKey.c_str());
+		Log().WithField("fun","StartTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)		
+			.Log(LOG_INFO,"start not started trade instance");
 
 		ReqLogin reqLogin;
 		reqLogin.aid = "req_login";
@@ -393,17 +406,19 @@ void trade_server::StartTradeInstance(const std::string& strKey
 
 		if (nullptr == userProcessInfoPtr)
 		{
-			Log(LOG_ERROR, nullptr
-				, "fun=StartTradeInstance;msg=new user process fail;key=%s"				
-				, strKey.c_str());
+			Log().WithField("fun","StartTradeInstance")
+				.WithField("key","gateway")
+				.WithField("user_key", strKey)
+				.Log(LOG_ERROR,"new user process fail");		
 			return;
 		}
 
 		if (!userProcessInfoPtr->StartProcess())
 		{
-			Log(LOG_ERROR, nullptr
-				, "fun=StartTradeInstance;msg=can not start up user process;key=%s"				
-				, strKey.c_str());
+			Log().WithField("fun","StartTradeInstance")
+				.WithField("key","gateway")
+				.WithField("user_key",strKey)
+				.Log(LOG_ERROR,"can not start up user process");			
 			return;
 		}
 
@@ -426,9 +441,10 @@ void trade_server::StartTradeInstance(const std::string& strKey
 		bool flag = userProcessInfoPtr->ProcessIsRunning();
 		if (flag)
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=StartTradeInstance;msg=start still running trade instance;key=gateway;instancekey=%s"
-				, strKey.c_str());
+			Log().WithField("fun","StartTradeInstance")
+				.WithField("key","gateway")
+				.WithField("user_key", strKey)
+				.Log(LOG_INFO,"start still running trade instance");		
 
 			SerializerConditionOrderData nss;
 			nss.FromVar(req_start_trade);
@@ -439,17 +455,19 @@ void trade_server::StartTradeInstance(const std::string& strKey
 		}
 		else
 		{
-			Log(LOG_INFO, nullptr
-				, "fun=StartTradeInstance;msg=start has stopped trade instance;key=gateway;instancekey=%s"
-				, strKey.c_str());
+			Log().WithField("fun","StartTradeInstance")
+				.WithField("key","gateway")
+				.WithField("user_key",strKey)
+				.Log(LOG_INFO,"start has stopped trade instance");
 
 			//启动进程
 			flag = userProcessInfoPtr->StartProcess();
 			if (!flag)
 			{
-				Log(LOG_ERROR, nullptr
-					, "fun=StartTradeInstance;msg=can not start up user process;key=%s"					
-					, strKey.c_str());
+				Log().WithField("fun","StartTradeInstance")
+					.WithField("key","gateway")
+					.WithField("user_key",strKey)
+					.Log(LOG_ERROR,"can not start up user process");				
 				return;
 			}
 
@@ -473,8 +491,9 @@ void trade_server::StartTradeInstance(const std::string& strKey
 
 void trade_server::TryStopTradeInstance()
 {
-	Log(LOG_INFO, nullptr
-		, "fun=TryStopTradeInstance;msg=try to stop trade instance;key=gateway");
+	Log().WithField("fun","TryStopTradeInstance")
+		.WithField("key","gateway")		
+		.Log(LOG_INFO,"try to stop trade instance");
 
 	req_start_trade_key_map rsckMap;
 	if (!GetReqStartTradeKeyMap(rsckMap))
@@ -493,10 +512,11 @@ void trade_server::TryStopTradeInstance()
 		req_start_trade_instance& req_start_trade = a.second;
 		req_start_trade.aid = "req_stop_ctp";
 
-		Log(LOG_INFO, nullptr
-			, "fun=TryStopTradeInstance;msg=stop trade instance;key=gateway;instancekey=%s"
-			, strKey.c_str());
-
+		Log().WithField("fun","TryStopTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)
+			.Log(LOG_INFO,"stop trade instance");
+		
 		StopTradeInstance(strKey, req_start_trade);
 	}
 }
@@ -507,9 +527,11 @@ void trade_server::StopTradeInstance(const std::string& strKey
 	auto it = g_config.brokers.find(req_start_trade.bid);
 	if (it == g_config.brokers.end())
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=StopTradeInstance;msg=invalid bid;key=gateway;bid=%s"
-			, req_start_trade.bid.c_str());
+		Log().WithField("fun","StopTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)
+			.WithField("bid",req_start_trade.bid)
+			.Log(LOG_WARNING,"invalid bid");		
 		return;
 	}
 
@@ -538,10 +560,12 @@ void trade_server::StopTradeInstance(const std::string& strKey
 
 	if (!flag)
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=StopTradeInstance;msg=invalid bid type;key=gateway;bid=%s;bidtype=%s"
-			, req_start_trade.bid.c_str()
-			, broker_type.c_str());
+		Log().WithField("fun","StopTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)
+			.WithField("bid",req_start_trade.bid)
+			.WithField("bidtype",broker_type)
+			.Log(LOG_WARNING,"invalid bid type");		
 		return;
 	}
 
@@ -550,9 +574,11 @@ void trade_server::StopTradeInstance(const std::string& strKey
 	//如果用户进程没有启动,直接退出
 	if (userIt == g_userProcessInfoMap.end())
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=StopTradeInstance;msg=process is not started;key=gateway;bid=%s"
-			, req_start_trade.bid.c_str());
+		Log().WithField("fun","StopTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)
+			.WithField("bid",req_start_trade.bid)			
+			.Log(LOG_WARNING,"process is not started");	
 		return;
 	}
 
@@ -561,16 +587,20 @@ void trade_server::StopTradeInstance(const std::string& strKey
 	flag = userProcessInfoPtr->ProcessIsRunning();
 	if (!flag)
 	{
-		Log(LOG_WARNING, nullptr
-			, "fun=StopTradeInstance;msg=process is not running;key=gateway;bid=%s"
-			, req_start_trade.bid.c_str());
+		Log().WithField("fun","StopTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)
+			.WithField("bid",req_start_trade.bid)
+			.Log(LOG_WARNING,"process is not running");		
 		return;
 	}
 	else
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=StopTradeInstance;msg=send stop trade instance msg;key=gateway;instancekey=%s"
-			, strKey.c_str());
+		Log().WithField("fun","StopTradeInstance")
+			.WithField("key","gateway")
+			.WithField("user_key",strKey)
+			.WithField("bid",req_start_trade.bid)
+			.Log(LOG_INFO,"send stop trade instance msg");		
 
 		SerializerConditionOrderData nss;
 		nss.FromVar(req_start_trade);
@@ -593,14 +623,16 @@ void trade_server::TryRestartProcesses()
 			continue;
 		}
 
-		Log(LOG_INFO, nullptr
-			, "fun=TryRestartProcesses;msg=try to restart dead process;key=gateway");
-
+		Log().WithField("fun","TryRestartProcesses")
+			.WithField("key","gateway")			
+			.Log(LOG_INFO,"try to restart dead process");
+		
 		if (!pro_ptr->ReStartProcess())
 		{
-			Log(LOG_WARNING, nullptr
-				, "fun=TryRestartProcesses;msg=can not restart up %s user process;key=gateway"
-				, it.first.c_str());
+			Log().WithField("fun","TryRestartProcesses")
+				.WithField("key", "gateway")
+				.WithField("user_key",it.first)
+				.Log(LOG_WARNING, "can not restart up user process");			
 		}
 
 	}
@@ -633,8 +665,11 @@ bool trade_server::LoadConditionOrderConfig(condition_order_config& tmp_co_confi
 	SerializerConditionOrderData ss;
 	if (!ss.FromFile("/etc/open-trade-gateway/config-condition-order.json"))
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=LoadConditionOrderConfig;msg=trade server load /etc/open-trade-gateway/config-condition-order.json file fail;key=gateway");
+		Log().WithField("fun","LoadConditionOrderConfig")
+			.WithField("key","gateway")	
+			.WithField("fileName","/etc/open-trade-gateway/config-condition-order.json")
+			.Log(LOG_INFO,"trade server load condition order config file fail");
+				
 		return false;
 	}
 	ss.ToVar(tmp_co_config);
@@ -643,9 +678,10 @@ bool trade_server::LoadConditionOrderConfig(condition_order_config& tmp_co_confi
 
 void trade_server::NotifyConditionOrderServerStatus()
 {
-	Log(LOG_INFO, nullptr
-		, "fun=NotifyConditionOrderServerStatus;msg=nofity sub process to change cos status;key=gateway");
-
+	Log().WithField("fun","NotifyConditionOrderServerStatus")
+		.WithField("key","gateway")
+		.Log(LOG_INFO,"nofity sub process to change cos status");
+	
 	SerializerConditionOrderData ss;
 	req_ccos_status req;
 	req.run_server = _co_config.run_server;
@@ -655,10 +691,11 @@ void trade_server::NotifyConditionOrderServerStatus()
 	//给子进程发消息
 	for (auto it : g_userProcessInfoMap)
 	{
-		Log(LOG_INFO, nullptr
-			, "fun=NotifyConditionOrderServerStatus;msg=nofity sub process to change cos status;key=gateway;subprocesskey=%s"
-		, it.first.c_str());
-
+		Log().WithField("fun","NotifyConditionOrderServerStatus")
+			.WithField("key","gateway")
+			.WithField("user_key",it.first)
+			.Log(LOG_INFO,"nofity sub process to change cos status");
+	
 		UserProcessInfo_ptr& pro_ptr = it.second;
 		if (nullptr != pro_ptr)
 		{

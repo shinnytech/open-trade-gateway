@@ -45,19 +45,21 @@ public:
 
 bool LoadConfig()
 {
-    g_config.trading_day = GuessTradingDay();
+    g_config.trading_day = GuessTradingDay();	
 
-	Log(LOG_INFO,nullptr
-		,"msg=LoadConfig;trading_day=%s"
-		,g_config.trading_day.c_str());
+	Log().WithField("fun","LoadConfig")
+		.WithField("TradingDay",g_config.trading_day).
+		Log(LOG_INFO, "try to load config");
 
     SerializerConfig ss;
     if (!ss.FromFile("/etc/open-trade-gateway/config.json"))
     {
-		Log(LOG_FATAL,nullptr
-			,"msg=load /etc/open-trade-gateway/config.json file fail");
-        return false;
+		Log().WithField("fun", "LoadConfig")
+			.WithField("fileName","/etc/open-trade-gateway/config.json")
+			.Log(LOG_FATAL,"load config json file fail");
+		return false;
     }
+
     ss.ToVar(g_config);
 		
 	std::map<std::string, BrokerConfig> brokerConfigMap;
@@ -70,9 +72,9 @@ bool LoadConfig()
 		SerializerConfig ss_broker;
 		if (!ss_broker.FromFile(strFileName.c_str()))
 		{
-			Log(LOG_WARNING,nullptr
-				,"msg=load %s file fail"
-				,strFileName.c_str());
+			Log().WithField("fun","LoadConfig")
+				.WithField("fileName",strFileName).
+				Log(LOG_WARNING,"load broker list json file fail");
 		}
 		else
 		{
@@ -116,10 +118,10 @@ bool LoadConfig()
 	{
 		SerializerConfig ss_broker;
 		if (!ss_broker.FromFile(fileName.c_str()))
-		{
-			Log(LOG_WARNING,nullptr
-				,"msg=load %s file fail"
-				,fileName.c_str());
+		{			
+			Log().WithField("fun", "LoadConfig")
+				.WithField("fileName", fileName).
+				Log(LOG_WARNING, "load broker json file fail");
 			continue;
 		}
 
@@ -132,8 +134,8 @@ bool LoadConfig()
    
 	if (brokerNameList.empty())
 	{
-		Log(LOG_FATAL,nullptr
-			,"msg=load broker list fail!");
+		Log().WithField("fun","LoadConfig")
+			.Log(LOG_FATAL,"load broker list fail!");
 		return false;
 	}
 
@@ -160,8 +162,12 @@ bool LoadConfig()
 }
 
 Config::Config()
+	:host("")
+	,port(7788)
+	,user_file_path("")
+	,auto_confirm_settlement(false)
+	,brokers()
+	,broker_list_str("")
+	,trading_day("")
 {
-    //配置参数默认值
-    port = 7788;
-    auto_confirm_settlement = false;
 }

@@ -15,6 +15,7 @@ inline char* strcpy_x(char(&dest)[N], const char* src)
 {
     return strncpy(dest, src, N - 1);
 }
+
 template<size_t N>
 inline char* strcpy_x(char(&dest)[N], const std::string& src)
 {
@@ -24,7 +25,6 @@ inline char* strcpy_x(char(&dest)[N], const std::string& src)
 long long GetLocalEpochNano();
 
 long long GetLocalEpochMilli();
-
 
 std::string GuessTradingDay();
 

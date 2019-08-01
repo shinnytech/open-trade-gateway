@@ -27,17 +27,17 @@ int main(int argc, char* argv[])
 
 		std::string key = argv[1];
 		
-		Log(LOG_INFO,nullptr
-			,"msg=trade sim init;key=%s"
-			,key.c_str());
+		Log().WithField("fun","main")
+			.WithField("key",key)
+			.Log(LOG_INFO,"trade sim init!");	
 
 		//加载配置文件
 		if (!LoadConfig())
 		{
-			Log(LOG_WARNING, nullptr
-				,"msg=trade sim load config failed!;key=%s"
-				, key.c_str());
-			
+			Log().WithField("fun","main")
+				.WithField("key",key)
+				.Log(LOG_WARNING,"trade sim load config failed!");
+
 			return -1;
 		}
 
@@ -63,14 +63,15 @@ int main(int argc, char* argv[])
 			flag.store(false);
 			ioc.stop();
 			
-			Log(LOG_INFO,nullptr
-				,"msg=trade sim got sig %d;key=%s"
-				, sig
-				, key.c_str());
+			Log().WithField("fun","main")
+				.WithField("key",key)
+				.WithField("sig",sig)
+				.Log(LOG_INFO,"trade sim got sig!");
 
-			Log(LOG_INFO, nullptr
-				,"msg=trade sim exit;key=%s"
-				,key.c_str());
+			Log().WithField("fun","main")
+				.WithField("key",key)
+				.WithField("sig",sig)
+				.Log(LOG_INFO,"trade sim exit!");
 		});
 		
 		while (flag.load())
@@ -82,10 +83,10 @@ int main(int argc, char* argv[])
 			}
 			catch (std::exception& ex)
 			{
-				Log(LOG_ERROR, nullptr
-					,"msg=trade sim ioc run exception;errmsg=%s;key=%s"
-					, ex.what()
-					, key.c_str());
+				Log().WithField("fun","main")
+					.WithField("key",key)
+					.WithField("errmsg",ex.what())
+					.Log(LOG_ERROR,"trade sim ioc run exception!");				
 			}
 		}
 	}
