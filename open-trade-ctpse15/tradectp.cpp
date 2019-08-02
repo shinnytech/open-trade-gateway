@@ -2989,11 +2989,16 @@ void traderctp::ReinitCtp()
 		StopTdApi();
 	}
 	boost::this_thread::sleep_for(boost::chrono::seconds(60));
-	InitTdApi();
-	if (nullptr != m_pTdApi)
+	if (m_b_login.load())
 	{
-		m_pTdApi->Init();
-	}
+		ReqLogin reqLogin;
+		reqLogin.aid = "req_login";
+		reqLogin.bid = _req_login.bid;
+		reqLogin.user_name = _req_login.user_name;
+		reqLogin.password = _req_login.password;
+		ClearOldData();
+		ProcessReqLogIn(0,reqLogin);
+	}	
 	Log().WithField("fun","ReinitCtp")
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
