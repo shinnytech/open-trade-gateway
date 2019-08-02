@@ -29,8 +29,7 @@ class LogContextImp:public LogContext
 public:
 	LogContextImp()
 		:m_local_host_name("")
-		,m_log_file_name("")
-		, m_log_file_mutex()
+		,m_log_file_name("")		
 	{
 		char hostname[128];
 		if (gethostname(hostname,sizeof(hostname)))
@@ -267,9 +266,7 @@ public:
 		std::string str;
 		if (ToString(rootDoc, str))
 		{
-			str += "\n";
-
-			std::lock_guard<std::mutex> lock(m_log_file_mutex);
+			str += "\n";			
 			int log_file_fd = open(m_log_file_name.c_str()
 				, O_WRONLY | O_APPEND | O_CREAT
 				, S_IRUSR | S_IWUSR);
@@ -301,9 +298,7 @@ public:
 protected:
 	std::string m_local_host_name;
 
-	std::string m_log_file_name;
-
-	std::mutex m_log_file_mutex;
+	std::string m_log_file_name;	
 
 	std::map<std::string, bool> boolMap;
 
@@ -396,12 +391,20 @@ public:
 
 LogContext& Log()
 {
-	static std::map<std::thread::id, GateWayLogContext> loggerMap;
-	return loggerMap[std::this_thread::get_id()];
+	static std::mutex log_file_mutex;
+	static std::map<std::string,GateWayLogContext> loggerMap;
+	std::lock_guard<std::mutex> lock(log_file_mutex);
+	std::stringstream ss;
+	ss << std::this_thread::get_id();	
+	return loggerMap[ss.str()];
 }
 
 LogContext& LogMs()
 {
-	static std::map<std::thread::id, GateWayMsLogContext> loggerMap;
-	return loggerMap[std::this_thread::get_id()];
+	static std::mutex log_file_mutex;
+	static std::map<std::string,GateWayMsLogContext> loggerMap;
+	std::lock_guard<std::mutex> lock(log_file_mutex);
+	std::stringstream ss;
+	ss << std::this_thread::get_id();
+	return loggerMap[ss.str()];
 }
