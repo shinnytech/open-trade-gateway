@@ -69,8 +69,7 @@ int main(int argc, char* argv[])
 				.Log(LOG_INFO,"trade sim got sig!");
 
 			Log().WithField("fun","main")
-				.WithField("key",key)
-				.WithField("sig",sig)
+				.WithField("key",key)				
 				.Log(LOG_INFO,"trade sim exit!");
 		});
 		

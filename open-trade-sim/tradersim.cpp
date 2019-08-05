@@ -27,12 +27,12 @@
 tradersim::tradersim(boost::asio::io_context& ios
 	, const std::string& key)
 :m_b_login(false)
-, _key(key)
+,_key(key)
 ,_ios(ios)
 ,_out_mq_ptr()
-,_out_mq_name(_key + "_msg_out")
+,_out_mq_name(_key+"_msg_out")
 ,_in_mq_ptr()
-,_in_mq_name(_key + "_msg_in")
+,_in_mq_name(_key+"_msg_in")
 ,_thread_ptr()
 ,_req_login()
 ,m_user_file_path("")
@@ -48,11 +48,11 @@ tradersim::tradersim(boost::asio::io_context& ios
 ,m_next_send_dt(0)
 ,m_transfer_seq(0)
 ,m_run_receive_msg(false)
-, m_condition_order_data()
-, m_condition_order_his_data()
-, m_condition_order_manager(_key
-	, m_condition_order_data
-	, m_condition_order_his_data, *this)
+,m_condition_order_data()
+,m_condition_order_his_data()
+,m_condition_order_manager(_key
+,m_condition_order_data
+,m_condition_order_his_data,*this)
 {
 }
 
@@ -208,6 +208,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("loginresult",true)
+				.WithField("loginstatus",1)
+				.WithField("connId",connId)
 				.Log(LOG_INFO,"m_b_login is true");
 
 			if (0 != connId)
@@ -242,6 +244,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("loginresult",false)
+				.WithField("loginstatus",1)
+				.WithField("connId",connId)
 				.Log(LOG_INFO,"m_b_login is true");			
 
 			if (0 != connId)
@@ -264,6 +268,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("key",_key)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
+				.WithField("connId",connId)
 				.WithField("m_user_file_path",m_user_file_path)
 				.Log(LOG_INFO,"g_config user_file_path is not empty");			
 		}
@@ -273,6 +278,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("key",_key)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
+				.WithField("connId",connId)
 				.WithField("m_user_file_path",m_user_file_path)
 				.Log(LOG_INFO,"g_config user_file_path is empty");			
 		}
@@ -289,6 +295,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("loginresult",true)
+				.WithField("loginstatus", 0)
+				.WithField("connId",connId)
 				.Log(LOG_INFO,"trade sim login success");			
 
 			OnInit();
@@ -326,7 +334,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 			Log().WithField("fun","ProcessReqLogIn")
 				.WithField("key",_key)
 				.WithField("bid",req.bid)
-				.WithField("user_name",req.user_name)				
+				.WithField("user_name",req.user_name)	
+				.WithField("connId",connId)
 				.Log(LOG_INFO,"load condition order success");
 		}
 		else
@@ -336,6 +345,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("loginresult",false)
+				.WithField("loginstatus",0)
+				.WithField("connId",connId)
 				.Log(LOG_INFO,"trade sim login fail");		
 
 			if (connId != 0)
@@ -357,7 +368,7 @@ void tradersim::CloseConnection(int nId)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithField("connid",nId)
+		.WithField("connId",nId)
 		.Log(LOG_INFO,"tradersim CloseConnection");
 
 	for (std::vector<int>::iterator it = m_logined_connIds.begin();
@@ -748,7 +759,9 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		{
 			Log().WithField("fun","SendMsgAll")
 				.WithField("key",_key)
-				.WithField("length",(int)msg.length())
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("msglen",(int)msg.length())
 				.WithField("errmsg",ex.what())				
 				.Log(LOG_ERROR,"SendMsg exception");
 		}
@@ -763,7 +776,9 @@ void tradersim::SendMsgAll(std::shared_ptr<std::string> msg_ptr)
 		{
 			Log().WithField("fun","SendMsgAll")
 				.WithField("key",_key)
-				.WithField("length",(int)totalLength)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("msglen",(int)totalLength)
 				.WithField("errmsg",ex.what())
 				.Log(LOG_ERROR,"SendMsg exception");
 		}
@@ -814,8 +829,11 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			Log().WithField("fun","SendMsg")
 				.WithField("key",_key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
 				.WithField("msglen",(int)msg.length())
 				.WithField("errmsg",ex.what())
+				.WithField("connId",connId)
 				.Log(LOG_ERROR,"SendMsg exception");			
 		}
 	}
@@ -829,8 +847,11 @@ void tradersim::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			Log().WithField("fun","SendMsg")
 				.WithField("key",_key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
 				.WithField("msglen",(int)totalLength)
 				.WithField("errmsg",ex.what())
+				.WithField("connId",connId)
 				.Log(LOG_ERROR,"SendMsg exception");			
 		}
 	}
@@ -841,17 +862,24 @@ void tradersim::SendUserDataImd(int connectId)
 	//构建数据包		
 	SerializerTradeBase nss;
 	nss.dump_all = true;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+
+	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
+
 	rapidjson::Value node_data;
 	nss.FromVar(m_data, &node_data);
+
 	rapidjson::Value node_user_id;
-	node_user_id.SetString(m_user_id, nss.m_doc->GetAllocator());
+	node_user_id.SetString(m_user_id,nss.m_doc->GetAllocator());
+
 	rapidjson::Value node_user;
 	node_user.SetObject();
-	node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
+	node_user.AddMember(node_user_id,node_data,nss.m_doc->GetAllocator());
+
+	rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc,node_user);
+
 	std::string json_str;
 	nss.ToString(&json_str);
+
 	//发送	
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	SendMsg(connectId, msg_ptr);
@@ -875,9 +903,10 @@ void tradersim::SendUserDataImd(int connectId)
 	}
 
 	rapidjson::Value co_node_data;
-	coss.FromVar(condition_orders, &co_node_data);
+	coss.FromVar(condition_orders,&co_node_data);
 	rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
 	coss.ToString(&json_str);
+
 	std::shared_ptr<std::string> msg_ptr2(new std::string(json_str));
 	_ios.post(boost::bind(&tradersim::SendMsg, this, connectId, msg_ptr2));
 }
@@ -893,18 +922,24 @@ void tradersim::SendUserData()
 	{
 		//构建数据包
 		m_data.m_trade_more_data = false;
+
 		SerializerTradeBase nss;
 		rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+
 		rapidjson::Value node_data;
 		nss.FromVar(m_data, &node_data);
+
 		rapidjson::Value node_user_id;
 		node_user_id.SetString(m_user_id, nss.m_doc->GetAllocator());
+
 		rapidjson::Value node_user;
 		node_user.SetObject();
 		node_user.AddMember(node_user_id, node_data, nss.m_doc->GetAllocator());
+
 		rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
 		std::string json_str;
 		nss.ToString(&json_str);
+
 		//发送
 		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 		SendMsgAll(msg_ptr);		
@@ -954,41 +989,41 @@ void tradersim::SendUserData()
 
 void SerializerSim::DefineStruct(ActionOrder& d)
 {
-	AddItem(d.aid, "aid");
-	AddItem(d.order_id, "order_id");
-	AddItem(d.user_id, "user_id");
-	AddItem(d.exchange_id, "exchange_id");
-	AddItem(d.ins_id, "instrument_id");
-	AddItemEnum(d.direction, "direction", {
-		{ kDirectionBuy, "BUY" },
-		{ kDirectionSell, "SELL" },
+	AddItem(d.aid,"aid");
+	AddItem(d.order_id,"order_id");
+	AddItem(d.user_id,"user_id");
+	AddItem(d.exchange_id,"exchange_id");
+	AddItem(d.ins_id,"instrument_id");
+	AddItemEnum(d.direction, "direction",{
+		{ kDirectionBuy,"BUY"},
+		{ kDirectionSell,"SELL"},
 		});
-	AddItemEnum(d.offset, "offset", {
-		{ kOffsetOpen, "OPEN" },
-		{ kOffsetClose, "CLOSE" },
-		{ kOffsetCloseToday, "CLOSETODAY" },
+	AddItemEnum(d.offset, "offset",{
+		{ kOffsetOpen,"OPEN" },
+		{ kOffsetClose,"CLOSE"},
+		{ kOffsetCloseToday,"CLOSETODAY" },
 		});
-	AddItemEnum(d.price_type, "price_type", {
-		{ kPriceTypeLimit, "LIMIT" },
-		{ kPriceTypeAny, "ANY" },
-		{ kPriceTypeBest, "BEST" },
-		{ kPriceTypeFiveLevel, "FIVELEVEL" },
+	AddItemEnum(d.price_type,"price_type",{
+		{ kPriceTypeLimit,"LIMIT"},
+		{ kPriceTypeAny,"ANY"},
+		{ kPriceTypeBest,"BEST"},
+		{ kPriceTypeFiveLevel,"FIVELEVEL"},
 		});
-	AddItemEnum(d.volume_condition, "volume_condition", {
-		{ kOrderVolumeConditionAny, "ANY" },
-		{ kOrderVolumeConditionMin, "MIN" },
-		{ kOrderVolumeConditionAll, "ALL" },
+	AddItemEnum(d.volume_condition,"volume_condition",{
+		{ kOrderVolumeConditionAny,"ANY"},
+		{ kOrderVolumeConditionMin,"MIN"},
+		{ kOrderVolumeConditionAll,"ALL"},
 		});
-	AddItemEnum(d.time_condition, "time_condition", {
-		{ kOrderTimeConditionIOC, "IOC" },
-		{ kOrderTimeConditionGFS, "GFS" },
-		{ kOrderTimeConditionGFD, "GFD" },
-		{ kOrderTimeConditionGTD, "GTD" },
-		{ kOrderTimeConditionGTC, "GTC" },
-		{ kOrderTimeConditionGFA, "GFA" },
+	AddItemEnum(d.time_condition,"time_condition",{
+		{ kOrderTimeConditionIOC,"IOC" },
+		{ kOrderTimeConditionGFS,"GFS" },
+		{ kOrderTimeConditionGFD,"GFD" },
+		{ kOrderTimeConditionGTD,"GTD" },
+		{ kOrderTimeConditionGTC,"GTC" },
+		{ kOrderTimeConditionGFA,"GFA" },
 		});
-	AddItem(d.volume, "volume");
-	AddItem(d.limit_price, "limit_price");
+	AddItem(d.volume,"volume");
+	AddItem(d.limit_price,"limit_price");
 }
 
 void SerializerSim::DefineStruct(ActionTransfer& d)
@@ -1004,6 +1039,8 @@ void tradersim::OnInit()
 	{
 		Log().WithField("fun","OnIni")
 			.WithField("key",_key)			
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
 			.Log(LOG_INFO,"sim init new balance");
 
 		m_account->user_id = m_user_id;
@@ -1031,24 +1068,20 @@ void tradersim::OnInit()
 	m_something_changed = true;
 	Log().WithField("fun","OnIni")
 		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
 		.Log(LOG_INFO,"sim OnInit Finish");	
 }
 
 void tradersim::LoadUserDataFile()
-{
-	Log().WithField("fun","LoadUserDataFile")
-		.WithField("key",_key)
-		.WithField("bid",_req_login.bid)
-		.WithField("user_name",_req_login.user_name)
-		.Log(LOG_INFO,"ready to load user data file");
-
+{	
 	if (m_user_file_path.empty())
 	{
 		Log().WithField("fun","LoadUserDataFile")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_INFO,"m_user_file_path is empty");		
+			.Log(LOG_ERROR,"m_user_file_path is empty");		
 		return;
 	}
 	
@@ -1072,7 +1105,7 @@ void tradersim::LoadUserDataFile()
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("fileName",fn)
-			.Log(LOG_INFO,"load user data file failed!");		
+			.Log(LOG_WARNING,"load user data file failed!");		
 	}
 
 	nss.ToVar(m_data);
@@ -1080,6 +1113,7 @@ void tradersim::LoadUserDataFile()
 	for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end();)
 	{
 		Position& position = it->second;
+				
 		position.ins = GetInstrument(position.symbol());
 		if (position.ins && !position.ins->expired)
 		{
@@ -1092,8 +1126,9 @@ void tradersim::LoadUserDataFile()
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
 				.WithField("fileName",fn)
-				.WithField("symbol",position.symbol())
-				.Log(LOG_INFO,"sysmbol is expired!");			
+				.WithField("exchange_id", position.exchange_id)
+				.WithField("instrument_id", position.instrument_id)				
+				.Log(LOG_WARNING,"sysmbol is expired!");
 			it = m_data.m_positions.erase(it);			
 		}
 		else
@@ -1103,8 +1138,9 @@ void tradersim::LoadUserDataFile()
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
 				.WithField("fileName",fn)
-				.WithField("symbol",position.symbol())
-				.Log(LOG_INFO,"miss sysmbol in position!");					
+				.WithField("exchange_id",position.exchange_id)
+				.WithField("instrument_id",position.instrument_id)
+				.Log(LOG_WARNING,"miss sysmbol in position!");
 			it = m_data.m_positions.erase(it);			
 		}			
 	}
@@ -1309,20 +1345,13 @@ void tradersim::LoadUserDataFile()
 
 void tradersim::SaveUserDataFile()
 {
-	Log().WithField("fun","SaveUserDataFile")
-		.WithField("key",_key)
-		.WithField("bid",_req_login.bid)
-		.WithField("user_name",_req_login.user_name)		
-		.Log(LOG_INFO,"ready to save user data file");		
-
 	if (m_user_file_path.empty())
 	{
 		Log().WithField("fun","SaveUserDataFile")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("m_user_file_path",m_user_file_path)
-			.Log(LOG_INFO,"user file path is empty");		
+			.WithField("user_name",_req_login.user_name)		
+			.Log(LOG_ERROR,"user file path is empty");
 		return;
 	}
 
@@ -1347,7 +1376,7 @@ void tradersim::SaveUserDataFile()
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("fileName",fn)
-			.Log(LOG_INFO,"save user date file fail!");		
+			.Log(LOG_ERROR,"save user date file fail!");		
 	}
 }
 
@@ -1358,10 +1387,10 @@ void tradersim::UpdateOrder(Order* order)
 	Position& position = GetPosition(order->symbol());	
 	if (nullptr == position.ins)
 	{
-		Log().WithField("fun", "UpdateOrder")
-			.WithField("key", _key)
-			.WithField("bid", _req_login.bid)
-			.WithField("user_name", _req_login.user_name)			
+		Log().WithField("fun","UpdateOrder")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)			
 			.Log(LOG_ERROR,"instrument of position is null!");
 		return;
 	}
@@ -1560,7 +1589,8 @@ void tradersim::RecaculatePositionAndFloatProfit()
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("symbol",symbol)
+				.WithField("exchange_id",ps.exchange_id)
+				.WithField("instrument_id",ps.instrument_id)				
 				.Log(LOG_ERROR,"miss symbol when processing position");			
 			continue;
 		}
@@ -1744,6 +1774,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 			//多头持仓手数
 			position->volume_long_today += volume;
 
+			position->volume_long = position->volume_long_his + position->volume_long_today;
+
 			//多头开仓市值
 			position->open_cost_long += price * volume * position->ins->volume_multiple;
 
@@ -1764,6 +1796,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 		{
 			//空头持仓手数
 			position->volume_short_today += volume;
+
+			position->volume_short = position->volume_short_his + position->volume_short_today;
 
 			//空头开仓市值
 			position->open_cost_short += price * volume * position->ins->volume_multiple;
@@ -1805,6 +1839,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 					//更新空头持仓手数(今仓)
 					position->volume_short_today -= volume;
 
+					position->volume_short = position->volume_short_today + position->volume_short_his;
+
 					//更新实际上的空头持仓(今仓)
 					position->pos_short_today -= volume;
 				}
@@ -1821,6 +1857,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 
 					//更新多头持仓手数
 					position->volume_long_today -= volume;
+
+					position->volume_long = position->volume_long_today + position->volume_long_his;
 
 					//更新实际上的多头持仓(今仓)
 					position->pos_long_today -= volume;
@@ -1843,6 +1881,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 					//更新空头持仓手数(昨仓)
 					position->volume_short_his -= volume;
 
+					position->volume_short = position->volume_short_his + position->volume_short_today;
+
 					//更新实际上的空头持仓(昨仓)
 					position->pos_short_his -= volume;
 				}
@@ -1859,6 +1899,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 
 					//更新多头持仓手数(昨仓)
 					position->volume_long_his -= volume;
+
+					position->volume_long = position->volume_long_his + position->volume_long_today;
 
 					//更新实际上的多头持仓(昨仓)
 					position->pos_long_his -= volume;
@@ -1882,6 +1924,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 				//更新空头持仓手数
 				position->volume_short_today -= volume;
 
+				position->volume_short = position->volume_short_today + position->volume_short_his;
+
 				//更新实际上的空头持仓(今仓),优先平今算法
 				position->pos_short_today -= volume;
 				if (position->pos_short_today < 0)
@@ -1903,6 +1947,8 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 				
 				//更新多头持仓手数
 				position->volume_long_today -= volume;
+
+				position->volume_long = position->volume_long_today + position->volume_long_his;
 
 				//更新实际上的多头持仓(今仓),优先平今算法
 				position->pos_long_today -= volume;
@@ -1983,7 +2029,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 		return;
 	}
 
-	if (!ins)
+	if (nullptr==ins)
 	{
 		OutputNotifyAllSycn(1
 			, u8"下单, 已被服务器拒绝, 原因:合约不合法"
@@ -2032,7 +2078,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 		if (position->ins->margin * action_insert_order.volume > m_account->available)
 		{
 			OutputNotifyAllSycn(1
-				, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足"
+				, u8"下单,已被服务器拒绝,原因:开仓保证金不足"
 				, "WARNING");
 			order->status = kOrderStatusFinished;
 			return;
@@ -2055,7 +2101,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 					)
 				{
 					OutputNotifyAllSycn(1
-						, u8"下单, 已被服务器拒绝, 原因:平今手数超过今仓持仓量", "WARNING");
+						, u8"下单,已被服务器拒绝,原因:平今手数超过今仓持仓量", "WARNING");
 					order->status = kOrderStatusFinished;
 					return;
 				}
@@ -2071,7 +2117,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 					)
 				{
 					OutputNotifyAllSycn(1
-						, u8"下单, 已被服务器拒绝, 原因:平昨手数超过昨仓持仓量", "WARNING");
+						, u8"下单,已被服务器拒绝,原因:平昨手数超过昨仓持仓量","WARNING");
 					order->status = kOrderStatusFinished;
 					return;
 				}
@@ -2088,7 +2134,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 				)
 			{
 				OutputNotifyAllSycn(1
-					, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量"
+					, u8"下单,已被服务器拒绝,原因:平仓手数超过持仓量"
 					, "WARNING");
 				order->status = kOrderStatusFinished;
 				return;
@@ -2100,7 +2146,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 	UpdateOrder(order);
 	
-	OutputNotifyAllSycn(1, u8"下单成功");
+	OutputNotifyAllSycn(1,u8"下单成功");
 
 	//尝试匹配成交
 	TryOrderMatch();
@@ -2119,12 +2165,14 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 	if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
 		OutputNotifyAllSycn(1
-			, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误"
-			, "WARNING");
+			,u8"撤单,已被服务器拒绝,原因:撤单指令中的用户名错误"
+			,"WARNING");
 		return;
 	}
 
-	for (auto it_order = m_alive_order_set.begin(); it_order != m_alive_order_set.end(); ++it_order)
+	for (auto it_order = m_alive_order_set.begin()
+		; it_order != m_alive_order_set.end()
+		; ++it_order)
 	{
 		Order* order = *it_order;
 		if (order->order_id == action_cancel_order.order_id
@@ -2133,7 +2181,7 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 			order->status = kOrderStatusFinished;
 			UpdateOrder(order);
 			m_something_changed = true;
-			OutputNotifyAllSycn(1, u8"撤单成功");	
+			OutputNotifyAllSycn(1,u8"撤单成功");	
 			SendUserData();
 			return;
 		}
@@ -2154,6 +2202,7 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	{
 		m_account->withdraw -= action_transfer.amount;
 	}
+	
 	m_account->static_balance += action_transfer.amount;
 	m_account->changed = true;
 
@@ -2161,6 +2210,7 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	TransferLog& d = GetTransferLog(std::to_string(m_transfer_seq));
 	d.currency = action_transfer.currency;
 	d.amount = action_transfer.amount;
+	
 	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
 	DateTime dt;
 	dt.date.year = now.date().year();
@@ -2170,7 +2220,9 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	dt.time.minute = now.time_of_day().minutes();
 	dt.time.second = now.time_of_day().seconds();
 	dt.time.microsecond = 0;
+	
 	d.datetime = DateTimeToEpochNano(&dt);
+
 	d.error_id = 0;
 	d.error_msg = u8"正确";
 
@@ -2220,7 +2272,7 @@ void tradersim::CheckPriceConditionOrder()
 	{
 		return;
 	}
-
+	
 	m_condition_order_manager.OnCheckPrice();
 }
 
@@ -2263,8 +2315,9 @@ void tradersim::OnTouchConditionOrder(const ConditionOrder& order)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("symbol",symbol)
-				.Log(LOG_WARNING,"instrument not exist");		
+				.WithField("exchange_id",co.exchange_id)
+				.WithField("instrument_id",co.instrument_id)
+				.Log(LOG_WARNING,"symbol not exist");		
 			continue;
 		}
 
