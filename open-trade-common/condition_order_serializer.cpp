@@ -136,6 +136,8 @@ void SerializerConditionOrderData::DefineStruct(ConditionOrder& d)
 		{ EConditionOrderStatus::discard, ("discard") },
 		{ EConditionOrderStatus::touched, ("touched") },
 		});
+
+	AddItem(d.touched_time,("touched_time"));
 }
 
 void SerializerConditionOrderData::DefineStruct(ConditionOrderData& d)

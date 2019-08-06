@@ -111,5 +111,7 @@ private:
 	bool IsContingentConditionTouched(
 		std::vector<ContingentCondition>& condition_list
 		,ELogicOperator logicOperator);	
+
+	int GetTouchedTime(ConditionOrder& conditionOrder);
 };
 

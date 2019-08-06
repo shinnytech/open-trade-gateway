@@ -195,6 +195,7 @@ struct ConditionOrder
 		, GTD_date(0)
 		, is_cancel_ori_close_order(false)
 		, status(EConditionOrderStatus::live)
+		, touched_time(0)
 		, changed(false)
 	{
 	}
@@ -228,6 +229,9 @@ struct ConditionOrder
 
 	//条件单状态
 	EConditionOrderStatus status;
+
+	//条件单触发时间(精确到秒)
+	int touched_time;
 
 	//内部使用
 	bool changed;

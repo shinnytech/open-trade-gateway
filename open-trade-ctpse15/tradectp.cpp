@@ -4186,7 +4186,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			OnClientReqQrySettlementInfo(qrySettlementInfo);
 		}
 		else if (aid == "insert_condition_order")
-		{
+		{			
 			m_condition_order_manager.InsertConditionOrder(msg);
 		}
 		else if (aid == "cancel_condition_order")

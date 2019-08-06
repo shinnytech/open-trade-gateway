@@ -1043,6 +1043,7 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
 		if (IsContingentConditionTouched(condition_list, conditionOrder.conditions_logic_oper))
 		{
 			conditionOrder.status = EConditionOrderStatus::touched;
+			conditionOrder.touched_time = GetTouchedTime(conditionOrder);
 			conditionOrder.changed = true;
 			//发单
 			m_callBack.OnTouchConditionOrder(conditionOrder);
@@ -1109,6 +1110,7 @@ void ConditionOrderManager::OnCheckTime()
 		if (IsContingentConditionTouched(condition_list, conditionOrder.conditions_logic_oper))
 		{
 			conditionOrder.status = EConditionOrderStatus::touched;
+			conditionOrder.touched_time = GetTouchedTime(conditionOrder);
 			conditionOrder.changed = true;
 			//发单
 			m_callBack.OnTouchConditionOrder(conditionOrder);
@@ -1122,6 +1124,28 @@ void ConditionOrderManager::OnCheckTime()
 		BuildConditionOrderIndex();
 		m_callBack.OnUserDataChange();
 	}
+}
+
+int ConditionOrderManager::GetTouchedTime(ConditionOrder& conditionOrder)
+{
+	int touched_time = 0;
+	for (auto& c : conditionOrder.condition_list)
+	{
+		int exchangeTime = GetExchangeTime(c.exchange_id);
+		if (exchangeTime > touched_time)
+		{
+			touched_time = exchangeTime;
+		}
+	}
+	for (auto& o : conditionOrder.order_list)
+	{
+		int exchangeTime = GetExchangeTime(o.exchange_id);
+		if (exchangeTime > touched_time)
+		{
+			touched_time = exchangeTime;
+		}
+	}
+	return touched_time;
 }
 
 void ConditionOrderManager::OnCheckPrice()
@@ -1270,6 +1294,7 @@ void ConditionOrderManager::OnCheckPrice()
 			if (IsContingentConditionTouched(condition_list, conditionOrder.conditions_logic_oper))
 			{
 				conditionOrder.status = EConditionOrderStatus::touched;
+				conditionOrder.touched_time = GetTouchedTime(conditionOrder);
 				conditionOrder.changed = true;
 				//发单
 				m_callBack.OnTouchConditionOrder(conditionOrder);
