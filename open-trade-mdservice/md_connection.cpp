@@ -221,8 +221,9 @@ void  md_connection::OnMessage(const std::string &json_str)
 	Log().WithField("fun","OnMessage")
 		.WithField("key","mdservice")
 		.WithField("msglen",(int)json_str.size())
+		.WithPack("mdmsg",json_str)
 		.Log(LOG_INFO,"md_connection receive md message");
-		
+				
 	SendTextMsg(m_req_peek_message);
 
 	MdParser ss;
