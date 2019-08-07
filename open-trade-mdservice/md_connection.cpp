@@ -216,12 +216,26 @@ void md_connection::OnRead(boost::system::error_code ec
 	DoRead();
 }
 
+bool ToString(rapidjson::Document& rootDoc, std::string& jsonStr)
+{
+	rapidjson::StringBuffer buffer(0, 2048);
+	typedef rapidjson::EncodedOutputStream<rapidjson::UTF8<>, rapidjson::StringBuffer> OutputStream;
+	OutputStream os(buffer, false);
+	rapidjson::Writer<OutputStream
+		, rapidjson::UTF8<>
+		, rapidjson::UTF8<>
+		, rapidjson::CrtAllocator
+		, rapidjson::kWriteNanAndInfFlag> writer(os);
+	rootDoc.Accept(writer);
+	jsonStr = std::string(buffer.GetString());
+	return true;
+}
+
 void  md_connection::OnMessage(const std::string &json_str)
 {
 	Log().WithField("fun","OnMessage")
 		.WithField("key","mdservice")
-		.WithField("msglen",(int)json_str.size())
-		.WithPack("mdmsg",json_str)
+		.WithField("msglen",(int)json_str.size())		
 		.Log(LOG_INFO,"md_connection receive md message");
 				
 	SendTextMsg(m_req_peek_message);
@@ -237,11 +251,42 @@ void  md_connection::OnMessage(const std::string &json_str)
 	for (auto& m : dt->GetObject())
 	{
 		std::array<char, 64> key = {};
-		strncpy(key.data(), m.name.GetString(), 64);
+		strncpy(key.data(),m.name.GetString(),64);
 		auto it = m_ins_map->find(key);
 		if (it == m_ins_map->end())
 			continue;
-		ss.ToVar(it->second, &m.value);
+		ss.ToVar(it->second,&m.value);	
+
+		std::string strKey = "/";
+		strKey += m.name.GetString();
+
+		rapidjson::Document instDoc;		
+		rapidjson::Value instObj(rapidjson::kObjectType);
+		instObj.AddMember("expired",it->second.expired,instDoc.GetAllocator());
+		instObj.AddMember("product_class",it->second.product_class, instDoc.GetAllocator());
+		instObj.AddMember("volume_multiple", it->second.volume_multiple, instDoc.GetAllocator());
+		instObj.AddMember("margin", it->second.margin, instDoc.GetAllocator());
+		instObj.AddMember("commission", it->second.commission, instDoc.GetAllocator());
+		instObj.AddMember("price_tick", it->second.price_tick, instDoc.GetAllocator());
+		instObj.AddMember("last_price", it->second.last_price, instDoc.GetAllocator());
+		instObj.AddMember("pre_settlement", it->second.pre_settlement, instDoc.GetAllocator());
+		instObj.AddMember("upper_limit", it->second.upper_limit, instDoc.GetAllocator());
+		instObj.AddMember("lower_limit", it->second.lower_limit, instDoc.GetAllocator());
+		instObj.AddMember("ask_price1", it->second.ask_price1, instDoc.GetAllocator());
+		instObj.AddMember("bid_price1", it->second.bid_price1, instDoc.GetAllocator());		
+		rapidjson::Pointer(strKey.c_str()).Set(instDoc,instObj);
+		std::string strMerge = "";
+		ToString(instDoc,strMerge);
+
+		std::string strDiff = "";
+		rapidjson::Document jsonDoc;
+		rapidjson::Pointer(strKey.c_str()).Set(jsonDoc,m.value);
+		ToString(jsonDoc,strDiff);
+		Log().WithField("fun","OnMessage")
+			.WithField("key","mdservice")
+			.WithPack("diff",strDiff)
+			.WithPack("merge",strMerge)
+			.Log(LOG_INFO, "md_connection receive md message");		
 	}
 }
 
