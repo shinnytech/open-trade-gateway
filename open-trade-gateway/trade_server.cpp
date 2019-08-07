@@ -99,8 +99,15 @@ bool trade_server::init()
 	condition_order_config tmp_co_config;
 	if (LoadConditionOrderConfig(tmp_co_config))
 	{
-		_co_config = tmp_co_config;
+		_co_config = tmp_co_config;		
+
+		//一启动就自动启动所有用户进程
+		/*Log().WithField("fun", "init")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "auto start ctp");
+		TryStartTradeInstance();*/
 	}
+
 	_timer.expires_from_now(boost::posix_time::seconds(30));
 	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus,this));
 
