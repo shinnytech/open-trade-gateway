@@ -130,7 +130,21 @@ void ConditionOrderManager::Load(const std::string& bid
 
 		m_condition_order_data.broker_id = bid;
 		m_condition_order_data.user_id = user_id;		
-		m_condition_order_data.user_password = user_password;	
+		m_condition_order_data.user_password = user_password;
+
+		//对条件单的插入时间进行调整,为的是兼容老的版本
+		int currentTime = GetLocalEpochSecond();
+		for (auto it = m_condition_order_data.condition_orders.begin();
+			it != m_condition_order_data.condition_orders.end(); it++)
+		{
+			ConditionOrder& order = it->second;
+			if (order.insert_date_time> currentTime)
+			{
+				order.insert_date_time = order.insert_date_time/ 1000000000;
+			}
+		}
+		
+
 		//如果不是同一个交易日,需要对条件单数据进行调整
 		if (m_condition_order_data.trading_day != trading_day)
 		{
@@ -280,19 +294,23 @@ void ConditionOrderManager::Load(const std::string& bid
 				it != m_condition_order_his_data.his_condition_orders.end();)
 			{
 				ConditionOrder& order = *it;
-				long long currentTime = GetLocalEpochNano();
+				int currentTime = GetLocalEpochSecond();
+				if (order.insert_date_time > currentTime)
+				{
+					order.insert_date_time = order.insert_date_time / 1000000000;
+				}
 				if (currentTime > order.insert_date_time)
 				{
 					//时间差,单位:秒 
-					long long timeSpan = (currentTime - order.insert_date_time) % 1000000000LL;
+					int timeSpan = currentTime - order.insert_date_time;
 					//历史条件单最多保存30天(自然日)
-					long long thirty_days = 30 * 24 * 60 * 60;
+					int thirty_days = 30 * 24 * 60 * 60;
 					if (timeSpan > thirty_days)
 					{
 						it=m_condition_order_his_data.his_condition_orders.erase(it);
 						continue;
 					}
-				}
+				}				
 				it++;				
 			}
 
@@ -440,8 +458,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		}
 		else if (cond.contingent_type == EContingentType::price)
 		{
-			if (!IsValid(cond.contingent_price)
-				||IsZero(cond.contingent_price))
+			if (!IsValid(cond.contingent_price))
 			{
 				m_callBack.OutputNotifyAll(
 					1
@@ -449,13 +466,52 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					, "WARNING", "MESSAGE");
 				return false;
 			}
+
+			bool flag = false;
+			switch (cond.price_relation)
+			{
+			case EPriceRelationType::G:
+				if (isgreater(ins->last_price, cond.contingent_price))
+				{
+					flag = true;
+				}
+				break;
+			case EPriceRelationType::GE:
+				if (isgreaterequal(ins->last_price,cond.contingent_price))
+				{
+					flag = true;
+				}
+				break;
+			case EPriceRelationType::L:
+				if (isless(ins->last_price,cond.contingent_price))
+				{
+					flag = true;
+				}
+				break;
+			case EPriceRelationType::LE:
+				if (islessequal(ins->last_price,cond.contingent_price))
+				{
+					flag = true;
+				}
+				break;
+			default:
+				break;
+			}
+			
+			if (flag)
+			{
+				m_callBack.OutputNotifyAll(
+					1
+					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
+					, "WARNING", "MESSAGE");
+				return false;
+			}
+
 		}
 		else if (cond.contingent_type == EContingentType::price_range)
 		{
-			if (!IsValid(cond.contingent_price_left)
-				||IsZero(cond.contingent_price_left)
-				||!IsValid(cond.contingent_price_right)
-				||IsZero(cond.contingent_price_right)
+			if (!IsValid(cond.contingent_price_left)				
+				||!IsValid(cond.contingent_price_right)				
 				|| (cond.contingent_price_left> cond.contingent_price_right)
 				)
 			{
@@ -465,12 +521,27 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					, "WARNING", "MESSAGE");
 				return false;
 			}
+
+			bool flag = false;
+			if (islessequal(ins->last_price,cond.contingent_price_right)
+				&& isgreaterequal(ins->last_price,cond.contingent_price_left))
+			{
+				flag = true;
+			}
+
+			if (flag)
+			{
+				m_callBack.OutputNotifyAll(
+					1
+					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
+					, "WARNING", "MESSAGE");
+				return false;
+			}
+
 		}
 		else if (cond.contingent_type == EContingentType::break_even)
 		{
-			if (!IsValid(cond.break_even_price)
-				||IsZero(cond.break_even_price)
-				)
+			if (!IsValid(cond.break_even_price))
 			{
 				m_callBack.OutputNotifyAll(
 					1
@@ -478,8 +549,36 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					, "WARNING", "MESSAGE");
 				return false;
 			}
+			
+			bool flag = false;
+			//多头
+			if (cond.break_even_direction == EOrderDirection::buy)
+			{
+				//向上突破止盈价
+				if (isgreater(ins->last_price,cond.break_even_price))
+				{				
+					flag = true;
+				}
+			}
+			//空头
+			else if (cond.break_even_direction == EOrderDirection::sell)
+			{
+				//先向下突破止盈价
+				if (isless(ins->last_price, cond.break_even_price))
+				{					
+					flag = true;
+				}
+			}
+			
+			if (flag)
+			{
+				m_callBack.OutputNotifyAll(
+					1
+					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
+					, "WARNING", "MESSAGE");
+				return false;
+			}
 		}
-
 	}
 
 	//检验订单
@@ -510,9 +609,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 
 		if (co.price_type == EPriceType::limit)
 		{
-			if (!IsValid(co.limit_price)
-				||IsZero(co.limit_price)
-				)
+			if (!IsValid(co.limit_price))
 			{
 				m_callBack.OutputNotifyAll(
 					1
@@ -535,9 +632,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				std::string symbol2 = cond.exchange_id + "." + cond.instrument_id;
 				if (symbol2 == symbol)
 				{
-					if (IsValid(cond.contingent_price)
-						&&!IsZero(cond.contingent_price)
-						)
+					if (IsValid(cond.contingent_price))
 					{
 						flag = true;
 						break;
@@ -550,8 +645,8 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			{
 				m_callBack.OutputNotifyAll(
 					1
-					, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法"
-					, "WARNING", "MESSAGE");
+					,u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法"
+					,"WARNING","MESSAGE");
 				return false;
 			}
 		}
@@ -599,8 +694,8 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		Log().WithField("fun","InsertConditionOrder")
 			.WithField("key",m_userKey)
 			.WithField("bid",m_condition_order_data.broker_id)
-			.WithField("user_name", m_condition_order_data.user_id)
-			.Log(LOG_INFO, "not invalid InsertConditionOrder msg!");		
+			.WithField("user_name",m_condition_order_data.user_id)
+			.Log(LOG_INFO,"not invalid InsertConditionOrder msg!");		
 		return;
 	}
 	
@@ -608,8 +703,8 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	{
 		m_callBack.OutputNotifyAll(
 			1
-			, u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
-			, "WARNING", "MESSAGE");
+			,u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
+			,"WARNING","MESSAGE");
 		return;
 	}
 
@@ -633,7 +728,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		return;
 	}
 
-	if (insert_co.user_id.substr(0, m_condition_order_data.user_id.size())
+	if (insert_co.user_id.substr(0,m_condition_order_data.user_id.size())
 		!= m_condition_order_data.user_id)
 	{
 		m_callBack.OutputNotifyAll(
@@ -646,7 +741,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	ConditionOrder order;
 	order.order_id = insert_co.order_id;
 	order.trading_day = atoi(m_condition_order_data.trading_day.c_str());
-	order.insert_date_time = GetLocalEpochNano();
+	order.insert_date_time = GetLocalEpochSecond();
 	order.condition_list.assign(insert_co.condition_list.begin(),
 		insert_co.condition_list.end());
 	order.conditions_logic_oper = insert_co.conditions_logic_oper;
@@ -702,11 +797,11 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
 	{
-		Log().WithField("fun", "CancelConditionOrder")
-			.WithField("key", m_userKey)
-			.WithField("bid", m_condition_order_data.broker_id)
-			.WithField("user_name", m_condition_order_data.user_id)
-			.Log(LOG_INFO, "not invalid CancelConditionOrder msg!");		
+		Log().WithField("fun","CancelConditionOrder")
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name",m_condition_order_data.user_id)
+			.Log(LOG_INFO,"not invalid CancelConditionOrder msg!");		
 		return;
 	}
 
@@ -1447,7 +1542,7 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 	for (auto order : m_condition_order_his_data.his_condition_orders)
 	{
 		DateTime dt;
-		SetDateTimeFromEpochNano(&dt, order.insert_date_time);
+		SetDateTimeFromEpochSeconds(&dt, order.insert_date_time);
 		int insert_day = dt.date.year * 10000 + dt.date.month * 100 + dt.date.day;
 		if (insert_day == qry_his_co.action_day)
 		{

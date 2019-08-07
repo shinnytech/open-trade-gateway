@@ -21,6 +21,13 @@ std::string GenerateUniqFileName()
 	return fname;
 }
 
+int GetLocalEpochSecond()
+{
+	auto now = std::chrono::high_resolution_clock::now();
+	std::chrono::seconds mi = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
+	return mi.count();
+}
+
 long long GetLocalEpochNano()
 {
     auto now = std::chrono::high_resolution_clock::now();

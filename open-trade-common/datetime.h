@@ -140,3 +140,5 @@ long long DateTimeToEpochNano(const struct DateTime* dt);
 void GetTimeFromString(const std::string& str,Time& time);
 
 int DateTimeToEpochSeconds(const DateTime& dt);
+
+void SetDateTimeFromEpochSeconds(struct DateTime* datetime,int epochSeconds);

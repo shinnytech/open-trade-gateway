@@ -537,6 +537,13 @@ void SetDateTimeFromEpochNano(struct DateTime* datetime, long long epoch_nano)
     datetime->time.microsecond = (epoch_nano % 1000000000ll) / 1000;
 }
 
+void SetDateTimeFromEpochSeconds(struct DateTime* datetime,int epochSeconds)
+{
+	time_t seconds = epochSeconds;
+	SetDateTimeFromTimeT(datetime, &seconds);
+	datetime->time.microsecond = 0;
+}
+
 void SetTimeInvalid(struct Time* time )
 {
     time->hour = 0xFF;
