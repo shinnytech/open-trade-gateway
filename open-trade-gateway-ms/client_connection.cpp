@@ -351,7 +351,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 			.Log(LOG_WARNING,"open trade gateway master get invalid bid");		
 		std::stringstream ss;
 		ss << u8"暂不支持," << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(1, ss.str(), "WARNING");
+		OutputNotifySycn(301,ss.str(), "WARNING");
 		return;
 	}
 
@@ -439,7 +439,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		{
 			std::stringstream ss;
 			ss <<u8"重登录过于频繁,请稍后重试!";
-			OutputNotifySycn(1,ss.str(),"WARNING");
+			OutputNotifySycn(302,ss.str(),"WARNING");
 			return;
 		}
 		
@@ -484,7 +484,7 @@ void client_connection::OnResolve(boost::system::error_code ec
 		
 		std::stringstream ss;
 		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
-		OutputNotifySycn(1,ss.str(),"WARNING");
+		OutputNotifySycn(303,ss.str(),"WARNING");
 		return;
 	}
 
@@ -515,7 +515,7 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 			.Log(LOG_WARNING,"open trade gateway master OnConnectToServer Slave node");		
 		std::stringstream ss;
 		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
-		OutputNotifySycn(1, ss.str(), "WARNING");
+		OutputNotifySycn(303,ss.str(), "WARNING");
 		return;
 	}
 
@@ -576,7 +576,7 @@ void client_connection::OnHandshakeWithServer(boost::system::error_code ec)
 				
 		std::stringstream ss;
 		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
-		OutputNotifySycn(1, ss.str(), "WARNING");
+		OutputNotifySycn(303,ss.str(), "WARNING");
 		return;
 	}
 

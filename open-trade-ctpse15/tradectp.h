@@ -28,16 +28,15 @@
 
 enum class ECTPLoginStatus
 {
-	init=800,
-	reqAuthenFail=801,
-	rspAuthenFail=802,
-	regSystemInfoFail = 803,
-	reqUserLoginFail = 804,
-	rspLoginFail=805,
-	rspLoginFailNeedModifyPassword = 806,	
-	reqLoginTimeOut = 807,
-	reqLoginDiffPass=808,
-	rspLoginSuccess=810
+	init=340,
+	reqAuthenFail= 341,
+	rspAuthenFail= 342,
+	regSystemInfoFail = 343,
+	reqUserLoginFail = 344,
+	rspLoginFail= 345,
+	rspLoginFailNeedModifyPassword = 346,
+	reqLoginTimeOut = 347,	
+	rspLoginSuccess= 350
 };
 
 class traderctp : public CThostFtdcTraderSpi

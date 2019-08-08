@@ -107,7 +107,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 
 void traderctp::ProcessOnFrontConnected()
 {
-	OutputNotifyAllSycn(0,u8"已经重新连接到交易前置");
+	OutputNotifyAllSycn(320,u8"已经重新连接到交易前置");
 	int ret = ReqAuthenticate();
 	if (0 != ret)
 	{
@@ -132,7 +132,7 @@ void traderctp::OnFrontConnected()
 	if (!m_b_login.load())
 	{
 		//这时是安全的
-		OutputNotifySycn(m_loging_connectId,0,u8"已经连接到交易前置");
+		OutputNotifySycn(m_loging_connectId,321,u8"已经连接到交易前置");
 		int ret = ReqAuthenticate();
 		if (0 != ret)
 		{
@@ -151,7 +151,7 @@ void traderctp::OnFrontConnected()
 
 void traderctp::ProcessOnFrontDisconnected(int nReason)
 {	
-	OutputNotifyAllSycn(1,u8"已经断开与交易前置的连接");
+	OutputNotifyAllSycn(322,u8"已经断开与交易前置的连接");
 }
 
 void traderctp::OnFrontDisconnected(int nReason)
@@ -166,7 +166,7 @@ void traderctp::OnFrontDisconnected(int nReason)
 	//还在等待登录阶段
 	if (!m_b_login.load())
 	{		
-		OutputNotifySycn(m_loging_connectId,1,u8"已经断开与交易前置的连接");
+		OutputNotifySycn(m_loging_connectId,322,u8"已经断开与交易前置的连接");
 	}
 	else
 	{
@@ -356,7 +356,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
-			OutputNotifyAllSycn(810, u8"交易服务器重登录成功");
+			OutputNotifyAllSycn(323,u8"交易服务器重登录成功");
 
 			m_req_position_id++;
 			m_req_account_id++;
@@ -435,7 +435,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
-			OutputNotifySycn(m_loging_connectId,810,u8"登录成功");
+			OutputNotifySycn(m_loging_connectId,324,u8"登录成功");
 			AfterLogin();
 			SetExchangeTime(*pRspUserLogin);
 			boost::unique_lock<boost::mutex> lock(_logInmutex);
@@ -536,7 +536,7 @@ void  traderctp::ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementIn
 			m_settlement_info += str;
 			if (0 == m_confirm_settlement_status.load())
 			{
-				OutputNotifyAllSycn(0,m_settlement_info,"INFO","SETTLEMENT");
+				OutputNotifyAllSycn(325,m_settlement_info,"INFO","SETTLEMENT");
 			}
 		}
 		else
@@ -559,7 +559,7 @@ void traderctp::ProcessEmptySettlementInfo()
 		m_need_query_settlement.store(false);
 		if (0 == m_confirm_settlement_status.load())
 		{
-			OutputNotifyAllSycn(0,"","INFO","SETTLEMENT");
+			OutputNotifyAllSycn(325,"","INFO","SETTLEMENT");
 		}
 	}	
 }
@@ -712,7 +712,7 @@ void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPas
 	{
 		std::string strOldPassword = GBKToUTF8(pUserPasswordUpdate->OldPassword);
 		std::string strNewPassword = GBKToUTF8(pUserPasswordUpdate->NewPassword);
-		OutputNotifySycn(m_loging_connectId,pRspInfo->ErrorID, u8"修改密码成功");
+		OutputNotifySycn(m_loging_connectId,326, u8"修改密码成功");
 		if (_req_login.password == strOldPassword)
 		{
 			_req_login.password = strNewPassword;
@@ -2016,7 +2016,7 @@ void traderctp::ProcessFromBankToFutureByFuture(
 
 		if (!m_req_transfer_list.empty())
 		{
-			OutputNotifyAllSycn(0, u8"转账成功");
+			OutputNotifyAllSycn(327,u8"转账成功");
 			m_req_transfer_list.pop_front();
 		}
 
@@ -2474,7 +2474,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		if (it != m_insert_order_set.end())
 		{
 			m_insert_order_set.erase(it);
-			OutputNotifyAllSycn(1,u8"下单成功");
+			OutputNotifyAllSycn(328,u8"下单成功");
 		}
 
 		//更新Order Key				
@@ -2495,7 +2495,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		if (it != m_cancel_order_set.end())
 		{
 			m_cancel_order_set.erase(it);
-			OutputNotifyAllSycn(1,u8"撤单成功");
+			OutputNotifyAllSycn(329,u8"撤单成功");
 			CheckConditionOrderCancelOrderTask(order.order_id);
 			//删除Order
 			auto itOrder = m_input_order_key_map.find(strKey);
@@ -2510,7 +2510,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 			if (it2 != m_insert_order_set.end())
 			{
 				m_insert_order_set.erase(it2);
-				OutputNotifyAllSycn(1, u8"下单失败," + order.last_msg,"WARNING");
+				OutputNotifyAllSycn(330,u8"下单失败," + order.last_msg,"WARNING");
 			}
 
 			//删除Order
@@ -2586,7 +2586,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 			std::stringstream ss;
 			ss << u8"成交通知,合约:" << serverOrderInfo.ExchangeId
 				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume ;
-			OutputNotifyAllSycn(0, ss.str().c_str());
+			OutputNotifyAllSycn(331, ss.str().c_str());
 
 			if (serverOrderInfo.VolumeLeft <= 0)
 			{
@@ -2759,7 +2759,7 @@ void traderctp::ProcessOnRtnTradingNotice(std::shared_ptr<CThostFtdcTradingNotic
 	auto s = GBKToUTF8(pTradingNoticeInfo->FieldContent);
 	if (!s.empty())
 	{		
-		OutputNotifyAllAsych(0,s);
+		OutputNotifyAllAsych(332,s);
 	}
 }
 
@@ -3179,7 +3179,7 @@ void traderctp::ReSendSettlementInfo(int connectId)
 		return;
 	}
 
-	OutputNotifySycn(connectId,0,m_settlement_info,"INFO","SETTLEMENT");
+	OutputNotifySycn(connectId,325,m_settlement_info,"INFO","SETTLEMENT");
 }
 
 #pragma endregion
@@ -4129,7 +4129,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			if (nullptr == m_pTdApi)
 			{
-				OutputNotifyAllSycn(0,u8"当前时间不支持下单! ","WARNING");
+				OutputNotifyAllSycn(333,u8"当前时间不支持下单!","WARNING");
 				return;
 			}
 			CtpActionInsertOrder d;
@@ -4140,7 +4140,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			if (nullptr == m_pTdApi)
 			{
-				OutputNotifyAllSycn(0, u8"当前时间不支持撤单! ", "WARNING");
+				OutputNotifyAllSycn(334,u8"当前时间不支持撤单!", "WARNING");
 				return;
 			}
 			CtpActionCancelOrder d;
@@ -4151,7 +4151,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			if (nullptr == m_pTdApi)
 			{
-				OutputNotifyAllSycn(0, u8"当前时间不支持转账! ", "WARNING");
+				OutputNotifyAllSycn(335,u8"当前时间不支持转账!", "WARNING");
 				return;
 			}
 			CThostFtdcReqTransferField f;
@@ -4163,7 +4163,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			if (nullptr == m_pTdApi)
 			{
-				OutputNotifyAllSycn(0, u8"当前时间不支持确认结算单! ", "WARNING");
+				OutputNotifyAllSycn(336,u8"当前时间不支持确认结算单!", "WARNING");
 				return;
 			}
 
@@ -4177,7 +4177,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 		{
 			if (nullptr == m_pTdApi)
 			{
-				OutputNotifyAllSycn(0, u8"当前时间不支持查询历史结算单! ", "WARNING");
+				OutputNotifyAllSycn(337,u8"当前时间不支持查询历史结算单!","WARNING");
 				return;
 			}
 
@@ -4473,7 +4473,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		
 		if (flag)
 		{
-			OutputNotifySycn(connId,0,u8"重复发送登录请求!");
+			OutputNotifySycn(connId,338,u8"重复发送登录请求!");
 			return;
 		}
 
@@ -4486,7 +4486,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			{
 				//加入登录客户端列表
 				m_logined_connIds.push_back(connId);
-				OutputNotifySycn(connId,810,u8"登录成功");
+				OutputNotifySycn(connId,324,u8"登录成功");
 
 				char json_str[1024];
 				sprintf(json_str, (u8"{"\
@@ -4512,7 +4512,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			if (0 != connId)
 			{
-				OutputNotifySycn(connId,808,u8"账户和密码不匹配!");
+				OutputNotifySycn(connId,339,u8"账户和密码不匹配!");
 			}			
 		}
 	}
@@ -4982,7 +4982,7 @@ void traderctp::OnClientReqChangePassword(CThostFtdcUserPasswordUpdateField f)
 		.Log(LOG_INFO, "send ReqUserPasswordUpdate request!");
 	if (0 != r)
 	{		
-		OutputNotifyAllSycn(1,u8"修改密码请求发送失败!","WARNING");
+		OutputNotifyAllSycn(351,u8"修改密码请求发送失败!","WARNING");
 	}	
 }
 
@@ -5018,7 +5018,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 
 		if (0 != r)
 		{					
-			OutputNotifyAllSycn(1, u8"银期转账请求发送失败!", "WARNING");
+			OutputNotifyAllSycn(352, u8"银期转账请求发送失败!", "WARNING");
 		}		
 		m_req_transfer_list.push_back(nRequestID);		
 	}
@@ -5045,7 +5045,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 
 		if (0 != r)
 		{				
-			OutputNotifyAllSycn(1,u8"银期转账请求发送失败!","WARNING");
+			OutputNotifyAllSycn(352,u8"银期转账请求发送失败!","WARNING");
 		}		
 		m_req_transfer_list.push_back(nRequestID);		
 	}
@@ -5055,14 +5055,14 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 {
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(1,u8"撤单user_id错误,不能撤单","WARNING");
+		OutputNotifyAllSycn(353,u8"撤单user_id错误,不能撤单","WARNING");
 		return;
 	}
 
 	RemoteOrderKey rkey;
 	if (!OrderIdLocalToRemote(d.local_key, &rkey))
 	{
-		OutputNotifyAllSycn(1,u8"撤单指定的order_id不存在,不能撤单","WARNING");
+		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
 		return;
 	}
 	strcpy_x(d.f.BrokerID, m_broker_id.c_str());
@@ -5089,7 +5089,7 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(1, u8"撤单请求发送失败!", "WARNING");
+		OutputNotifyAllSycn(355,u8"撤单请求发送失败!", "WARNING");
 	}
 
 	SerializerLogCtp nss;
@@ -5115,7 +5115,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(1, u8"报单user_id错误，不能下单", "WARNING");
+		OutputNotifyAllSycn(356,u8"报单user_id错误，不能下单", "WARNING");
 		return;
 	}
 
@@ -5127,7 +5127,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	rkey.instrument_id = d.f.InstrumentID;
 	if (OrderIdLocalToRemote(d.local_key, &rkey))
 	{
-		OutputNotifyAllSycn(1, u8"报单单号重复，不能下单", "WARNING");
+		OutputNotifyAllSycn(357, u8"报单单号重复，不能下单", "WARNING");
 		return;
 	}
 
@@ -5150,7 +5150,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(1, u8"下单请求发送失败!", "WARNING");
+		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");
 	}
 
 	SerializerLogCtp nss;
@@ -7153,13 +7153,13 @@ void traderctp::OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d)
 	
 	if (nullptr == m_pTdApi)
 	{
-		OutputNotifyAllSycn(0,u8"当前时间不支持撤单!","WARNING");
+		OutputNotifyAllSycn(334,u8"当前时间不支持撤单!","WARNING");
 		return;
 	}
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(1,u8"撤单请求发送失败!","WARNING");
+		OutputNotifyAllSycn(355,u8"撤单请求发送失败!","WARNING");
 		Log().WithField("fun","OnConditionOrderReqCancelOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
@@ -7221,13 +7221,13 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	
 	if (nullptr == m_pTdApi)
 	{
-		OutputNotifyAllSycn(0,u8"当前时间不支持下单!","WARNING");
+		OutputNotifyAllSycn(333,u8"当前时间不支持下单!","WARNING");
 		return;
 	}
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);	
 	if (0 != r)
 	{		
-		OutputNotifyAllSycn(1,u8"下单请求发送失败!","WARNING");
+		OutputNotifyAllSycn(358,u8"下单请求发送失败!","WARNING");
 		Log().WithField("fun","OnConditionOrderReqInsertOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
@@ -7340,17 +7340,17 @@ int traderctp::RegSystemInfo()
 
 	int ret = m_pTdApi->RegisterUserSystemInfo(&f);
 
-	Log().WithField("fun","RegSystemInfo")
-		.WithField("key",_key)
-		.WithField("bid",_req_login.bid)
-		.WithField("user_name",_req_login.user_name)		
-		.WithField("ClientLoginTime",f.ClientLoginTime)
-		.WithField("ClientPublicIP",_req_login.client_ip)
-		.WithField("ClientIPPort",_req_login.client_port)
-		.WithField("ClientAppID",_req_login.client_app_id)
-		.WithField("ClientSystemInfoLen",(int)client_system_info.length())
-		.WithField("ret",ret)
-		.Log(LOG_INFO,"ctp RegisterUserSystemInfo");
+	Log().WithField("fun", "RegSystemInfo")
+		.WithField("key", _key)
+		.WithField("bid", _req_login.bid)
+		.WithField("user_name", _req_login.user_name)
+		.WithField("ClientLoginTime", f.ClientLoginTime)
+		.WithField("ClientPublicIP", _req_login.client_ip)
+		.WithField("ClientIPPort", _req_login.client_port)
+		.WithField("ClientAppID", _req_login.client_app_id)
+		.WithField("ClientSystemInfoLen", (int)client_system_info.length())
+		.WithField("ret", ret)
+		.Log(LOG_INFO, "ctp RegisterUserSystemInfo");
 	return ret;
 }
 
@@ -7369,11 +7369,11 @@ int traderctp::ReqAuthenticate()
 	m_try_req_authenticate_times++;
 	if (_req_login.broker.auth_code.empty())
 	{
-		Log().WithField("fun","ReqAuthenticate")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO,"auth_code is empty");		
+		Log().WithField("fun", "ReqAuthenticate")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.Log(LOG_INFO, "auth_code is empty");
 		SendLoginRequest();
 		return 0;
 	}
@@ -7386,15 +7386,15 @@ int traderctp::ReqAuthenticate()
 	strcpy_x(field.AppID, _req_login.broker.product_info.c_str());
 	strcpy_x(field.AuthCode, _req_login.broker.auth_code.c_str());
 	int ret = m_pTdApi->ReqAuthenticate(&field, ++_requestID);
-	Log().WithField("fun","ReqAuthenticate")
-		.WithField("key",_key)
-		.WithField("bid",_req_login.bid)
-		.WithField("user_name",_req_login.user_name)		
-		.WithField("UserProductInfo",USER_PRODUCT_INFO_NAME)
-		.WithField("AppID",_req_login.broker.product_info)
-		.WithField("AuthCode",_req_login.broker.auth_code)		
-		.WithField("ret",ret)
-		.Log(LOG_INFO,"ctp ReqAuthenticate");	
+	Log().WithField("fun", "ReqAuthenticate")
+		.WithField("key", _key)
+		.WithField("bid", _req_login.bid)
+		.WithField("user_name", _req_login.user_name)
+		.WithField("UserProductInfo", USER_PRODUCT_INFO_NAME)
+		.WithField("AppID", _req_login.broker.product_info)
+		.WithField("AuthCode", _req_login.broker.auth_code)
+		.WithField("ret", ret)
+		.Log(LOG_INFO, "ctp ReqAuthenticate");
 	return ret;
 }
 

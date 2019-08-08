@@ -341,7 +341,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 
 		std::stringstream ss;
 		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(1,ss.str(),"WARNING");
+		OutputNotifySycn(311,ss.str(),"WARNING");
 		return;
 	}
 
@@ -372,7 +372,7 @@ void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	{
 		std::stringstream ss;
 		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(1, ss.str(), "WARNING");
+		OutputNotifySycn(311, ss.str(), "WARNING");
 		return;
 	}
 

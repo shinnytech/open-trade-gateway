@@ -194,7 +194,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				
 		if (flag)
 		{
-			OutputNotifySycn(connId,0,u8"重复发送登录请求!");
+			OutputNotifySycn(connId,400,u8"重复发送登录请求!");
 			return;
 		}
 		
@@ -217,7 +217,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				//加入登录客户端列表
 				m_logined_connIds.push_back(connId);
 
-				OutputNotifySycn(connId,0,u8"登录成功");
+				OutputNotifySycn(connId,401,u8"登录成功");
 
 				char json_str[1024];
 				sprintf(json_str, (u8"{"\
@@ -250,7 +250,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 
 			if (0 != connId)
 			{
-				OutputNotifySycn(connId,0,u8"账户和密码不匹配!");
+				OutputNotifySycn(connId,402,u8"账户和密码不匹配!");
 			}			
 		}
 	}
@@ -308,7 +308,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				//加入登录客户端列表
 				m_logined_connIds.push_back(connId);
 
-				OutputNotifySycn(connId,0,u8"登录成功");
+				OutputNotifySycn(connId,401,u8"登录成功");
 
 				char json_str[1024];
 				sprintf(json_str, (u8"{"\
@@ -351,7 +351,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 
 			if (connId != 0)
 			{
-				OutputNotifySycn(connId, 0, u8"用户登录失败!");
+				OutputNotifySycn(connId,403,u8"用户登录失败!");
 			}			
 		}
 	}
@@ -1687,7 +1687,7 @@ void tradersim::CheckOrderTrade(Order* order)
 	{
 		if (order->limit_price - 0.0001 > ins->upper_limit)
 		{
-			OutputNotifyAllSycn(1
+			OutputNotifyAllSycn(404
 				, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板"
 				, "WARNING");
 
@@ -1699,7 +1699,7 @@ void tradersim::CheckOrderTrade(Order* order)
 
 		if (order->limit_price + 0.0001 < ins->lower_limit)
 		{
-			OutputNotifyAllSycn(1
+			OutputNotifyAllSycn(405
 				, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格跌破跌停板"
 				, "WARNING");
 
@@ -1747,7 +1747,7 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 	std::stringstream ss;
 	ss << u8"成交通知,合约:" << trade->exchange_id
 		<< u8"." << trade->instrument_id << u8",手数:" << trade->volume;
-	OutputNotifyAllSycn(1, ss.str().c_str());
+	OutputNotifyAllSycn(406,ss.str().c_str());
 
 	//调整委托单数据
 	assert(volume <= order->volume_left);
@@ -1994,7 +1994,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 	auto it = m_data.m_orders.find(order_key);
 	if (it != m_data.m_orders.end())
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(407
 			, u8"下单, 已被服务器拒绝,原因:单号重复"
 			, "WARNING");
 		return;
@@ -2022,7 +2022,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 	if (action_insert_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(408
 			, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -2031,7 +2031,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 	if (nullptr==ins)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(409
 			, u8"下单, 已被服务器拒绝, 原因:合约不合法"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -2040,7 +2040,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 	if (ins->product_class != kProductClassFutures)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(410
 			, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -2049,7 +2049,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 	if (action_insert_order.volume <= 0)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(411
 			, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -2059,7 +2059,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 	double xs = action_insert_order.limit_price / ins->price_tick;
 	if (xs - int(xs + 0.5) >= 0.001)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(412
 			, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -2077,7 +2077,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 	{
 		if (position->ins->margin * action_insert_order.volume > m_account->available)
 		{
-			OutputNotifyAllSycn(1
+			OutputNotifyAllSycn(413
 				, u8"下单,已被服务器拒绝,原因:开仓保证金不足"
 				, "WARNING");
 			order->status = kOrderStatusFinished;
@@ -2100,7 +2100,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 						&& position->volume_long_today < action_insert_order.volume + position->volume_long_frozen_today)
 					)
 				{
-					OutputNotifyAllSycn(1
+					OutputNotifyAllSycn(414
 						, u8"下单,已被服务器拒绝,原因:平今手数超过今仓持仓量", "WARNING");
 					order->status = kOrderStatusFinished;
 					return;
@@ -2116,7 +2116,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 						&& position->volume_long_his < action_insert_order.volume + position->volume_long_frozen_his)
 					)
 				{
-					OutputNotifyAllSycn(1
+					OutputNotifyAllSycn(415
 						, u8"下单,已被服务器拒绝,原因:平昨手数超过昨仓持仓量","WARNING");
 					order->status = kOrderStatusFinished;
 					return;
@@ -2133,7 +2133,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 					&& position->volume_long < action_insert_order.volume + position->volume_long_frozen_today)
 				)
 			{
-				OutputNotifyAllSycn(1
+				OutputNotifyAllSycn(416
 					, u8"下单,已被服务器拒绝,原因:平仓手数超过持仓量"
 					, "WARNING");
 				order->status = kOrderStatusFinished;
@@ -2146,7 +2146,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 	UpdateOrder(order);
 	
-	OutputNotifyAllSycn(1,u8"下单成功");
+	OutputNotifyAllSycn(417,u8"下单成功");
 
 	//尝试匹配成交
 	TryOrderMatch();
@@ -2164,7 +2164,7 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 {
 	if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(418
 			,u8"撤单,已被服务器拒绝,原因:撤单指令中的用户名错误"
 			,"WARNING");
 		return;
@@ -2181,13 +2181,13 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 			order->status = kOrderStatusFinished;
 			UpdateOrder(order);
 			m_something_changed = true;
-			OutputNotifyAllSycn(1,u8"撤单成功");	
+			OutputNotifyAllSycn(419,u8"撤单成功");
 			SendUserData();
 			return;
 		}
 	}
 
-	OutputNotifyAllSycn(1
+	OutputNotifyAllSycn(420
 		, u8"要撤销的单不存在"
 		, "WARNING");	
 }
@@ -2227,7 +2227,7 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	d.error_msg = u8"正确";
 
 	m_something_changed = true;
-	OutputNotifyAllSycn(0, u8"转账成功");	
+	OutputNotifyAllSycn(421, u8"转账成功");	
 	SendUserData();
 }
 
@@ -3823,7 +3823,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 	auto it = m_data.m_orders.find(order_key);
 	if (it != m_data.m_orders.end())
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(407
 			, u8"下单, 已被服务器拒绝,原因:单号重复"
 			, "WARNING");
 		return;
@@ -3851,7 +3851,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 
 	if (action_insert_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(408
 			, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -3860,7 +3860,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 
 	if (!ins)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(409
 			, u8"下单, 已被服务器拒绝, 原因:合约不合法"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -3869,7 +3869,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 
 	if (ins->product_class != kProductClassFutures)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(410
 			, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -3878,7 +3878,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 
 	if (action_insert_order.volume <= 0)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(411
 			, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -3888,7 +3888,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 	double xs = action_insert_order.limit_price / ins->price_tick;
 	if (xs - int(xs + 0.5) >= 0.001)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(412
 			, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数"
 			, "WARNING");
 		order->status = kOrderStatusFinished;
@@ -3906,7 +3906,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 	{
 		if (position->ins->margin * action_insert_order.volume > m_account->available)
 		{
-			OutputNotifyAllSycn(1
+			OutputNotifyAllSycn(413
 				, u8"下单, 已被服务器拒绝, 原因:开仓保证金不足"
 				, "WARNING");
 			order->status = kOrderStatusFinished;
@@ -3929,7 +3929,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 						&& position->volume_long_today < action_insert_order.volume + position->volume_long_frozen_today)
 					)
 				{
-					OutputNotifyAllSycn(1
+					OutputNotifyAllSycn(414
 						, u8"下单, 已被服务器拒绝, 原因:平今手数超过今仓持仓量", "WARNING");
 					order->status = kOrderStatusFinished;
 					return;
@@ -3945,7 +3945,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 						&& position->volume_long_his < action_insert_order.volume + position->volume_long_frozen_his)
 					)
 				{
-					OutputNotifyAllSycn(1
+					OutputNotifyAllSycn(415
 						, u8"下单, 已被服务器拒绝, 原因:平昨手数超过昨仓持仓量", "WARNING");
 					order->status = kOrderStatusFinished;
 					return;
@@ -3962,7 +3962,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 					&& position->volume_long < action_insert_order.volume + position->volume_long_frozen_today)
 				)
 			{
-				OutputNotifyAllSycn(1
+				OutputNotifyAllSycn(416
 					, u8"下单, 已被服务器拒绝, 原因:平仓手数超过持仓量"
 					, "WARNING");
 				order->status = kOrderStatusFinished;
@@ -3975,7 +3975,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 
 	UpdateOrder(order);
 	
-	OutputNotifyAllSycn(1, u8"下单成功");
+	OutputNotifyAllSycn(417, u8"下单成功");
 
 	//尝试匹配成交
 	TryOrderMatch();
@@ -3993,7 +3993,7 @@ void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 {
 	if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
-		OutputNotifyAllSycn(1
+		OutputNotifyAllSycn(418
 			, u8"撤单, 已被服务器拒绝, 原因:撤单指令中的用户名错误"
 			, "WARNING");
 		return;
@@ -4008,12 +4008,12 @@ void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 			order->status = kOrderStatusFinished;
 			UpdateOrder(order);
 			m_something_changed = true;
-			OutputNotifyAllSycn(1, u8"撤单成功");
+			OutputNotifyAllSycn(419, u8"撤单成功");
 			//SendUserData();
 			return;
 		}
 	}
-	OutputNotifyAllSycn(1
+	OutputNotifyAllSycn(420
 		, u8"要撤销的单不存在"
 		, "WARNING");
 }

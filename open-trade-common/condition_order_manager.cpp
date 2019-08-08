@@ -444,8 +444,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				.WithField("user_name", m_condition_order_data.user_id)				
 				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发条件中的合约ID不存在:" + symbol);
 
-			m_callBack.OutputNotifyAll(
-				1
+			m_callBack.OutputNotifyAll(501
 				, u8"条件单已被服务器拒绝,条件单触发条件中的合约ID不存在:"+ symbol
 				, "WARNING","MESSAGE");
 			return false;
@@ -461,8 +460,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO,u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(502
 					, u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间" 
 					, "WARNING", "MESSAGE");
 				return false;
@@ -478,8 +476,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,价格触发条件指定的触发价格不合法");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(503
 					, u8"条件单已被服务器拒绝,价格触发条件指定的触发价格不合法"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -524,8 +521,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(504
 					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -545,8 +541,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,价格区间触发条件指定的价格区间不合法");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(505
 					, u8"条件单已被服务器拒绝,价格区间触发条件指定的价格区间不合法"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -567,8 +562,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(504
 					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -585,8 +579,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,固定价格止盈触发条件指定的固定价格不合法");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(506
 					, u8"条件单已被服务器拒绝,固定价格止盈触发条件指定的固定价格不合法"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -620,8 +613,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(504
 					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -642,8 +634,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				.WithField("user_name", m_condition_order_data.user_id)
 				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单列表中的合约ID不存在:" + symbol);
 
-			m_callBack.OutputNotifyAll(
-				1
+			m_callBack.OutputNotifyAll(507
 				, u8"条件单已被服务器拒绝,条件单触发的订单列表中的合约ID不存在:" + symbol
 				, "WARNING", "MESSAGE");
 			return false;
@@ -659,8 +650,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单手数设置不合法");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(508
 					, u8"条件单已被服务器拒绝,条件单触发的订单手数设置不合法"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -677,8 +667,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(509
 					, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法"
 					, "WARNING", "MESSAGE");
 				return false;
@@ -715,8 +704,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("user_name", m_condition_order_data.user_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法");
 
-				m_callBack.OutputNotifyAll(
-					1
+				m_callBack.OutputNotifyAll(509
 					,u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法"
 					,"WARNING","MESSAGE");
 				return false;
@@ -734,8 +722,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				.WithField("user_name", m_condition_order_data.user_id)
 				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单有效日期设置不合法");
 
-			m_callBack.OutputNotifyAll(
-				1
+			m_callBack.OutputNotifyAll(510
 				, u8"条件单已被服务器拒绝,条件单有效日期设置不合法"
 				, "WARNING", "MESSAGE");
 			return false;
@@ -750,8 +737,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			.WithField("user_name", m_condition_order_data.user_id)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(511
 			, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制:"+std::to_string(MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY)
 			, "WARNING", "MESSAGE");
 		return false;
@@ -766,8 +752,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			.WithField("user_name", m_condition_order_data.user_id)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(512
 			, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制:" + std::to_string(MAX_VALID_CONDITION_ORDER_COUNT_ALL)
 			, "WARNING", "MESSAGE");
 		return false;
@@ -797,8 +782,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			.WithField("user_name", m_condition_order_data.user_id)
 			.WithPack("req_insert_condition_order",msg)
 			.Log(LOG_INFO,u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(513
 			,u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
 			,"WARNING","MESSAGE");
 		return;
@@ -824,8 +808,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			.WithPack("req_insert_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,原因:单号重复");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(514
 			, u8"条件单已被服务器拒绝,原因:单号重复"
 			, "WARNING","MESSAGE");
 		return;
@@ -841,8 +824,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			.WithPack("req_insert_condition_order",msg)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,原因:下单指令中的用户名错误");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(515
 			, u8"条件单已被服务器拒绝,原因:下单指令中的用户名错误"
 			, "WARNING", "MESSAGE");
 		return;
@@ -871,7 +853,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 				,order));
 		m_current_day_condition_order_count++;
 		m_current_valid_condition_order_count++;
-		m_callBack.OutputNotifyAll(0, u8"条件单下单成功","INFO","MESSAGE");
+		m_callBack.OutputNotifyAll(516, u8"条件单下单成功","INFO","MESSAGE");
 		
 		Log().WithField("fun","InsertConditionOrder")
 			.WithField("key",m_userKey)
@@ -928,8 +910,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			.WithPack("req_cancel_condition_order",msg)
 			.Log(LOG_INFO,u8"条件单撤单请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(517
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
 			, "WARNING", "MESSAGE");
 		return;
@@ -948,8 +929,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			.WithPack("req_cancel_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:撤单请求中的用户名错误");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(518
 			, u8"条件单撤单请求已被服务器拒绝,原因:撤单请求中的用户名错误"
 			, "WARNING", "MESSAGE");
 		return;
@@ -966,8 +946,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			.WithPack("req_cancel_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:单号不存在");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(519
 			, u8"条件单撤单请求已被服务器拒绝,原因:单号不存在"
 			, "WARNING", "MESSAGE");
 		return;
@@ -983,8 +962,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			.WithPack("req_cancel_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:条件单已触发");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(520
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单已触发"
 			, "WARNING", "MESSAGE");
 		return;
@@ -999,8 +977,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			.WithPack("req_cancel_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:条件单已撤");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(521
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单已撤"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1015,8 +992,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 			.WithPack("req_cancel_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:条件单是废单");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(522
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单是废单"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1033,7 +1009,7 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 		.WithPack("req_cancel_condition_order", msg)
 		.Log(LOG_INFO, u8"条件单撤单成功");
 
-	m_callBack.OutputNotifyAll(0, u8"条件单撤单成功", "INFO", "MESSAGE");
+	m_callBack.OutputNotifyAll(523,u8"条件单撤单成功", "INFO", "MESSAGE");
 	m_current_day_condition_order_count--;
 	m_current_valid_condition_order_count--;
 	SaveCurrent();
@@ -1063,8 +1039,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order",msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(524
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1083,8 +1058,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:暂停请求中的用户名错误");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(525
 			, u8"条件单暂停请求已被服务器拒绝,原因:暂停请求中的用户名错误"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1101,8 +1075,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:单号不存在");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(526
 			, u8"条件单暂停请求已被服务器拒绝,原因:单号不存在"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1118,8 +1091,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单已触发");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(527
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单已触发"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1134,8 +1106,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单已撤");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(528
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单已撤"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1150,8 +1121,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单是废单");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(529
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单是废单"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1166,8 +1136,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 			.WithPack("req_pause_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单已经暂停");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(530
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单已经暂停"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1182,7 +1151,7 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 		.WithField("user_name", m_condition_order_data.user_id)
 		.WithPack("req_pause_condition_order", msg)
 		.Log(LOG_INFO, u8"条件单暂停成功");
-	m_callBack.OutputNotifyAll(0, u8"条件单暂停成功", "INFO", "MESSAGE");
+	m_callBack.OutputNotifyAll(531,u8"条件单暂停成功", "INFO", "MESSAGE");
 	SaveCurrent();	
 	BuildConditionOrderIndex();
 	m_callBack.OnUserDataChange();
@@ -1210,8 +1179,7 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 			.WithPack("req_resume_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(532
 			, u8"条件单恢复请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1230,8 +1198,7 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 			.WithPack("req_resume_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:恢复请求中的用户名错误");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(533
 			, u8"条件单恢复请求已被服务器拒绝,原因:恢复请求中的用户名错误"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1248,8 +1215,7 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 			.WithPack("req_resume_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:单号不存在");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(534
 			, u8"条件单恢复请求已被服务器拒绝,原因:单号不存在"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1265,8 +1231,7 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 			.WithPack("req_resume_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:条件单不是处于暂停状态");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(535
 			, u8"条件单恢复请求已被服务器拒绝,原因:条件单不是处于暂停状态"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1283,7 +1248,7 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 		.WithPack("req_resume_condition_order", msg)
 		.Log(LOG_INFO, u8"条件单恢复成功");
 
-	m_callBack.OutputNotifyAll(0, u8"条件单恢复成功", "INFO", "MESSAGE");
+	m_callBack.OutputNotifyAll(536, u8"条件单恢复成功", "INFO", "MESSAGE");
 	SaveCurrent();	
 	BuildConditionOrderIndex();
 	m_callBack.OnUserDataChange();
@@ -1772,8 +1737,7 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 			.WithField("user_name", m_condition_order_his_data.user_id)
 			.Log(LOG_INFO, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
 
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(537
 			, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1785,8 +1749,7 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 	if (qry_his_co.user_id.substr(0, m_condition_order_his_data.user_id.size())
 		!= m_condition_order_his_data.user_id)
 	{
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(538
 			, u8"历史条件单查询请求已被服务器拒绝,原因:查询请求中的用户名错误"
 			, "WARNING", "MESSAGE");
 		return;
@@ -1794,8 +1757,7 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 
 	if (qry_his_co.action_day <= 0)
 	{
-		m_callBack.OutputNotifyAll(
-			1
+		m_callBack.OutputNotifyAll(539
 			, u8"历史条件单查询请求已被服务器拒绝,原因:查询请求中的日期输入有误"
 			, "WARNING", "MESSAGE");
 		return;
