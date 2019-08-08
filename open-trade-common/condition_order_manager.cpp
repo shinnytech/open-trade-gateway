@@ -438,6 +438,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		Instrument* ins = GetInstrument(symbol);
 		if (nullptr == ins)
 		{
+			Log().WithField("fun", "ValidConditionOrder")
+				.WithField("key", m_userKey)
+				.WithField("bid", m_condition_order_data.broker_id)
+				.WithField("user_name", m_condition_order_data.user_id)				
+				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发条件中的合约ID不存在:" + symbol);
+
 			m_callBack.OutputNotifyAll(
 				1
 				, u8"条件单已被服务器拒绝,条件单触发条件中的合约ID不存在:"+ symbol
@@ -449,6 +455,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		{			
 			if (cond.contingent_time <= GetExchangeTime(cond.exchange_id))
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO,u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间" 
@@ -460,6 +472,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		{
 			if (!IsValid(cond.contingent_price))
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,价格触发条件指定的触发价格不合法");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,价格触发条件指定的触发价格不合法"
@@ -500,6 +518,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			
 			if (flag)
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
@@ -515,6 +539,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				|| (cond.contingent_price_left> cond.contingent_price_right)
 				)
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,价格区间触发条件指定的价格区间不合法");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,价格区间触发条件指定的价格区间不合法"
@@ -531,6 +561,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 
 			if (flag)
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
@@ -543,6 +579,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		{
 			if (!IsValid(cond.break_even_price))
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,固定价格止盈触发条件指定的固定价格不合法");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,固定价格止盈触发条件指定的固定价格不合法"
@@ -572,6 +614,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			
 			if (flag)
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
@@ -588,6 +636,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		Instrument* ins = GetInstrument(symbol);
 		if (nullptr == ins)
 		{
+			Log().WithField("fun", "ValidConditionOrder")
+				.WithField("key", m_userKey)
+				.WithField("bid", m_condition_order_data.broker_id)
+				.WithField("user_name", m_condition_order_data.user_id)
+				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单列表中的合约ID不存在:" + symbol);
+
 			m_callBack.OutputNotifyAll(
 				1
 				, u8"条件单已被服务器拒绝,条件单触发的订单列表中的合约ID不存在:" + symbol
@@ -599,6 +653,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		{
 			if (co.volume <= 0)
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单手数设置不合法");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,条件单触发的订单手数设置不合法"
@@ -611,6 +671,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		{
 			if (!IsValid(co.limit_price))
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法");
+
 				m_callBack.OutputNotifyAll(
 					1
 					, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法"
@@ -643,6 +709,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 
 			if (!flag)
 			{
+				Log().WithField("fun", "ValidConditionOrder")
+					.WithField("key", m_userKey)
+					.WithField("bid", m_condition_order_data.broker_id)
+					.WithField("user_name", m_condition_order_data.user_id)
+					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法");
+
 				m_callBack.OutputNotifyAll(
 					1
 					,u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法"
@@ -656,6 +728,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 	{
 		if (order.GTD_date < order.trading_day)
 		{
+			Log().WithField("fun", "ValidConditionOrder")
+				.WithField("key", m_userKey)
+				.WithField("bid", m_condition_order_data.broker_id)
+				.WithField("user_name", m_condition_order_data.user_id)
+				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单有效日期设置不合法");
+
 			m_callBack.OutputNotifyAll(
 				1
 				, u8"条件单已被服务器拒绝,条件单有效日期设置不合法"
@@ -666,6 +744,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 
 	if (m_current_day_condition_order_count + 1 > MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY)
 	{
+		Log().WithField("fun", "ValidConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制:"+std::to_string(MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY)
@@ -676,6 +760,12 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 
 	if (m_current_valid_condition_order_count + 1 > MAX_VALID_CONDITION_ORDER_COUNT_ALL)
 	{
+		Log().WithField("fun", "ValidConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制:" + std::to_string(MAX_VALID_CONDITION_ORDER_COUNT_ALL)
@@ -701,6 +791,12 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	
 	if (!m_run_server)
 	{
+		Log().WithField("fun", "InsertConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_insert_condition_order",msg)
+			.Log(LOG_INFO,u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
 		m_callBack.OutputNotifyAll(
 			1
 			,u8"条件单已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
@@ -721,6 +817,13 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	auto it = m_condition_order_data.condition_orders.find(order_key);
 	if (it != m_condition_order_data.condition_orders.end())
 	{
+		Log().WithField("fun", "InsertConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_insert_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单已被服务器拒绝,原因:单号重复");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单已被服务器拒绝,原因:单号重复"
@@ -731,6 +834,13 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	if (insert_co.user_id.substr(0,m_condition_order_data.user_id.size())
 		!= m_condition_order_data.user_id)
 	{
+		Log().WithField("fun", "InsertConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_insert_condition_order",msg)
+			.Log(LOG_INFO, u8"条件单已被服务器拒绝,原因:下单指令中的用户名错误");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单已被服务器拒绝,原因:下单指令中的用户名错误"
@@ -754,6 +864,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	if (ValidConditionOrder(order))
 	{
 		order.status = EConditionOrderStatus::live;
+		order.touched_time = GetTouchedTime(order);
 		order.changed = true;
 		m_condition_order_data.condition_orders.insert(
 			std::map<std::string, ConditionOrder>::value_type(order.order_id
@@ -763,10 +874,11 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		m_callBack.OutputNotifyAll(0, u8"条件单下单成功","INFO","MESSAGE");
 		
 		Log().WithField("fun","InsertConditionOrder")
-			.WithField("key", m_userKey)
-			.WithField("bid", m_condition_order_data.broker_id)
-			.WithField("user_name", m_condition_order_data.user_id)
-			.Log(LOG_INFO, "insert condition order ok");
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name",m_condition_order_data.user_id)
+			.WithPack("req_insert_condition_order",msg)
+			.Log(LOG_INFO,u8"条件单下单成功");
 
 		SaveCurrent();
 
@@ -775,16 +887,18 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	else
 	{
 		order.status = EConditionOrderStatus::discard;
+		order.touched_time = GetTouchedTime(order);
 		order.changed = true;
 		m_condition_order_data.condition_orders.insert(
 			std::map<std::string,ConditionOrder>::value_type(order.order_id
 			,order));
 
-		Log().WithField("fun", "InsertConditionOrder")
-			.WithField("key", m_userKey)
-			.WithField("bid", m_condition_order_data.broker_id)
-			.WithField("user_name", m_condition_order_data.user_id)
-			.Log(LOG_INFO, "insert condition order fail");
+		Log().WithField("fun","InsertConditionOrder")
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name",m_condition_order_data.user_id)
+			.WithPack("req_insert_condition_order",msg)
+			.Log(LOG_INFO, u8"条件单下单失败");
 
 		SaveCurrent();
 	}
@@ -807,6 +921,13 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 
 	if (!m_run_server)
 	{
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_cancel_condition_order",msg)
+			.Log(LOG_INFO,u8"条件单撤单请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
@@ -820,6 +941,13 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	if (cancel_co.user_id.substr(0, m_condition_order_data.user_id.size())
 		!= m_condition_order_data.user_id)
 	{
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_cancel_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:撤单请求中的用户名错误");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单撤单请求已被服务器拒绝,原因:撤单请求中的用户名错误"
@@ -831,6 +959,13 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	auto it = m_condition_order_data.condition_orders.find(order_key);
 	if (it == m_condition_order_data.condition_orders.end())
 	{
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_cancel_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:单号不存在");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单撤单请求已被服务器拒绝,原因:单号不存在"
@@ -841,6 +976,13 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	ConditionOrder& order = it->second;
 	if (order.status == EConditionOrderStatus::touched)
 	{
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_cancel_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:条件单已触发");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单已触发"
@@ -850,6 +992,13 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 
 	if (order.status == EConditionOrderStatus::cancel)
 	{
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_cancel_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:条件单已撤");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单已撤"
@@ -859,6 +1008,13 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 
 	if (order.status == EConditionOrderStatus::discard)
 	{
+		Log().WithField("fun", "CancelConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_cancel_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单撤单请求已被服务器拒绝,原因:条件单是废单");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单撤单请求已被服务器拒绝,原因:条件单是废单"
@@ -867,7 +1023,16 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	}
 
 	it->second.status = EConditionOrderStatus::cancel;
+	it->second.touched_time = GetTouchedTime(it->second);
 	it->second.changed = true;
+
+	Log().WithField("fun", "CancelConditionOrder")
+		.WithField("key", m_userKey)
+		.WithField("bid", m_condition_order_data.broker_id)
+		.WithField("user_name", m_condition_order_data.user_id)
+		.WithPack("req_cancel_condition_order", msg)
+		.Log(LOG_INFO, u8"条件单撤单成功");
+
 	m_callBack.OutputNotifyAll(0, u8"条件单撤单成功", "INFO", "MESSAGE");
 	m_current_day_condition_order_count--;
 	m_current_valid_condition_order_count--;
@@ -891,6 +1056,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 
 	if (!m_run_server)
 	{
+		Log().WithField("fun","PauseConditionOrder")
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name",m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order",msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
@@ -904,6 +1076,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	if (pause_co.user_id.substr(0, m_condition_order_data.user_id.size())
 		!= m_condition_order_data.user_id)
 	{
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:暂停请求中的用户名错误");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:暂停请求中的用户名错误"
@@ -915,6 +1094,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	auto it = m_condition_order_data.condition_orders.find(order_key);
 	if (it == m_condition_order_data.condition_orders.end())
 	{
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:单号不存在");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:单号不存在"
@@ -925,6 +1111,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	ConditionOrder& order = it->second;
 	if (order.status == EConditionOrderStatus::touched)
 	{
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单已触发");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单已触发"
@@ -934,6 +1127,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 
 	if (order.status == EConditionOrderStatus::cancel)
 	{
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单已撤");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单已撤"
@@ -943,6 +1143,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 
 	if (order.status == EConditionOrderStatus::discard)
 	{
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单是废单");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单是废单"
@@ -952,6 +1159,13 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 
 	if (order.status == EConditionOrderStatus::suspend)
 	{
+		Log().WithField("fun", "PauseConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_pause_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单暂停请求已被服务器拒绝,原因:条件单已经暂停");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单暂停请求已被服务器拒绝,原因:条件单已经暂停"
@@ -960,7 +1174,14 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	}
 
 	it->second.status = EConditionOrderStatus::suspend;
+	it->second.touched_time = GetTouchedTime(it->second);
 	it->second.changed = true;
+	Log().WithField("fun", "PauseConditionOrder")
+		.WithField("key", m_userKey)
+		.WithField("bid", m_condition_order_data.broker_id)
+		.WithField("user_name", m_condition_order_data.user_id)
+		.WithPack("req_pause_condition_order", msg)
+		.Log(LOG_INFO, u8"条件单暂停成功");
 	m_callBack.OutputNotifyAll(0, u8"条件单暂停成功", "INFO", "MESSAGE");
 	SaveCurrent();	
 	BuildConditionOrderIndex();
@@ -982,6 +1203,13 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 
 	if (!m_run_server)
 	{
+		Log().WithField("fun","ResumeConditionOrder")
+			.WithField("key",m_userKey)
+			.WithField("bid",m_condition_order_data.broker_id)
+			.WithField("user_name",m_condition_order_data.user_id)
+			.WithPack("req_resume_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单恢复请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"
@@ -995,6 +1223,13 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	if (resume_co.user_id.substr(0, m_condition_order_data.user_id.size())
 		!= m_condition_order_data.user_id)
 	{
+		Log().WithField("fun", "ResumeConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_resume_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:恢复请求中的用户名错误");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单恢复请求已被服务器拒绝,原因:恢复请求中的用户名错误"
@@ -1006,6 +1241,13 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	auto it = m_condition_order_data.condition_orders.find(order_key);
 	if (it == m_condition_order_data.condition_orders.end())
 	{
+		Log().WithField("fun", "ResumeConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_resume_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:单号不存在");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单恢复请求已被服务器拒绝,原因:单号不存在"
@@ -1016,16 +1258,31 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	ConditionOrder& order = it->second;
 	if (order.status != EConditionOrderStatus::suspend)
 	{
+		Log().WithField("fun", "ResumeConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_resume_condition_order", msg)
+			.Log(LOG_INFO, u8"条件单恢复请求已被服务器拒绝,原因:条件单不是处于暂停状态");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"条件单恢复请求已被服务器拒绝,原因:条件单不是处于暂停状态"
 			, "WARNING", "MESSAGE");
 		return;
 	}
-	
-	
+		
 	it->second.status = EConditionOrderStatus::live;
+	it->second.touched_time = GetTouchedTime(it->second);
 	it->second.changed = true;
+
+	Log().WithField("fun", "ResumeConditionOrder")
+		.WithField("key", m_userKey)
+		.WithField("bid", m_condition_order_data.broker_id)
+		.WithField("user_name", m_condition_order_data.user_id)
+		.WithPack("req_resume_condition_order", msg)
+		.Log(LOG_INFO, u8"条件单恢复成功");
+
 	m_callBack.OutputNotifyAll(0, u8"条件单恢复成功", "INFO", "MESSAGE");
 	SaveCurrent();	
 	BuildConditionOrderIndex();
@@ -1509,6 +1766,12 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 
 	if (!m_run_server)
 	{
+		Log().WithField("fun", "QryHisConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_his_data.broker_id)
+			.WithField("user_name", m_condition_order_his_data.user_id)
+			.Log(LOG_INFO, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行");
+
 		m_callBack.OutputNotifyAll(
 			1
 			, u8"历史条件单查询请求已被服务器拒绝,原因:条件单服务器已经暂时停止运行"

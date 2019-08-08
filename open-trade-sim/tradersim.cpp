@@ -2280,6 +2280,7 @@ void tradersim::OnUserDataChange()
 {
 	Log().WithField("fun","OnUserDataChange")
 		.Log(LOG_INFO,"tradersim OnUserDataChange");
+	SaveUserDataFile();
 	SendUserData();
 }
 
@@ -3983,9 +3984,9 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 	RecaculatePositionAndFloatProfit();
 
 	//保存用户文件
-	SaveUserDataFile();
+	//SaveUserDataFile();
 
-	SendUserData();
+	//SendUserData();
 }
 
 void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
@@ -4008,7 +4009,7 @@ void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 			UpdateOrder(order);
 			m_something_changed = true;
 			OutputNotifyAllSycn(1, u8"撤单成功");
-			SendUserData();
+			//SendUserData();
 			return;
 		}
 	}
