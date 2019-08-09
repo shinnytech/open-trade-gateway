@@ -99,13 +99,7 @@ bool trade_server::init()
 	condition_order_config tmp_co_config;
 	if (LoadConditionOrderConfig(tmp_co_config))
 	{
-		_co_config = tmp_co_config;		
-
-		//一启动就自动启动所有用户进程
-		Log().WithField("fun","init")
-			.WithField("key","gateway")
-			.Log(LOG_INFO,"auto start ctp");
-		TryStartTradeInstance();
+		_co_config = tmp_co_config;				
 	}
 
 	_timer.expires_from_now(boost::posix_time::seconds(30));
@@ -180,7 +174,7 @@ void trade_server::OnCheckServerStatus()
 	Log().WithField("fun","OnCheckServerStatus")
 		.WithField("key","gateway")
 		.Log(LOG_INFO,"on check server status");
-
+	
 	condition_order_config tmp_co_config;
 	if (LoadConditionOrderConfig(tmp_co_config))
 	{
@@ -194,7 +188,7 @@ void trade_server::OnCheckServerStatus()
 			NotifyConditionOrderServerStatus();
 		}*/
 
-		//_co_config.auto_start_ctp_time = tmp_co_config.auto_start_ctp_time;
+		_co_config.auto_start_ctp_time = tmp_co_config.auto_start_ctp_time;
 		_co_config.auto_close_ctp_time = tmp_co_config.auto_close_ctp_time;
 		_co_config.auto_restart_process_time = tmp_co_config.auto_restart_process_time;
 
@@ -202,7 +196,7 @@ void trade_server::OnCheckServerStatus()
 		int weekNumber=tm.date().day_of_week();
 		int timeValue = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
 		
-		/*if (IsInTimeSpan(_co_config.auto_start_ctp_time, weekNumber, timeValue))
+		if (IsInTimeSpan(_co_config.auto_start_ctp_time, weekNumber, timeValue))
 		{
 			if (!_co_config.has_auto_start_ctp)
 			{
@@ -216,7 +210,7 @@ void trade_server::OnCheckServerStatus()
 		else
 		{
 			_co_config.has_auto_start_ctp = false;
-		}*/
+		}
 
 		if (IsInTimeSpan(_co_config.auto_close_ctp_time, weekNumber, timeValue))
 		{

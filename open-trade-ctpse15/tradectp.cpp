@@ -183,7 +183,7 @@ void traderctp::ProcessOnRspAuthenticate(std::shared_ptr<CThostFtdcRspInfoField>
 		//如果是未初始化
 		if (7 == pRspInfo->ErrorID)
 		{
-			_ios.post(boost::bind(&traderctp::ReinitCtp, this));
+			_ios.post(boost::bind(&traderctp::ReinitCtp,this));
 		}
 		return;
 	}
@@ -1426,6 +1426,33 @@ void traderctp::InitPositionVolume()
 		Trade& trade = *(it->second);
 		AdjustPositionByTrade(trade);
 	}
+
+	for (auto it = m_data.m_positions.begin();
+		it != m_data.m_positions.end(); ++it)
+	{
+		const std::string& symbol = it->first;
+		Position& position = it->second;
+
+		Log().WithField("fun", "InitPositionVolume")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("exchange_id", position.exchange_id.c_str())
+			.WithField("instrument_id", position.instrument_id.c_str())			
+			.WithField("pos_short_today", position.pos_short_today)
+			.WithField("pos_short_his", position.pos_short_his)
+			.WithField("pos_long_today", position.pos_long_today)
+			.WithField("pos_long_his", position.pos_long_his)
+			.WithField("volume_long_his", position.volume_long_his)
+			.WithField("volume_long_frozen_his", position.volume_long_frozen_his)
+			.WithField("volume_long_today", position.volume_long_today)
+			.WithField("volume_long_frozen_today", position.volume_long_frozen_today)
+			.WithField("volume_short_his", position.volume_short_his)
+			.WithField("volume_short_frozen_his", position.volume_short_frozen_his)
+			.WithField("volume_short_today", position.volume_short_today)
+			.WithField("volume_short_frozen_today", position.volume_short_frozen_today)
+			.Log(LOG_INFO,"InitPositionVolume Finish");
+	}
 }
 
 void traderctp::AdjustPositionByTrade(const Trade& trade)
@@ -1509,6 +1536,29 @@ void traderctp::AdjustPositionByTrade(const Trade& trade)
 		}
 	}
 	pos.changed = true;
+
+	if (m_position_inited)
+	{
+		Log().WithField("fun","AdjustPositionByTrade")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("exchange_id",pos.exchange_id.c_str())
+			.WithField("instrument_id",pos.instrument_id.c_str())
+			.WithField("pos_short_today",pos.pos_short_today)
+			.WithField("pos_short_his",pos.pos_short_his)
+			.WithField("pos_long_today",pos.pos_long_today)
+			.WithField("pos_long_his", pos.pos_long_his)
+			.WithField("volume_long_his",pos.volume_long_his)
+			.WithField("volume_long_frozen_his",pos.volume_long_frozen_his)
+			.WithField("volume_long_today",pos.volume_long_today)
+			.WithField("volume_long_frozen_today",pos.volume_long_frozen_today)
+			.WithField("volume_short_his",pos.volume_short_his)
+			.WithField("volume_short_frozen_his",pos.volume_short_frozen_his)
+			.WithField("volume_short_today",pos.volume_short_today)
+			.WithField("volume_short_frozen_today",pos.volume_short_frozen_today)
+			.Log(LOG_INFO, "AdjustPositionByTrade Finish");
+	}
 }
 
 void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInvestorPosition
@@ -4589,6 +4639,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		else if (ECTPLoginStatus::reqLoginTimeOut == login_status)
 		{
 			m_b_login.store(false);
+			StopTdApi();
 			if (connId != 0)
 			{
 				m_loging_connectId = connId;
@@ -5258,6 +5309,7 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
+			.WithField("exchange_id", co.exchange_id)
 			.WithField("instrument_id",co.instrument_id)	
 			.Log(LOG_WARNING,"has bad volume_type");
 
@@ -5297,7 +5349,8 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("instrument_id",co.instrument_id)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
 				.Log(LOG_WARNING,"can not find contingent_price");			
 			return false;
 		}
@@ -5389,6 +5442,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
+			.WithField("exchange_id", co.exchange_id)
 			.WithField("instrument_id",co.instrument_id)
 			.Log(LOG_WARNING,"exchange not support close_today command");	
 		return false;
@@ -5437,7 +5491,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithField("instrument_id",co.instrument_id)
+						.WithField("exchange_id", co.exchange_id)
+						.WithField("instrument_id", co.instrument_id)
 						.Log(LOG_WARNING,"can close short is less than will close short");				
 					return false;
 				}				
@@ -5448,7 +5503,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"can close short is less than will close short");				
 				return false;
 			}
@@ -5468,7 +5524,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"have no need close short");
 				return false;
 			}
@@ -5504,7 +5561,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithField("instrument_id",co.instrument_id)
+						.WithField("exchange_id", co.exchange_id)
+						.WithField("instrument_id", co.instrument_id)
 						.Log(LOG_WARNING,"can close long is less than will close long");					
 					return false;
 				}
@@ -5515,7 +5573,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"can close long is less than will close long");
 				return false;
 			}
@@ -5535,7 +5594,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"have no need close long");			
 				return false;
 			}
@@ -5576,7 +5636,8 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("instrument_id",co.instrument_id)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
 				.Log(LOG_WARNING,"can not find contingent_price");
 			return false;
 		}
@@ -5787,7 +5848,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithField("instrument_id",co.instrument_id)
+						.WithField("exchange_id", co.exchange_id)
+						.WithField("instrument_id", co.instrument_id)
 						.Log(LOG_WARNING,"can close short is less than will close short");					
 					return false;
 				}
@@ -5798,7 +5860,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"can close short is less than will close short");
 				return false;
 			}
@@ -5818,7 +5881,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"have no need close short");
 				return false;
 			}
@@ -5854,7 +5918,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithField("instrument_id",co.instrument_id)
+						.WithField("exchange_id", co.exchange_id)
+						.WithField("instrument_id", co.instrument_id)
 						.Log(LOG_WARNING, "can close long is less than will close long");				
 					return false;
 				}
@@ -5865,7 +5930,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"can close long is less than will close long");
 				return false;
 			}
@@ -5885,7 +5951,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
-					.WithField("instrument_id",co.instrument_id)
+					.WithField("exchange_id", co.exchange_id)
+					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_WARNING,"have no need close long");
 				return false;
 			}
@@ -5926,7 +5993,8 @@ bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("instrument_id",co.instrument_id)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
 				.Log(LOG_WARNING,"can not find contingent_price");			
 			return false;
 		}
@@ -6116,13 +6184,13 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		if (EVolumeType::num == co.volume_type)
 		{
 			//要平的手数小于等于可平手数
-			if (co.volume <= pos.volume_short - pos.volume_short_frozen)
+			if (co.volume <= pos.pos_short_his+ pos.pos_short_today - pos.volume_short_frozen)
 			{
 				f.VolumeTotalOriginal = co.volume;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
 			//要平的手数小于等于可平手数(包括冻结的手数)
-			else if (co.volume <= pos.volume_short)
+			else if (co.volume <= pos.pos_short_his + pos.pos_short_today)
 			{
 				if (order.is_cancel_ori_close_order)
 				{
@@ -6157,9 +6225,9 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		{
 			Position& position = GetPosition(symbol);
 			//如果可平手数大于零
-			if (pos.volume_short - pos.volume_short_frozen > 0)
+			if (pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen > 0)
 			{
-				f.VolumeTotalOriginal = pos.volume_short - pos.volume_short_frozen;
+				f.VolumeTotalOriginal = pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
 			else
@@ -6184,13 +6252,13 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		if (EVolumeType::num == co.volume_type)
 		{
 			//要平的手数小于等于可平的手数
-			if (co.volume <= pos.volume_long - pos.volume_long_frozen)
+			if (co.volume <= pos.pos_long_his+ pos.pos_long_today - pos.volume_long_frozen)
 			{
 				f.VolumeTotalOriginal = co.volume;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
 			//要平的手数小于等于可平手数(包括冻结的手数)
-			else if (co.volume <= pos.volume_long)
+			else if (co.volume <= pos.pos_long_his + pos.pos_long_today)
 			{
 				if (order.is_cancel_ori_close_order)
 				{
@@ -6225,9 +6293,9 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		{
 			Position& position = GetPosition(symbol);
 			//如果可平手数大于零
-			if (pos.volume_long - pos.volume_long_frozen > 0)
+			if (pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen > 0)
 			{
-				f.VolumeTotalOriginal = pos.volume_long - pos.volume_long_frozen;
+				f.VolumeTotalOriginal = pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
 			else
@@ -6569,7 +6637,8 @@ bool traderctp::ConditionOrder_Reverse_Long(const ConditionOrder& order
 	else
 	{
 		//如果有多仓
-		if (pos.volume_long > 0)
+		int volume_long = pos.pos_long_today + pos.pos_long_his;
+		if (volume_long > 0)
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -6586,7 +6655,7 @@ bool traderctp::ConditionOrder_Reverse_Long(const ConditionOrder& order
 			f.Direction = THOST_FTDC_D_Sell;
 
 			//数量
-			f.VolumeTotalOriginal = pos.volume_long;
+			f.VolumeTotalOriginal = volume_long;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
 			//价格类型(反手一定用市价平仓)
@@ -6609,7 +6678,8 @@ bool traderctp::ConditionOrder_Reverse_Long(const ConditionOrder& order
 
 	//生成开空单	
 	//如果有多仓
-	if (pos.volume_long > 0)
+	int volume_long = pos.pos_long_today + pos.pos_long_his;
+	if (volume_long > 0)
 	{
 		CThostFtdcInputOrderField f;
 		memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -6626,7 +6696,7 @@ bool traderctp::ConditionOrder_Reverse_Long(const ConditionOrder& order
 		f.Direction = THOST_FTDC_D_Sell;
 
 		//数量
-		f.VolumeTotalOriginal = pos.volume_long;
+		f.VolumeTotalOriginal = volume_long;
 		f.VolumeCondition = THOST_FTDC_VC_AV;
 
 		//价格(反手一定用市价开仓)
@@ -6782,7 +6852,8 @@ bool traderctp::ConditionOrder_Reverse_Short(const ConditionOrder& order
 	else
 	{
 		//如果有空仓
-		if (pos.volume_short > 0)
+		int volume_short = pos.pos_short_today + pos.pos_short_his;
+		if (volume_short > 0)
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -6799,7 +6870,7 @@ bool traderctp::ConditionOrder_Reverse_Short(const ConditionOrder& order
 			f.Direction = THOST_FTDC_D_Buy;
 
 			//数量
-			f.VolumeTotalOriginal = pos.volume_short;
+			f.VolumeTotalOriginal = volume_short;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
 			//价格类型(反手一定用市价平仓)
@@ -6823,7 +6894,8 @@ bool traderctp::ConditionOrder_Reverse_Short(const ConditionOrder& order
 	//生成开多单	
 
 	//如果有空仓
-	if (pos.volume_short > 0)
+	int volume_short = pos.pos_short_today + pos.pos_short_his;
+	if (volume_short > 0)
 	{
 		CThostFtdcInputOrderField f;
 		memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -6840,7 +6912,7 @@ bool traderctp::ConditionOrder_Reverse_Short(const ConditionOrder& order
 		f.Direction = THOST_FTDC_D_Buy;
 
 		//数量
-		f.VolumeTotalOriginal = pos.volume_short;
+		f.VolumeTotalOriginal = volume_short;
 		f.VolumeCondition = THOST_FTDC_VC_AV;
 
 		//价格(反手一定用市价开仓)
