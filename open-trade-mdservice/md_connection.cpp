@@ -257,7 +257,7 @@ void  md_connection::OnMessage(const std::string &json_str)
 			continue;
 		ss.ToVar(it->second,&m.value);	
 
-		/*std::string strKey = "/";
+		std::string strKey = "/";
 		strKey += m.name.GetString();
 
 		rapidjson::Document instDoc;		
@@ -286,7 +286,7 @@ void  md_connection::OnMessage(const std::string &json_str)
 			.WithField("key","mdservice")
 			.WithPack("diff",strDiff)
 			.WithPack("merge",strMerge)
-			.Log(LOG_INFO, "md_connection receive md message");*/		
+			.Log(LOG_INFO, "md_connection receive md message");		
 	}
 }
 
