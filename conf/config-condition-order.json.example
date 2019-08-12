@@ -1,10 +1,10 @@
 {
   "run_server":true,
-  "auto_start_ctp_time": [{"weekday":1,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
-  {"weekday":2,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
-  {"weekday":3,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
-  {"weekday":4,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
-   {"weekday":5,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]}
+  "auto_start_ctp_time": [{"weekday":1,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},
+  {"weekday":2,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},
+  {"weekday":3,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},
+  {"weekday":4,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},
+   {"weekday":5,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]}
   ],
   "auto_close_ctp_time": [{"weekday":1,"timespan":[{"begin":1535,"end":1540}]},
   {"weekday":2,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
@@ -13,11 +13,11 @@
   {"weekday":5,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
   {"weekday":6,"timespan":[{"begin":235,"end":240}]}
   ],
-  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":900,"end":1530}]},
-  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":855,"end":1530}]},
+  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
+  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
+  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
+  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
   {"weekday":6,"timespan":[{"begin":0,"end":230}]}
   ]
 }

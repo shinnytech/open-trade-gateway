@@ -37,6 +37,7 @@ ConditionOrderManager::ConditionOrderManager(const std::string& userKey
 	,m_INETime(0)
 	,m_FFEXTime(0)
 	,m_CZCETime(0)
+	,_instrumentTradeStatusInfoMap()
 {	
 	LoadConditionOrderConfig();
 }
@@ -185,7 +186,7 @@ void ConditionOrderManager::Load(const std::string& bid
 				{
 					//如果不是当天新增的条件单
 					if (order.trading_day != atoi(trading_day.c_str()))
-					{
+					{						
 						//放入历史条件单列表
 						tmp_his_condition_orders.push_back(order);
 						//从当前条件单列表中删除
@@ -200,6 +201,7 @@ void ConditionOrderManager::Load(const std::string& bid
 					//如果不是当天新增的条件单
 					if (order.trading_day != atoi(trading_day.c_str()))
 					{
+						order.status = EConditionOrderStatus::discard;
 						//放入历史条件单列表
 						tmp_his_condition_orders.push_back(order);
 						//从当前条件单列表中删除
@@ -214,6 +216,7 @@ void ConditionOrderManager::Load(const std::string& bid
 					//有效日期小于当前交易日
 					if (order.GTD_date < atoi(trading_day.c_str()))
 					{
+						order.status = EConditionOrderStatus::discard;
 						//放入历史条件单列表
 						tmp_his_condition_orders.push_back(order);
 						//从当前条件单列表中删除
@@ -441,7 +444,8 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			Log().WithField("fun", "ValidConditionOrder")
 				.WithField("key", m_userKey)
 				.WithField("bid", m_condition_order_data.broker_id)
-				.WithField("user_name", m_condition_order_data.user_id)				
+				.WithField("user_name", m_condition_order_data.user_id)	
+				.WithField("order_id", order.order_id)
 				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发条件中的合约ID不存在:" + symbol);
 
 			m_callBack.OutputNotifyAll(501
@@ -458,6 +462,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO,u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间");
 
 				m_callBack.OutputNotifyAll(502
@@ -474,6 +479,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,价格触发条件指定的触发价格不合法");
 
 				m_callBack.OutputNotifyAll(503
@@ -488,25 +494,37 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			case EPriceRelationType::G:
 				if (isgreater(ins->last_price, cond.contingent_price))
 				{
-					flag = true;
+					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+					{
+						flag = true;
+					}					
 				}
 				break;
 			case EPriceRelationType::GE:
 				if (isgreaterequal(ins->last_price,cond.contingent_price))
 				{
-					flag = true;
+					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+					{
+						flag = true;
+					}					
 				}
 				break;
 			case EPriceRelationType::L:
 				if (isless(ins->last_price,cond.contingent_price))
 				{
-					flag = true;
+					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+					{
+						flag = true;
+					}
 				}
 				break;
 			case EPriceRelationType::LE:
 				if (islessequal(ins->last_price,cond.contingent_price))
 				{
-					flag = true;
+					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+					{
+						flag = true;
+					}
 				}
 				break;
 			default:
@@ -519,6 +537,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
 				m_callBack.OutputNotifyAll(504
@@ -539,6 +558,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,价格区间触发条件指定的价格区间不合法");
 
 				m_callBack.OutputNotifyAll(505
@@ -551,7 +571,10 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			if (islessequal(ins->last_price,cond.contingent_price_right)
 				&& isgreaterequal(ins->last_price,cond.contingent_price_left))
 			{
-				flag = true;
+				if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+				{
+					flag = true;
+				}				
 			}
 
 			if (flag)
@@ -560,6 +583,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
 				m_callBack.OutputNotifyAll(504
@@ -577,6 +601,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,固定价格止盈触发条件指定的固定价格不合法");
 
 				m_callBack.OutputNotifyAll(506
@@ -592,7 +617,10 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				//向上突破止盈价
 				if (isgreater(ins->last_price,cond.break_even_price))
 				{				
-					flag = true;
+					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+					{
+						flag = true;
+					}					
 				}
 			}
 			//空头
@@ -601,7 +629,10 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				//先向下突破止盈价
 				if (isless(ins->last_price, cond.break_even_price))
 				{					
-					flag = true;
+					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
+					{
+						flag = true;
+					}
 				}
 			}
 			
@@ -611,6 +642,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
 				m_callBack.OutputNotifyAll(504
@@ -632,6 +664,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				.WithField("key", m_userKey)
 				.WithField("bid", m_condition_order_data.broker_id)
 				.WithField("user_name", m_condition_order_data.user_id)
+				.WithField("order_id", order.order_id)
 				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单列表中的合约ID不存在:" + symbol);
 
 			m_callBack.OutputNotifyAll(507
@@ -648,6 +681,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单手数设置不合法");
 
 				m_callBack.OutputNotifyAll(508
@@ -665,6 +699,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法");
 
 				m_callBack.OutputNotifyAll(509
@@ -702,6 +737,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 					.WithField("key", m_userKey)
 					.WithField("bid", m_condition_order_data.broker_id)
 					.WithField("user_name", m_condition_order_data.user_id)
+					.WithField("order_id", order.order_id)
 					.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单触发的订单价格设置不合法");
 
 				m_callBack.OutputNotifyAll(509
@@ -720,6 +756,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 				.WithField("key", m_userKey)
 				.WithField("bid", m_condition_order_data.broker_id)
 				.WithField("user_name", m_condition_order_data.user_id)
+				.WithField("order_id", order.order_id)
 				.Log(LOG_INFO, u8"条件单已被服务器拒绝,条件单有效日期设置不合法");
 
 			m_callBack.OutputNotifyAll(510
@@ -735,6 +772,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			.WithField("key", m_userKey)
 			.WithField("bid", m_condition_order_data.broker_id)
 			.WithField("user_name", m_condition_order_data.user_id)
+			.WithField("order_id", order.order_id)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制");
 
 		m_callBack.OutputNotifyAll(511
@@ -750,6 +788,7 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			.WithField("key", m_userKey)
 			.WithField("bid", m_condition_order_data.broker_id)
 			.WithField("user_name", m_condition_order_data.user_id)
+			.WithField("order_id", order.order_id)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制");
 
 		m_callBack.OutputNotifyAll(512
@@ -1301,6 +1340,68 @@ std::set<std::string>& ConditionOrderManager::GetTimeCoSet()
 TInstOrderIdListMap& ConditionOrderManager::GetPriceCoMap()
 {
 	return m_price_condition_order_map;
+}
+
+void ConditionOrderManager::OnUpdateInstrumentTradeStatus(const InstrumentTradeStatusInfo
+	& instTradeStatusInfo)
+{	
+	TInstrumentTradeStatusInfoMap::iterator it = _instrumentTradeStatusInfoMap.find(instTradeStatusInfo.InstrumentId);
+	if (it == _instrumentTradeStatusInfoMap.end())
+	{
+		_instrumentTradeStatusInfoMap.insert(TInstrumentTradeStatusInfoMap::value_type(instTradeStatusInfo.InstrumentId,
+			instTradeStatusInfo));
+	}
+	else
+	{
+		it->second = instTradeStatusInfo;
+	}
+
+	//检验状态
+	if ((instTradeStatusInfo.instumentStatus != EInstrumentStatus::auctionOrdering)
+		&& (instTradeStatusInfo.instumentStatus != EInstrumentStatus::continousTrading))
+	{
+		return;
+	}
+
+	//如果数据未就绪,不是正常的状态切换
+	if (!instTradeStatusInfo.IsDataReady)
+	{
+		return;
+	}
+
+	//服务端时间和客户端时间相差60秒以上,不是正常的状态切换
+	if (std::abs(instTradeStatusInfo.serverEnterTime - instTradeStatusInfo.localEnterTime) > 60)
+	{
+		return;
+	}
+
+	//检验品种
+	std::string strExchangeId = instTradeStatusInfo.ExchangeId;
+	std::string strInstId = instTradeStatusInfo.InstrumentId;
+	std::string strSymbolId = strExchangeId + "." + strInstId;
+	TInstOrderIdListMap& om = GetOpenmarketCoMap();
+	TInstOrderIdListMap::iterator it2 = om.find(strSymbolId);
+	if (it2 == om.end())
+	{
+		return;
+	}
+
+	OnMarketOpen(strSymbolId);	
+}
+
+bool ConditionOrderManager::InstrumentLastTradeStatusIsContinousTrading(const std::string& instId)
+{
+	std::string strInstId = instId;
+	CutDigital(strInstId);
+	TInstrumentTradeStatusInfoMap::iterator it = _instrumentTradeStatusInfoMap.find(strInstId);
+	if (it == _instrumentTradeStatusInfoMap.end())
+	{
+		return true;
+	}
+	else
+	{
+		return (EInstrumentStatus::continousTrading==it->second.instumentStatus);
+	}
 }
 
 void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)

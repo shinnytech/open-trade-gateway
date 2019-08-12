@@ -446,3 +446,42 @@ struct req_reconnect_trade_instance
 
 typedef std::map<std::string, std::vector<std::string> > TInstOrderIdListMap;
 
+
+//合约交易状态类型
+enum class EInstrumentStatus
+{
+	beforeTrading=0,//开盘前
+	closed, //收盘
+	noTrading,//盘中非交易状态
+	auctionOrdering,//集合竞价报单
+	auctionBalance,//集合竞价价格平衡
+	auctionMatch,//集合竞价撮合
+	continousTrading//连续交易
+};
+
+struct InstrumentTradeStatusInfo
+{
+	std::string ExchangeId;
+
+	std::string InstrumentId;
+
+	int serverEnterTime;
+	
+	int localEnterTime;
+
+	EInstrumentStatus instumentStatus;
+
+	bool IsDataReady;
+
+	InstrumentTradeStatusInfo()
+		:ExchangeId("")
+		,InstrumentId("")
+		,serverEnterTime(0)
+		,localEnterTime(0)
+		,instumentStatus(EInstrumentStatus::beforeTrading)
+		,IsDataReady(false)
+	{
+	}
+};
+
+typedef std::map<std::string,InstrumentTradeStatusInfo> TInstrumentTradeStatusInfoMap;

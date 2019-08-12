@@ -43,6 +43,7 @@ trade_server::trade_server(boost::asio::io_context& ios,int port)
 	,_connection_id(0)
 	,_timer(io_context_)
 	,_co_config()
+	,m_need_auto_start_ctp(true)
 {
 }
 
@@ -51,7 +52,7 @@ bool trade_server::init()
 	boost::system::error_code ec;
 
 	//Open the acceptor
-	acceptor_.open(_endpoint.protocol(), ec);
+	acceptor_.open(_endpoint.protocol(),ec);
 	if (ec)
 	{
 		Log().WithField("fun","init")
@@ -61,7 +62,7 @@ bool trade_server::init()
 	}
 
 	//Allow address reuse
-	acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
+	acceptor_.set_option(boost::asio::socket_base::reuse_address(true),ec);
 	if (ec)
 	{
 		Log().WithField("fun","init")
@@ -72,7 +73,7 @@ bool trade_server::init()
 	}
 
 	// Bind to the server address
-	acceptor_.bind(_endpoint, ec);
+	acceptor_.bind(_endpoint,ec);
 	if (ec)
 	{
 		Log().WithField("fun","init")
@@ -102,7 +103,7 @@ bool trade_server::init()
 		_co_config = tmp_co_config;				
 	}
 
-	_timer.expires_from_now(boost::posix_time::seconds(30));
+	_timer.expires_from_now(boost::posix_time::seconds(10));
 	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus,this));
 
 	return true;
@@ -178,7 +179,7 @@ void trade_server::OnCheckServerStatus()
 	condition_order_config tmp_co_config;
 	if (LoadConditionOrderConfig(tmp_co_config))
 	{
-		/*if (tmp_co_config.run_server != _co_config.run_server)
+		if (tmp_co_config.run_server != _co_config.run_server)
 		{
 			Log().WithField("fun","OnCheckServerStatus")
 				.WithField("key","gateway")
@@ -186,7 +187,7 @@ void trade_server::OnCheckServerStatus()
 
 			_co_config.run_server = tmp_co_config.run_server;
 			NotifyConditionOrderServerStatus();
-		}*/
+		}
 
 		_co_config.auto_start_ctp_time = tmp_co_config.auto_start_ctp_time;
 		_co_config.auto_close_ctp_time = tmp_co_config.auto_close_ctp_time;
@@ -196,7 +197,7 @@ void trade_server::OnCheckServerStatus()
 		int weekNumber=tm.date().day_of_week();
 		int timeValue = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
 		
-		if (IsInTimeSpan(_co_config.auto_start_ctp_time, weekNumber, timeValue))
+		if (IsInTimeSpan(_co_config.auto_start_ctp_time,weekNumber,timeValue))
 		{
 			if (!_co_config.has_auto_start_ctp)
 			{
@@ -205,6 +206,7 @@ void trade_server::OnCheckServerStatus()
 					.Log(LOG_INFO,"auto start ctp");				
 				_co_config.has_auto_start_ctp = true;
 				TryStartTradeInstance();
+				m_need_auto_start_ctp = false;
 			}
 		}
 		else
@@ -230,7 +232,18 @@ void trade_server::OnCheckServerStatus()
 
 		if(IsInTimeSpan(_co_config.auto_restart_process_time, weekNumber, timeValue))
 		{			
-			TryRestartProcesses();
+			if (m_need_auto_start_ctp)
+			{
+				Log().WithField("fun","OnCheckServerStatus")
+					.WithField("key","gateway")
+					.Log(LOG_INFO,"auto start ctp in auto restart process time span");
+				TryStartTradeInstance();
+				m_need_auto_start_ctp = false;
+			}
+			else
+			{
+				TryRestartProcesses();
+			}			
 		}
 	}
 

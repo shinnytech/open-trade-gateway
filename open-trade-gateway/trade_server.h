@@ -64,4 +64,6 @@ private:
 	boost::asio::deadline_timer _timer;
 
 	condition_order_config _co_config;
+
+	bool m_need_auto_start_ctp;
 };

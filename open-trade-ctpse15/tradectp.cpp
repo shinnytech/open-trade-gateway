@@ -2901,42 +2901,53 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 void traderctp::ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentStatusField>
 	pInstrumentStatus)
 {
-	//检验状态
-	if ((pInstrumentStatus->InstrumentStatus != THOST_FTDC_IS_AuctionOrdering)
-		&& (pInstrumentStatus->InstrumentStatus != THOST_FTDC_IS_Continous))
-	{
-		return;
-	}
-
-	//检验时间
+	InstrumentTradeStatusInfo instTradeStatusInfo;
+	instTradeStatusInfo.InstrumentId = pInstrumentStatus->InstrumentID;
+	instTradeStatusInfo.ExchangeId = pInstrumentStatus->ExchangeID;
+	//进入该状态的时间
 	std::string strEnterTime = pInstrumentStatus->EnterTime;
 	std::vector<std::string> hms;
-	boost::algorithm::split(hms,strEnterTime,boost::algorithm::is_any_of(":"));
+	boost::algorithm::split(hms, strEnterTime, boost::algorithm::is_any_of(":"));
 	if (hms.size() != 3)
 	{
 		return;
 	}
-	int serverTime = atoi(hms[0].c_str()) * 60 * 60 + atoi(hms[1].c_str()) * 60 + atoi(hms[2].c_str());
-	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
-	int localTime = tm.time_of_day().hours() * 60*60 + tm.time_of_day().minutes()*60+ tm.time_of_day().seconds();
-	//服务端时间和客户端时间相差60秒以上,不是正常的状态切换
-	if (std::abs(serverTime - localTime) > 60)
-	{
-		return;
-	}
+	instTradeStatusInfo.serverEnterTime = atoi(hms[0].c_str()) * 60 * 60 + atoi(hms[1].c_str()) * 60 + atoi(hms[2].c_str());
 
-	//检验品种
-	std::string strExchangeId = pInstrumentStatus->ExchangeID;
-	std::string strInstId = pInstrumentStatus->InstrumentID;
-	std::string strSymbolId = strExchangeId + "." + strInstId;
-	TInstOrderIdListMap& om = m_condition_order_manager.GetOpenmarketCoMap();
-	TInstOrderIdListMap::iterator it = om.find(strSymbolId);
-	if (it == om.end())
+	//收到状态改变消息的本地时间
+	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+	instTradeStatusInfo.localEnterTime = tm.time_of_day().hours() * 60 * 60 + tm.time_of_day().minutes() * 60 + tm.time_of_day().seconds();
+	
+	switch (pInstrumentStatus->InstrumentStatus)
 	{
-		return;
+	case THOST_FTDC_IS_BeforeTrading:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::beforeTrading;
+		break;
+	case THOST_FTDC_IS_NoTrading:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::noTrading;
+		break;
+	case THOST_FTDC_IS_Continous:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::continousTrading;
+		break;
+	case THOST_FTDC_IS_AuctionOrdering:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::auctionOrdering;
+		break;
+	case THOST_FTDC_IS_AuctionBalance:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::auctionBalance;
+		break;
+	case THOST_FTDC_IS_AuctionMatch:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::auctionMatch;
+		break;
+	case THOST_FTDC_IS_Closed:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::closed;
+	default:
+		instTradeStatusInfo.instumentStatus = EInstrumentStatus::beforeTrading;
+		break;
 	}
-		
-	m_condition_order_manager.OnMarketOpen(strSymbolId);
+	
+	instTradeStatusInfo.IsDataReady = m_position_inited;
+
+	m_condition_order_manager.OnUpdateInstrumentTradeStatus(instTradeStatusInfo);	
 }
 
 #pragma endregion

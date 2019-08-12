@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
 		//启动md server
 		boost::process::child md_child(boost::process::search_path("open-trade-mdservice"));
-				
+
 		boost::asio::io_context ios;		
 		trade_server s(ios,g_config.port);
 		if (!s.init())

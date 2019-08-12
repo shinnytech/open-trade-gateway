@@ -50,6 +50,8 @@ public:
 
 	void OnCheckPrice();
 
+	void OnUpdateInstrumentTradeStatus(const InstrumentTradeStatusInfo& instTradeStatusInfo);
+
 	TInstOrderIdListMap& GetOpenmarketCoMap();
 
 	std::set<std::string>& GetTimeCoSet();
@@ -96,6 +98,8 @@ private:
 
 	int m_CZCETime;
 
+	TInstrumentTradeStatusInfoMap _instrumentTradeStatusInfoMap;
+
 	int GetExchangeTime(const std::string& exchange_id);
 	
 	bool ValidConditionOrder(const ConditionOrder& order);	
@@ -113,5 +117,7 @@ private:
 		,ELogicOperator logicOperator);	
 
 	int GetTouchedTime(ConditionOrder& conditionOrder);
+
+	bool InstrumentLastTradeStatusIsContinousTrading(const std::string& instId);
 };
 
