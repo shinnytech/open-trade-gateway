@@ -432,9 +432,12 @@ void ConditionOrderManager::SaveHistory()
 	}
 }
 
-bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
+bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 {
 	//检验条件	
+	bool logic_is_or = (1== order.condition_list.size())
+		|| (ELogicOperator::logic_or ==order.conditions_logic_oper );
+	
 	for (auto& cond : order.condition_list)
 	{
 		std::string symbol = cond.exchange_id + "." + cond.instrument_id;
@@ -458,17 +461,24 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 		{			
 			if (cond.contingent_time <= GetExchangeTime(cond.exchange_id))
 			{
-				Log().WithField("fun", "ValidConditionOrder")
-					.WithField("key", m_userKey)
-					.WithField("bid", m_condition_order_data.broker_id)
-					.WithField("user_name", m_condition_order_data.user_id)
-					.WithField("order_id", order.order_id)
-					.Log(LOG_INFO,u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间");
+				if (logic_is_or)
+				{
+					Log().WithField("fun", "ValidConditionOrder")
+						.WithField("key", m_userKey)
+						.WithField("bid", m_condition_order_data.broker_id)
+						.WithField("user_name", m_condition_order_data.user_id)
+						.WithField("order_id", order.order_id)
+						.Log(LOG_INFO, u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间");
 
-				m_callBack.OutputNotifyAll(502
-					, u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间" 
-					, "WARNING", "MESSAGE");
-				return false;
+					m_callBack.OutputNotifyAll(502
+						, u8"条件单已被服务器拒绝,时间触发条件指定的触发时间小于当前时间"
+						, "WARNING", "MESSAGE");
+					return false;
+				}			
+				else
+				{
+					cond.is_touched = true;
+				}
 			}
 		}
 		else if (cond.contingent_type == EContingentType::price)
@@ -533,17 +543,24 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			
 			if (flag)
 			{
-				Log().WithField("fun", "ValidConditionOrder")
-					.WithField("key", m_userKey)
-					.WithField("bid", m_condition_order_data.broker_id)
-					.WithField("user_name", m_condition_order_data.user_id)
-					.WithField("order_id", order.order_id)
-					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
+				if (logic_is_or)
+				{
+					Log().WithField("fun", "ValidConditionOrder")
+						.WithField("key", m_userKey)
+						.WithField("bid", m_condition_order_data.broker_id)
+						.WithField("user_name", m_condition_order_data.user_id)
+						.WithField("order_id", order.order_id)
+						.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
-				m_callBack.OutputNotifyAll(504
-					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
-					, "WARNING", "MESSAGE");
-				return false;
+					m_callBack.OutputNotifyAll(504
+						, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
+						, "WARNING", "MESSAGE");
+					return false;
+				}
+				else
+				{
+					cond.is_touched = true;
+				}
 			}
 
 		}
@@ -579,17 +596,24 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 
 			if (flag)
 			{
-				Log().WithField("fun", "ValidConditionOrder")
-					.WithField("key", m_userKey)
-					.WithField("bid", m_condition_order_data.broker_id)
-					.WithField("user_name", m_condition_order_data.user_id)
-					.WithField("order_id", order.order_id)
-					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
+				if (logic_is_or)
+				{
+					Log().WithField("fun", "ValidConditionOrder")
+						.WithField("key", m_userKey)
+						.WithField("bid", m_condition_order_data.broker_id)
+						.WithField("user_name", m_condition_order_data.user_id)
+						.WithField("order_id", order.order_id)
+						.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
-				m_callBack.OutputNotifyAll(504
-					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
-					, "WARNING", "MESSAGE");
-				return false;
+					m_callBack.OutputNotifyAll(504
+						, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
+						, "WARNING", "MESSAGE");
+					return false;
+				}
+				else
+				{
+					cond.is_touched = true;
+				}				
 			}
 
 		}
@@ -638,18 +662,49 @@ bool ConditionOrderManager::ValidConditionOrder(const ConditionOrder& order)
 			
 			if (flag)
 			{
-				Log().WithField("fun", "ValidConditionOrder")
-					.WithField("key", m_userKey)
-					.WithField("bid", m_condition_order_data.broker_id)
-					.WithField("user_name", m_condition_order_data.user_id)
-					.WithField("order_id", order.order_id)
-					.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
+				if (logic_is_or)
+				{
+					Log().WithField("fun", "ValidConditionOrder")
+						.WithField("key", m_userKey)
+						.WithField("bid", m_condition_order_data.broker_id)
+						.WithField("user_name", m_condition_order_data.user_id)
+						.WithField("order_id", order.order_id)
+						.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置");
 
-				m_callBack.OutputNotifyAll(504
-					, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
-					, "WARNING", "MESSAGE");
-				return false;
+					m_callBack.OutputNotifyAll(504
+						, u8"条件单已被服务器拒绝,当前价格已满足设定条件,请重新设置"
+						, "WARNING", "MESSAGE");
+					return false;
+				}
+				else
+				{
+					cond.is_touched = true;
+				}
 			}
+		}
+	}
+
+	if (!logic_is_or)
+	{
+		bool flag = true;
+		for (auto& cond : order.condition_list)
+		{
+			flag = flag && cond.is_touched;
+		}
+
+		if (flag)
+		{
+			Log().WithField("fun", "ValidConditionOrder")
+				.WithField("key", m_userKey)
+				.WithField("bid", m_condition_order_data.broker_id)
+				.WithField("user_name", m_condition_order_data.user_id)
+				.WithField("order_id", order.order_id)
+				.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前所有条件都已满足,请重新设置");
+
+			m_callBack.OutputNotifyAll(540
+				, u8"条件单已被服务器拒绝,当前所有条件都已满足,请重新设置"
+				, "WARNING", "MESSAGE");
+			return false;
 		}
 	}
 

@@ -102,7 +102,7 @@ private:
 
 	int GetExchangeTime(const std::string& exchange_id);
 	
-	bool ValidConditionOrder(const ConditionOrder& order);	
+	bool ValidConditionOrder(ConditionOrder& order);	
 
 	void SaveHistory();
 
