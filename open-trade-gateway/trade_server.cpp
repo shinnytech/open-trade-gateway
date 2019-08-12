@@ -211,16 +211,16 @@ void trade_server::OnCheckServerStatus()
 		}
 		else
 		{
-			_co_config.has_auto_start_ctp = false;
+		_co_config.has_auto_start_ctp = false;
 		}
 
 		if (IsInTimeSpan(_co_config.auto_close_ctp_time, weekNumber, timeValue))
 		{
 			if (!_co_config.has_auto_close_ctp)
 			{
-				Log().WithField("fun","OnCheckServerStatus")
-					.WithField("key","gateway")
-					.Log(LOG_INFO,"auto stop ctp");				
+				Log().WithField("fun", "OnCheckServerStatus")
+					.WithField("key", "gateway")
+					.Log(LOG_INFO, "auto stop ctp");
 				_co_config.has_auto_close_ctp = true;
 				TryStopTradeInstance();
 			}
@@ -230,25 +230,25 @@ void trade_server::OnCheckServerStatus()
 			_co_config.has_auto_close_ctp = false;
 		}
 
-		if(IsInTimeSpan(_co_config.auto_restart_process_time, weekNumber, timeValue))
-		{			
+		if (IsInTimeSpan(_co_config.auto_restart_process_time, weekNumber, timeValue))
+		{
 			if (m_need_auto_start_ctp)
 			{
-				Log().WithField("fun","OnCheckServerStatus")
-					.WithField("key","gateway")
-					.Log(LOG_INFO,"auto start ctp in auto restart process time span");
+				Log().WithField("fun", "OnCheckServerStatus")
+					.WithField("key", "gateway")
+					.Log(LOG_INFO, "auto start ctp in auto restart process time span");
 				TryStartTradeInstance();
 				m_need_auto_start_ctp = false;
 			}
 			else
 			{
 				TryRestartProcesses();
-			}			
+			}
 		}
 	}
 
 	_timer.expires_from_now(boost::posix_time::seconds(30));
-	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus,this));
+	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus, this));
 }
 
 bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
@@ -262,7 +262,7 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 	{
 		user_file_path = "/var/local/lib/open-trade-gateway/";
 	}
-	
+
 	if (!boost::filesystem::exists(user_file_path))
 	{
 		return false;
@@ -277,7 +277,7 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			continue;
 		}
 
-		boost::filesystem::path bid_file_path= beg_iter->path();
+		boost::filesystem::path bid_file_path = beg_iter->path();
 		boost::filesystem::recursive_directory_iterator beg_iter_2(bid_file_path);
 		boost::filesystem::recursive_directory_iterator end_iter_2;
 
@@ -308,6 +308,17 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			req_start_trade.user_name = condition_order_data.user_id;
 			req_start_trade.password = condition_order_data.user_password;
 
+			//ycsong 2019/08/12
+			if (req_start_trade.bid.find(u8"sim_快期模拟_游客_",0) != std::string::npos)
+			{
+				continue;
+			}
+
+			if (req_start_trade.bid.find(u8"sim_快期模拟_100000", 0) != std::string::npos)
+			{
+				continue;
+			}
+					   
 			std::string strKey = key_file_path.filename().string();
 			strKey = strKey.substr(0, strKey.length() - 3);
 						
