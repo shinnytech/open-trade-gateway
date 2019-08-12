@@ -309,12 +309,12 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			req_start_trade.password = condition_order_data.user_password;
 
 			//ycsong 2019/08/12
-			if (req_start_trade.bid.find(u8"sim_快期模拟_游客_",0) != std::string::npos)
+			if (req_start_trade.user_name.find(u8"sim_快期模拟_游客_",0) != std::string::npos)
 			{
 				continue;
 			}
 
-			if (req_start_trade.bid.find(u8"sim_快期模拟_100000", 0) != std::string::npos)
+			if (req_start_trade.user_name.find(u8"sim_快期模拟_100000", 0) != std::string::npos)
 			{
 				continue;
 			}
