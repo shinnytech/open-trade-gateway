@@ -1663,6 +1663,18 @@ void ConditionOrderManager::OnCheckPrice()
 					continue;
 				}
 
+				std::string strInstId = c.instrument_id;
+				CutDigital(strInstId);
+				TInstrumentTradeStatusInfoMap::iterator it = _instrumentTradeStatusInfoMap.find(strInstId);
+				if (it != _instrumentTradeStatusInfoMap.end())
+				{
+					InstrumentTradeStatusInfo& instTradeStatusInfo = it->second;
+					if (instTradeStatusInfo.instumentStatus != EInstrumentStatus::continousTrading)
+					{
+						continue;
+					}
+				}
+				
 				if (c.contingent_type == EContingentType::price)
 				{
 					switch (c.price_relation)
