@@ -1140,7 +1140,7 @@ void tradersim::LoadUserDataFile()
 				.WithField("fileName",fn)
 				.WithField("exchange_id",position.exchange_id)
 				.WithField("instrument_id",position.instrument_id)
-				.Log(LOG_WARNING,"miss sysmbol in position!");
+				.Log(LOG_WARNING,"miss symbol in position!");
 			it = m_data.m_positions.erase(it);			
 		}			
 	}

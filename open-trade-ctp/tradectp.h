@@ -545,4 +545,6 @@ private:
 	void SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField);	
 
 	virtual void SendDataDirect(int connId, const std::string& msg);
+
+	void PrintOrderLogIfTouchedByConditionOrder(const Order& order);
 };

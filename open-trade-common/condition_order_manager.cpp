@@ -899,6 +899,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			.WithField("key", m_userKey)
 			.WithField("bid", m_condition_order_data.broker_id)
 			.WithField("user_name", m_condition_order_data.user_id)
+			.WithField("condition_order_id", insert_co.order_id)
 			.WithPack("req_insert_condition_order", msg)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,原因:单号重复");
 
@@ -915,6 +916,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			.WithField("key", m_userKey)
 			.WithField("bid", m_condition_order_data.broker_id)
 			.WithField("user_name", m_condition_order_data.user_id)
+			.WithField("condition_order_id",insert_co.order_id)
 			.WithPack("req_insert_condition_order",msg)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,原因:下单指令中的用户名错误");
 
@@ -949,11 +951,17 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		m_current_valid_condition_order_count++;
 		m_callBack.OutputNotifyAll(516, u8"条件单下单成功","INFO","MESSAGE");
 		
+		SerializerConditionOrderData nss;
+		nss.FromVar(order);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
 		Log().WithField("fun","InsertConditionOrder")
 			.WithField("key",m_userKey)
 			.WithField("bid",m_condition_order_data.broker_id)
 			.WithField("user_name",m_condition_order_data.user_id)
 			.WithPack("req_insert_condition_order",msg)
+			.WithPack("ConditionOrder",strMsg)
 			.Log(LOG_INFO,u8"条件单下单成功");
 
 		SaveCurrent();
@@ -969,11 +977,17 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			std::map<std::string,ConditionOrder>::value_type(order.order_id
 			,order));
 
+		SerializerConditionOrderData nss2;
+		nss2.FromVar(order);
+		std::string strMsg = "";
+		nss2.ToString(&strMsg);
+
 		Log().WithField("fun","InsertConditionOrder")
 			.WithField("key",m_userKey)
 			.WithField("bid",m_condition_order_data.broker_id)
 			.WithField("user_name",m_condition_order_data.user_id)
-			.WithPack("req_insert_condition_order",msg)
+			.WithPack("req_insert_condition_order", msg)
+			.WithPack("ConditionOrder", strMsg)			
 			.Log(LOG_INFO, u8"条件单下单失败");
 
 		SaveCurrent();
@@ -1096,11 +1110,17 @@ void ConditionOrderManager::CancelConditionOrder(const std::string& msg)
 	it->second.touched_time = GetTouchedTime(it->second);
 	it->second.changed = true;
 
+	SerializerConditionOrderData nss2;
+	nss2.FromVar(it->second);
+	std::string strMsg = "";
+	nss2.ToString(&strMsg);
+
 	Log().WithField("fun", "CancelConditionOrder")
 		.WithField("key", m_userKey)
 		.WithField("bid", m_condition_order_data.broker_id)
 		.WithField("user_name", m_condition_order_data.user_id)
-		.WithPack("req_cancel_condition_order", msg)
+		.WithPack("req_cancel_condition_order",msg)
+		.WithPack("ConditionOrder",strMsg)
 		.Log(LOG_INFO, u8"条件单撤单成功");
 
 	m_callBack.OutputNotifyAll(523,u8"条件单撤单成功", "INFO", "MESSAGE");
@@ -1239,12 +1259,20 @@ void ConditionOrderManager::PauseConditionOrder(const std::string& msg)
 	it->second.status = EConditionOrderStatus::suspend;
 	it->second.touched_time = GetTouchedTime(it->second);
 	it->second.changed = true;
+
+	SerializerConditionOrderData nss2;
+	nss2.FromVar(it->second);
+	std::string strMsg = "";
+	nss2.ToString(&strMsg);
+
 	Log().WithField("fun", "PauseConditionOrder")
 		.WithField("key", m_userKey)
 		.WithField("bid", m_condition_order_data.broker_id)
 		.WithField("user_name", m_condition_order_data.user_id)
 		.WithPack("req_pause_condition_order", msg)
+		.WithPack("ConditionOrder",strMsg)
 		.Log(LOG_INFO, u8"条件单暂停成功");
+	
 	m_callBack.OutputNotifyAll(531,u8"条件单暂停成功", "INFO", "MESSAGE");
 	SaveCurrent();	
 	BuildConditionOrderIndex();
@@ -1335,11 +1363,17 @@ void ConditionOrderManager::ResumeConditionOrder(const std::string& msg)
 	it->second.touched_time = GetTouchedTime(it->second);
 	it->second.changed = true;
 
+	SerializerConditionOrderData nss2;
+	nss2.FromVar(it->second);
+	std::string strMsg = "";
+	nss2.ToString(&strMsg);
+
 	Log().WithField("fun", "ResumeConditionOrder")
 		.WithField("key", m_userKey)
 		.WithField("bid", m_condition_order_data.broker_id)
 		.WithField("user_name", m_condition_order_data.user_id)
-		.WithPack("req_resume_condition_order", msg)
+		.WithPack("req_resume_condition_order",msg)
+		.WithPack("ConditionOrder",strMsg)
 		.Log(LOG_INFO, u8"条件单恢复成功");
 
 	m_callBack.OutputNotifyAll(536, u8"条件单恢复成功", "INFO", "MESSAGE");
@@ -1943,6 +1977,15 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 		}
 	}
 
+	Log().WithField("fun","QryHisConditionOrder")
+		.WithField("key",m_userKey)
+		.WithField("bid",m_condition_order_his_data.broker_id)
+		.WithField("user_name",m_condition_order_his_data.user_id)
+		.WithField("user_id",m_condition_order_his_data.user_id)		
+		.WithField("qry_day",qry_his_co.action_day)
+		.WithField("his_co_size",(int)condition_orders.size())
+		.Log(LOG_INFO,u8"历史条件单查询成功");
+	
 	SerializerConditionOrderData nss_his;
 
 	rapidjson::Pointer("/aid").Set(*nss_his.m_doc, "rtn_his_condition_orders");

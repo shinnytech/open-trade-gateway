@@ -152,20 +152,28 @@ void traderctp::OnFrontConnected()
 void traderctp::ProcessOnFrontDisconnected(int nReason)
 {	
 	OutputNotifyAllSycn(322,u8"已经断开与交易前置的连接");
+
+	Log().WithField("fun", "ProcessOnFrontDisconnected")
+		.WithField("key", _key)
+		.WithField("bid", _req_login.bid)
+		.WithField("user_name", _req_login.user_name)
+		.WithField("reason", nReason)
+		.WithField("co_size",(int)m_condition_order_data.condition_orders.size())
+		.Log(LOG_INFO, "ctp OnFrontDisconnected");
 }
 
 void traderctp::OnFrontDisconnected(int nReason)
 {
-	Log().WithField("fun","OnFrontDisconnected")
-		.WithField("key",_key)
-		.WithField("bid",_req_login.bid)
-		.WithField("user_name",_req_login.user_name)
-		.WithField("reason",nReason)
-		.Log(LOG_INFO,"ctp OnFrontDisconnected");
-
 	//还在等待登录阶段
 	if (!m_b_login.load())
 	{		
+		Log().WithField("fun", "OnFrontDisconnected")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("reason", nReason)
+			.Log(LOG_INFO, "ctp OnFrontDisconnected");
+
 		OutputNotifySycn(m_loging_connectId,322,u8"已经断开与交易前置的连接");
 	}
 	else
@@ -2508,11 +2516,15 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	order.volume_left = pOrder->VolumeTotal;
 	order.last_msg = GBKToUTF8(pOrder->StatusMsg);
 	order.changed = true;
+
+	PrintOrderLogIfTouchedByConditionOrder(order);
+	
 	//要求重新查询持仓
 	m_req_position_id++;
 	m_req_account_id++;
 	m_something_changed = true;
 	SendUserData();
+	
 	//发送下单成功通知
 	if (pOrder->OrderStatus != THOST_FTDC_OST_Canceled
 		&& pOrder->OrderStatus != THOST_FTDC_OST_Unknown
@@ -6966,6 +6978,8 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 	{
 		nOrderIndex++;
 		ctp_condition_order_task task;
+		task.condition_order = order;
+
 		std::string symbol = co.exchange_id + "." + co.instrument_id;
 		Instrument* ins = GetInstrument(symbol);
 		if (nullptr==ins)
@@ -7053,6 +7067,113 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 			continue;
 		}
 	}	
+}
+
+void traderctp::PrintOrderLogIfTouchedByConditionOrder(const Order& order)
+{
+	bool flag = false;
+	for (ctp_condition_order_task& task : m_condition_order_task)
+	{
+		if (task.has_order_to_cancel)
+		{
+			for (auto it = task.orders_to_cancel.begin(); it != task.orders_to_cancel.end(); it++)
+			{
+				if (it->local_key.order_id == order.order_id)
+				{
+					SerializerConditionOrderData ss1;
+					ss1.FromVar(task.condition_order);
+					std::string strMsg1;
+					ss1.ToString(&strMsg1);
+
+					SerializerTradeBase ss2;
+					ss2.FromVar(order);
+					std::string strMsg2;
+					ss2.ToString(&strMsg2);
+
+					Log().WithField("fun","PrintOrderLogIfTouchedByConditionOrder")
+						.WithField("key",_key)
+						.WithField("bid",_req_login.bid)
+						.WithField("user_name",_req_login.user_name)
+						.WithPack("Order",strMsg2)
+						.WithPack("ConditionOrder",strMsg1)						
+						.Log(LOG_INFO, "order is touched by condition order");
+
+					flag = true;
+					break;
+				}
+			}
+		}
+
+		if (flag)
+		{
+			break;
+		}
+
+		if (task.has_first_orders_to_send)
+		{
+			for (auto it = task.first_orders_to_send.begin(); it != task.first_orders_to_send.end(); it++)
+			{
+				if (it->local_key.order_id == order.order_id)
+				{
+					SerializerConditionOrderData ss1;
+					ss1.FromVar(task.condition_order);
+					std::string strMsg1;
+					ss1.ToString(&strMsg1);
+
+					SerializerTradeBase ss2;
+					ss2.FromVar(order);
+					std::string strMsg2;
+					ss2.ToString(&strMsg2);
+
+					Log().WithField("fun", "PrintOrderLogIfTouchedByConditionOrder")
+						.WithField("key", _key)
+						.WithField("bid", _req_login.bid)
+						.WithField("user_name", _req_login.user_name)
+						.WithPack("Order", strMsg2)
+						.WithPack("ConditionOrder", strMsg1)
+						.Log(LOG_INFO, "order is touched by condition order");
+
+					flag = true;
+					break;
+				}
+			}
+		}
+
+		if (flag)
+		{
+			break;
+		}
+
+		if (task.has_second_orders_to_send)
+		{
+			for (auto it = task.second_orders_to_send.begin(); it != task.second_orders_to_send.end(); it++)
+			{
+				if (it->local_key.order_id == order.order_id)
+				{
+					SerializerConditionOrderData ss1;
+					ss1.FromVar(task.condition_order);
+					std::string strMsg1;
+					ss1.ToString(&strMsg1);
+
+					SerializerTradeBase ss2;
+					ss2.FromVar(order);
+					std::string strMsg2;
+					ss2.ToString(&strMsg2);
+
+					Log().WithField("fun", "PrintOrderLogIfTouchedByConditionOrder")
+						.WithField("key", _key)
+						.WithField("bid", _req_login.bid)
+						.WithField("user_name", _req_login.user_name)
+						.WithPack("Order", strMsg2)
+						.WithPack("ConditionOrder", strMsg1)
+						.Log(LOG_INFO, "order is touched by condition order");
+
+					flag = true;
+					break;
+				}
+			}
+		}
+	}
 }
 
 void traderctp::CheckConditionOrderCancelOrderTask(const std::string& orderId)

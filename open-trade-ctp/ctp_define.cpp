@@ -1087,5 +1087,6 @@ ctp_condition_order_task::ctp_condition_order_task()
 	, first_orders_to_send()
 	, has_second_orders_to_send(false)
 	, second_orders_to_send()
+	, condition_order()
 {
 }

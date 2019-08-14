@@ -9,6 +9,7 @@
 #include "ctp/ThostFtdcTraderApi.h"
 #include "datetime.h"
 #include "rapid_serialize.h"
+#include "condition_order_type.h"
 
 struct LocalOrderKey
 {
@@ -186,4 +187,6 @@ struct ctp_condition_order_task
 	bool has_second_orders_to_send;
 
 	std::vector <CtpActionInsertOrder> second_orders_to_send;
+
+	ConditionOrder condition_order;
 };
