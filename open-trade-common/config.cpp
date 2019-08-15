@@ -9,6 +9,8 @@
 #include "utility.h"
 #include "SerializerTradeBase.h"
 #include "rapid_serialize.h"
+#include "condition_order_type.h"
+#include "condition_order_serializer.h"
 
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -16,6 +18,8 @@
 using namespace std;
 
 Config g_config;
+
+condition_order_config g_condition_order_config;
 
 class SerializerConfig
     : public RapidSerialize::Serializer<SerializerConfig>
@@ -158,6 +162,16 @@ bool LoadConfig()
 	}
     ss_broker_list_str.ToString(&g_config.broker_list_str);
 
+	SerializerConditionOrderData ss2;
+	if (!ss2.FromFile("/etc/open-trade-gateway/config-condition-order.json"))
+	{
+		Log().WithField("fun", "LoadConfig")			
+			.WithField("fileName", "/etc/open-trade-gateway/config-condition-order.json")
+			.Log(LOG_INFO, "load condition order config file fail");
+		return false;
+	}
+	ss2.ToVar(g_condition_order_config);
+	
     return true;
 }
 

@@ -12,10 +12,6 @@
 
 using namespace std;
 
-const int MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY = 20;
-
-const int MAX_VALID_CONDITION_ORDER_COUNT_ALL = 50;
-
 ConditionOrderManager::ConditionOrderManager(const std::string& userKey
 	, ConditionOrderData& condition_order_data
 	, ConditionOrderHisData& condition_order_his_data
@@ -39,23 +35,7 @@ ConditionOrderManager::ConditionOrderManager(const std::string& userKey
 	,m_CZCETime(0)
 	,_instrumentTradeStatusInfoMap()
 {	
-	LoadConditionOrderConfig();
-}
-
-void ConditionOrderManager::LoadConditionOrderConfig()
-{
-	condition_order_config tmp_co_config;
-	SerializerConditionOrderData ss;
-	if (!ss.FromFile("/etc/open-trade-gateway/config-condition-order.json"))
-	{
-		Log().WithField("fun","LoadConditionOrderConfig")
-			.WithField("fileName","/etc/open-trade-gateway/config-condition-order.json")
-			.Log(LOG_INFO, "load condition order config  json file fail!");
-		return;
-	}
-
-	ss.ToVar(tmp_co_config);
-	m_run_server = tmp_co_config.run_server;
+	m_run_server = g_condition_order_config.run_server;
 }
 
 ConditionOrderManager::~ConditionOrderManager()
@@ -326,6 +306,23 @@ void ConditionOrderManager::Load(const std::string& bid
 			}
 
 			m_condition_order_his_data.trading_day = trading_day;
+		}
+	}
+
+	//如果条件单服务已经暂停,则把所有活着的条件单都暂停掉
+	if (!m_run_server)
+	{
+		for (auto it = m_condition_order_data.condition_orders.begin();
+			it != m_condition_order_data.condition_orders.end(); it++)
+		{
+			ConditionOrder& order = it->second;
+
+			if (order.status == EConditionOrderStatus::live)
+			{
+				order.status = EConditionOrderStatus::suspend;
+				order.touched_time = GetTouchedTime(order);
+				order.changed = true;
+			}
 		}
 	}
 
@@ -821,7 +818,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 		}
 	}
 
-	if (m_current_day_condition_order_count + 1 > MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY)
+	if (m_current_day_condition_order_count + 1 > g_condition_order_config.max_new_cos_per_day)
 	{
 		Log().WithField("fun", "ValidConditionOrder")
 			.WithField("key", m_userKey)
@@ -831,13 +828,13 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制");
 
 		m_callBack.OutputNotifyAll(511
-			, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制:"+std::to_string(MAX_NEW_CONDITION_ORDER_COUNT_PER_DAY)
+			, u8"条件单已被服务器拒绝,当前交易日新增条件单数量超过最大数量限制:"+std::to_string(g_condition_order_config.max_new_cos_per_day)
 			, "WARNING", "MESSAGE");
 		return false;
 	}
 
 
-	if (m_current_valid_condition_order_count + 1 > MAX_VALID_CONDITION_ORDER_COUNT_ALL)
+	if (m_current_valid_condition_order_count + 1 > g_condition_order_config.max_valid_cos_all)
 	{
 		Log().WithField("fun", "ValidConditionOrder")
 			.WithField("key", m_userKey)
@@ -847,7 +844,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			.Log(LOG_INFO, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制");
 
 		m_callBack.OutputNotifyAll(512
-			, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制:" + std::to_string(MAX_VALID_CONDITION_ORDER_COUNT_ALL)
+			, u8"条件单已被服务器拒绝,当前有效条件单数量超过最大数量限制:" + std::to_string(g_condition_order_config.max_valid_cos_all)
 			, "WARNING", "MESSAGE");
 		return false;
 	}

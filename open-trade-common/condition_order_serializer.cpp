@@ -74,10 +74,11 @@ void SerializerConditionOrderData::DefineStruct(ContingentOrder& d)
 	AddItemEnum(d.offset
 		, ("offset")
 		, { { EOrderOffset::open, ("OPEN") },
-		{ EOrderOffset::close, ("CLOSE") },
-		{ EOrderOffset::close_today, ("CLOSETODAY") },
+		{ EOrderOffset::close, ("CLOSE") },		
 		{ EOrderOffset::reverse, ("REVERSE") },
 		});
+
+	AddItem(d.close_today_prior,("close_today_prior"));
 
 	AddItemEnum(d.volume_type
 		, ("volume_type")
@@ -222,6 +223,8 @@ void SerializerConditionOrderData::DefineStruct(weekday_time_span& d)
 void SerializerConditionOrderData::DefineStruct(condition_order_config& d)
 {
 	AddItem(d.run_server, ("run_server"));
+	AddItem(d.max_new_cos_per_day, ("max_new_cos_per_day"));
+	AddItem(d.max_valid_cos_all, ("max_valid_cos_all"));
 	AddItem(d.auto_start_ctp_time, ("auto_start_ctp_time"));
 	AddItem(d.auto_close_ctp_time, ("auto_close_ctp_time"));
 	AddItem(d.auto_restart_process_time, ("auto_restart_process_time"));

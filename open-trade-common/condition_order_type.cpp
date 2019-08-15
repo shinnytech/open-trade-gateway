@@ -55,11 +55,13 @@ weekday_time_span::weekday_time_span()
 
 condition_order_config::condition_order_config()
 	: run_server(true)
-	, auto_start_ctp_time()
-	, has_auto_start_ctp(false)
-	, auto_close_ctp_time()
-	, has_auto_close_ctp(false)
-	, auto_restart_process_time()
+	,max_new_cos_per_day(20)
+	,max_valid_cos_all(50)
+	,auto_start_ctp_time()
+	,has_auto_start_ctp(false)
+	,auto_close_ctp_time()
+	,has_auto_close_ctp(false)
+	,auto_restart_process_time()
 {
 }
 

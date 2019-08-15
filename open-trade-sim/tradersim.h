@@ -226,16 +226,36 @@ private:
 		, const ContingentOrder& co
 		, const Instrument& ins		
 		, int nOrderIndex);
+	
+	bool ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& order
+			, const ContingentOrder& co
+			, const Instrument& ins
+			, int nOrderIndex);
 
-	bool ConditionOrder_CloseToday(const ConditionOrder& order
+	bool ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrder& order
 		, const ContingentOrder& co
-		, const Instrument& ins		
+		, const Instrument& ins
 		, int nOrderIndex);
 
-	bool ConditionOrder_CloseYesToday(const ConditionOrder& order
+	bool ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrder& order
 		, const ContingentOrder& co
-		, const Instrument& ins	
+		, const Instrument& ins
 		, int nOrderIndex);
+
+	bool ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseAll(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, int nOrderIndex);
+
+	bool SetConditionOrderPrice(ActionOrder& action_insert_order
+		, const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins);
 
 	bool ConditionOrder_Close(const ConditionOrder& order
 		, const ContingentOrder& co

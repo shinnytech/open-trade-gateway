@@ -244,6 +244,14 @@ bool UserProcessInfo::RestartProcess_i(const std::string& name, const std::strin
 		if (nullptr != _process_ptr)
 		{
 			_process_ptr->wait();
+
+			Log().WithField("fun", "RestartProcess_i")
+				.WithField("key", "gateway")
+				.WithField("user_key", _key)
+				.WithField("exit_code", _process_ptr->exit_code())
+				.WithField("native_exit_code", _process_ptr->native_exit_code())
+				.Log(LOG_ERROR, "before restart process user process");
+
 			_process_ptr.reset();
 		}
 
@@ -453,4 +461,14 @@ void UserProcessInfo::ProcessMsg(std::shared_ptr<std::string> msg_ptr)
 			conn_ptr->SendTextMsg(strMsg);
 		}
 	}
+}
+
+ReqLogin UserProcessInfo::GetReqLogin()
+{
+	return _reqLogin;
+}
+
+std::string UserProcessInfo::GetKey()
+{
+	return _key;
 }

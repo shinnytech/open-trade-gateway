@@ -1,5 +1,7 @@
 {
   "run_server":true,
+  "max_new_cos_per_day":20,
+  "max_valid_cos_all":50,
   "auto_start_ctp_time": [{"weekday":1,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},
   {"weekday":2,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},
   {"weekday":3,"timespan":[{"begin":850,"end":855},{"begin":2050,"end":2055}]},

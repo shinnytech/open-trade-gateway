@@ -41,8 +41,7 @@ trade_server::trade_server(boost::asio::io_context& ios,int port)
 	,acceptor_(io_context_)
 	,connection_manager_()
 	,_connection_id(0)
-	,_timer(io_context_)
-	,_co_config()
+	,_timer(io_context_)	
 	,m_need_auto_start_ctp(true)
 {
 }
@@ -96,13 +95,7 @@ bool trade_server::init()
 	}
 
 	do_accept();
-
-	condition_order_config tmp_co_config;
-	if (LoadConditionOrderConfig(tmp_co_config))
-	{
-		_co_config = tmp_co_config;				
-	}
-
+		
 	_timer.expires_from_now(boost::posix_time::seconds(10));
 	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus,this));
 
@@ -176,79 +169,61 @@ void trade_server::OnCheckServerStatus()
 		.WithField("key","gateway")
 		.Log(LOG_INFO,"on check server status");
 	
-	condition_order_config tmp_co_config;
-	if (LoadConditionOrderConfig(tmp_co_config))
+	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+	int weekNumber = tm.date().day_of_week();
+	int timeValue = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
+
+	if (IsInTimeSpan(g_condition_order_config.auto_start_ctp_time,weekNumber,timeValue))
 	{
-		if (tmp_co_config.run_server != _co_config.run_server)
+		if (!g_condition_order_config.has_auto_start_ctp)
 		{
-			Log().WithField("fun","OnCheckServerStatus")
-				.WithField("key","gateway")
-				.Log(LOG_INFO,"condition server status changed");
-
-			_co_config.run_server = tmp_co_config.run_server;
-			NotifyConditionOrderServerStatus();
+			Log().WithField("fun", "OnCheckServerStatus")
+				.WithField("key", "gateway")
+				.Log(LOG_INFO, "auto start ctp");
+			g_condition_order_config.has_auto_start_ctp = true;
+			TryStartTradeInstance();
+			m_need_auto_start_ctp = false;
 		}
+	}
+	else
+	{
+		g_condition_order_config.has_auto_start_ctp = false;
+	}
 
-		_co_config.auto_start_ctp_time = tmp_co_config.auto_start_ctp_time;
-		_co_config.auto_close_ctp_time = tmp_co_config.auto_close_ctp_time;
-		_co_config.auto_restart_process_time = tmp_co_config.auto_restart_process_time;
-
-		boost::posix_time::ptime tm=boost::posix_time::second_clock::local_time();
-		int weekNumber=tm.date().day_of_week();
-		int timeValue = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
-		
-		if (IsInTimeSpan(_co_config.auto_start_ctp_time,weekNumber,timeValue))
+	if (IsInTimeSpan(g_condition_order_config.auto_close_ctp_time, weekNumber, timeValue))
+	{
+		if (!g_condition_order_config.has_auto_close_ctp)
 		{
-			if (!_co_config.has_auto_start_ctp)
-			{
-				Log().WithField("fun","OnCheckServerStatus")
-					.WithField("key","gateway")
-					.Log(LOG_INFO,"auto start ctp");				
-				_co_config.has_auto_start_ctp = true;
-				TryStartTradeInstance();
-				m_need_auto_start_ctp = false;
-			}
+			Log().WithField("fun", "OnCheckServerStatus")
+				.WithField("key", "gateway")
+				.Log(LOG_INFO, "auto stop ctp");
+			g_condition_order_config.has_auto_close_ctp = true;
+			TryStopTradeInstance();
 		}
-		else
-		{
-		_co_config.has_auto_start_ctp = false;
-		}
+	}
+	else
+	{
+		g_condition_order_config.has_auto_close_ctp = false;
+	}
 
-		if (IsInTimeSpan(_co_config.auto_close_ctp_time, weekNumber, timeValue))
+	if (IsInTimeSpan(g_condition_order_config.auto_restart_process_time,weekNumber,timeValue))
+	{
+		if (m_need_auto_start_ctp)
 		{
-			if (!_co_config.has_auto_close_ctp)
-			{
-				Log().WithField("fun", "OnCheckServerStatus")
-					.WithField("key", "gateway")
-					.Log(LOG_INFO, "auto stop ctp");
-				_co_config.has_auto_close_ctp = true;
-				TryStopTradeInstance();
-			}
+			Log().WithField("fun", "OnCheckServerStatus")
+				.WithField("key", "gateway")
+				.Log(LOG_INFO, "auto start ctp in auto restart process time span");
+			TryStartTradeInstance();
+			m_need_auto_start_ctp = false;
 		}
 		else
 		{
-			_co_config.has_auto_close_ctp = false;
-		}
-
-		if (IsInTimeSpan(_co_config.auto_restart_process_time, weekNumber, timeValue))
-		{
-			if (m_need_auto_start_ctp)
-			{
-				Log().WithField("fun", "OnCheckServerStatus")
-					.WithField("key", "gateway")
-					.Log(LOG_INFO, "auto start ctp in auto restart process time span");
-				TryStartTradeInstance();
-				m_need_auto_start_ctp = false;
-			}
-			else
-			{
-				TryRestartProcesses();
-			}
+			TryRestartProcesses();
 		}
 	}
 
 	_timer.expires_from_now(boost::posix_time::seconds(30));
-	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus, this));
+	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus,this));
 }
 
 bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
@@ -304,6 +279,20 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			}
 
 			nss.ToVar(condition_order_data);
+
+			//条件单数量为空的用户不自动重启
+			if (condition_order_data.condition_orders.empty())
+			{
+				Log().WithField("fun", "GetReqStartTradeKeyMap")
+					.WithField("key", "gateway")
+					.WithField("trading_day", condition_order_data.trading_day)
+					.WithField("user_name",condition_order_data.user_id)
+					.WithField("broker_id", condition_order_data.broker_id)					
+					.Log(LOG_INFO, "user's condition order is empty");
+
+				continue;
+			}
+
 			req_start_trade.bid = condition_order_data.broker_id;
 			req_start_trade.user_name = condition_order_data.user_id;
 			req_start_trade.password = condition_order_data.user_password;
@@ -311,8 +300,8 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			std::string strKey = key_file_path.filename().string();
 			strKey = strKey.substr(0, strKey.length() - 3);
 
-			//ycsong 2019/08/12
-			if (strKey.find(u8"sim_快期模拟_游客_", 0) != std::string::npos)
+			//ycsong 2019/08/15 注掉
+			/*if (strKey.find(u8"sim_快期模拟_游客_", 0) != std::string::npos)
 			{
 				continue;
 			}
@@ -320,7 +309,7 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			if (strKey.find(u8"sim_快期模拟_100000", 0) != std::string::npos)
 			{
 				continue;
-			}
+			}*/
 						
 			if (rsckMap.find(strKey) == rsckMap.end())
 			{
@@ -347,6 +336,9 @@ void trade_server::TryStartTradeInstance()
 
 	if (rsckMap.empty())
 	{
+		Log().WithField("fun", "TryStartTradeInstance")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "rsckMap is empty");
 		return;
 	}
 
@@ -520,30 +512,31 @@ void trade_server::TryStopTradeInstance()
 		.WithField("key","gateway")		
 		.Log(LOG_INFO,"try to stop trade instance");
 
-	req_start_trade_key_map rsckMap;
-	if (!GetReqStartTradeKeyMap(rsckMap))
+	//给子进程发消息
+	for (auto it : g_userProcessInfoMap)
 	{
-		return;
-	}
+		UserProcessInfo_ptr& pro_ptr = it.second;
 
-	if (rsckMap.empty())
-	{
-		return;
-	}
+		if (!pro_ptr->ProcessIsRunning())
+		{
+			continue;
+		}
 
-	for (auto a : rsckMap)
-	{
-		const std::string& strKey = a.first;
-		req_start_trade_instance& req_start_trade = a.second;
+		ReqLogin reqLogin= pro_ptr->GetReqLogin();
+		std::string strKey = it.first;
+		req_start_trade_instance req_start_trade;
 		req_start_trade.aid = "req_stop_ctp";
+		req_start_trade.bid = reqLogin.bid;
+		req_start_trade.user_name = reqLogin.user_name;
+		req_start_trade.password = reqLogin.password;
 
 		Log().WithField("fun","TryStopTradeInstance")
 			.WithField("key","gateway")
 			.WithField("user_key",strKey)
 			.Log(LOG_INFO,"stop trade instance");
 		
-		StopTradeInstance(strKey, req_start_trade);
-	}
+		StopTradeInstance(strKey,req_start_trade);
+	}	
 }
 
 void trade_server::StopTradeInstance(const std::string& strKey
@@ -683,48 +676,4 @@ bool trade_server::IsInTimeSpan(const std::vector<weekday_time_span>& timeSpan
 		}
 	}
 	return flag;
-}
-
-bool trade_server::LoadConditionOrderConfig(condition_order_config& tmp_co_config)
-{
-	SerializerConditionOrderData ss;
-	if (!ss.FromFile("/etc/open-trade-gateway/config-condition-order.json"))
-	{
-		Log().WithField("fun","LoadConditionOrderConfig")
-			.WithField("key","gateway")	
-			.WithField("fileName","/etc/open-trade-gateway/config-condition-order.json")
-			.Log(LOG_INFO,"trade server load condition order config file fail");
-				
-		return false;
-	}
-	ss.ToVar(tmp_co_config);
-	return true;
-}
-
-void trade_server::NotifyConditionOrderServerStatus()
-{
-	Log().WithField("fun","NotifyConditionOrderServerStatus")
-		.WithField("key","gateway")
-		.Log(LOG_INFO,"nofity sub process to change cos status");
-	
-	SerializerConditionOrderData ss;
-	req_ccos_status req;
-	req.run_server = _co_config.run_server;
-	ss.FromVar(req);
-	std::string msg;
-	ss.ToString(&msg);
-	//给子进程发消息
-	for (auto it : g_userProcessInfoMap)
-	{
-		Log().WithField("fun","NotifyConditionOrderServerStatus")
-			.WithField("key","gateway")
-			.WithField("user_key",it.first)
-			.Log(LOG_INFO,"nofity sub process to change cos status");
-	
-		UserProcessInfo_ptr& pro_ptr = it.second;
-		if (nullptr != pro_ptr)
-		{
-			pro_ptr->SendMsg(0,msg);
-		}
-	}
 }

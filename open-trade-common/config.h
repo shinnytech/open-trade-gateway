@@ -7,6 +7,7 @@
 #pragma once
 
 #include "types.h"
+#include "condition_order_type.h"
 
 #include <string>
 #include <vector>
@@ -37,5 +38,7 @@ struct Config
 };
 
 extern Config g_config;
+
+extern condition_order_config g_condition_order_config;
 
 bool LoadConfig();

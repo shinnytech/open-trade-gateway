@@ -500,15 +500,38 @@ private:
 		,const ContingentOrder& co
 		,const Instrument& ins
 		,ctp_condition_order_task& task
-		,int nOrderIndex);
+		,int nOrderIndex);	
 
-	bool ConditionOrder_CloseToday(const ConditionOrder& order
+	bool SetConditionOrderPrice(CThostFtdcInputOrderField& f
+		,const ConditionOrder& order
+		,const ContingentOrder& co
+		,const Instrument& ins);
+	   
+	bool ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& order
 		, const ContingentOrder& co
 		, const Instrument& ins
 		, ctp_condition_order_task& task
 		, int nOrderIndex);
 
-	bool ConditionOrder_CloseYesToday(const ConditionOrder& order
+	bool ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionOrder& order
+		, const ContingentOrder& co
+		, const Instrument& ins
+		, ctp_condition_order_task& task
+		, int nOrderIndex);
+
+	bool ConditionOrder_CloseAll(const ConditionOrder& order
 		, const ContingentOrder& co
 		, const Instrument& ins
 		, ctp_condition_order_task& task

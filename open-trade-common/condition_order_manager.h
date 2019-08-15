@@ -98,7 +98,7 @@ private:
 
 	int m_CZCETime;
 
-	TInstrumentTradeStatusInfoMap _instrumentTradeStatusInfoMap;
+	TInstrumentTradeStatusInfoMap _instrumentTradeStatusInfoMap;	
 
 	int GetExchangeTime(const std::string& exchange_id);
 	
@@ -107,9 +107,7 @@ private:
 	void SaveHistory();
 
 	void SaveCurrent();
-
-	void LoadConditionOrderConfig();
-
+	
 	void BuildConditionOrderIndex();
 
 	bool IsContingentConditionTouched(

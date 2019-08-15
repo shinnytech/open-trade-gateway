@@ -35,7 +35,11 @@ public:
 
 	void SendMsg(int connid, const std::string& msg);
 
-	void NotifyClose(int connid);	
+	void NotifyClose(int connid);
+
+	ReqLogin GetReqLogin();
+
+	std::string GetKey();
 private:
 	bool RestartProcess_i(const std::string& name, const std::string& cmd);
 

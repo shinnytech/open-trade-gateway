@@ -35,7 +35,6 @@ enum class EOrderOffset
 {
 	open,//开
 	close,//平
-	close_today,//平今
 	reverse//反手
 };
 
@@ -157,6 +156,7 @@ struct ContingentOrder
 		, instrument_id("")
 		, direction(EOrderDirection::buy)
 		, offset(EOrderOffset::open)
+		, close_today_prior(true)	
 		, volume_type(EVolumeType::num)
 		, volume(0)
 		, price_type(EPriceType::limit)
@@ -171,6 +171,8 @@ struct ContingentOrder
 	EOrderDirection direction;//方向
 
 	EOrderOffset offset;//开平
+
+	bool close_today_prior;
 
 	EVolumeType volume_type;//手数类型
 
@@ -398,6 +400,10 @@ struct condition_order_config
 	condition_order_config();
 
 	bool run_server;
+
+	int max_new_cos_per_day;
+
+	int max_valid_cos_all;
 
 	std::vector<weekday_time_span> auto_start_ctp_time;
 

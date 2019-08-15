@@ -5452,187 +5452,19 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 	return true;
 }
 
-bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
+bool traderctp::SetConditionOrderPrice(CThostFtdcInputOrderField& f
+	, const ConditionOrder& order
 	, const ContingentOrder& co
-	, const Instrument& ins
-	, ctp_condition_order_task& task
-	, int nOrderIndex)
+	, const Instrument& ins)
 {
-	bool b_has_td_yd_distinct = (co.exchange_id == "SHFE") || (co.exchange_id == "INE");
-	if (!b_has_td_yd_distinct)
-	{
-		Log().WithField("fun","ConditionOrder_CloseToday")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("exchange_id", co.exchange_id)
-			.WithField("instrument_id",co.instrument_id)
-			.Log(LOG_WARNING,"exchange not support close_today command");	
-		return false;
-	}
-		
-	std::string symbol = co.exchange_id + "." + co.instrument_id;
-	
-	CThostFtdcInputOrderField f;
-	memset(&f, 0, sizeof(CThostFtdcInputOrderField));
-	strcpy_x(f.BrokerID, m_broker_id.c_str());
-	strcpy_x(f.UserID, _req_login.user_name.c_str());
-	strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-	strcpy_x(f.ExchangeID, co.exchange_id.c_str());
-	strcpy_x(f.InstrumentID, co.instrument_id.c_str());
-
-	ENeedCancelOrderType needCancelOrderType = ENeedCancelOrderType::not_need;
-
-	//平今
-	f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
-	//买平
-	if (EOrderDirection::buy == co.direction)
-	{
-		f.Direction = THOST_FTDC_D_Buy;
-		Position& pos = GetPosition(symbol);
-		//数量类型
-		if (EVolumeType::num == co.volume_type)
-		{
-			//要平的手数小于等于可平的今仓手数
-			if (co.volume <= pos.pos_short_today- pos.volume_short_frozen_today)
-			{
-				f.VolumeTotalOriginal = co.volume;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
-			}
-			//要平的手数小于等于今仓手数(包括冻结的手数)
-			else if (co.volume <= pos.pos_short_today)
-			{
-				if (order.is_cancel_ori_close_order)
-				{		
-					f.VolumeTotalOriginal = co.volume;
-					f.VolumeCondition = THOST_FTDC_VC_AV;
-					needCancelOrderType = ENeedCancelOrderType::today_buy;
-				}
-				else
-				{
-					Log().WithField("fun","ConditionOrder_CloseToday")
-						.WithField("key",_key)
-						.WithField("bid",_req_login.bid)
-						.WithField("user_name",_req_login.user_name)
-						.WithField("exchange_id", co.exchange_id)
-						.WithField("instrument_id", co.instrument_id)
-						.Log(LOG_WARNING,"can close short is less than will close short");				
-					return false;
-				}				
-			}
-			else
-			{
-				Log().WithField("fun","ConditionOrder_CloseToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"can close short is less than will close short");				
-				return false;
-			}
-		}
-		else if (EVolumeType::close_all == co.volume_type)
-		{
-			Position& position = GetPosition(symbol);
-			//如果可平手数大于零
-			if (pos.pos_short_today - pos.volume_short_frozen_today>0)
-			{				
-				f.VolumeTotalOriginal = pos.pos_short_today - pos.volume_short_frozen_today;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
-			}
-			else
-			{
-				Log().WithField("fun","ConditionOrder_CloseToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"have no need close short");
-				return false;
-			}
-		}		
-	}
-	//卖平
-	else
-	{
-		f.Direction = THOST_FTDC_D_Sell;
-		Position& pos = GetPosition(symbol);
-		//数量类型
-		if (EVolumeType::num == co.volume_type)
-		{
-			//要平的手数小于等于可平的今仓手数
-			if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today)
-			{
-				f.VolumeTotalOriginal = co.volume;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
-			}
-			//要平的手数小于等于今仓手数(包括冻结的手数)
-			else if (co.volume <= pos.pos_long_today)
-			{
-				if (order.is_cancel_ori_close_order)
-				{					
-					//需要先撤掉所有平今空仓的单子,然后再发送该订单
-					f.VolumeTotalOriginal = co.volume;
-					f.VolumeCondition = THOST_FTDC_VC_AV;
-					needCancelOrderType = ENeedCancelOrderType::today_sell;
-				}
-				else
-				{
-					Log().WithField("fun","ConditionOrder_CloseToday")
-						.WithField("key",_key)
-						.WithField("bid",_req_login.bid)
-						.WithField("user_name",_req_login.user_name)
-						.WithField("exchange_id", co.exchange_id)
-						.WithField("instrument_id", co.instrument_id)
-						.Log(LOG_WARNING,"can close long is less than will close long");					
-					return false;
-				}
-			}
-			else
-			{
-				Log().WithField("fun","ConditionOrder_CloseToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"can close long is less than will close long");
-				return false;
-			}
-		}
-		else if (EVolumeType::close_all == co.volume_type)
-		{
-			Position& position = GetPosition(symbol);
-			//如果可平手数大于零
-			if (pos.pos_long_today - pos.volume_long_frozen_today > 0)
-			{
-				f.VolumeTotalOriginal = pos.pos_long_today - pos.volume_long_frozen_today;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
-			}
-			else
-			{
-				Log().WithField("fun","ConditionOrder_CloseToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"have no need close long");			
-				return false;
-			}
-		}
-	}
-
 	//价格类型
-
 	//限价
 	if (EPriceType::limit == co.price_type)
 	{
 		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
 		f.TimeCondition = THOST_FTDC_TC_GFD;
 		f.LimitPrice = co.limit_price;
+		return true;
 	}
 	//触发价
 	else if (EPriceType::contingent == co.price_type)
@@ -5655,14 +5487,18 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 		if (!flag)
 		{
 			//找不到触发价
-			Log().WithField("fun","ConditionOrder_CloseToday")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
+			Log().WithField("fun", "SetConditionOrderPrice")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
 				.WithField("exchange_id", co.exchange_id)
 				.WithField("instrument_id", co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");
+				.Log(LOG_WARNING, "can not find contingent_price");
 			return false;
+		}
+		else
+		{
+			return true;
 		}
 	}
 	//对价
@@ -5680,6 +5516,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 		{
 			f.LimitPrice = ins.bid_price1;
 		}
+		return true;
 	}
 	//市价
 	else if (EPriceType::market == co.price_type)
@@ -5696,6 +5533,7 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 		{
 			f.LimitPrice = ins.lower_limit;
 		}
+		return true;
 	}
 	//超价
 	else if (EPriceType::over == co.price_type)
@@ -5720,460 +5558,2128 @@ bool traderctp::ConditionOrder_CloseToday(const ConditionOrder& order
 				f.LimitPrice = ins.lower_limit;
 			}
 		}
+		return true;
 	}
-	
-	f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
-	f.ContingentCondition = THOST_FTDC_CC_Immediately;
-	f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
-
-	task.has_first_orders_to_send = true;
-	CtpActionInsertOrder actionInsertOrder;
-	actionInsertOrder.local_key.user_id = _req_login.user_name;
-	actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-	actionInsertOrder.f = f;
-	task.first_orders_to_send.push_back(actionInsertOrder);
-
-	task.has_second_orders_to_send = false;
-	
-	if (ENeedCancelOrderType::today_buy == needCancelOrderType)
-	{
-		for (auto it : m_data.m_orders)
-		{
-			const std::string& orderId = it.first;
-			const Order& order = it.second;
-			if (order.status == kOrderStatusFinished)
-			{
-				continue;
-			}
-
-			if (order.symbol() != symbol)
-			{
-				continue;
-			}
-
-			if ((order.direction == kDirectionBuy) 
-				&& (order.offset== kOffsetCloseToday))
-			{
-				CtpActionCancelOrder cancelOrder;
-				cancelOrder.local_key.order_id = orderId;
-				cancelOrder.local_key.user_id = _req_login.user_name.c_str();
-
-				CThostFtdcInputOrderActionField f;
-				memset(&f, 0, sizeof(CThostFtdcInputOrderActionField));
-				strcpy_x(f.BrokerID, m_broker_id.c_str());
-				strcpy_x(f.UserID, _req_login.user_name.c_str());
-				strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-				strcpy_x(f.ExchangeID, order.exchange_id.c_str());
-				strcpy_x(f.InstrumentID, order.instrument_id.c_str());
-
-				cancelOrder.f = f;
-
-				task.has_order_to_cancel = true;
-				task.orders_to_cancel.push_back(cancelOrder);
-
-			}			
-		}
-	}
-	else if (ENeedCancelOrderType::today_sell == needCancelOrderType)
-	{
-		for (auto it : m_data.m_orders)
-		{
-			const std::string& orderId = it.first;
-			const Order& order = it.second;
-			if (order.status == kOrderStatusFinished)
-			{
-				continue;
-			}
-
-			if (order.symbol() != symbol)
-			{
-				continue;
-			}
-
-			if ((order.direction == kDirectionSell)
-				&& (order.offset == kOffsetCloseToday))
-			{
-				CtpActionCancelOrder cancelOrder;
-				cancelOrder.local_key.order_id = orderId;
-				cancelOrder.local_key.user_id = _req_login.user_name.c_str();
-
-				CThostFtdcInputOrderActionField f;
-				memset(&f, 0, sizeof(CThostFtdcInputOrderActionField));
-				strcpy_x(f.BrokerID, m_broker_id.c_str());
-				strcpy_x(f.UserID, _req_login.user_name.c_str());
-				strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-				strcpy_x(f.ExchangeID, order.exchange_id.c_str());
-				strcpy_x(f.InstrumentID, order.instrument_id.c_str());
-
-				cancelOrder.f = f;
-
-				task.has_order_to_cancel = true;
-				task.orders_to_cancel.push_back(cancelOrder);
-			}
-		}
-	}
-	else
-	{
-		task.has_order_to_cancel = false;
-	}
-	
-	return true;
+	return false;
 }
 
-bool traderctp::ConditionOrder_CloseYesToday(const ConditionOrder& order
+bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& order
 	, const ContingentOrder& co
 	, const Instrument& ins
 	, ctp_condition_order_task& task
 	, int nOrderIndex)
 {
+	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
-
-	CThostFtdcInputOrderField f;
-	memset(&f, 0, sizeof(CThostFtdcInputOrderField));
-	strcpy_x(f.BrokerID, m_broker_id.c_str());
-	strcpy_x(f.UserID, _req_login.user_name.c_str());
-	strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-	strcpy_x(f.ExchangeID, co.exchange_id.c_str());
-	strcpy_x(f.InstrumentID, co.instrument_id.c_str());
-
-	ENeedCancelOrderType needCancelOrderType = ENeedCancelOrderType::not_need;
-
-	//平昨
-	f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+	//持仓
+	Position& pos = GetPosition(symbol);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		f.Direction = THOST_FTDC_D_Buy;
-		Position& pos = GetPosition(symbol);
-
-		//数量类型
-		if (EVolumeType::num == co.volume_type)
+		//要平的手数小于等于可平的今仓手数
+		if (co.volume <= pos.pos_short_today - pos.volume_short_frozen_today)
 		{
-			//要平的手数小于等于可平的昨仓手数
-			if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his)
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+
+			f.Direction = THOST_FTDC_D_Buy;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
 			{
-				f.VolumeTotalOriginal = co.volume;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+
+				return true;
 			}
-			//要平的手数小于等于昨仓手数(包括冻结的手数)
-			else if (co.volume <= pos.pos_short_his)
-			{
-				if (order.is_cancel_ori_close_order)
-				{
-					f.VolumeTotalOriginal = co.volume;
-					f.VolumeCondition = THOST_FTDC_VC_AV;
-					needCancelOrderType = ENeedCancelOrderType::yestoday_buy;
-				}
-				else
-				{
-					Log().WithField("fun","ConditionOrder_CloseYesToday")
-						.WithField("key",_key)
-						.WithField("bid",_req_login.bid)
-						.WithField("user_name",_req_login.user_name)
-						.WithField("exchange_id", co.exchange_id)
-						.WithField("instrument_id", co.instrument_id)
-						.Log(LOG_WARNING,"can close short is less than will close short");					
-					return false;
-				}
-			}
+			//价格设置不合法
 			else
 			{
-				Log().WithField("fun","ConditionOrder_CloseYesToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"can close short is less than will close short");
+				return  false;
+			}
+		}
+		//要平的手数小于等于今仓手数(包括冻结的手数)
+		else if (co.volume <= pos.pos_short_today)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+
+			f.Direction = THOST_FTDC_D_Buy;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平今仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionBuy)
+						&& (order.offset == kOffsetCloseToday))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f2;
+						memset(&f2, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f2.BrokerID, m_broker_id.c_str());
+						strcpy_x(f2.UserID, _req_login.user_name.c_str());
+						strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f2.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f2.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f2;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+
+		}
+		//要平的手数小于等于所有空仓(不包手冻结的昨仓)
+		else if (co.volume <= pos.pos_short_today + pos.pos_short_his - pos.volume_short_frozen_his)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f1.Direction = THOST_FTDC_D_Buy;
+			f1.VolumeTotalOriginal = pos.pos_short_today;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f2.Direction = THOST_FTDC_D_Buy;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_short_today;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平今仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionBuy)
+						&& (order.offset == kOffsetCloseToday))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
 				return false;
 			}
 		}
-		else if (EVolumeType::close_all == co.volume_type)
+		//要平的手数小于等于所有空仓(包括冻结的手数)
+		else if (co.volume <= pos.pos_short_today + pos.pos_short_his)
 		{
-			Position& position = GetPosition(symbol);
-			//如果可平手数大于零
-			if (pos.pos_short_his - pos.volume_short_frozen_his > 0)
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f1.Direction = THOST_FTDC_D_Buy;
+			f1.VolumeTotalOriginal = pos.pos_short_today;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f2.Direction = THOST_FTDC_D_Buy;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_short_today;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
 			{
-				f.VolumeTotalOriginal = pos.pos_short_his - pos.volume_short_frozen_his;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionBuy)
+						&& ((order.offset == kOffsetClose) || (order.offset == kOffsetCloseToday)))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
 			}
+			//价格设置不合法
 			else
 			{
-				Log().WithField("fun","ConditionOrder_CloseYesToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"have no need close short");
 				return false;
 			}
+		}
+		//可平不足
+		else
+		{
+			Log().WithField("fun", "ConditionOrder_CloseTodayPrior_NeedCancel")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
+				.Log(LOG_WARNING, "can close short is less than will close short");
+			return false;
 		}
 	}
 	//卖平
 	else
 	{
-		f.Direction = THOST_FTDC_D_Sell;
-		Position& pos = GetPosition(symbol);
-
-		//数量类型
-		if (EVolumeType::num == co.volume_type)
+		//要平的手数小于等于可平的今仓手数
+		if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today)
 		{
-			//要平的手数小于等于可平的昨仓手数
-			if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his)
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+
+			//卖平
+			f.Direction = THOST_FTDC_D_Sell;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
 			{
-				f.VolumeTotalOriginal = co.volume;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+				return true;
 			}
-			//要平的手数小于等于昨仓手数(包括冻结的手数)
-			else if (co.volume <= pos.pos_long_his)
-			{
-				if (order.is_cancel_ori_close_order)
-				{
-					f.VolumeTotalOriginal = co.volume;
-					f.VolumeCondition = THOST_FTDC_VC_AV;
-					needCancelOrderType = ENeedCancelOrderType::yestoday_sell;
-				}
-				else
-				{
-					Log().WithField("fun","ConditionOrder_CloseYesToday")
-						.WithField("key",_key)
-						.WithField("bid",_req_login.bid)
-						.WithField("user_name",_req_login.user_name)
-						.WithField("exchange_id", co.exchange_id)
-						.WithField("instrument_id", co.instrument_id)
-						.Log(LOG_WARNING, "can close long is less than will close long");				
-					return false;
-				}
-			}
+			//价格设置不合法
 			else
 			{
-				Log().WithField("fun","ConditionOrder_CloseYesToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"can close long is less than will close long");
-				return false;
+				return  false;
 			}
+
 		}
-		else if (EVolumeType::close_all == co.volume_type)
+		//要平的手数小于等于今仓手数(包括冻结的手数)
+		else if (co.volume <= pos.pos_long_today)
 		{
-			Position& position = GetPosition(symbol);
-			//如果可平手数大于零
-			if (pos.pos_long_his - pos.volume_long_frozen_his > 0)
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+
+			//卖平
+			f.Direction = THOST_FTDC_D_Sell;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
 			{
-				f.VolumeTotalOriginal = pos.pos_long_his - pos.volume_long_frozen_his;
-				f.VolumeCondition = THOST_FTDC_VC_AV;
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平今仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionSell)
+						&& (order.offset == kOffsetCloseToday))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f2;
+						memset(&f2, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f2.BrokerID, m_broker_id.c_str());
+						strcpy_x(f2.UserID, _req_login.user_name.c_str());
+						strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f2.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f2.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f2;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
 			}
+			//价格设置不合法
 			else
-			{				
-				Log().WithField("fun","ConditionOrder_CloseYesToday")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
-					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id", co.instrument_id)
-					.Log(LOG_WARNING,"have no need close long");
+			{
+				return  false;
+			}
+		}
+		//要平的手数小于等于所有多仓(不包手冻结的昨仓)
+		else if (co.volume <= pos.pos_long_today + pos.pos_long_his - pos.volume_long_frozen_his)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_long_today;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_long_today;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1,order,co,ins)
+				&& SetConditionOrderPrice(f2,order,co,ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平今仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionSell)
+						&& (order.offset == kOffsetCloseToday))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
 				return false;
 			}
+
 		}
-	}
-
-	//价格类型
-
-	//限价
-	if (EPriceType::limit == co.price_type)
-	{
-		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
-		f.TimeCondition = THOST_FTDC_TC_GFD;
-		f.LimitPrice = co.limit_price;
-	}
-	//触发价
-	else if (EPriceType::contingent == co.price_type)
-	{
-		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
-		f.TimeCondition = THOST_FTDC_TC_GFD;
-
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		//要平的手数小于等于所有多仓(包括冻结的手数)
+		else if (co.volume <= pos.pos_long_today + pos.pos_long_his)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_long_today;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_long_today;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
 			{
-				f.LimitPrice = c.contingent_price;
-				flag = true;
-				break;
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionSell)
+						&& ((order.offset == kOffsetClose) || (order.offset == kOffsetCloseToday)))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+					}
+				}//end for
+
+				return true;
 			}
+			//价格设国置不合法
+			else
+			{
+				return false;
+			}
+				
 		}
-		if (!flag)
+		//可平不足
+		else
 		{
-			//找不到触发价
-			Log().WithField("fun","ConditionOrder_CloseYesToday")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("exchange_id", co.exchange_id)
-				.WithField("instrument_id", co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");			
+			Log().WithField("fun", "ConditionOrder_CloseTodayPrior_NeedCancel")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("exchange_id", co.exchange_id)
+			.WithField("instrument_id", co.instrument_id)
+			.Log(LOG_WARNING, "can close long is less than will close long");
 			return false;
 		}
 	}
-	//对价
-	else if (EPriceType::consideration == co.price_type)
+}
+
+bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrder& order
+	, const ContingentOrder& co
+	, const Instrument& ins
+	, ctp_condition_order_task& task
+	, int nOrderIndex)
+{
+	//合约
+	std::string symbol = co.exchange_id + "." + co.instrument_id;
+	//持仓
+	Position& pos = GetPosition(symbol);
+
+	//买平
+	if (EOrderDirection::buy == co.direction)
 	{
-		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
-		f.TimeCondition = THOST_FTDC_TC_GFD;
-		//买平
-		if (EOrderDirection::buy == co.direction)
+		//要平的手数小于等于可平的今仓手数
+		if (co.volume <= pos.pos_short_today - pos.volume_short_frozen_today)
 		{
-			f.LimitPrice = ins.ask_price1;
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+
+			f.Direction = THOST_FTDC_D_Buy;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
 		}
-		//卖平
+		//如果可平的手数小于所有可平的今昨仓手数
+		else if (co.volume <= pos.pos_short_today - pos.volume_short_frozen_today+ pos.pos_short_his- pos.volume_short_frozen_his)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_short_today - pos.volume_short_frozen_today;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - f1.VolumeTotalOriginal;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}			
+		}
+		//可平不足
 		else
 		{
-			f.LimitPrice = ins.bid_price1;
+			Log().WithField("fun", "ConditionOrder_CloseTodayPrior_NotNeedCancel")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("exchange_id", co.exchange_id)
+			.WithField("instrument_id", co.instrument_id)
+			.Log(LOG_WARNING, "can close short is less than will close short");
+			return false;
 		}
 	}
-	//市价
-	else if (EPriceType::market == co.price_type)
-	{
-		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
-		f.TimeCondition = THOST_FTDC_TC_IOC;
-		//买平
-		if (EOrderDirection::buy == co.direction)
-		{
-			f.LimitPrice = ins.upper_limit;
-		}
-		//卖平
-		else
-		{
-			f.LimitPrice = ins.lower_limit;
-		}
-	}
-	//超价
-	else if (EPriceType::over == co.price_type)
-	{
-		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
-		f.TimeCondition = THOST_FTDC_TC_GFD;
-		//买平
-		if (EOrderDirection::buy == co.direction)
-		{
-			f.LimitPrice = ins.bid_price1 + ins.price_tick;
-			if (f.LimitPrice > ins.upper_limit)
-			{
-				f.LimitPrice = ins.upper_limit;
-			}
-		}
-		//卖平
-		else
-		{
-			f.LimitPrice = ins.ask_price1 - ins.price_tick;
-			if (f.LimitPrice < ins.lower_limit)
-			{
-				f.LimitPrice = ins.lower_limit;
-			}
-		}
-	}
-	
-	f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
-	f.ContingentCondition = THOST_FTDC_CC_Immediately;
-	f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
-
-	task.has_first_orders_to_send = true;
-	CtpActionInsertOrder actionInsertOrder;
-	actionInsertOrder.local_key.user_id = _req_login.user_name;
-	actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-	actionInsertOrder.f = f;
-	task.first_orders_to_send.push_back(actionInsertOrder);
-
-	task.has_second_orders_to_send = false;
-
-	if (ENeedCancelOrderType::yestoday_buy == needCancelOrderType)
-	{
-		for (auto it : m_data.m_orders)
-		{
-			const std::string& orderId = it.first;
-			const Order& order = it.second;
-			if (order.status == kOrderStatusFinished)
-			{
-				continue;
-			}
-
-			if (order.symbol() != symbol)
-			{
-				continue;
-			}
-
-			if ((order.direction == kDirectionBuy)
-				&& (order.offset == kOffsetClose))
-			{
-				CtpActionCancelOrder cancelOrder;
-				cancelOrder.local_key.order_id = orderId;
-				cancelOrder.local_key.user_id = _req_login.user_name.c_str();
-
-				CThostFtdcInputOrderActionField f;
-				memset(&f, 0, sizeof(CThostFtdcInputOrderActionField));
-				strcpy_x(f.BrokerID, m_broker_id.c_str());
-				strcpy_x(f.UserID, _req_login.user_name.c_str());
-				strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-				strcpy_x(f.ExchangeID, order.exchange_id.c_str());
-				strcpy_x(f.InstrumentID, order.instrument_id.c_str());
-
-				cancelOrder.f = f;
-
-				task.has_order_to_cancel = true;
-				task.orders_to_cancel.push_back(cancelOrder);
-			}
-		}
-	}
-	else if (ENeedCancelOrderType::yestoday_sell == needCancelOrderType)
-	{
-		for (auto it : m_data.m_orders)
-		{
-			const std::string& orderId = it.first;
-			const Order& order = it.second;
-			if (order.status == kOrderStatusFinished)
-			{
-				continue;
-			}
-
-			if (order.symbol() != symbol)
-			{
-				continue;
-			}
-
-			if ((order.direction == kDirectionSell)
-				&& (order.offset == kOffsetClose))
-			{
-				CtpActionCancelOrder cancelOrder;
-				cancelOrder.local_key.order_id = orderId;
-				cancelOrder.local_key.user_id = _req_login.user_name.c_str();
-
-				CThostFtdcInputOrderActionField f;
-				memset(&f, 0, sizeof(CThostFtdcInputOrderActionField));
-				strcpy_x(f.BrokerID, m_broker_id.c_str());
-				strcpy_x(f.UserID, _req_login.user_name.c_str());
-				strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-				strcpy_x(f.ExchangeID, order.exchange_id.c_str());
-				strcpy_x(f.InstrumentID, order.instrument_id.c_str());
-
-				cancelOrder.f = f;
-
-				task.has_order_to_cancel = true;
-				task.orders_to_cancel.push_back(cancelOrder);
-			}
-		}
-	}
+	//卖平
 	else
 	{
-		task.has_order_to_cancel = false;
-	}
+		//要平的手数小于等于可平的今仓手数
+		if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
 
-	return true;
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+
+			//卖平
+			f.Direction = THOST_FTDC_D_Sell;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+		}
+		else if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today+pos.pos_long_his- pos.volume_long_frozen_his)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_long_today - pos.volume_long_frozen_today;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - f1.VolumeTotalOriginal;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+		}
+		//可平不足
+		else
+		{
+			Log().WithField("fun","ConditionOrder_CloseTodayPrior_NotNeedCancel")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
+				.Log(LOG_WARNING, "can close long is less than will close long");
+			return false;
+		}		
+	}
+}
+
+bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrder& order
+	, const ContingentOrder& co
+	, const Instrument& ins
+	, ctp_condition_order_task& task
+	, int nOrderIndex)
+{
+	//合约
+	std::string symbol = co.exchange_id + "." + co.instrument_id;
+	//持仓
+	Position& pos = GetPosition(symbol);
+
+	//买平
+	if (EOrderDirection::buy == co.direction)
+	{
+		//要平的手数小于等于可平的昨仓手数
+		if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+
+			f.Direction = THOST_FTDC_D_Buy;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+		}
+		//要平的手数小于等于昨仓手数(包括冻结的手数)
+		else if (co.volume <= pos.pos_short_his)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+
+			f.Direction = THOST_FTDC_D_Buy;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平昨仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionBuy)
+						&& (order.offset == kOffsetClose))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f2;
+						memset(&f2, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f2.BrokerID, m_broker_id.c_str());
+						strcpy_x(f2.UserID, _req_login.user_name.c_str());
+						strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f2.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f2.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f2;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+
+		}
+		//要平的手数小于等于所有空仓(不包手冻结的昨仓)
+		else if (co.volume <= pos.pos_short_his+pos.pos_short_today-pos.volume_short_frozen_today)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f1.Direction = THOST_FTDC_D_Buy;
+			f1.VolumeTotalOriginal = pos.pos_short_his;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f2.Direction = THOST_FTDC_D_Buy;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_short_his;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+			
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平昨仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionBuy)
+						&& (order.offset == kOffsetClose))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+		}
+		//要平的手数小于等于所有空仓(包括冻结的手数)
+		else if (co.volume <= pos.pos_short_his+pos.pos_short_today)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f1.Direction = THOST_FTDC_D_Buy;
+			f1.VolumeTotalOriginal = pos.pos_short_his;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f2.Direction = THOST_FTDC_D_Buy;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_short_his;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionBuy)
+						&& ((order.offset == kOffsetClose) || (order.offset == kOffsetCloseToday)))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+		}
+		//可平不足
+		else
+		{
+			Log().WithField("fun", "ConditionOrder_CloseYesTodayPrior_NeedCancel")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
+				.Log(LOG_WARNING, "can close short is less than will close short");
+			return false;
+		}
+	}
+	//卖平
+	else
+	{
+		//要平的手数小于等于可平的昨仓手数
+		if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+
+			//卖平
+			f.Direction = THOST_FTDC_D_Sell;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+
+		}
+		//要平的手数小于等于昨仓手数(包括冻结的手数)
+		else if (co.volume <= pos.pos_long_his)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+
+			//卖平
+			f.Direction = THOST_FTDC_D_Sell;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平昨仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionSell)
+						&& (order.offset == kOffsetClose))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f2;
+						memset(&f2, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f2.BrokerID, m_broker_id.c_str());
+						strcpy_x(f2.UserID, _req_login.user_name.c_str());
+						strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f2.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f2.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f2;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+		}
+		//要平的手数小于等于所有多仓(不包手冻结的昨仓)
+		else if (co.volume <= pos.pos_long_his+pos.pos_long_today-pos.volume_long_frozen_today)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_long_his;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_long_his;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平昨仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionSell)
+						&& (order.offset == kOffsetClose))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+
+		}
+		//要平的手数小于等于所有多仓(包括冻结的手数)
+		else if (co.volume <= pos.pos_long_his+pos.pos_long_today)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_long_his;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - pos.pos_long_his;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+
+				//撤掉所有平仓的挂单
+				for (auto it : m_data.m_orders)
+				{
+					const std::string& orderId = it.first;
+					const Order& order = it.second;
+					if (order.status == kOrderStatusFinished)
+					{
+						continue;
+					}
+
+					if (order.symbol() != symbol)
+					{
+						continue;
+					}
+
+					if ((order.direction == kDirectionSell)
+						&& ((order.offset == kOffsetClose) || (order.offset == kOffsetCloseToday)))
+					{
+						CtpActionCancelOrder cancelOrder;
+						cancelOrder.local_key.order_id = orderId;
+						cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+						CThostFtdcInputOrderActionField f3;
+						memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+						strcpy_x(f3.BrokerID, m_broker_id.c_str());
+						strcpy_x(f3.UserID, _req_login.user_name.c_str());
+						strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+						strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+						strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+						cancelOrder.f = f3;
+
+						task.has_order_to_cancel = true;
+						task.orders_to_cancel.push_back(cancelOrder);
+					}
+				}//end for
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+
+		}
+		//可平不足
+		else
+		{
+			Log().WithField("fun", "ConditionOrder_CloseYesTodayPrior_NeedCancel")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
+				.Log(LOG_WARNING, "can close long is less than will close long");
+			return false;
+		}
+	}
+}
+
+bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionOrder& order
+	, const ContingentOrder& co
+	, const Instrument& ins
+	, ctp_condition_order_task& task
+	, int nOrderIndex)
+{
+	//合约
+	std::string symbol = co.exchange_id + "." + co.instrument_id;
+	//持仓
+	Position& pos = GetPosition(symbol);
+
+	//买平
+	if (EOrderDirection::buy == co.direction)
+	{
+		//要平的手数小于等于可平的昨仓手数
+		if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+
+			f.Direction = THOST_FTDC_D_Buy;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+		}
+		//如果可平的手数小于所有可平的今昨仓手数
+		else if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his + pos.pos_short_today - pos.volume_short_frozen_today)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_short_his - pos.volume_short_frozen_his;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - f1.VolumeTotalOriginal;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+		}
+		//可平不足
+		else
+		{
+			Log().WithField("fun", "ConditionOrder_CloseYesTodayPrior_NotNeedCancel")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
+				.Log(LOG_WARNING, "can close short is less than will close short");
+			return false;
+		}
+	}
+	//卖平
+	else
+	{
+		//要平的手数小于等于可平的今仓手数
+		if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+
+			//卖平
+			f.Direction = THOST_FTDC_D_Sell;
+
+			f.VolumeTotalOriginal = co.volume;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return  false;
+			}
+		}
+		else if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his+pos.pos_long_today - pos.volume_long_frozen_today)
+		{
+			CThostFtdcInputOrderField f1;
+			memset(&f1, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f1.BrokerID, m_broker_id.c_str());
+			strcpy_x(f1.UserID, _req_login.user_name.c_str());
+			strcpy_x(f1.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f1.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f1.InstrumentID, co.instrument_id.c_str());
+
+			//平昨
+			f1.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f1.Direction = THOST_FTDC_D_Sell;
+			f1.VolumeTotalOriginal = pos.pos_long_his - pos.volume_long_frozen_his;
+			f1.VolumeCondition = THOST_FTDC_VC_AV;
+
+			CThostFtdcInputOrderField f2;
+			memset(&f2, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f2.BrokerID, m_broker_id.c_str());
+			strcpy_x(f2.UserID, _req_login.user_name.c_str());
+			strcpy_x(f2.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f2.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f2.InstrumentID, co.instrument_id.c_str());
+
+			//平今
+			f2.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f2.Direction = THOST_FTDC_D_Sell;
+			f2.VolumeTotalOriginal = co.volume - f1.VolumeTotalOriginal;
+			f2.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f1, order, co, ins)
+				&& SetConditionOrderPrice(f2, order, co, ins))
+			{
+				f1.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f1.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f1.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+
+				CtpActionInsertOrder actionInsertOrder1;
+				actionInsertOrder1.local_key.user_id = _req_login.user_name;
+				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder1.f = f1;
+				task.first_orders_to_send.push_back(actionInsertOrder1);
+
+				CtpActionInsertOrder actionInsertOrder2;
+				actionInsertOrder2.local_key.user_id = _req_login.user_name;
+				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder2.f = f2;
+				task.first_orders_to_send.push_back(actionInsertOrder2);
+
+				task.has_second_orders_to_send = false;
+				task.has_order_to_cancel = false;
+				return true;
+			}
+			//价格设置不合法
+			else
+			{
+				return false;
+			}
+		}
+		//可平不足
+		else
+		{
+			Log().WithField("fun", "ConditionOrder_CloseYesTodayPrior_NotNeedCancel")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("exchange_id", co.exchange_id)
+				.WithField("instrument_id", co.instrument_id)
+				.Log(LOG_WARNING, "can close long is less than will close long");
+			return false;
+		}
+	}
+}
+
+bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
+	, const ContingentOrder& co
+	, const Instrument& ins
+	, ctp_condition_order_task& task
+	, int nOrderIndex)
+{
+	//合约
+	std::string symbol = co.exchange_id + "." + co.instrument_id;
+	//持仓
+	Position& pos = GetPosition(symbol);
+
+	//买平
+	if (EOrderDirection::buy == co.direction)
+	{
+		//如果可平今仓手数大于零
+		if (pos.pos_short_today - pos.volume_short_frozen_today > 0)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f.Direction = THOST_FTDC_D_Buy;
+			f.VolumeTotalOriginal = pos.pos_short_today - pos.volume_short_frozen_today;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f,order,co,ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);				
+			}
+			else
+			{
+				return  false;
+			}								
+		}
+
+		//如果可平昨仓手数大于零
+		if (pos.pos_short_his - pos.volume_short_frozen_his > 0)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f.Direction = THOST_FTDC_D_Buy;
+			f.VolumeTotalOriginal = pos.pos_short_his - pos.volume_short_frozen_his;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f,order,co,ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);				
+			}
+			else
+			{
+				return  false;
+			}
+		}
+
+		if (task.has_first_orders_to_send)
+		{
+			task.has_order_to_cancel = false;
+			task.has_second_orders_to_send = false;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	//卖平
+	else
+	{
+		//如果可平今仓手数大于零
+		if (pos.pos_long_today - pos.volume_long_frozen_today > 0)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+			//平今
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+			f.Direction = THOST_FTDC_D_Sell;
+			f.VolumeTotalOriginal = pos.pos_long_today - pos.volume_long_frozen_today;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f, order, co, ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+			}
+			else
+			{
+				return  false;
+			}
+		}
+
+		//如果可平昨仓手数大于零
+		if (pos.pos_long_his - pos.volume_long_frozen_his > 0)
+		{
+			CThostFtdcInputOrderField f;
+			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
+			strcpy_x(f.BrokerID, m_broker_id.c_str());
+			strcpy_x(f.UserID, _req_login.user_name.c_str());
+			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+			//平昨
+			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+			f.Direction = THOST_FTDC_D_Sell;
+			f.VolumeTotalOriginal = pos.pos_long_his - pos.volume_long_frozen_his;
+			f.VolumeCondition = THOST_FTDC_VC_AV;
+
+			if (SetConditionOrderPrice(f,order,co,ins))
+			{
+				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+				f.ContingentCondition = THOST_FTDC_CC_Immediately;
+				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+
+				task.has_first_orders_to_send = true;
+				CtpActionInsertOrder actionInsertOrder;
+				actionInsertOrder.local_key.user_id = _req_login.user_name;
+				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+				actionInsertOrder.f = f;
+				task.first_orders_to_send.push_back(actionInsertOrder);
+			}
+			else
+			{
+				return  false;
+			}
+		}
+
+		if (task.has_first_orders_to_send)
+		{
+			task.has_order_to_cancel = false;
+			task.has_second_orders_to_send = false;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 bool traderctp::ConditionOrder_Close(const ConditionOrder& order
@@ -6999,19 +8505,45 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 		if (EOrderOffset::open == co.offset)
 		{
 			flag=ConditionOrder_Open(order,co,*ins,task,nOrderIndex);				
-		}
-		//平今
-		else if (EOrderOffset::close_today == co.offset)
-		{			
-			flag = ConditionOrder_CloseToday(order,co,*ins,task,nOrderIndex);		
-		}
+		}		
 		else if (EOrderOffset::close == co.offset)
 		{
 			bool b_has_td_yd_distinct = (co.exchange_id == "SHFE") || (co.exchange_id == "INE");
 			if (b_has_td_yd_distinct)
-			{
-				//平昨
-				flag = ConditionOrder_CloseYesToday(order,co,*ins,task,nOrderIndex);
+			{		
+				//如果是平掉指定数量
+				if (EVolumeType::num == co.volume_type)
+				{
+					//如果是平今优先
+					if (co.close_today_prior)
+					{
+						if (order.is_cancel_ori_close_order)
+						{
+							flag = ConditionOrder_CloseTodayPrior_NeedCancel(order, co, *ins, task, nOrderIndex);
+						}
+						else
+						{
+							flag = ConditionOrder_CloseTodayPrior_NotNeedCancel(order, co, *ins, task, nOrderIndex);
+						}
+					}
+					//如果是平昨优先
+					else
+					{
+						if (order.is_cancel_ori_close_order)
+						{
+							flag = ConditionOrder_CloseYesTodayPrior_NeedCancel(order, co, *ins, task, nOrderIndex);
+						}
+						else
+						{
+							flag = ConditionOrder_CloseYesTodayPrior_NotNeedCancel(order, co, *ins, task, nOrderIndex);
+						}
+					}
+				}
+				//如果是全平
+				else if (EVolumeType::close_all == co.volume_type)
+				{
+					flag = ConditionOrder_CloseAll(order, co, *ins, task, nOrderIndex);
+				}						
 			}
 			else
 			{
