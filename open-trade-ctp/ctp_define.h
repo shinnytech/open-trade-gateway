@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "ctp/ThostFtdcTraderApi.h"
+#include "ctpse15/ThostFtdcTraderApi.h"
 #include "datetime.h"
 #include "rapid_serialize.h"
 #include "condition_order_type.h"

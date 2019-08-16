@@ -5439,15 +5439,18 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 	f.ContingentCondition = THOST_FTDC_CC_Immediately;
 	f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-	task.has_order_to_cancel = false;
-	task.has_first_orders_to_send = true;
+	task.has_order_to_cancel = false;	
 	task.has_second_orders_to_send = false;
 
-	CtpActionInsertOrder actionInsertOrder;
-	actionInsertOrder.local_key.user_id = _req_login.user_name;
-	actionInsertOrder.local_key.order_id = order.order_id + "_open_" + std::to_string(nOrderIndex);
-	actionInsertOrder.f = f;
-	task.first_orders_to_send.push_back(actionInsertOrder);
+	if (f.VolumeTotalOriginal > 0)
+	{
+		task.has_first_orders_to_send = true;
+		CtpActionInsertOrder actionInsertOrder;
+		actionInsertOrder.local_key.user_id = _req_login.user_name;
+		actionInsertOrder.local_key.order_id = order.order_id + "_open_" + std::to_string(nOrderIndex);
+		actionInsertOrder.f = f;
+		task.first_orders_to_send.push_back(actionInsertOrder);
+	}	
 	
 	return true;
 }
@@ -5582,11 +5585,11 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
-			strcpy_x(f.BrokerID, m_broker_id.c_str());
-			strcpy_x(f.UserID, _req_login.user_name.c_str());
-			strcpy_x(f.InvestorID, _req_login.user_name.c_str());
-			strcpy_x(f.ExchangeID, co.exchange_id.c_str());
-			strcpy_x(f.InstrumentID, co.instrument_id.c_str());
+			strcpy_x(f.BrokerID,m_broker_id.c_str());
+			strcpy_x(f.UserID,_req_login.user_name.c_str());
+			strcpy_x(f.InvestorID,_req_login.user_name.c_str());
+			strcpy_x(f.ExchangeID,co.exchange_id.c_str());
+			strcpy_x(f.InstrumentID,co.instrument_id.c_str());
 
 			//平今
 			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
@@ -5602,15 +5605,18 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
 
-				task.has_second_orders_to_send = false;
-				task.has_order_to_cancel = false;
+					task.has_second_orders_to_send = false;
+					task.has_order_to_cancel = false;
+				}
 
 				return true;
 			}
@@ -5645,12 +5651,15 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}				
 
 				task.has_second_orders_to_send = false;
 
@@ -5729,8 +5738,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 			f2.Direction = THOST_FTDC_D_Buy;
 			f2.VolumeTotalOriginal = co.volume - pos.pos_short_today;
 			f2.VolumeCondition = THOST_FTDC_VC_AV;
-
-
+			
 			if (SetConditionOrderPrice(f1, order, co, ins)
 				&& SetConditionOrderPrice(f2, order, co, ins))
 			{
@@ -5741,21 +5749,27 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				f2.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+				
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
-
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}
+				
 				task.has_second_orders_to_send = false;
 
 				//撤掉所有平今仓的挂单
@@ -5792,7 +5806,6 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 
 						task.has_order_to_cancel = true;
 						task.orders_to_cancel.push_back(cancelOrder);
-
 					}
 				}//end for
 
@@ -5846,17 +5859,25 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 
 				task.has_first_orders_to_send = true;
 
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}			
 
 				task.has_second_orders_to_send = false;
 
@@ -5948,12 +5969,15 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}				
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -5986,18 +6010,21 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 			f.VolumeTotalOriginal = co.volume;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
-			if (SetConditionOrderPrice(f, order, co, ins))
+			if (SetConditionOrderPrice(f,order,co,ins))
 			{
 				f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}			
 
 				task.has_second_orders_to_send = false;
 
@@ -6088,19 +6115,25 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}			
 
 				task.has_second_orders_to_send = false;
 
@@ -6193,19 +6226,25 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}			
 
 				task.has_second_orders_to_send = false;
 
@@ -6309,12 +6348,15 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}			
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -6369,19 +6411,25 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}			
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -6436,12 +6484,15 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}				
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -6494,19 +6545,25 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}				
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -6572,13 +6629,16 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
-
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}
+				
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
 
@@ -6615,12 +6675,15 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}				
 
 				task.has_second_orders_to_send = false;
 
@@ -6711,19 +6774,25 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}				
 
 				task.has_second_orders_to_send = false;
 
@@ -6812,20 +6881,26 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
-
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}
+				
 				task.has_second_orders_to_send = false;
 
 				//撤掉所有平仓的挂单
@@ -6862,7 +6937,6 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 
 						task.has_order_to_cancel = true;
 						task.orders_to_cancel.push_back(cancelOrder);
-
 					}
 				}//end for
 
@@ -6916,12 +6990,15 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}				
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -6960,13 +7037,16 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
-
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}
+				
 				task.has_second_orders_to_send = false;
 
 				//撤掉所有平昨仓的挂单
@@ -7056,20 +7136,26 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
-
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}
+				
 				task.has_second_orders_to_send = false;
 
 				//撤掉所有平昨仓的挂单
@@ -7161,19 +7247,25 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}				
 
 				task.has_second_orders_to_send = false;
 
@@ -7277,13 +7369,16 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
-
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}
+				
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
 
@@ -7337,20 +7432,26 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
-
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}
+				
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
 
@@ -7378,7 +7479,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 	//卖平
 	else
 	{
-		//要平的手数小于等于可平的今仓手数
+		//要平的手数小于等于可平的昨仓手数
 		if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7404,13 +7505,16 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);
-
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}
+				
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
 				return true;
@@ -7462,19 +7566,25 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				f2.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f2.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-
-				CtpActionInsertOrder actionInsertOrder1;
-				actionInsertOrder1.local_key.user_id = _req_login.user_name;
-				actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder1.f = f1;
-				task.first_orders_to_send.push_back(actionInsertOrder1);
-
-				CtpActionInsertOrder actionInsertOrder2;
-				actionInsertOrder2.local_key.user_id = _req_login.user_name;
-				actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder2.f = f2;
-				task.first_orders_to_send.push_back(actionInsertOrder2);
+				if (f1.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder1;
+					actionInsertOrder1.local_key.user_id = _req_login.user_name;
+					actionInsertOrder1.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder1.f = f1;
+					task.first_orders_to_send.push_back(actionInsertOrder1);
+				}
+				
+				if (f2.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder2;
+					actionInsertOrder2.local_key.user_id = _req_login.user_name;
+					actionInsertOrder2.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder2.f = f2;
+					task.first_orders_to_send.push_back(actionInsertOrder2);
+				}				
 
 				task.has_second_orders_to_send = false;
 				task.has_order_to_cancel = false;
@@ -7537,12 +7647,15 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);				
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}					
 			}
 			else
 			{
@@ -7572,12 +7685,15 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 				f.ContingentCondition = THOST_FTDC_CC_Immediately;
 				f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-				task.has_first_orders_to_send = true;
-				CtpActionInsertOrder actionInsertOrder;
-				actionInsertOrder.local_key.user_id = _req_login.user_name;
-				actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				actionInsertOrder.f = f;
-				task.first_orders_to_send.push_back(actionInsertOrder);				
+				if (f.VolumeTotalOriginal > 0)
+				{
+					task.has_first_orders_to_send = true;
+					CtpActionInsertOrder actionInsertOrder;
+					actionInsertOrder.local_key.user_id = _req_login.user_name;
+					actionInsertOrder.local_key.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					actionInsertOrder.f = f;
+					task.first_orders_to_send.push_back(actionInsertOrder);
+				}						
 			}
 			else
 			{
@@ -7940,12 +8056,15 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 	f.ContingentCondition = THOST_FTDC_CC_Immediately;
 	f.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
 
-	task.has_first_orders_to_send = true;
-	CtpActionInsertOrder actionInsertOrder;
-	actionInsertOrder.local_key.user_id = _req_login.user_name;
-	actionInsertOrder.local_key.order_id = order.order_id + "_close_" + std::to_string(nOrderIndex);
-	actionInsertOrder.f = f;
-	task.first_orders_to_send.push_back(actionInsertOrder);
+	if (f.VolumeTotalOriginal > 0)
+	{
+		task.has_first_orders_to_send = true;
+		CtpActionInsertOrder actionInsertOrder;
+		actionInsertOrder.local_key.user_id = _req_login.user_name;
+		actionInsertOrder.local_key.order_id = order.order_id + "_close_" + std::to_string(nOrderIndex);
+		actionInsertOrder.f = f;
+		task.first_orders_to_send.push_back(actionInsertOrder);
+	}	
 	
 	task.has_second_orders_to_send = false;
 

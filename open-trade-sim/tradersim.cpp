@@ -2566,7 +2566,10 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
 
-				OnConditionOrderReqInsertOrder(action_insert_order);
+				if (action_insert_order.volume>0)
+				{
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}				
 
 				return true;
 			}
@@ -2622,8 +2625,12 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 
 				//再平今仓
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);				
-				OnConditionOrderReqInsertOrder(action_insert_order);
+				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);	
+
+				if (action_insert_order.volume > 0)
+				{
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}						
 
 				return true;
 			}
@@ -2690,16 +2697,22 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					}
 				}
 
-				//再平今仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
+				//先平今仓
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
 				//再平昨仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -2765,16 +2778,22 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					}
 				}
 
-				//再平今仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
+				//先平今仓
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
 				//再平昨仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -2820,8 +2839,11 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
 
-				OnConditionOrderReqInsertOrder(action_insert_order);
-
+				if (action_insert_order.volume > 0)
+				{
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -2874,11 +2896,14 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 
 				}
 
-				//再平今仓
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order);
-
+				//平今仓
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -2944,16 +2969,22 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					}
 				}
 
-				//再平今仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
-				//再平昨仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				//平今仓
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
+				//平昨仓
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3019,16 +3050,22 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					}
 				}
 
-				//再平今仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
-				//再平昨仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				//平今仓
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
+				//平昨仓
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3083,11 +3120,13 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
 			{
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-
-				OnConditionOrderReqInsertOrder(action_insert_order);
-
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3129,15 +3168,21 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				&& SetConditionOrderPrice(action_insert_order2, order, co, ins))
 			{
 				//平今
-				action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order1);
-
+				if (action_insert_order1.volume > 0)
+				{
+					action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order1);
+				}
+				
 				//平昨
-				action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order2);
-
+				if (action_insert_order2.volume > 0)
+				{
+					action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order2);
+				}
+				
 				return true;
 			}
 			//价格设置不合法
@@ -3180,11 +3225,13 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
 			{
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-
-				OnConditionOrderReqInsertOrder(action_insert_order);
-
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3227,15 +3274,21 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				&& SetConditionOrderPrice(action_insert_order2, order, co, ins))
 			{
 				//平今
-				action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order1);
-
+				if (action_insert_order1.volume > 0)
+				{
+					action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order1.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order1);
+				}
+				
 				//平昨
-				action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order2);
-
+				if (action_insert_order2.volume > 0)
+				{
+					action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order2.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order2);
+				}
+				
 				return true;
 			}
 			//价格设置不合法
@@ -3290,10 +3343,12 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
 			{
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-
-				OnConditionOrderReqInsertOrder(action_insert_order);
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
 
 				return true;
 			}
@@ -3348,10 +3403,13 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				}
 
 				//再平昨仓
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order);
-
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3417,15 +3475,21 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					}
 				}
 
-				//再平昨仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
-				//再平今仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
+				//平昨仓
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
+				//平今仓
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
 
 				return true;
 			}
@@ -3492,16 +3556,22 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					}
 				}
 
-				//再平昨仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
-				//再平今仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				//平昨仓
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
+				//平今仓
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3544,10 +3614,12 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
 			{
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-
-				OnConditionOrderReqInsertOrder(action_insert_order);
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}				
 
 				return true;
 			}
@@ -3601,10 +3673,13 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 
 				}
 
-				//再平昨仓
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order);
+				//平昨仓
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}				
 
 				return true;
 			}
@@ -3672,15 +3747,21 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				}
 
 				//再平昨仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
 				//再平今仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3747,15 +3828,21 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				}
 
 				//再平昨仓
-				action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_1);
-
+				if (action_insert_order_1.volume > 0)
+				{
+					action_insert_order_1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_1);
+				}
+				
 				//再平今仓
-				action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order_2);
-
+				if (action_insert_order_2.volume > 0)
+				{
+					action_insert_order_2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order_2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order_2);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3810,10 +3897,12 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
 			{
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-
-				OnConditionOrderReqInsertOrder(action_insert_order);
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}		
 
 				return true;
 			}
@@ -3856,15 +3945,21 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				&& SetConditionOrderPrice(action_insert_order2, order, co, ins))
 			{
 				//平昨
-				action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order1);
-
+				if (action_insert_order1.volume > 0)
+				{
+					action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order1);
+				}
+				
 				//平今
-				action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order2);
-
+				if (action_insert_order2.volume > 0)
+				{
+					action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order2);
+				}
+				
 				return true;
 			}
 			//价格设置不合法
@@ -3907,11 +4002,13 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
 			{
-				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-
-				OnConditionOrderReqInsertOrder(action_insert_order);
-
+				if (action_insert_order.volume > 0)
+				{
+					action_insert_order.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order);
+				}
+				
 				return true;
 			}
 			//价格设置错误
@@ -3952,15 +4049,21 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				&& SetConditionOrderPrice(action_insert_order2, order, co, ins))
 			{
 				//平昨
-				action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order1);
-
+				if (action_insert_order1.volume > 0)
+				{
+					action_insert_order1.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order1.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order1);
+				}
+				
 				//平今
-				action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
-				action_insert_order2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-				OnConditionOrderReqInsertOrder(action_insert_order2);
-
+				if (action_insert_order2.volume > 0)
+				{
+					action_insert_order2.hedge_flag = kHedgeFlagSpeculation;
+					action_insert_order2.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
+					OnConditionOrderReqInsertOrder(action_insert_order2);
+				}
+				
 				return true;
 			}
 			//价格设置不合法
@@ -3972,12 +4075,12 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 		//可平不足
 		else
 		{
-			Log().WithField("fun", "ConditionOrder_CloseYesTodayPrior_NotNeedCancel")
-				.WithField("key", _key)
-				.WithField("bid", _req_login.bid)
-				.WithField("user_name", _req_login.user_name)
-				.WithField("exchange_id", co.exchange_id)
-				.WithField("instrument_id", co.instrument_id)
+			Log().WithField("fun","ConditionOrder_CloseYesTodayPrior_NotNeedCancel")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("exchange_id",co.exchange_id)
+				.WithField("instrument_id",co.instrument_id)
 				.Log(LOG_WARNING, "can close long is less than will close long");
 			return false;
 		}
@@ -4016,7 +4119,6 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			{
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-
 				OnConditionOrderReqInsertOrder(action_insert_order);
 
 				flag = true;
@@ -4048,7 +4150,6 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			{
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-
 				OnConditionOrderReqInsertOrder(action_insert_order);
 
 				flag = true;
@@ -4086,7 +4187,6 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			{
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
-
 				OnConditionOrderReqInsertOrder(action_insert_order);
 
 				flag = true;
@@ -4118,7 +4218,6 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			{
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
-
 				OnConditionOrderReqInsertOrder(action_insert_order);
 
 				flag = true;
@@ -4169,12 +4268,12 @@ bool tradersim::SetConditionOrderPrice(ActionOrder& action_insert_order
 		if (!flag)
 		{
 			//找不到触发价			
-			Log().WithField("fun", "SetConditionOrderPrice")
-				.WithField("key", _key)
-				.WithField("bid", _req_login.bid)
-				.WithField("user_name", _req_login.user_name)
-				.WithField("instrument_id", co.instrument_id)
-				.Log(LOG_WARNING, "can not find contingent_price");
+			Log().WithField("fun","SetConditionOrderPrice")
+				.WithField("key",_key)
+				.WithField("bid",_req_login.bid)
+				.WithField("user_name",_req_login.user_name)
+				.WithField("instrument_id",co.instrument_id)
+				.Log(LOG_WARNING,"can not find contingent_price");
 			return false;
 		}
 		return true;
@@ -4248,6 +4347,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 	, int nOrderIndex)
 {
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
+	Position& pos = GetPosition(symbol);
 
 	ActionOrder action_insert_order;
 	action_insert_order.aid = "insert_order";
@@ -4262,20 +4362,19 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		action_insert_order.direction = kDirectionBuy;
-		Position& pos = GetPosition(symbol);
+		action_insert_order.direction = kDirectionBuy;		
 
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
 		{
 			//要平的手数小于等于可平手数
-			if (co.volume <= pos.volume_short - pos.volume_short_frozen)
+			if (co.volume <= pos.pos_short_his+pos.pos_short_today-pos.volume_short_frozen)
 			{
 				action_insert_order.volume = co.volume;
 				action_insert_order.volume_condition = kOrderVolumeConditionAny;
 			}
 			//要平的手数小于等于可平手数(包括冻结的手数)
-			else if (co.volume <= pos.volume_short)
+			else if (co.volume <= pos.pos_short_his + pos.pos_short_today)
 			{
 				if (order.is_cancel_ori_close_order)
 				{
@@ -4309,9 +4408,9 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		{
 			Position& position = GetPosition(symbol);
 			//如果可平手数大于零
-			if (pos.volume_short - pos.volume_short_frozen > 0)
+			if (pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen > 0)
 			{
-				action_insert_order.volume = pos.volume_short - pos.volume_short_frozen;
+				action_insert_order.volume = pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen;
 				action_insert_order.volume_condition = kOrderVolumeConditionAny;
 			}
 			else
@@ -4336,13 +4435,13 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		if (EVolumeType::num == co.volume_type)
 		{
 			//要平的手数小于等于可平的手数
-			if (co.volume <= pos.volume_long - pos.volume_long_frozen)
+			if (co.volume <= pos.pos_long_his+ pos.pos_long_today - pos.volume_long_frozen)
 			{
 				action_insert_order.volume = co.volume;
 				action_insert_order.volume_condition = kOrderVolumeConditionAny;
 			}
 			//要平的手数小于等于可平手数(包括冻结的手数)
-			else if (co.volume <= pos.volume_long)
+			else if (co.volume <= pos.pos_long_his + pos.pos_long_today)
 			{
 				if (order.is_cancel_ori_close_order)
 				{
@@ -4375,11 +4474,10 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(symbol);
 			//如果可平手数大于零
-			if (pos.volume_long - pos.volume_long_frozen > 0)
+			if (pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen > 0)
 			{
-				action_insert_order.volume = pos.volume_long - pos.volume_long_frozen;
+				action_insert_order.volume = pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen;
 				action_insert_order.volume_condition = kOrderVolumeConditionAny;
 			}
 			else
@@ -4549,8 +4647,11 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		}
 	}
 
-	OnConditionOrderReqInsertOrder(action_insert_order);
-
+	if (action_insert_order.volume > 0)
+	{
+		OnConditionOrderReqInsertOrder(action_insert_order);
+	}
+	
 	return true;
 }
 
@@ -4663,9 +4764,9 @@ bool tradersim::ConditionOrder_Reverse_Long(const ConditionOrder& order
 	else
 	{
 		//如果有多仓
-		if (pos.volume_long > 0)
+		if (pos.pos_long_his+pos.pos_long_today > 0)
 		{
-			volume_long = pos.volume_long;
+			volume_long = pos.pos_long_his + pos.pos_long_today;
 
 			ActionOrder action_insert_order;
 			action_insert_order.aid = "insert_order";
@@ -4680,7 +4781,7 @@ bool tradersim::ConditionOrder_Reverse_Long(const ConditionOrder& order
 			action_insert_order.direction = kDirectionSell;
 
 			//数量
-			action_insert_order.volume = pos.volume_long;
+			action_insert_order.volume = volume_long;
 			action_insert_order.volume_condition = kOrderVolumeConditionAny;
 
 			//价格类型(反手一定用市价平仓)
@@ -4841,9 +4942,9 @@ bool tradersim::ConditionOrder_Reverse_Short(const ConditionOrder& order
 	else
 	{
 		//如果有空仓
-		if (pos.volume_short > 0)
+		if (pos.pos_short_his+pos.pos_short_today > 0)
 		{
-			volume_short = pos.volume_short;
+			volume_short = pos.pos_short_his + pos.pos_short_today;
 
 			ActionOrder action_insert_order;
 			action_insert_order.aid = "insert_order";
@@ -4858,7 +4959,7 @@ bool tradersim::ConditionOrder_Reverse_Short(const ConditionOrder& order
 			action_insert_order.direction = kDirectionBuy;
 
 			//数量
-			action_insert_order.volume = pos.volume_short;
+			action_insert_order.volume = volume_short;
 			action_insert_order.volume_condition = kOrderVolumeConditionAny;
 
 			//价格类型(反手一定用市价平仓)

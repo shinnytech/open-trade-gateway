@@ -255,8 +255,7 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 		boost::filesystem::path bid_file_path = beg_iter->path();
 		boost::filesystem::recursive_directory_iterator beg_iter_2(bid_file_path);
 		boost::filesystem::recursive_directory_iterator end_iter_2;
-
-		ConditionOrderData condition_order_data;
+				
 		req_start_trade_instance req_start_trade;
 		for (; beg_iter_2 != end_iter_2; ++beg_iter_2)
 		{
@@ -271,6 +270,15 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 				continue;
 			}
 
+			std::string strKey = key_file_path.filename().string();
+			strKey = strKey.substr(0, strKey.length() - 3);
+
+			//ycsong 2019/08/16
+			if (strKey.find(u8"sim_快期模拟_游客_", 0) != std::string::npos)
+			{
+				continue;
+			}			
+			
 			SerializerConditionOrderData nss;
 			bool loadfile = nss.FromFile(key_file_path.string().c_str());
 			if (!loadfile)
@@ -278,6 +286,7 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 				continue;
 			}
 
+			ConditionOrderData condition_order_data;
 			nss.ToVar(condition_order_data);
 
 			//条件单数量为空的用户不自动重启
@@ -296,21 +305,7 @@ bool trade_server::GetReqStartTradeKeyMap(req_start_trade_key_map& rsckMap)
 			req_start_trade.bid = condition_order_data.broker_id;
 			req_start_trade.user_name = condition_order_data.user_id;
 			req_start_trade.password = condition_order_data.user_password;
-								   
-			std::string strKey = key_file_path.filename().string();
-			strKey = strKey.substr(0, strKey.length() - 3);
-
-			//ycsong 2019/08/15 注掉
-			/*if (strKey.find(u8"sim_快期模拟_游客_", 0) != std::string::npos)
-			{
-				continue;
-			}
-
-			if (strKey.find(u8"sim_快期模拟_100000", 0) != std::string::npos)
-			{
-				continue;
-			}*/
-						
+											
 			if (rsckMap.find(strKey) == rsckMap.end())
 			{
 				rsckMap.insert(req_start_trade_key_map::value_type(strKey

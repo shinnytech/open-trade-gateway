@@ -69,6 +69,8 @@ bool master_server::init()
 bool master_server::GetSlaveBrokerList()
 {
 	std::vector<std::string> brokerVector;
+	bool flag = false;
+	std::string strKQMN = u8"快期模拟";
 	for (auto node : masterConfig_.slaveNodeList)
 	{
 		try
@@ -115,7 +117,14 @@ bool master_server::GetSlaveBrokerList()
 				TBrokerSlaveNodeMap::iterator it = m_broker_slave_node_Map.find(bid);
 				if (it == m_broker_slave_node_Map.end())
 				{
-					brokerVector.push_back(bid);
+					if (strKQMN == bid)
+					{
+						flag = true;						
+					}
+					else
+					{
+						brokerVector.push_back(bid);
+					}					
 					m_broker_slave_node_Map.insert(TBrokerSlaveNodeMap::value_type(bid,node));
 				}
 			}
@@ -131,7 +140,7 @@ bool master_server::GetSlaveBrokerList()
 		}
 	}
 
-	if (brokerVector.empty())
+	if (brokerVector.empty()&&(!flag))
 	{
 		LogMs().WithField("fun","GetSlaveBrokerList")
 			.WithField("key","gatewayms")			
@@ -142,11 +151,21 @@ bool master_server::GetSlaveBrokerList()
 	SerializerTradeBase ss_broker_list_str;
 	rapidjson::Pointer("/aid").Set(*ss_broker_list_str.m_doc,"rtn_brokers");
 	int i = 0;
-	for (auto b : brokerVector)
+	if (flag)
 	{
-		std::string brokerName = b;
-		rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc,brokerName);
+		rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc,strKQMN);
 		i++;
+	}
+
+	if (!brokerVector.empty())
+	{
+		std::sort(brokerVector.begin(),brokerVector.end());
+		for (auto b : brokerVector)
+		{
+			std::string brokerName = b;
+			rapidjson::Pointer("/brokers/" + std::to_string(i)).Set(*ss_broker_list_str.m_doc, brokerName);
+			i++;
+		}
 	}
 	ss_broker_list_str.ToString(&m_broker_list_str);
 

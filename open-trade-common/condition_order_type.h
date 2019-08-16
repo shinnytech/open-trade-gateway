@@ -209,7 +209,7 @@ struct ConditionOrder
 	int trading_day;
 
 	//条件单生成的时间
-	long long insert_date_time;
+	int insert_date_time;
 
 	//条件单的条件列表
 	std::vector<ContingentCondition> condition_list;

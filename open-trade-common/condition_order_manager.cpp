@@ -112,20 +112,7 @@ void ConditionOrderManager::Load(const std::string& bid
 		m_condition_order_data.broker_id = bid;
 		m_condition_order_data.user_id = user_id;		
 		m_condition_order_data.user_password = user_password;
-
-		//对条件单的插入时间进行调整,为的是兼容老的版本
-		int currentTime = GetLocalEpochSecond();
-		for (auto it = m_condition_order_data.condition_orders.begin();
-			it != m_condition_order_data.condition_orders.end(); it++)
-		{
-			ConditionOrder& order = it->second;
-			if (order.insert_date_time> currentTime)
-			{
-				order.insert_date_time = order.insert_date_time/ 1000000000;
-			}
-		}
 		
-
 		//如果不是同一个交易日,需要对条件单数据进行调整
 		if (m_condition_order_data.trading_day != trading_day)
 		{
@@ -277,11 +264,7 @@ void ConditionOrderManager::Load(const std::string& bid
 				it != m_condition_order_his_data.his_condition_orders.end();)
 			{
 				ConditionOrder& order = *it;
-				int currentTime = GetLocalEpochSecond();
-				if (order.insert_date_time > currentTime)
-				{
-					order.insert_date_time = order.insert_date_time / 1000000000;
-				}
+				int currentTime = GetLocalEpochSecond();				
 				if (currentTime > order.insert_date_time)
 				{
 					//时间差,单位:秒 
@@ -1963,7 +1946,7 @@ void ConditionOrderManager::QryHisConditionOrder(int connId,const std::string& m
 	}
 
 	std::vector<ConditionOrder> condition_orders;
-	for (auto order : m_condition_order_his_data.his_condition_orders)
+	for (auto& order : m_condition_order_his_data.his_condition_orders)
 	{
 		DateTime dt;
 		SetDateTimeFromEpochSeconds(&dt, order.insert_date_time);
