@@ -867,8 +867,8 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 
 	if (insert_co.order_id.empty())
 	{
-		insert_co.order_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
-			(std::chrono::steady_clock::now().time_since_epoch()).count());
+		insert_co.order_id = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>
+			(std::chrono::steady_clock::now().time_since_epoch()).count());	
 	}
 
 	std::string order_key = insert_co.order_id;
