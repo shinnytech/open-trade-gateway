@@ -156,9 +156,15 @@ void md_connection::OnHandshake(boost::system::error_code ec)
 		OnConnectionnClose();
 		return;
 	}
+		
+	Log().WithField("fun", "OnHandshake")
+		.WithField("key", "mdservice")	
+		.WithField("contentlen", (int)m_req_subscribe_quote.length())
+		.WithPack("m_req_subscribe_quote", m_req_subscribe_quote)
+		.Log(LOG_INFO, "send req subscribe quote message");
 
 	SendTextMsg(m_req_subscribe_quote);
-
+		
 	SendTextMsg(m_req_peek_message);
 
 	DoRead();
