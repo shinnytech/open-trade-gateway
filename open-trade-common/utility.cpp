@@ -12,6 +12,8 @@
 #include <ctime>
 #include <stdio.h>
 
+#include <boost/algorithm/string.hpp>
+
 std::string GenerateUniqFileName()
 {	
 	static char base[] = "/tmp/myfileXXXXXX";
@@ -141,4 +143,27 @@ void CutDigital(std::string& instId)
 	{
 		instId = instId.substr(0, i);
 	}	
+}
+
+void CutDigital_Ex(std::string& instId)
+{
+	std::vector<std::string> vecs;
+	boost::split(vecs,instId,boost::is_any_of(" "),boost::token_compress_on);
+	if (vecs.size() != 2)
+	{
+		CutDigital(instId);
+		return;
+	}
+
+	instId = vecs[1];
+	vecs.clear();
+	boost::split(vecs,instId,boost::is_any_of("&"),boost::token_compress_on);
+	if (vecs.size() != 2)
+	{
+		CutDigital(instId);
+		return;
+	}
+
+	instId= vecs[0];
+	CutDigital(instId);
 }

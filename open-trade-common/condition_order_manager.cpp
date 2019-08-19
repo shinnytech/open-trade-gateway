@@ -343,7 +343,7 @@ void ConditionOrderManager::BuildConditionOrderIndex()
 			if (c.contingent_type == EContingentType::market_open)
 			{
 				std::string strInstId = c.instrument_id;
-				CutDigital(strInstId);
+				CutDigital_Ex(strInstId);
 				std::string strSymbol = c.exchange_id + "." + strInstId;
 				std::vector<std::string>& orderIdList = m_openmarket_condition_order_map[strSymbol];
 				orderIdList.push_back(order_id);
@@ -1461,7 +1461,7 @@ void ConditionOrderManager::OnUpdateInstrumentTradeStatus(const InstrumentTradeS
 bool ConditionOrderManager::InstrumentLastTradeStatusIsContinousTrading(const std::string& instId)
 {
 	std::string strInstId = instId;
-	CutDigital(strInstId);
+	CutDigital_Ex(strInstId);
 	TInstrumentTradeStatusInfoMap::iterator it = _instrumentTradeStatusInfoMap.find(strInstId);
 	if (it == _instrumentTradeStatusInfoMap.end())
 	{
@@ -1516,7 +1516,7 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
 				continue;
 			}
 			std::string strInstId= c.instrument_id;
-			CutDigital(strInstId);
+			CutDigital_Ex(strInstId);
 			std::string symbol = c.exchange_id + "." + strInstId;
 			if (symbol != strSymbol)
 			{
@@ -1678,7 +1678,7 @@ void ConditionOrderManager::OnCheckPrice()
 				}
 
 				std::string strInstId = c.instrument_id;
-				CutDigital(strInstId);
+				CutDigital_Ex(strInstId);
 				TInstrumentTradeStatusInfoMap::iterator it = _instrumentTradeStatusInfoMap.find(strInstId);
 				if (it != _instrumentTradeStatusInfoMap.end())
 				{
