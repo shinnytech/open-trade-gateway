@@ -290,6 +290,8 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 		m_b_login = WaitLogIn();
 		if (m_b_login.load())
 		{
+			m_peeking_message = true;
+
 			Log().WithField("fun","ProcessReqLogIn")
 				.WithField("key",_key)
 				.WithField("bid",req.bid)
@@ -973,7 +975,7 @@ void tradersim::SendUserData()
 		SendMsgAll(msg_ptr);		
 	}
 		
-	if ((!m_something_changed) && (!flag))
+	if (!m_something_changed)
 	{
 		return;
 	}

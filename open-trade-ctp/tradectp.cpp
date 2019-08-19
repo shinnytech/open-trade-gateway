@@ -3507,6 +3507,7 @@ void traderctp::SendUserData()
 {
 	if (!m_peeking_message)
 	{
+
 		return;
 	}
 
@@ -3651,50 +3652,50 @@ void traderctp::SendUserData()
 					std::shared_ptr<std::string> conn_ptr(new std::string(str));
 					_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
 				}						
+			}			
+		}		
+
+		//发送条件单数据
+		SerializerConditionOrderData coss;
+		rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
+		rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
+		rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
+		std::vector<ConditionOrder> condition_orders;
+		bool flag = false;
+		for (auto& it : m_condition_order_data.condition_orders)
+		{
+			if (it.second.changed)
+			{
+				flag = true;
+				condition_orders.push_back(it.second);
+				it.second.changed = false;
 			}
 		}
-	}
-			
-	//发送条件单数据
-	SerializerConditionOrderData coss;
-	rapidjson::Pointer("/aid").Set(*coss.m_doc, "rtn_condition_orders");
-	rapidjson::Pointer("/user_id").Set(*coss.m_doc, m_condition_order_data.user_id);
-	rapidjson::Pointer("/trading_day").Set(*coss.m_doc, m_condition_order_data.trading_day);
-	std::vector<ConditionOrder> condition_orders;
-	bool flag = false;
-	for (auto& it : m_condition_order_data.condition_orders)
-	{
-		if (it.second.changed)
+		if (flag)
 		{
-			flag = true;
-			condition_orders.push_back(it.second);
-			it.second.changed = false;
+			rapidjson::Value co_node_data;
+			coss.FromVar(condition_orders, &co_node_data);
+			rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
+			std::string json_str;
+			coss.ToString(&json_str);
+			//发送		
+			std::string str = GetConnectionStr();
+			if (!str.empty())
+			{
+				std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
+				std::shared_ptr<std::string> conn_ptr(new std::string(str));
+				_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
+			}
 		}
-	}
-	if (flag)
-	{
-		rapidjson::Value co_node_data;
-		coss.FromVar(condition_orders, &co_node_data);
-		rapidjson::Pointer("/condition_orders").Set(*coss.m_doc, co_node_data);
-		std::string json_str;
-		coss.ToString(&json_str);
-		//发送		
-		std::string str = GetConnectionStr();
-		if (!str.empty())
-		{
-			std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-			std::shared_ptr<std::string> conn_ptr(new std::string(str));
-			_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
-		}
-	}
-	
-	if ((!m_something_changed) && (!flag))
-	{
-		return;
-	}
 
-	m_something_changed = false;
-	m_peeking_message = false;
+		if (!m_something_changed)
+		{
+			return;
+		}
+
+		m_something_changed = false;
+		m_peeking_message = false;
+	}	
 }
 
 void traderctp::SendUserDataImd(int connectId)
@@ -4672,6 +4673,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		}
 		else if (ECTPLoginStatus::rspLoginSuccess == login_status)
 		{
+			m_peeking_message = true;
 			m_b_login.store(true);
 
 			//加入登录客户端列表
