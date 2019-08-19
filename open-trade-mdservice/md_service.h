@@ -45,9 +45,9 @@ private:
 	bool m_stop_reconnect;
 
 	bool m_need_reconnect;
-	
-	bool LoadInsList();		
 
+	bool OpenInstList();
+	
 	void StartConnect();
 
 	void ReStartConnect();

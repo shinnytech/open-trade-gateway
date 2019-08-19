@@ -24,41 +24,13 @@
 #include "log.h"
 #include "config.h"
 #include "rapid_serialize.h"
-#include "http.h"
 #include "version.h"
 
 using namespace std::chrono;
 
-const char* ins_file_url = "http://openmd.shinnytech.com/t/md/symbols/latest.json";
-
-class InsFileParser
-	: public RapidSerialize::Serializer<InsFileParser>
-{
-public:
-	void DefineStruct(Instrument& d)
-	{
-		AddItem(d.expired, ("expired"));
-		AddItemEnum(d.product_class,("class"), 
-		{
-			{ kProductClassFutures, ("FUTURE") },
-			{ kProductClassOptions, ("OPTION") },
-			{ kProductClassCombination, ("FUTURE_COMBINE") },
-			{ kProductClassFOption, ("FUTURE_OPTION") },
-			{ kProductClassFutureIndex, ("FUTURE_INDEX") },
-			{ kProductClassFutureContinuous, ("FUTURE_CONT") },
-			{ kProductClassStock, ("STOCK") },
-		});
-		AddItem(d.volume_multiple, ("volume_multiple"));
-		AddItem(d.price_tick, ("price_tick"));
-		AddItem(d.margin, ("margin"));
-		AddItem(d.commission, ("commission"));
-	}
-};
-
 mdservice::mdservice(boost::asio::io_context& ios)
-	:io_context_(ios)
+	:io_context_(ios)	
 	,m_segment(nullptr)
-	,m_alloc_inst(nullptr)
 	,m_ins_map(nullptr)	
 	,m_req_subscribe_quote("")
 	,m_req_peek_message("")
@@ -70,14 +42,18 @@ mdservice::mdservice(boost::asio::io_context& ios)
 }
 
 bool mdservice::init()
-{
-	if (!LoadInsList())
-	{
-		return false;
-	}
-		
+{		
 	try
 	{
+		if (!OpenInstList())
+		{
+			Log().WithField("fun","init")
+				.WithField("key","mdservice")				
+				.Log(LOG_INFO,"mdservice open ins list map fail");
+
+			return false;
+		}
+
 		std::string ins_list;
 		for (auto it = m_ins_map->begin(); it != m_ins_map->end(); ++it)
 		{
@@ -114,85 +90,6 @@ bool mdservice::init()
 	}
 }
 
-
-bool mdservice::LoadInsList()
-{
-	try
-	{
-		boost::interprocess::shared_memory_object::remove("InsMapSharedMemory");
-
-		m_segment =new boost::interprocess::managed_shared_memory
-							(boost::interprocess::create_only
-								, "InsMapSharedMemory" //segment name
-								, 32 * 1024 * 1024);  //segment size in bytes
-
-		//Initialize the shared memory STL-compatible allocator
-		//ShmemAllocator alloc_inst (segment.get_segment_manager());
-		m_alloc_inst = new ShmemAllocator(m_segment->get_segment_manager());
-
-		//Construct a shared memory map.
-		//Note that the first parameter is the comparison function,
-		//and the second one the allocator.
-		//This the same signature as std::map's constructor taking an allocator
-		m_ins_map =
-			m_segment->construct<InsMapType>("InsMap")//object name
-			(CharArrayComparer() //first  ctor parameter
-				, *m_alloc_inst);     //second ctor parameter		
-	}
-	catch (std::exception& ex)
-	{
-		Log().WithField("fun","LoadInsList")
-			.WithField("key","mdservice")
-			.WithField("errmsg",ex.what())
-			.Log(LOG_FATAL,"mdservice construct m_ins_map fail");		
-		return false;
-	}
-
-	try
-	{
-		//下载和加载合约表文件
-		std::string content;
-		if (HttpGet(ins_file_url, &content) != 0)
-		{
-			Log().WithField("fun","LoadInsList")
-				.WithField("key","mdservice")			
-				.Log(LOG_FATAL,"md service download ins file fail");			
-			return false;
-		}
-
-		Log().WithField("fun","LoadInsList")
-			.WithField("key","mdservice")
-			.WithField("contentlen",(int)content.length())
-			.Log(LOG_INFO,"mdservice download ins file success");
-
-		InsFileParser ss;
-		if (!ss.FromString(content.c_str()))
-		{
-			Log().WithField("fun","LoadInsList")
-				.WithField("key","mdservice")				
-				.Log(LOG_FATAL,"md service parse downloaded ins file fail");			
-			return false;
-		}
-
-		for (auto& m : ss.m_doc->GetObject())
-		{
-			std::array<char, 64> key = {};
-			strncpy(key.data(), m.name.GetString(), 64);
-			ss.ToVar((*m_ins_map)[key], &m.value);
-		}
-	}
-	catch (std::exception& ex)
-	{
-		Log().WithField("fun","LoadInsList")
-			.WithField("key","mdservice")
-			.WithField("errmsg",ex.what())
-			.Log(LOG_FATAL,"get inst list fail");		
-		return false;
-	}
-	
-	return true;
-}
-
 void mdservice::stop()
 {
 	m_stop_reconnect = true;
@@ -209,8 +106,7 @@ void mdservice::stop()
 		.Log(LOG_INFO,"mdservice stop");	
 
 	//TODO::先不释放如下资源,反正进程要退出
-	//m_segment
-	//m_alloc_inst
+	//m_segment	
 	//m_ins_map 	
 }
 
@@ -308,4 +204,25 @@ void mdservice::OnConnectionnClose()
 void mdservice::OnConnectionnError()
 {
 	m_need_reconnect = true;
+}
+
+bool mdservice::OpenInstList()
+{
+	try
+	{
+		m_segment = new  boost::interprocess::managed_shared_memory(
+			boost::interprocess::open_only,
+			"InsMapSharedMemory");
+		std::pair<InsMapType*, std::size_t> p = m_segment->find<InsMapType>("InsMap");
+		m_ins_map = p.first;
+		return true;
+	}
+	catch (const std::exception& ex)
+	{
+		Log().WithField("fun", "OpenInstList")
+			.WithField("key", "mdservice")
+			.WithField("errmsg", ex.what()).
+			Log(LOG_FATAL, "open InsMapSharedMemory fail");
+		return false;
+	}
 }
