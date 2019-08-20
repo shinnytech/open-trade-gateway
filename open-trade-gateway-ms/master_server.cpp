@@ -7,6 +7,7 @@
 #include "master_server.h"
 #include "SerializerTradeBase.h"
 #include "log.h"
+#include "version.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -337,7 +338,7 @@ void WebSocketClient::OnConnect(boost::system::error_code ec)
 		[](boost::beast::websocket::request_type& m)
 	{
 		m.insert(boost::beast::http::field::accept,"application/v1+json");
-		m.insert(boost::beast::http::field::user_agent,"OTG-MS-1.1.0.0");
+		m.insert(boost::beast::http::field::user_agent,"OTG-MS-" VERSION_STR);
 	}));
 
 	m_ws_socket.async_handshake(
