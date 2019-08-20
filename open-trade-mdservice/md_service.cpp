@@ -103,11 +103,7 @@ void mdservice::stop()
 	
 	Log().WithField("fun","stop")
 		.WithField("key","mdservice")		
-		.Log(LOG_INFO,"mdservice stop");	
-
-	//TODO::先不释放如下资源,反正进程要退出
-	//m_segment	
-	//m_ins_map 	
+		.Log(LOG_INFO,"mdservice stop");		
 }
 
 void mdservice::StartConnect()

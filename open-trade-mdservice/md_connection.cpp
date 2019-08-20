@@ -159,7 +159,7 @@ void md_connection::OnHandshake(boost::system::error_code ec)
 		
 	Log().WithField("fun", "OnHandshake")
 		.WithField("key", "mdservice")	
-		.WithField("contentlen", (int)m_req_subscribe_quote.length())
+		.WithField("msglen", (int)m_req_subscribe_quote.length())
 		.WithPack("m_req_subscribe_quote", m_req_subscribe_quote)
 		.Log(LOG_INFO, "send req subscribe quote message");
 
