@@ -100,40 +100,88 @@ void SerializerTradeBase::DefineStruct(Position& d)
 	AddItem(d.volume_long_today, ("volume_long_today"));
 	AddItem(d.volume_long_his, ("volume_long_his"));
 	AddItem(d.volume_long, ("volume_long"));
+
 	AddItem(d.volume_long_frozen_today, ("volume_long_frozen_today"));
 	AddItem(d.volume_long_frozen_his, ("volume_long_frozen_his"));
 	AddItem(d.volume_long_frozen, ("volume_long_frozen"));
+
 	AddItem(d.volume_short_today, ("volume_short_today"));
 	AddItem(d.volume_short_his, ("volume_short_his"));
 	AddItem(d.volume_short, ("volume_short"));
+
 	AddItem(d.volume_short_frozen_today, ("volume_short_frozen_today"));
 	AddItem(d.volume_short_frozen_his, ("volume_short_frozen_his"));
 	AddItem(d.volume_short_frozen, ("volume_short_frozen"));
+
 	AddItem(d.volume_long_yd, ("volume_long_yd"));
 	AddItem(d.volume_short_yd, ("volume_short_yd"));
+
 	AddItem(d.pos_long_his, ("pos_long_his"));
 	AddItem(d.pos_long_today, ("pos_long_today"));
 	AddItem(d.pos_short_his, ("pos_short_his"));
 	AddItem(d.pos_short_today, ("pos_short_today"));
+
 	AddItem(d.open_price_long, ("open_price_long"));
 	AddItem(d.open_price_short, ("open_price_short"));
+
 	AddItem(d.open_cost_long, ("open_cost_long"));
 	AddItem(d.open_cost_short, ("open_cost_short"));
+
 	AddItem(d.position_price_long, ("position_price_long"));
 	AddItem(d.position_price_short, ("position_price_short"));
+
 	AddItem(d.position_cost_long, ("position_cost_long"));
 	AddItem(d.position_cost_short, ("position_cost_short"));
+
 	AddItem(d.last_price, ("last_price"));
+
 	AddItem(d.float_profit_long, ("float_profit_long"));
 	AddItem(d.float_profit_short, ("float_profit_short"));
+
 	AddItem(d.float_profit, ("float_profit"));
+
 	AddItem(d.position_profit_long, ("position_profit_long"));
 	AddItem(d.position_profit_short, ("position_profit_short"));
+
 	AddItem(d.position_profit, ("position_profit"));
 
 	AddItem(d.margin_long, ("margin_long"));
 	AddItem(d.margin_short, ("margin_short"));
 	AddItem(d.margin, ("margin"));
+
+	/*
+
+	//成本, 现价与盈亏
+			
+	double open_cost_long_his; //多头开仓市值(昨仓)
+
+	double open_cost_long_today; //多头开仓市值(今仓)
+
+	double open_cost_short_today; //空头开仓市值(今仓)	
+
+	double open_cost_short_his; //空头开仓市值(昨仓)
+	
+
+	double position_cost_long_today; //多头持仓成本(今仓)
+
+	double position_cost_long_his; //多头持仓成本(昨仓)
+
+	double position_cost_short_today; //空头持仓成本(今仓)	
+
+	double position_cost_short_his; //空头持仓成本(昨仓)
+	   	
+	//保证金占用	
+
+	double margin_long_today;//多头保证金占用(今仓)
+
+	double margin_short_today;//空头保证金占用(今仓)
+
+	double margin_long_his;//多头保证金占用(昨仓)
+
+	double margin_short_his;//空头保证金占用(昨仓)
+	
+	double frozen_margin;//冻结保证金
+	*/
 }
 
 void SerializerTradeBase::DefineStruct(Order& d)

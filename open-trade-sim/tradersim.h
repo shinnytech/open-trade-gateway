@@ -178,6 +178,8 @@ private:
 	//数据存取档
 	void LoadUserDataFile();
 
+	void ClearUserPosition(Position& item);
+
 	void SaveUserDataFile();
 
 	//用户请求处理

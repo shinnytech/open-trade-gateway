@@ -9131,31 +9131,76 @@ void traderctp::SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField)
 	dtSHFETime.date.year = tm.date().year();
 	dtSHFETime.date.month = tm.date().month();
 	dtSHFETime.date.day = tm.date().day();
-	GetTimeFromString(userLogInField.SHFETime, dtSHFETime.time);
+	GetTimeFromString(userLogInField.SHFETime,dtSHFETime.time);
+	if ((dtSHFETime.time.hour == 0)
+		&& (dtSHFETime.time.minute == 0)
+		&& (dtSHFETime.time.second == 0))
+	{
+		dtSHFETime.time.hour = dtLocalTime.time.hour;
+		dtSHFETime.time.minute = dtLocalTime.time.minute;
+		dtSHFETime.time.second = dtLocalTime.time.second;
+		dtSHFETime.time.microsecond = 0;
+	}
 	
 	DateTime dtDCETime;
 	dtDCETime.date.year = tm.date().year();
 	dtDCETime.date.month = tm.date().month();
 	dtDCETime.date.day = tm.date().day();
 	GetTimeFromString(userLogInField.DCETime, dtDCETime.time);
+	if ((dtDCETime.time.hour == 0)
+		&& (dtDCETime.time.minute == 0)
+		&& (dtDCETime.time.second == 0))
+	{
+		dtDCETime.time.hour = dtLocalTime.time.hour;
+		dtDCETime.time.minute = dtLocalTime.time.minute;
+		dtDCETime.time.second = dtLocalTime.time.second;
+		dtDCETime.time.microsecond = 0;
+	}
 
 	DateTime dtINETime;
 	dtINETime.date.year = tm.date().year();
 	dtINETime.date.month = tm.date().month();
 	dtINETime.date.day = tm.date().day();
 	GetTimeFromString(userLogInField.INETime, dtINETime.time);
+	if ((dtINETime.time.hour == 0)
+		&& (dtINETime.time.minute == 0)
+		&& (dtINETime.time.second == 0))
+	{
+		dtINETime.time.hour = dtLocalTime.time.hour;
+		dtINETime.time.minute = dtLocalTime.time.minute;
+		dtINETime.time.second = dtLocalTime.time.second;
+		dtINETime.time.microsecond = 0;
+	}
 
 	DateTime dtFFEXTime;
 	dtFFEXTime.date.year = tm.date().year();
 	dtFFEXTime.date.month = tm.date().month();
 	dtFFEXTime.date.day = tm.date().day();
 	GetTimeFromString(userLogInField.FFEXTime, dtFFEXTime.time);
+	if ((dtFFEXTime.time.hour == 0)
+		&& (dtFFEXTime.time.minute == 0)
+		&& (dtFFEXTime.time.second == 0))
+	{
+		dtFFEXTime.time.hour = dtLocalTime.time.hour;
+		dtFFEXTime.time.minute = dtLocalTime.time.minute;
+		dtFFEXTime.time.second = dtLocalTime.time.second;
+		dtFFEXTime.time.microsecond = 0;
+	}
 
 	DateTime dtCZCETime;
 	dtCZCETime.date.year = tm.date().year();
 	dtCZCETime.date.month = tm.date().month();
 	dtCZCETime.date.day = tm.date().day();
-	GetTimeFromString(userLogInField.CZCETime, dtCZCETime.time);	   	
+	GetTimeFromString(userLogInField.CZCETime, dtCZCETime.time);
+	if ((dtCZCETime.time.hour == 0)
+		&& (dtCZCETime.time.minute == 0)
+		&& (dtCZCETime.time.second == 0))
+	{
+		dtCZCETime.time.hour = dtLocalTime.time.hour;
+		dtCZCETime.time.minute = dtLocalTime.time.minute;
+		dtCZCETime.time.second = dtLocalTime.time.second;
+		dtCZCETime.time.microsecond = 0;
+	}
 
 	m_condition_order_manager.SetExchangeTime(DateTimeToEpochSeconds(dtLocalTime),
 		DateTimeToEpochSeconds(dtSHFETime),

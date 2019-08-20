@@ -1191,6 +1191,9 @@ void tradersim::LoadUserDataFile()
 		{
 			Position& item = it->second;
 
+			//对历史数据进行清理
+			ClearUserPosition(item);
+			
 			//上期和原油交易所
 			if ((item.exchange_id == "SHFE" || item.exchange_id == "INE"))
 			{
@@ -1345,6 +1348,137 @@ void tradersim::LoadUserDataFile()
 	}
 }
 
+void tradersim::ClearUserPosition(Position& item)
+{
+	if (item.volume_long_today < 0)
+	{
+		item.volume_long_today = 0;
+	}
+
+	if (item.volume_long_his < 0)
+	{
+		item.volume_long_his = 0;
+	}
+
+	item.volume_long = item.volume_long_today + item.volume_long_his;
+
+	if (item.volume_long_frozen_today < 0)
+	{
+		item.volume_long_frozen_today = 0;
+	}
+
+	if (item.volume_long_frozen_his < 0)
+	{
+		item.volume_long_frozen_his = 0;
+	}
+
+	item.volume_long_frozen = item.volume_long_frozen_today + item.volume_long_frozen_his;
+
+	if (item.volume_short_today < 0)
+	{
+		item.volume_short_today = 0;
+	}
+
+	if (item.volume_long_his < 0)
+	{
+		item.volume_short_his = 0;
+	}
+
+	item.volume_short = item.volume_short_today + item.volume_short_his;
+
+	if (item.volume_short_frozen_today < 0)
+	{
+		item.volume_short_frozen_today = 0;
+	}
+
+	if (item.volume_short_frozen_his < 0)
+	{
+		item.volume_short_frozen_his = 0;
+	}
+
+	item.volume_short_frozen = item.volume_short_frozen_his + item.volume_short_frozen_today;
+
+	if (item.volume_long_yd < 0)
+	{
+		item.volume_long_yd = 0;
+	}
+
+	if (item.volume_short_yd < 0)
+	{
+		item.volume_short_yd = 0;
+	}
+
+	if (item.pos_long_his < 0)
+	{
+		item.pos_long_his = 0;
+	}
+
+	if (item.pos_long_today < 0)
+	{
+		item.pos_long_today = 0;
+	}
+
+	if (item.pos_short_his < 0)
+	{
+		item.pos_short_his = 0;
+	}
+
+	if (item.pos_short_today < 0)
+	{
+		item.pos_short_today = 0;
+	}		
+
+	if (!IsValid(item.open_price_long))
+	{
+		item.open_price_long = 0;
+	}
+
+	if (!IsValid(item.open_price_short))
+	{
+		item.open_price_short = 0;
+	}
+
+	if (!IsValid(item.open_cost_long))
+	{
+		item.open_cost_long = 0;
+	}
+
+	if (!IsValid(item.open_cost_short))
+	{
+		item.open_cost_short = 0;
+	}
+
+	if (!IsValid(item.position_price_long))
+	{
+		item.position_price_long = 0;
+	}
+
+	if (!IsValid(item.position_price_short))
+	{
+		item.position_price_short = 0;
+	}
+
+	if (!IsValid(item.position_cost_long))
+	{
+		item.position_cost_long = 0;
+	}
+
+	if (!IsValid(item.position_cost_short))
+	{
+		item.position_cost_short = 0;
+	}
+
+	if (!IsValid(item.last_price))
+	{
+		item.last_price = 0;
+	}
+
+	if (!IsValid(item.float_profit_long))
+	{
+		item.last_price = 0;
+	}
+}
+
 void tradersim::SaveUserDataFile()
 {
 	if (m_user_file_path.empty())
@@ -1467,12 +1601,12 @@ void tradersim::UpdatePositionVolume(Position* position)
 					if (order->direction == kDirectionBuy)
 					{
 						//昨仓空头冻结手数加上本定单的冻结手数
-						position->volume_long_frozen_his += order->volume_left;
+						position->volume_short_frozen_his += order->volume_left;
 					}
 					else
 					{
-						//昨仓多头冻结手数加上本定单的冻结手数
-						position->volume_short_frozen_his += order->volume_left;
+						//昨仓多头冻结手数加上本定单的冻结手数						
+						position->volume_long_frozen_his += order->volume_left;
 					}
 				}
 			}

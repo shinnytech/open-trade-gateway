@@ -264,7 +264,7 @@ void ConditionOrderManager::Load(const std::string& bid
 				it != m_condition_order_his_data.his_condition_orders.end();)
 			{
 				ConditionOrder& order = *it;
-				int currentTime = GetLocalEpochSecond();				
+				int currentTime = GetTouchedTime(order);
 				if (currentTime > order.insert_date_time)
 				{
 					//时间差,单位:秒 
@@ -908,8 +908,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		
 	ConditionOrder order;
 	order.order_id = insert_co.order_id;
-	order.trading_day = atoi(m_condition_order_data.trading_day.c_str());
-	order.insert_date_time = GetLocalEpochSecond();
+	order.trading_day = atoi(m_condition_order_data.trading_day.c_str());	
 	order.condition_list.assign(insert_co.condition_list.begin(),
 		insert_co.condition_list.end());
 	order.conditions_logic_oper = insert_co.conditions_logic_oper;
@@ -918,6 +917,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	order.time_condition_type = insert_co.time_condition_type;
 	order.GTD_date = insert_co.GTD_date;
 	order.is_cancel_ori_close_order = insert_co.is_cancel_ori_close_order;
+	order.insert_date_time = GetTouchedTime(order);
 	
 	if (ValidConditionOrder(order))
 	{
