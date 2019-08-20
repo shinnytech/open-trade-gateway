@@ -1441,10 +1441,10 @@ void ConditionOrderManager::OnUpdateInstrumentTradeStatus(const InstrumentTradeS
 	}
 
 	//服务端时间和客户端时间相差60秒以上,不是正常的状态切换
-	if (std::abs(instTradeStatusInfo.serverEnterTime - instTradeStatusInfo.localEnterTime) > 60)
-	{
-		return;
-	}
+	//if (std::abs(instTradeStatusInfo.serverEnterTime - instTradeStatusInfo.localEnterTime) > 60)
+	//{
+	//	return;
+	//}
 
 	//检验品种
 	std::string strExchangeId = instTradeStatusInfo.ExchangeId;
