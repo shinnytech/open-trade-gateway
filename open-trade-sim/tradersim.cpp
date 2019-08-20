@@ -1673,8 +1673,8 @@ void tradersim::RecaculatePositionAndFloatProfit()
 		m_account->available = m_account->balance - m_account->margin - m_account->frozen_margin;
 
 		//计算风险度
-		if (IsValid(m_account->available) && IsValid(m_account->balance) && !IsZero(m_account->balance))
-			m_account->risk_ratio = 1.0 - m_account->available / m_account->balance;
+		if (IsValid(m_account->margin) && IsValid(m_account->balance) && !IsZero(m_account->balance))
+			m_account->risk_ratio = m_account->margin / m_account->balance;
 		else
 			m_account->risk_ratio = NAN;
 

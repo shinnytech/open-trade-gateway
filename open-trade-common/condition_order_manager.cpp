@@ -947,33 +947,33 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 		SaveCurrent();
 
 		BuildConditionOrderIndex();
+
+		m_callBack.OnUserDataChange();
 	}
 	else
 	{
-		order.status = EConditionOrderStatus::discard;
+		SerializerConditionOrderData nss2;
+		nss2.FromVar(order);
+		std::string strMsg = "";
+		nss2.ToString(&strMsg);
+
+		Log().WithField("fun", "InsertConditionOrder")
+			.WithField("key", m_userKey)
+			.WithField("bid", m_condition_order_data.broker_id)
+			.WithField("user_name", m_condition_order_data.user_id)
+			.WithPack("req_insert_condition_order", msg)
+			.WithPack("ConditionOrder", strMsg)
+			.Log(LOG_INFO, u8"条件单下单失败");
+
+		/*order.status = EConditionOrderStatus::discard;
 		order.touched_time = GetTouchedTime(order);
 		order.changed = true;
 		m_condition_order_data.condition_orders.insert(
 			std::map<std::string,ConditionOrder>::value_type(order.order_id
 			,order));
 
-		SerializerConditionOrderData nss2;
-		nss2.FromVar(order);
-		std::string strMsg = "";
-		nss2.ToString(&strMsg);
-
-		Log().WithField("fun","InsertConditionOrder")
-			.WithField("key",m_userKey)
-			.WithField("bid",m_condition_order_data.broker_id)
-			.WithField("user_name",m_condition_order_data.user_id)
-			.WithPack("req_insert_condition_order", msg)
-			.WithPack("ConditionOrder", strMsg)			
-			.Log(LOG_INFO, u8"条件单下单失败");
-
-		SaveCurrent();
+		SaveCurrent();*/
 	}
-
-	m_callBack.OnUserDataChange();
 }
 
 void ConditionOrderManager::CancelConditionOrder(const std::string& msg)

@@ -3620,8 +3620,8 @@ void traderctp::SendUserData()
 				acc.float_profit = total_float_profit;
 				acc.available += av_diff;
 				acc.balance += dv;
-				if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
-					acc.risk_ratio = 1.0 - acc.available / acc.balance;
+				if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
+					acc.risk_ratio = acc.margin / acc.balance;
 				else
 					acc.risk_ratio = NAN;
 				acc.changed = true;
@@ -3807,8 +3807,8 @@ void traderctp::SendUserDataImd(int connectId)
 		acc.float_profit = total_float_profit;
 		acc.available += av_diff;
 		acc.balance += dv;
-		if (IsValid(acc.available) && IsValid(acc.balance) && !IsZero(acc.balance))
-			acc.risk_ratio = 1.0 - acc.available / acc.balance;
+		if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
+			acc.risk_ratio = acc.margin / acc.balance;
 		else
 			acc.risk_ratio = NAN;
 		acc.changed = true;
