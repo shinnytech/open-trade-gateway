@@ -952,6 +952,10 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 	}
 	else
 	{
+		order.status = EConditionOrderStatus::discard;
+		order.touched_time = GetTouchedTime(order);
+		order.changed = true;
+
 		SerializerConditionOrderData nss2;
 		nss2.FromVar(order);
 		std::string strMsg = "";
@@ -965,9 +969,7 @@ void ConditionOrderManager::InsertConditionOrder(const std::string& msg)
 			.WithPack("ConditionOrder", strMsg)
 			.Log(LOG_INFO, u8"条件单下单失败");
 
-		/*order.status = EConditionOrderStatus::discard;
-		order.touched_time = GetTouchedTime(order);
-		order.changed = true;
+		/*
 		m_condition_order_data.condition_orders.insert(
 			std::map<std::string,ConditionOrder>::value_type(order.order_id
 			,order));
