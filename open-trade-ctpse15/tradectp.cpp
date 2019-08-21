@@ -3133,12 +3133,13 @@ int traderctp::ReqQryAccount(int reqid)
 	CThostFtdcQryTradingAccountField field;
 	memset(&field, 0, sizeof(field));
 	strcpy_x(field.BrokerID, m_broker_id.c_str());
-	strcpy_x(field.InvestorID, _req_login.user_name.c_str());
+	strcpy_x(field.InvestorID, _req_login.user_name.c_str());	
 	int r = m_pTdApi->ReqQryTradingAccount(&field, reqid);
 	Log().WithField("fun","ReqQryAccount")
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
+		.WithField("RequestID",reqid)
 		.WithField("ret",r)
 		.Log(LOG_INFO,"ctp ReqQryTradingAccount");
 	return r;
@@ -3507,10 +3508,9 @@ void traderctp::SendUserData()
 {
 	if (!m_peeking_message)
 	{
-
 		return;
 	}
-
+		
 	if (m_data.m_accounts.size() != 0)
 	{
 		if (m_position_ready)
@@ -3577,54 +3577,57 @@ void traderctp::SendUserData()
 			//重算资金账户
 			if (m_something_changed)
 			{
-				Account& acc = GetAccount("CNY");
-				double dv = total_position_profit - acc.position_profit;
-				double po_ori = 0;
-				double po_curr = 0;
-				double av_diff = 0;
-				switch (m_Algorithm_Type)
+				if (m_rsp_account_id >= m_req_account_id)
 				{
-				case THOST_FTDC_AG_All:
-					po_ori = acc.position_profit;
-					po_curr = total_position_profit;
-					break;
-				case THOST_FTDC_AG_OnlyLost:
-					if (acc.position_profit < 0)
+					Account& acc = GetAccount("CNY");
+					double dv = total_position_profit - acc.position_profit;
+					double po_ori = 0;
+					double po_curr = 0;
+					double av_diff = 0;
+					switch (m_Algorithm_Type)
 					{
+					case THOST_FTDC_AG_All:
 						po_ori = acc.position_profit;
-					}
-					if (total_position_profit < 0)
-					{
 						po_curr = total_position_profit;
+						break;
+					case THOST_FTDC_AG_OnlyLost:
+						if (acc.position_profit < 0)
+						{
+							po_ori = acc.position_profit;
+						}
+						if (total_position_profit < 0)
+						{
+							po_curr = total_position_profit;
+						}
+						break;
+					case THOST_FTDC_AG_OnlyGain:
+						if (acc.position_profit > 0)
+						{
+							po_ori = acc.position_profit;
+						}
+						if (total_position_profit > 0)
+						{
+							po_curr = total_position_profit;
+						}
+						break;
+					case THOST_FTDC_AG_None:
+						po_ori = 0;
+						po_curr = 0;
+						break;
+					default:
+						break;
 					}
-					break;
-				case THOST_FTDC_AG_OnlyGain:
-					if (acc.position_profit > 0)
-					{
-						po_ori = acc.position_profit;
-					}
-					if (total_position_profit > 0)
-					{
-						po_curr = total_position_profit;
-					}
-					break;
-				case THOST_FTDC_AG_None:
-					po_ori = 0;
-					po_curr = 0;
-					break;
-				default:
-					break;
-				}
-				av_diff = po_curr - po_ori;
-				acc.position_profit = total_position_profit;
-				acc.float_profit = total_float_profit;
-				acc.available += av_diff;
-				acc.balance += dv;
-				if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
-					acc.risk_ratio = acc.margin / acc.balance;
-				else
-					acc.risk_ratio = NAN;
-				acc.changed = true;
+					av_diff = po_curr - po_ori;
+					acc.position_profit = total_position_profit;
+					acc.float_profit = total_float_profit;
+					acc.available += av_diff;
+					acc.balance += dv;
+					if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
+						acc.risk_ratio = acc.margin / acc.balance;
+					else
+						acc.risk_ratio = NAN;
+					acc.changed = true;
+				}				
 			}
 
 			//发送交易截面数据
@@ -3762,56 +3765,59 @@ void traderctp::SendUserDataImd(int connectId)
 	//重算资金账户
 	if (m_something_changed)
 	{
-		Account& acc = GetAccount("CNY");
-		double dv = total_position_profit - acc.position_profit;
-		double po_ori = 0;
-		double po_curr = 0;
-		double av_diff = 0;
-
-		switch (m_Algorithm_Type)
+		if (m_rsp_account_id >= m_req_account_id)
 		{
-		case THOST_FTDC_AG_All:
-			po_ori = acc.position_profit;
-			po_curr = total_position_profit;
-			break;
-		case THOST_FTDC_AG_OnlyLost:
-			if (acc.position_profit < 0)
-			{
-				po_ori = acc.position_profit;
-			}
-			if (total_position_profit < 0)
-			{
-				po_curr = total_position_profit;
-			}
-			break;
-		case THOST_FTDC_AG_OnlyGain:
-			if (acc.position_profit > 0)
-			{
-				po_ori = acc.position_profit;
-			}
-			if (total_position_profit > 0)
-			{
-				po_curr = total_position_profit;
-			}
-			break;
-		case THOST_FTDC_AG_None:
-			po_ori = 0;
-			po_curr = 0;
-			break;
-		default:
-			break;
-		}
+			Account& acc = GetAccount("CNY");
+			double dv = total_position_profit - acc.position_profit;
+			double po_ori = 0;
+			double po_curr = 0;
+			double av_diff = 0;
 
-		av_diff = po_curr - po_ori;
-		acc.position_profit = total_position_profit;
-		acc.float_profit = total_float_profit;
-		acc.available += av_diff;
-		acc.balance += dv;
-		if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
-			acc.risk_ratio = acc.margin / acc.balance;
-		else
-			acc.risk_ratio = NAN;
-		acc.changed = true;
+			switch (m_Algorithm_Type)
+			{
+			case THOST_FTDC_AG_All:
+				po_ori = acc.position_profit;
+				po_curr = total_position_profit;
+				break;
+			case THOST_FTDC_AG_OnlyLost:
+				if (acc.position_profit < 0)
+				{
+					po_ori = acc.position_profit;
+				}
+				if (total_position_profit < 0)
+				{
+					po_curr = total_position_profit;
+				}
+				break;
+			case THOST_FTDC_AG_OnlyGain:
+				if (acc.position_profit > 0)
+				{
+					po_ori = acc.position_profit;
+				}
+				if (total_position_profit > 0)
+				{
+					po_curr = total_position_profit;
+				}
+				break;
+			case THOST_FTDC_AG_None:
+				po_ori = 0;
+				po_curr = 0;
+				break;
+			default:
+				break;
+			}
+
+			av_diff = po_curr - po_ori;
+			acc.position_profit = total_position_profit;
+			acc.float_profit = total_float_profit;
+			acc.available += av_diff;
+			acc.balance += dv;
+			if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
+				acc.risk_ratio = acc.margin / acc.balance;
+			else
+				acc.risk_ratio = NAN;
+			acc.changed = true;
+		}		
 	}
 
 	//构建数据包		
