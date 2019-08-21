@@ -58,7 +58,9 @@ struct ActionTransfer
 		currency = "CNY";
 		amount = 0.0;
 	}
+
 	std::string currency;
+
 	double amount;
 };
 
@@ -69,13 +71,14 @@ public:
 	using RapidSerialize::Serializer<SerializerSim>::Serializer;
 
 	void DefineStruct(ActionOrder& d);
+
 	void DefineStruct(ActionTransfer& d);
 };
 
 class tradersim: public IConditionOrderCallBack
 {
 public:
-	tradersim(boost::asio::io_context& ios, const std::string& logFileName);
+	tradersim(boost::asio::io_context& ios,const std::string& logFileName);
 	   
 	void Start();
 
