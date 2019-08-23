@@ -5426,7 +5426,7 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 		//开多
 		if (EOrderDirection::buy == co.direction)
 		{
-			f.LimitPrice = ins.bid_price1 + ins.price_tick;
+			f.LimitPrice = ins.ask_price1 + ins.price_tick;
 			if (f.LimitPrice > ins.upper_limit)
 			{
 				f.LimitPrice = ins.upper_limit;
@@ -5435,7 +5435,7 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 		//开空
 		else
 		{
-			f.LimitPrice = ins.ask_price1 - ins.price_tick;
+			f.LimitPrice = ins.bid_price1 - ins.price_tick;
 			if (f.LimitPrice < ins.lower_limit)
 			{
 				f.LimitPrice = ins.lower_limit;
@@ -5554,7 +5554,7 @@ bool traderctp::SetConditionOrderPrice(CThostFtdcInputOrderField& f
 		//买平
 		if (EOrderDirection::buy == co.direction)
 		{
-			f.LimitPrice = ins.bid_price1 + ins.price_tick;
+			f.LimitPrice = ins.ask_price1 + ins.price_tick;
 			if (f.LimitPrice > ins.upper_limit)
 			{
 				f.LimitPrice = ins.upper_limit;
@@ -5563,7 +5563,7 @@ bool traderctp::SetConditionOrderPrice(CThostFtdcInputOrderField& f
 		//卖平
 		else
 		{
-			f.LimitPrice = ins.ask_price1 - ins.price_tick;
+			f.LimitPrice = ins.bid_price1 - ins.price_tick;
 			if (f.LimitPrice < ins.lower_limit)
 			{
 				f.LimitPrice = ins.lower_limit;
@@ -8043,7 +8043,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		//买平
 		if (EOrderDirection::buy == co.direction)
 		{
-			f.LimitPrice = ins.bid_price1 + ins.price_tick;
+			f.LimitPrice = ins.ask_price1 + ins.price_tick;
 			if (f.LimitPrice > ins.upper_limit)
 			{
 				f.LimitPrice = ins.upper_limit;
@@ -8052,7 +8052,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		//卖平
 		else
 		{
-			f.LimitPrice = ins.ask_price1 - ins.price_tick;
+			f.LimitPrice = ins.bid_price1 - ins.price_tick;
 			if (f.LimitPrice < ins.lower_limit)
 			{
 				f.LimitPrice = ins.lower_limit;

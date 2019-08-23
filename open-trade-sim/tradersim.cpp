@@ -2843,7 +2843,7 @@ bool tradersim::ConditionOrder_Open(const ConditionOrder& order
 		//开多
 		if (EOrderDirection::buy == co.direction)
 		{
-			action_insert_order.limit_price = ins.bid_price1 + ins.price_tick;
+			action_insert_order.limit_price = ins.ask_price1 + ins.price_tick;
 			if (action_insert_order.limit_price > ins.upper_limit)
 			{
 				action_insert_order.limit_price = ins.upper_limit;
@@ -2852,7 +2852,7 @@ bool tradersim::ConditionOrder_Open(const ConditionOrder& order
 		//开空
 		else
 		{
-			action_insert_order.limit_price = ins.ask_price1 - ins.price_tick;
+			action_insert_order.limit_price = ins.bid_price1 - ins.price_tick;
 			if (action_insert_order.limit_price < ins.lower_limit)
 			{
 				action_insert_order.limit_price = ins.lower_limit;
@@ -4887,7 +4887,7 @@ bool tradersim::SetConditionOrderPrice(ActionOrder& action_insert_order
 		//买平
 		if (EOrderDirection::buy == co.direction)
 		{
-			action_insert_order.limit_price = ins.bid_price1 + ins.price_tick;
+			action_insert_order.limit_price = ins.ask_price1 + ins.price_tick;
 			if (action_insert_order.limit_price > ins.upper_limit)
 			{
 				action_insert_order.limit_price = ins.upper_limit;
@@ -4896,7 +4896,7 @@ bool tradersim::SetConditionOrderPrice(ActionOrder& action_insert_order
 		//卖平
 		else
 		{
-			action_insert_order.limit_price = ins.ask_price1 - ins.price_tick;
+			action_insert_order.limit_price = ins.bid_price1 - ins.price_tick;
 			if (action_insert_order.limit_price < ins.lower_limit)
 			{
 				action_insert_order.limit_price = ins.lower_limit;
@@ -5145,7 +5145,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		//买平
 		if (EOrderDirection::buy == co.direction)
 		{
-			action_insert_order.limit_price = ins.bid_price1 + ins.price_tick;
+			action_insert_order.limit_price = ins.ask_price1 + ins.price_tick;
 			if (action_insert_order.limit_price > ins.upper_limit)
 			{
 				action_insert_order.limit_price = ins.upper_limit;
@@ -5154,7 +5154,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		//卖平
 		else
 		{
-			action_insert_order.limit_price = ins.ask_price1 - ins.price_tick;
+			action_insert_order.limit_price = ins.bid_price1 - ins.price_tick;
 			if (action_insert_order.limit_price < ins.lower_limit)
 			{
 				action_insert_order.limit_price = ins.lower_limit;
