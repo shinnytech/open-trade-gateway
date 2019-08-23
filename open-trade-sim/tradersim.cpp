@@ -2464,18 +2464,13 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 
 void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 {
-	SerializerSim ss;
-	ss.FromVar(action_cancel_order);
-	std::string strMsg;
-	ss.ToString(&strMsg);
-	
 	if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
 		Log().WithField("fun","OnClientReqCancelOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("ActionOrder",strMsg)
+			.WithField("order_id", action_cancel_order.order_id)			
 			.Log(LOG_INFO, u8"撤单,已被服务器拒绝,原因:撤单指令中的用户名错误");
 
 		OutputNotifyAllSycn(418,u8"撤单,已被服务器拒绝,原因:撤单指令中的用户名错误","WARNING");
@@ -2498,7 +2493,7 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 				.WithField("key", _key)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
-				.WithPack("ActionOrder", strMsg)
+				.WithField("order_id", action_cancel_order.order_id)
 				.Log(LOG_INFO, u8"撤单成功");
 
 			OutputNotifyAllSycn(419,u8"撤单成功");
@@ -2511,7 +2506,7 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithPack("ActionOrder", strMsg)
+		.WithField("order_id", action_cancel_order.order_id)
 		.Log(LOG_INFO,u8"要撤销的单不存在");
 
 	OutputNotifyAllSycn(420,u8"要撤销的单不存在","WARNING");	
@@ -5828,18 +5823,13 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 
 void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 {
-	SerializerSim ss;
-	ss.FromVar(action_cancel_order);
-	std::string strMsg;
-	ss.ToString(&strMsg);
-
 	if (action_cancel_order.user_id.substr(0, m_user_id.size()) != m_user_id)
 	{
 		Log().WithField("fun","OnConditionOrderReqCancelOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("ActionOrder",strMsg)
+			.WithField("order_id", action_cancel_order.order_id)
 			.Log(LOG_INFO, u8"撤单,已被服务器拒绝,原因:撤单指令中的用户名错误");
 
 		OutputNotifyAllSycn(418,u8"撤单,已被服务器拒绝, 原因:撤单指令中的用户名错误","WARNING");
@@ -5860,7 +5850,7 @@ void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 				.WithField("key", _key)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
-				.WithPack("ActionOrder", strMsg)
+				.WithField("order_id", action_cancel_order.order_id)
 				.Log(LOG_INFO,u8"撤单成功");
 
 			OutputNotifyAllSycn(419,u8"撤单成功");			
@@ -5872,7 +5862,7 @@ void tradersim::OnConditionOrderReqCancelOrder(ActionOrder action_cancel_order)
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithPack("ActionOrder", strMsg)
+		.WithField("order_id", action_cancel_order.order_id)
 		.Log(LOG_INFO, u8"要撤销的单不存在");
 
 	OutputNotifyAllSycn(420,u8"要撤销的单不存在","WARNING");
