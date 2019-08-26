@@ -8603,6 +8603,7 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
+		.WithField("order_id", order.order_id)
 		.WithPack("ConditionOrder",strMsg)
 		.Log(LOG_INFO,"condition order is touched");
 
