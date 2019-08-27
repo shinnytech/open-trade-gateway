@@ -33,18 +33,22 @@ Install
     git clone https://github.com/shinnytech/open-trade-gateway.git
 
 编译与安装::
-  cd open-trade-gateway && make && sudo make install
+  cd open-trade-gateway
+  sudo make
+  sudo make install
 
-第一次安装后需要将如下两个路径加入/etc/ld.so.conf文件中::
-	/usr/local/bin/
-	/usr/local/lib/
-	然后执行命令:ldconfig
+第一次安装后需要将如下两个路径加入/etc/ld.so.conf文件中
+
+* /usr/local/bin/
+* /usr/local/lib/
+
+然后执行命令:ldconfig
   
 Config
 -------------------------------------------------
 本系统运行需要两个配置文件:
 
-/etc/open-trade-gateway/config.json 用于服务进程的一些配置项::
+/etc/open-trade-gateway/config.json,用于服务进程的一些配置项::
 
     {
       "host": "0.0.0.0",                                      //提供服务的IP地址  
@@ -90,7 +94,7 @@ Run
 
   open_trade_gateway
 
-系统运行日志将输出到文件 /var/log/open-trade-gateway/open-trade-gateway.log 中
+系统运行日志将输出到文件 /var/log/open-trade-gateway/open-trade-gateway.log 中,如果目录 /var/log/open-trade-gateway/ 不存在,请手工创建.
 
 
 Test
@@ -107,59 +111,95 @@ Test
 负载均衡服务配置
 -------------------------------------------------
 
-1、首先按上述配置步骤在一台或者多台服务器上配置一个或者多个open_trade_gateway实例 
+1、首先按上述配置步骤在一台或者多台服务器上配置一个或者多个open_trade_gateway实例; 
 
-2、按下面的配置文件(文件名config-ms.json,需要安装在/etc/open-trade-gateway/下)的说明配置负载均衡服务器
+2、按下面的配置文件(文件名config-ms.json,需要安装在/etc/open-trade-gateway/下)的说明配置负载均衡服务器;
+::
+
 	{
 		"host":"0.0.0.0",//提供负载均衡服务的IP地址
-
 		"port":5566,//负载均衡服务的端口号
-
 		"slaveNodeList":[//在第1步中已经配好的open_trade_gateway实例列表    
-
 		{
 			"name":"135",//结点名称,不能重复
-
 			"host":"192.168.1.35",//open_trade_gateway实例的IP地址
-
 			"port":"7788", //open_trade_gateway实例的端口号(注意:这里是字符串)
-
 			"path":"/" //open_trade_gateway实例的路径,默认为"/"
-
 		},
-
 		{
 			"name":"136",
-
 			"host":"192.168.1.36",
-
 			"port":"7788",
-
 			"path":"/"
-
 		},
-
 		{
 			"name":"137",
-
 			"host":"192.168.1.37",
-
 			"port":"7788",
-
 			"path":"/",
-
 		}
-
 		]
-
 	}
 
-3、上述多个open_trade_gateway实例的broker list的bid配置不可重复,如果重复,按步骤2中结点配置的顺序,先出现的有效,后出现的忽略
+3、上述多个open_trade_gateway实例的broker list的bid配置不可重复,如果重复,按步骤2中结点配置的顺序,先出现的有效,后出现的忽略;
 
-4、首先正确启动上述结点上的open_trade_gateway实例，最后启动负载均衡服务器open-trade-gateway-ms
+4、首先正确启动上述结点上的open_trade_gateway实例,最后启动负载均衡服务器open-trade-gateway-ms;
 
-5、采用DIFF协议的客户端应用连接open-trade-gateway-ms的服务端口(上例中的5566)发送请求,open-trade-gateway-ms会根据请求的bid自动将请求转发到不同的open-trade-gateway结点进行处理,实现负载均衡
+5、采用DIFF协议的客户端应用连接open-trade-gateway-ms的服务端口(上例中的5566)发送请求,open-trade-gateway-ms会根据请求的bid自动将请求转发到不同的open-trade-gateway结点进行处理,实现负载均衡;
 
+条件单服务配置
+-------------------------------------------------
+
+1、目前,条件单服务只是一个逻辑上的服务,因此正常编译安装了open-trade-gateway之后就同时安装了条件单服务;
+
+2、按下面的配置文件(文件名config-condition-order.json,需要安装在/etc/open-trade-gateway/下)的说明配置条件单服务;
+::
+
+ {
+  "run_server":true,
+  "max_new_cos_per_day":20,
+  "max_valid_cos_all":50,
+  "auto_start_ctp_time": [{"weekday":1,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
+  {"weekday":2,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
+  {"weekday":3,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
+  {"weekday":4,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]},
+   {"weekday":5,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]}
+  ],
+  "auto_close_ctp_time": [{"weekday":1,"timespan":[{"begin":1535,"end":1540}]},
+  {"weekday":2,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
+  {"weekday":3,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
+  {"weekday":4,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
+  {"weekday":5,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
+  {"weekday":6,"timespan":[{"begin":235,"end":240}]}
+  ],
+  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":900,"end":1530}]},
+  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  {"weekday":6,"timespan":[{"begin":0,"end":230}]}
+  ]
+ }
+  
+* "run_server"表示是否启用条件单服务,true表示启用,false表示不启用;
+
+* "max_new_cos_per_day"表示单个用户一个交易日能够添加的最大条件单数量限制,默认为20条;
+
+* "max_valid_cos_all"表示单个用户最多可同时持有的最大未触发条件单数量限制,包括非本交易日添加的,默认为50条;
+
+* "auto_start_ctp_time"表示自动重登录用户的时间段配置,在配置的时间段内,如果发现用户还没有登录交易系统,且用户有条件单数据,条件单服务会自动登录交易系统,以保证条件单能够正常被触发;
+
+* "auto_close_ctp_time": 表示自动关闭CTP实例的时间段配置,在配置的时间段内,系统会自动关闭CTP实例,以防止CTP在非交易时间段内发生崩溃,关闭CTP实例后用户仍然能够登录交易系统并查询用户截面数据,但不能下单;
+
+* "auto_restart_process_time":表示自动重启交易实例进程的时间段配置,在配置的时间段内,如果用户的交易实例进程崩溃,open-trade-gateway会自动重启该进程;如果open-trade-gateway进程在该配置项的时间段内重新启动,也会自动启动有条件单的用户进程;
+
+* 上述的三个时间段配置全部采用{"weekday":1,"timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]的形式;
+
+* "weekday":XX定义一周的某一天,0表示周日,1表示周一,依次类推;
+
+* "timespan":[{"begin":835,"end":840},{"begin":2040,"end":2045}]表示一个时间区间的列表,列表项表示一天中的某个时间段,如{"begin":835,"end":840}表示早上8:30到8:40之间;
+
+3、条件单服务配置文件修改后需要重启交易系统,open-trade-gateway只会在启动时加载config-condition-order.json配置文件;
 
 Q&A
 -------------------------------------------------
