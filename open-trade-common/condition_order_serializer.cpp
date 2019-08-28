@@ -115,7 +115,7 @@ void SerializerConditionOrderData::DefineStruct(ConditionOrder& d)
 		, ("conditions_logic_oper")
 		, { { ELogicOperator::logic_and, ("AND") },
 		{ ELogicOperator::logic_or, ("OR") }, });
-
+	
 	AddItem(d.order_list, ("order_list"));
 
 	AddItemEnum(d.time_condition_type
