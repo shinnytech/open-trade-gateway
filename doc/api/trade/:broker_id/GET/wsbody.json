@@ -127,7 +127,8 @@
 				"minItems":1,
 				"uniqueItems": true
 			},						
-			"conditions_logic_oper":{ "enum": ["AND", "OR"]},			
+			"conditions_logic_oper":{ "enum": ["AND", "OR"]},	
+            "conditions_logic_operator":{ "enum": ["AND", "OR"]},					
 			"order_list":
 			{
 				"type": "array",
@@ -154,7 +155,8 @@
 			},
 			"time_condition_type": { "enum": ["GFD", "GTD", "GTC"]},
 			"GTD_date":{ "type": "integer"},
-			"is_cancel_ori_close_order":{"type": "boolean"}			
+			"is_cancel_ori_close_order":{"type": "boolean"},
+            "is_cancel_origin_close_order":{"type": "boolean"}					
 		  },
 		  "required": ["aid", "user_id","condition_list","order_list"],
           "additionalProperties": false

@@ -5,11 +5,11 @@ req_insert_condition_order::req_insert_condition_order()
 	,user_id("")
 	,order_id("")
 	,condition_list()
-	,conditions_logic_oper(ELogicOperator::logic_and)
+	,conditions_logic_oper(ELogicOperator::logic_or)
 	,order_list()
 	,time_condition_type(ETimeConditionType::GFD)
 	,GTD_date(0)
-	,is_cancel_ori_close_order(false)
+	,is_cancel_ori_close_order(true)
 {
 }
 

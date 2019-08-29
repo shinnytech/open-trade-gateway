@@ -115,6 +115,11 @@ void SerializerConditionOrderData::DefineStruct(ConditionOrder& d)
 		, ("conditions_logic_oper")
 		, { { ELogicOperator::logic_and, ("AND") },
 		{ ELogicOperator::logic_or, ("OR") }, });
+
+	AddItemEnum(d.conditions_logic_oper
+		, ("conditions_logic_operator")
+		, { { ELogicOperator::logic_and, ("AND") },
+		{ ELogicOperator::logic_or, ("OR") }, });
 	
 	AddItem(d.order_list, ("order_list"));
 
@@ -128,6 +133,8 @@ void SerializerConditionOrderData::DefineStruct(ConditionOrder& d)
 	AddItem(d.GTD_date, ("GTD_date"));
 
 	AddItem(d.is_cancel_ori_close_order, ("is_cancel_ori_close_order"));
+
+	AddItem(d.is_cancel_ori_close_order, ("is_cancel_origin_close_order"));
 
 	AddItemEnum(d.status
 		, ("status")
@@ -166,7 +173,7 @@ void SerializerConditionOrderData::DefineStruct(req_insert_condition_order& d)
 	AddItem(d.order_id, ("order_id"));
 	AddItem(d.condition_list, ("condition_list"));
 	AddItemEnum(d.conditions_logic_oper
-		, ("conditions_logic_oper")
+		, ("conditions_logic_operator")
 		, { { ELogicOperator::logic_and, ("AND") },
 		{ ELogicOperator::logic_or, ("OR") }, });
 	AddItem(d.order_list, ("order_list"));
@@ -177,7 +184,7 @@ void SerializerConditionOrderData::DefineStruct(req_insert_condition_order& d)
 		{ ETimeConditionType::GTD, ("GTD") },
 		});
 	AddItem(d.GTD_date, ("GTD_date"));
-	AddItem(d.is_cancel_ori_close_order, ("is_cancel_ori_close_order"));	
+	AddItem(d.is_cancel_ori_close_order, ("is_cancel_origin_close_order"));	
 }
 
 void SerializerConditionOrderData::DefineStruct(req_cancel_condition_order& d)
