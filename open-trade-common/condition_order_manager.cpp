@@ -479,10 +479,24 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			}
 
 			bool flag = false;
+			double last_price = ins->last_price;
+			if ((kProductClassCombination == ins->product_class)
+				&& (order.order_list.size() > 0))
+			{
+				if (EOrderDirection::buy == order.order_list[0].direction)
+				{
+					last_price = ins->ask_price1;
+				}
+				else
+				{
+					last_price = ins->bid_price1;
+				}
+			}
+
 			switch (cond.price_relation)
 			{
 			case EPriceRelationType::G:
-				if (isgreater(ins->last_price, cond.contingent_price))
+				if (isgreater(last_price, cond.contingent_price))
 				{
 					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 					{
@@ -491,7 +505,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 				}
 				break;
 			case EPriceRelationType::GE:
-				if (isgreaterequal(ins->last_price,cond.contingent_price))
+				if (isgreaterequal(last_price,cond.contingent_price))
 				{
 					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 					{
@@ -500,7 +514,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 				}
 				break;
 			case EPriceRelationType::L:
-				if (isless(ins->last_price,cond.contingent_price))
+				if (isless(last_price,cond.contingent_price))
 				{
 					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 					{
@@ -509,7 +523,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 				}
 				break;
 			case EPriceRelationType::LE:
-				if (islessequal(ins->last_price,cond.contingent_price))
+				if (islessequal(last_price,cond.contingent_price))
 				{
 					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 					{
@@ -565,8 +579,21 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			}
 
 			bool flag = false;
-			if (islessequal(ins->last_price,cond.contingent_price_right)
-				&& isgreaterequal(ins->last_price,cond.contingent_price_left))
+			double last_price = ins->last_price;
+			if ((kProductClassCombination == ins->product_class)
+				&& (order.order_list.size() > 0))
+			{
+				if (EOrderDirection::buy == order.order_list[0].direction)
+				{
+					last_price = ins->ask_price1;
+				}
+				else
+				{
+					last_price = ins->bid_price1;
+				}
+			}
+			if (islessequal(last_price,cond.contingent_price_right)
+				&& isgreaterequal(last_price,cond.contingent_price_left))
 			{
 				if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 				{
@@ -615,11 +642,24 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			}
 			
 			bool flag = false;
+			double last_price = ins->last_price;
+			if ((kProductClassCombination == ins->product_class)
+				&& (order.order_list.size() > 0))
+			{
+				if (EOrderDirection::buy == order.order_list[0].direction)
+				{
+					last_price = ins->ask_price1;
+				}
+				else
+				{
+					last_price = ins->bid_price1;
+				}
+			}
 			//多头
 			if (cond.break_even_direction == EOrderDirection::buy)
 			{
 				//向上突破止盈价
-				if (isgreater(ins->last_price,cond.break_even_price))
+				if (isgreater(last_price,cond.break_even_price))
 				{				
 					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 					{
@@ -631,7 +671,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			else if (cond.break_even_direction == EOrderDirection::sell)
 			{
 				//先向下突破止盈价
-				if (isless(ins->last_price, cond.break_even_price))
+				if (isless(last_price, cond.break_even_price))
 				{					
 					if (InstrumentLastTradeStatusIsContinousTrading(cond.instrument_id))
 					{
@@ -744,7 +784,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 			}
 		}
 
-		if (co.price_type == EPriceType::contingent)
+		/*if (co.price_type == EPriceType::contingent)
 		{
 			bool flag = false;
 			for (auto cond : order.condition_list)
@@ -780,7 +820,7 @@ bool ConditionOrderManager::ValidConditionOrder(ConditionOrder& order)
 					,"WARNING","MESSAGE");
 				return false;
 			}
-		}
+		}*/
 	}
 
 	if (order.time_condition_type == ETimeConditionType::GTD)
@@ -1654,7 +1694,7 @@ void ConditionOrderManager::OnCheckPrice()
 		{
 			continue;
 		}
-		double last_price=ins->last_price;
+		double last_price = ins->last_price;			
 		for (auto orderId : orderIdList)
 		{
 			std::map<std::string, ConditionOrder>::iterator it
@@ -1669,6 +1709,19 @@ void ConditionOrderManager::OnCheckPrice()
 			{
 				continue;
 			}
+
+			if ((kProductClassCombination ==ins->product_class )
+				&&(conditionOrder.order_list.size()>0))
+			{
+				if (EOrderDirection::buy ==conditionOrder.order_list[0].direction )
+				{
+					last_price = ins->ask_price1;
+				}
+				else
+				{
+					last_price = ins->bid_price1;
+				}
+			}			
 
 			std::vector<ContingentCondition>& condition_list = conditionOrder.condition_list;
 

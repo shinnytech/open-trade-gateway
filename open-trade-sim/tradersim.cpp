@@ -2778,30 +2778,19 @@ bool tradersim::ConditionOrder_Open(const ConditionOrder& order
 	{
 		action_insert_order.price_type = kPriceTypeLimit;
 		action_insert_order.time_condition = kOrderTimeConditionGFD;
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		double last_price = ins.last_price;
+		if (kProductClassCombination == ins.product_class)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			if (EOrderDirection::buy == co.direction)
 			{
-				action_insert_order.limit_price = c.contingent_price;
-				flag = true;
-				break;
+				last_price = ins.ask_price1;
+			}
+			else
+			{
+				last_price = ins.bid_price1;
 			}
 		}
-		if (!flag)
-		{
-			//找不到触发价
-			Log().WithField("fun","ConditionOrder_Open")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("order_id", order.order_id)
-				.WithField("instrument_id",co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");			
-			return false;
-		}
+		action_insert_order.limit_price = last_price;
 	}
 	//对价
 	else if (EPriceType::consideration == co.price_type)
@@ -4818,30 +4807,20 @@ bool tradersim::SetConditionOrderPrice(ActionOrder& action_insert_order
 		action_insert_order.price_type = kPriceTypeLimit;
 		action_insert_order.time_condition = kOrderTimeConditionGFD;
 
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		double last_price = ins.last_price;
+		if (kProductClassCombination == ins.product_class)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			if (EOrderDirection::buy == co.direction)
 			{
-				action_insert_order.limit_price = c.contingent_price;
-				flag = true;
-				break;
+				last_price = ins.ask_price1;
+			}
+			else
+			{
+				last_price = ins.bid_price1;
 			}
 		}
-		if (!flag)
-		{
-			//找不到触发价			
-			Log().WithField("fun","SetConditionOrderPrice")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("order_id", order.order_id)
-				.WithField("instrument_id",co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");
-			return false;
-		}
+		action_insert_order.limit_price = last_price;
+
 		return true;
 	}
 	//对价
@@ -5079,31 +5058,19 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 	{
 		action_insert_order.price_type = kPriceTypeLimit;
 		action_insert_order.time_condition = kOrderTimeConditionGFD;
-
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		double last_price = ins.last_price;
+		if (kProductClassCombination == ins.product_class)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			if (EOrderDirection::buy == co.direction)
 			{
-				action_insert_order.limit_price = c.contingent_price;
-				flag = true;
-				break;
+				last_price = ins.ask_price1;
+			}
+			else
+			{
+				last_price = ins.bid_price1;
 			}
 		}
-		if (!flag)
-		{
-			//找不到触发价
-			Log().WithField("fun","ConditionOrder_Close")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("order_id", order.order_id)
-				.WithField("instrument_id",co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");		
-			return false;
-		}
+		action_insert_order.limit_price = last_price;
 	}
 	//对价
 	else if (EPriceType::consideration == co.price_type)

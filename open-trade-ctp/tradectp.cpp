@@ -5361,30 +5361,19 @@ bool traderctp::ConditionOrder_Open(const ConditionOrder& order
 	{
 		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
 		f.TimeCondition = THOST_FTDC_TC_GFD;
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		double last_price = ins.last_price;
+		if (kProductClassCombination == ins.product_class)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			if (EOrderDirection::buy == co.direction)
 			{
-				f.LimitPrice = c.contingent_price;
-				flag = true;
-				break;
+				last_price = ins.ask_price1;
+			}
+			else
+			{
+				last_price = ins.bid_price1;
 			}
 		}
-		if (!flag)
-		{
-			//找不到触发价
-			Log().WithField("fun","ConditionOrder_Open")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("exchange_id", co.exchange_id)
-				.WithField("instrument_id", co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");			
-			return false;
-		}
+		f.LimitPrice = last_price;
 	}
 	//对价
 	else if (EPriceType::consideration == co.price_type)
@@ -5482,35 +5471,20 @@ bool traderctp::SetConditionOrderPrice(CThostFtdcInputOrderField& f
 	{
 		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
 		f.TimeCondition = THOST_FTDC_TC_GFD;
-
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		double last_price = ins.last_price;
+		if (kProductClassCombination == ins.product_class)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			if (EOrderDirection::buy == co.direction)
 			{
-				f.LimitPrice = c.contingent_price;
-				flag = true;
-				break;
+				last_price = ins.ask_price1;
+			}
+			else
+			{
+				last_price = ins.bid_price1;
 			}
 		}
-		if (!flag)
-		{
-			//找不到触发价
-			Log().WithField("fun", "SetConditionOrderPrice")
-				.WithField("key", _key)
-				.WithField("bid", _req_login.bid)
-				.WithField("user_name", _req_login.user_name)
-				.WithField("exchange_id", co.exchange_id)
-				.WithField("instrument_id", co.instrument_id)
-				.Log(LOG_WARNING, "can not find contingent_price");
-			return false;
-		}
-		else
-		{
-			return true;
-		}
+		f.LimitPrice = last_price;
+		return true;
 	}
 	//对价
 	else if (EPriceType::consideration == co.price_type)
@@ -7979,29 +7953,19 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
 		f.TimeCondition = THOST_FTDC_TC_GFD;
 
-		bool flag = false;
-		for (const ContingentCondition& c : order.condition_list)
+		double last_price = ins.last_price;
+		if (kProductClassCombination == ins.product_class)
 		{
-			if ((c.contingent_type == EContingentType::price)
-				&& (c.exchange_id == co.exchange_id)
-				&& (c.instrument_id == co.instrument_id))
+			if (EOrderDirection::buy == co.direction)
 			{
-				f.LimitPrice = c.contingent_price;
-				flag = true;
-				break;
+				last_price = ins.ask_price1;
+			}
+			else
+			{
+				last_price = ins.bid_price1;
 			}
 		}
-		if (!flag)
-		{
-			//找不到触发价
-			Log().WithField("fun","ConditionOrder_Close")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("instrument_id",co.instrument_id)
-				.Log(LOG_WARNING,"can not find contingent_price");			
-			return false;
-		}
+		f.LimitPrice = last_price;		
 	}
 	//对价
 	else if (EPriceType::consideration == co.price_type)

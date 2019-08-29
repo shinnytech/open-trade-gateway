@@ -62,6 +62,7 @@ bool mdservice::init()
 			if (!ins.expired && (ins.product_class == kProductClassFutures
 				|| ins.product_class == kProductClassOptions
 				|| ins.product_class == kProductClassFOption
+				|| ins.product_class == kProductClassCombination
 				)) {
 				ins_list += std::string(key.data());
 				ins_list += ",";
