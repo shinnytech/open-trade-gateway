@@ -52,7 +52,7 @@ bool LoadConfig()
     g_config.trading_day = GuessTradingDay();	
 
 	Log().WithField("fun","LoadConfig")
-		.WithField("TradingDay",g_config.trading_day).
+		.WithField("trading_day",g_config.trading_day).
 		Log(LOG_INFO, "try to load config");
 
     SerializerConfig ss;

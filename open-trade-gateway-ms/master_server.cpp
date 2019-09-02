@@ -83,7 +83,7 @@ bool master_server::GetSlaveBrokerList()
 			{
 				LogMs().WithField("fun","GetSlaveBrokerList")
 					.WithField("key","gatewayms")
-					.WithField("slaveNode",node.name)
+					.WithField("nodename",node.name)
 					.Log(LOG_INFO,"open trade gateway master can not get broker list from slave node!");
 								
 				continue;
@@ -94,7 +94,7 @@ bool master_server::GetSlaveBrokerList()
 			{
 				LogMs().WithField("fun","GetSlaveBrokerList")
 					.WithField("key","gatewayms")
-					.WithField("slaveNode",node.name)
+					.WithField("nodename",node.name)
 					.WithField("brokerlist",strBrokerList)
 					.Log(LOG_INFO,"open trade gateway master GetSlaveBrokerList is not json!");				
 				continue;
@@ -107,7 +107,7 @@ bool master_server::GetSlaveBrokerList()
 			{
 				LogMs().WithField("fun","GetSlaveBrokerList")
 					.WithField("key","gatewayms")
-					.WithField("slaveNode",node.name)
+					.WithField("nodename",node.name)
 					.WithField("brokerlist",strBrokerList)
 					.Log(LOG_INFO,"open trade gateway master GetSlaveBrokerList is not rtn_brokers!");				
 				continue;
@@ -134,7 +134,7 @@ bool master_server::GetSlaveBrokerList()
 		{
 			LogMs().WithField("fun","GetSlaveBrokerList")
 				.WithField("key","gatewayms")
-				.WithField("slaveNode",node.name)
+				.WithField("nodename",node.name)
 				.WithField("errmsg",ex.what())
 				.Log(LOG_WARNING,"open trade gateway master GetSlaveBrokerList fail!");			
 			continue;

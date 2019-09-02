@@ -186,7 +186,7 @@ bool LoadInsList()
 
 		Log().WithField("fun", "LoadInsList")
 			.WithField("key", "gateway")
-			.WithField("contentlen", (int)content.length())
+			.WithField("msglen", (int)content.length())
 			.Log(LOG_INFO, "mdservice download ins file success");
 
 		InsFileParser ss;

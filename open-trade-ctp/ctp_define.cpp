@@ -131,6 +131,8 @@ void SerializerCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcRspAuthenticateField& d)
 {
+	AddItem("CThostFtdcRspAuthenticateField", ("aid"));
+
 	std::string strUserID = GBKToUTF8(d.UserID);
 	AddItem(strUserID, ("UserID"));
 
@@ -143,6 +145,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspAuthenticateField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcRspUserLoginField& d)
 {
+	AddItem("CThostFtdcRspUserLoginField", ("aid"));
+
 	std::string strTradingDay = GBKToUTF8(d.TradingDay);
 	AddItem(strTradingDay, ("TradingDay"));
 
@@ -177,6 +181,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspUserLoginField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcSettlementInfoConfirmField& d)
 {
+	AddItem("CThostFtdcSettlementInfoConfirmField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(d.BrokerID, ("BrokerID"));
 
@@ -197,6 +203,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcSettlementInfoConfirmField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcSettlementInfoField& d)
 {
+	AddItem("CThostFtdcSettlementInfoField", ("aid"));
+
 	AddItem(d.TradingDay, ("TradingDay"));
 	AddItem(d.SettlementID, ("SettlementID"));
 
@@ -220,6 +228,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcSettlementInfoField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
 {
+	AddItem("CThostFtdcUserPasswordUpdateField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -235,6 +245,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderField& d)
 {
+	AddItem("CThostFtdcInputOrderField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -294,6 +306,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderActionField& d)
 {
+	AddItem("CThostFtdcInputOrderActionField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -332,6 +346,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderActionField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcOrderActionField& d)
 {
+	AddItem("CThostFtdcOrderActionField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -387,6 +403,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcOrderActionField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInvestorPositionField& d)
 {
+	AddItem("CThostFtdcInvestorPositionField", ("aid"));
+
 	AddItem(d.InstrumentID, ("InstrumentID"));
 
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
@@ -455,6 +473,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcInvestorPositionField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcBrokerTradingParamsField& d)
 {
+	AddItem("CThostFtdcBrokerTradingParamsField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -477,6 +497,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcBrokerTradingParamsField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcTradingAccountField& d)
 {
+	AddItem("CThostFtdcTradingAccountField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 	
@@ -548,6 +570,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcTradingAccountField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcContractBankField& d)
 {
+	AddItem("CThostFtdcContractBankField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -563,6 +587,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcContractBankField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcAccountregisterField& d)
 {
+	AddItem("CThostFtdcAccountregisterField", ("aid"));
+
 	AddItem(d.TradeDay, ("TradeDay"));
 
 	std::string strBankID = GBKToUTF8(d.BankID);
@@ -611,6 +637,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcAccountregisterField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcTransferSerialField& d)
 {
+	AddItem("CThostFtdcTransferSerialField", ("aid"));
+
 	AddItem(d.PlateSerial, ("PlateSerial"));
 	AddItem(d.TradeDate, ("TradeDate"));
 	AddItem(d.TradingDay, ("TradingDay"));
@@ -676,6 +704,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcTransferSerialField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 {
+	AddItem("CThostFtdcRspTransferField", ("aid"));
+
 	AddItem(d.TradeCode, ("TradeCode"));
 
 	std::string strBankID = GBKToUTF8(d.BankID);
@@ -777,6 +807,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcReqTransferField& d)
 {
+	AddItem("CThostFtdcReqTransferField", ("aid"));
+
 	AddItem(d.TradeCode, ("TradeCode"));
 
 	std::string strBankID = GBKToUTF8(d.BankID);
@@ -876,6 +908,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcReqTransferField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcOrderField& d)
 {
+	AddItem("CThostFtdcOrderField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -988,6 +1022,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcOrderField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcTradeField& d)
 {
+	AddItem("CThostFtdcTradeField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -1049,6 +1085,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcTradeField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcTradingNoticeInfoField& d)
 {
+	AddItem("CThostFtdcTradingNoticeInfoField", ("aid"));
+
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
 
@@ -1069,6 +1107,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcTradingNoticeInfoField& d)
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInstrumentStatusField& d)
 {
+	AddItem("CThostFtdcInstrumentStatusField", ("aid"));
+
 	AddItem(d.ExchangeID, ("ExchangeID"));
 	AddItem(d.ExchangeInstID, ("ExchangeInstID"));
 	std::string strSettlementGroupID = GBKToUTF8(d.SettlementGroupID);

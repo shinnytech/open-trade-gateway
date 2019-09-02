@@ -478,7 +478,7 @@ void client_connection::OnResolve(boost::system::error_code ec
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)			
+			.WithField("nodename",m_last_slave_node.name)			
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING, "open trade gateway master OnResolve Slave node");
 		
@@ -510,7 +510,7 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway master OnConnectToServer Slave node");		
 		std::stringstream ss;
@@ -552,7 +552,7 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_WARNING,"m_ws_socket_to_server async_handshake exception");		
 	}
@@ -570,7 +570,7 @@ void client_connection::OnHandshakeWithServer(boost::system::error_code ec)
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway master OnHandshakeWithServer Slave node");
 				
@@ -620,7 +620,7 @@ void client_connection::DoReadFromServer()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_WARNING,"m_ws_socket_to_server async_read exception");		
 	}
@@ -640,7 +640,7 @@ void client_connection::OnReadFromServer(boost::system::error_code ec
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway master OnReadFromServer Slave node");
 		//关闭客户端连接
@@ -666,7 +666,7 @@ void client_connection::OnTextMsgFromServer(const std::string& msg)
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)			
+			.WithField("nodename",m_last_slave_node.name)			
 			.Log(LOG_WARNING,"receive invalide msg from server");		
 		return;
 	}
@@ -709,7 +709,7 @@ void client_connection::DoWriteToServer()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_ERROR,"open trade gateway master client connection DoWriteToServer exception");		
 	}
@@ -727,7 +727,7 @@ void client_connection::OnWriteServer(boost::system::error_code ec, std::size_t 
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway master client connection send message to server fail");		
 		//关闭客户端连接
@@ -779,7 +779,7 @@ void client_connection::SendTextMsgToServer(const std::string& msg)
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_ERROR,"open trade gateway master client connection SendTextMsgToServer exception");	
 	}
@@ -809,7 +809,7 @@ void client_connection::OnCloseConnection()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)			
+			.WithField("nodename",m_last_slave_node.name)			
 			.Log(LOG_INFO,"client connection close connection");		
 
 		client_connection_manager_.stop(shared_from_this());
@@ -824,7 +824,7 @@ void client_connection::OnCloseConnection()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_ERROR,"client_connection OnCloseConnection exception");		
 	}	
@@ -842,7 +842,7 @@ void client_connection::stop()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.Log(LOG_INFO,"m_ws_socket next_layer close");
 
 		boost::system::error_code ec;
@@ -857,7 +857,7 @@ void client_connection::stop()
 				.WithField("connId",_connection_id)
 				.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 				.WithField("bid",m_last_req_login.bid)
-				.WithField("slaveNode",m_last_slave_node.name)
+				.WithField("nodename",m_last_slave_node.name)
 				.WithField("errmsg",ec.message())
 				.Log(LOG_INFO,"m_ws_socket stop exception");			
 		}
@@ -877,7 +877,7 @@ void client_connection::stop()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_INFO,"m_ws_socket stop exception");		
 	}	
@@ -895,7 +895,7 @@ void client_connection::stop_server()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)			
+			.WithField("nodename",m_last_slave_node.name)			
 			.Log(LOG_INFO,"m_ws_socket_to_server next_layer close");
 		
 		boost::system::error_code ec;
@@ -910,7 +910,7 @@ void client_connection::stop_server()
 				.WithField("connId",_connection_id)
 				.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 				.WithField("bid",m_last_req_login.bid)
-				.WithField("slaveNode",m_last_slave_node.name)
+				.WithField("nodename",m_last_slave_node.name)
 				.WithField("errmsg",ec.message())
 				.Log(LOG_INFO,"m_ws_socket_to_server close exception");			
 		}
@@ -925,7 +925,7 @@ void client_connection::stop_server()
 			.WithField("connId",_connection_id)
 			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
 			.WithField("bid",m_last_req_login.bid)
-			.WithField("slaveNode",m_last_slave_node.name)
+			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ex.what())
 			.Log(LOG_INFO,"m_ws_socket_to_server stop exception");		
 	}

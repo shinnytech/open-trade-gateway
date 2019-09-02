@@ -269,7 +269,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("connId",connId)
-				.WithField("m_user_file_path",m_user_file_path)
+				.WithField("fileName",m_user_file_path)
 				.Log(LOG_INFO,"g_config user_file_path is not empty");			
 		}
 		else
@@ -279,7 +279,7 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("connId",connId)
-				.WithField("m_user_file_path",m_user_file_path)
+				.WithField("fileName",m_user_file_path)
 				.Log(LOG_INFO,"g_config user_file_path is empty");			
 		}
 
@@ -499,7 +499,7 @@ void tradersim::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
 				.WithField("connId",connId)
-				.WithPack("msgcontent",msg)
+				.WithPack("diff_req_pack",msg)
 				.Log(LOG_INFO,"receive req reconnect trade msg");
 
 			SerializerConditionOrderData ns;
@@ -1203,7 +1203,7 @@ void tradersim::LoadUserDataFile()
 				.WithField("user_name", _req_login.user_name)
 				.WithField("old_trading_day", m_data.trading_day)
 				.WithField("trading_day", g_config.trading_day)
-				.WithPack("Account",msg)
+				.WithPack("account_pack",msg)
 				.Log(LOG_INFO, "diffrent trading day!");
 		}
 
@@ -1360,7 +1360,7 @@ void tradersim::LoadUserDataFile()
 				.WithField("user_name", _req_login.user_name)
 				.WithField("old_trading_day", m_data.trading_day)
 				.WithField("trading_day", g_config.trading_day)
-				.WithPack("Position",msg)
+				.WithPack("pos_pack",msg)
 				.Log(LOG_INFO, "diffrent trading day!");
 
 		}
@@ -1575,7 +1575,7 @@ void tradersim::UpdateOrder(Order* order)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)	
-		.WithPack("Position",msg)
+		.WithPack("pos_pack",msg)
 		.Log(LOG_INFO,"update order and position");
 }
 
@@ -1878,7 +1878,7 @@ void tradersim::CheckOrderTrade(Order* order)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithPack("Order",msg)
+				.WithPack("order_pack",msg)
 				.Log(LOG_INFO,u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板");
 
 			OutputNotifyAllSycn(404,u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格超出涨停板","WARNING");
@@ -1895,7 +1895,7 @@ void tradersim::CheckOrderTrade(Order* order)
 				.WithField("key", _key)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
-				.WithPack("Order", msg)
+				.WithPack("order_pack", msg)
 				.Log(LOG_INFO, u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格跌破跌停板");
 
 			OutputNotifyAllSycn(405,u8"下单,已被服务器拒绝,原因:已撤单报单被拒绝价格跌破跌停板","WARNING");
@@ -1915,7 +1915,7 @@ void tradersim::CheckOrderTrade(Order* order)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("Order",msg)
+			.WithPack("order_pack",msg)
 			.Log(LOG_INFO,u8"to do trade with ask price 1");
 		DoTrade(order, order->volume_left, ins->ask_price1);
 	}
@@ -1928,7 +1928,7 @@ void tradersim::CheckOrderTrade(Order* order)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("Order",msg)
+			.WithPack("order_pack",msg)
 			.Log(LOG_INFO,u8"to do trade with bid price 1");
 		DoTrade(order, order->volume_left, ins->bid_price1);
 	}		
@@ -1961,7 +1961,7 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithPack("Trade", msg)
+		.WithPack("trade_pack", msg)
 		.Log(LOG_INFO,"trade info");
 
 	//生成成交通知
@@ -1987,7 +1987,7 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithPack("Order", msg)
+		.WithPack("order_pack", msg)
 		.Log(LOG_INFO, "order info after ajust");
 
 	//调整持仓数据
@@ -2204,7 +2204,7 @@ void tradersim::DoTrade(Order* order, int volume, double price)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithPack("Position",msg)
+		.WithPack("pos_pack",msg)
 		.Log(LOG_INFO,"position info after ajust");
 }
 
@@ -2241,7 +2241,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)	
-			.WithPack("ActionOrder",strMsg)
+			.WithPack("diff_req_pack",strMsg)
 			.Log(LOG_INFO,u8"下单, 已被服务器拒绝,原因:单号重复");
 
 		OutputNotifyAllSycn(407,u8"下单, 已被服务器拒绝,原因:单号重复","WARNING");
@@ -2274,7 +2274,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误");
 
 		OutputNotifyAllSycn(408,u8"下单, 已被服务器拒绝, 原因:下单指令中的用户名错误","WARNING");
@@ -2288,7 +2288,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单, 已被服务器拒绝, 原因:合约不合法");
 
 		OutputNotifyAllSycn(409,u8"下单, 已被服务器拒绝, 原因:合约不合法","WARNING");
@@ -2302,7 +2302,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约");
 
 		OutputNotifyAllSycn(410,u8"下单, 已被服务器拒绝, 原因:模拟交易只支持期货合约","WARNING");
@@ -2316,7 +2316,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0");
 
 		OutputNotifyAllSycn(411,u8"下单, 已被服务器拒绝, 原因:下单手数应该大于0","WARNING");
@@ -2331,7 +2331,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单, 已被服务器拒绝, 原因:下单价格不是价格单位的整倍数");
 
 		OutputNotifyAllSycn(412,u8"下单,已被服务器拒绝, 原因:下单价格不是价格单位的整倍数","WARNING");
@@ -2354,7 +2354,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithPack("ActionOrder",strMsg)
+				.WithPack("diff_req_pack",strMsg)
 				.Log(LOG_INFO, u8"下单,已被服务器拒绝,原因:开仓保证金不足");
 
 			OutputNotifyAllSycn(413,u8"下单,已被服务器拒绝,原因:开仓保证金不足","WARNING");
@@ -2382,7 +2382,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithPack("ActionOrder",strMsg)
+						.WithPack("diff_req_pack",strMsg)
 						.Log(LOG_INFO,u8"下单,已被服务器拒绝,原因:平今手数超过今仓持仓量");
 
 					OutputNotifyAllSycn(414,u8"下单,已被服务器拒绝,原因:平今手数超过今仓持仓量","WARNING");
@@ -2404,7 +2404,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 						.WithField("key", _key)
 						.WithField("bid", _req_login.bid)
 						.WithField("user_name", _req_login.user_name)
-						.WithPack("ActionOrder", strMsg)
+						.WithPack("diff_req_pack", strMsg)
 						.Log(LOG_INFO,u8"下单,已被服务器拒绝,原因:平昨手数超过昨仓持仓量");
 
 					OutputNotifyAllSycn(415,u8"下单,已被服务器拒绝,原因:平昨手数超过昨仓持仓量","WARNING");
@@ -2427,7 +2427,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 					.WithField("key", _key)
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
-					.WithPack("ActionOrder", strMsg)
+					.WithPack("diff_req_pack", strMsg)
 					.Log(LOG_INFO,u8"下单,已被服务器拒绝,原因:平仓手数超过持仓量");
 
 				OutputNotifyAllSycn(416,u8"下单,已被服务器拒绝,原因:平仓手数超过持仓量","WARNING");
@@ -2445,7 +2445,7 @@ void tradersim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithPack("ActionOrder",strMsg)
+		.WithPack("diff_req_pack",strMsg)
 		.Log(LOG_INFO, u8"下单成功");
 
 	OutputNotifyAllSycn(417,u8"下单成功");
@@ -2553,7 +2553,8 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithPack("ActionTransfer",strMsg)
+		.WithField("amount", action_transfer.amount)
+		.WithField("currency", action_transfer.currency)		
 		.Log(LOG_INFO, u8"转账成功");
 
 	m_something_changed = true;
@@ -2632,7 +2633,7 @@ void tradersim::OnTouchConditionOrder(const ConditionOrder& order)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("order_id", order.order_id)
-		.WithPack("ConditionOrder",strMsg)
+		.WithPack("co_pack",strMsg)
 		.Log(LOG_INFO,"condition order is touched");
 
 	int nOrderIndex = 0;
@@ -3061,6 +3062,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3150,6 +3152,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3209,6 +3212,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3277,6 +3281,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3366,6 +3371,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3455,6 +3461,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3525,6 +3532,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3589,6 +3597,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3647,6 +3656,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3712,6 +3722,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3782,6 +3793,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3850,6 +3862,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -3939,6 +3952,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4028,6 +4042,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4086,6 +4101,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4154,6 +4170,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4243,6 +4260,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4332,6 +4350,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4402,6 +4421,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4466,6 +4486,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4524,6 +4545,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4587,6 +4609,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4653,6 +4676,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4692,6 +4716,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4737,6 +4762,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4776,6 +4802,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id", co.instrument_id)
 					.Log(LOG_INFO, "price is wrong!");
 
@@ -4934,6 +4961,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
 						.WithField("order_id", order.order_id)
+						.WithField("exchange_id", co.exchange_id)
 						.WithField("instrument_id",co.instrument_id)
 						.Log(LOG_WARNING,"can close short is less than will close short");					
 					return false;
@@ -4946,6 +4974,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"can close short is less than will close short");				
 				return false;
@@ -4967,6 +4996,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"have no need close short");			
 				return false;
@@ -5004,6 +5034,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
 						.WithField("order_id", order.order_id)
+						.WithField("exchange_id", co.exchange_id)
 						.WithField("instrument_id",co.instrument_id)
 						.Log(LOG_WARNING,"can close long is less than will close long");				
 					return false;
@@ -5016,6 +5047,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING, "can close long is less than will close long");
 
@@ -5037,6 +5069,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
 					.WithField("order_id", order.order_id)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"have no need close long");				
 				return false;
@@ -5571,7 +5604,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("ActionOrder",strMsg)
+			.WithPack("diff_req_pack",strMsg)
 			.Log(LOG_INFO,u8"下单,已被服务器拒绝,原因:单号重复");
 
 		OutputNotifyAllSycn(407, u8"下单, 已被服务器拒绝,原因:单号重复","WARNING");
@@ -5604,7 +5637,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("ActionOrder",strMsg)
+			.WithPack("diff_req_pack",strMsg)
 			.Log(LOG_INFO, u8"下单,已被服务器拒绝,原因:下单指令中的用户名错误");
 
 		OutputNotifyAllSycn(408,u8"下单,已被服务器拒绝, 原因:下单指令中的用户名错误","WARNING");
@@ -5618,7 +5651,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("ActionOrder",strMsg)
+			.WithPack("diff_req_pack",strMsg)
 			.Log(LOG_INFO, u8"下单,已被服务器拒绝, 原因:合约不合法");
 
 		OutputNotifyAllSycn(409,u8"下单,已被服务器拒绝, 原因:合约不合法","WARNING");
@@ -5632,7 +5665,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单,已被服务器拒绝, 原因:模拟交易只支持期货合约");
 
 		OutputNotifyAllSycn(410,u8"下单,已被服务器拒绝, 原因:模拟交易只支持期货合约","WARNING");
@@ -5646,7 +5679,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单,已被服务器拒绝, 原因:下单手数应该大于0");
 
 		OutputNotifyAllSycn(411,u8"下单,已被服务器拒绝, 原因:下单手数应该大于0","WARNING");
@@ -5661,7 +5694,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 			.WithField("key", _key)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
-			.WithPack("ActionOrder", strMsg)
+			.WithPack("diff_req_pack", strMsg)
 			.Log(LOG_INFO, u8"下单,已被服务器拒绝, 原因:下单价格不是价格单位的整倍数");
 
 		OutputNotifyAllSycn(412,u8"下单,已被服务器拒绝, 原因:下单价格不是价格单位的整倍数","WARNING");
@@ -5684,7 +5717,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name", _req_login.user_name)
-				.WithPack("ActionOrder", strMsg)
+				.WithPack("diff_req_pack", strMsg)
 				.Log(LOG_INFO,u8"下单,已被服务器拒绝,原因:开仓保证金不足");
 
 			OutputNotifyAllSycn(413,u8"下单, 已被服务器拒绝, 原因:开仓保证金不足","WARNING");
@@ -5712,7 +5745,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 						.WithField("key", _key)
 						.WithField("bid", _req_login.bid)
 						.WithField("user_name", _req_login.user_name)
-						.WithPack("ActionOrder", strMsg)
+						.WithPack("diff_req_pack", strMsg)
 						.Log(LOG_INFO, u8"下单,已被服务器拒绝,原因:平今手数超过今仓持仓量");
 
 					OutputNotifyAllSycn(414
@@ -5735,7 +5768,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithPack("ActionOrder",strMsg)
+						.WithPack("diff_req_pack",strMsg)
 						.Log(LOG_INFO, u8"下单,已被服务器拒绝,原因:平昨手数超过昨仓持仓量");
 
 					OutputNotifyAllSycn(415,u8"下单,已被服务器拒绝,原因:平昨手数超过昨仓持仓量","WARNING");
@@ -5758,7 +5791,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 					.WithField("key", _key)
 					.WithField("bid", _req_login.bid)
 					.WithField("user_name", _req_login.user_name)
-					.WithPack("ActionOrder", strMsg)
+					.WithPack("diff_req_pack", strMsg)
 					.Log(LOG_INFO, u8"下单,已被服务器拒绝,原因:平仓手数超过持仓量");
 
 				OutputNotifyAllSycn(416,u8"下单,已被服务器拒绝,原因:平仓手数超过持仓量","WARNING");
@@ -5776,7 +5809,7 @@ void tradersim::OnConditionOrderReqInsertOrder(ActionOrder action_insert_order)
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithPack("ActionOrder", strMsg)
+		.WithPack("diff_req_pack", strMsg)
 		.Log(LOG_INFO, u8"下单成功");
 
 	OutputNotifyAllSycn(417, u8"下单成功");

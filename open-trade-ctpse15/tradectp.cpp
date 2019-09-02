@@ -217,11 +217,11 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcRspAuthenticateField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspAuthenticate msg");
 	}
 	else
@@ -230,8 +230,8 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO, "ctp OnRspAuthenticate msg");
@@ -386,11 +386,11 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcRspUserLoginField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspUserLogin msg");		
 	}
 	else
@@ -399,8 +399,8 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO, "ctp OnRspUserLogin msg");
@@ -489,11 +489,11 @@ void traderctp::OnRspQrySettlementInfoConfirm(
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcSettlementInfoConfirmField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQrySettlementInfoConfirm msg");		
 	}
 	else
@@ -502,8 +502,8 @@ void traderctp::OnRspQrySettlementInfoConfirm(
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQrySettlementInfoConfirm msg");		
@@ -615,11 +615,11 @@ void traderctp::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlemen
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcSettlementInfoField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQrySettlementInfo msg");		
 	}
 	else
@@ -628,8 +628,8 @@ void traderctp::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlemen
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQrySettlementInfo msg");
@@ -680,11 +680,11 @@ void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField 
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcSettlementInfoConfirmField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspSettlementInfoConfirm msg");		
 	}
 	else
@@ -693,8 +693,8 @@ void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField 
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)		
 			.Log(LOG_INFO,"ctp OnRspSettlementInfoConfirm msg");
@@ -750,11 +750,11 @@ void traderctp::OnRspUserPasswordUpdate(
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcUserPasswordUpdateField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspUserPasswordUpdate msg");		
 	}
 	else
@@ -763,8 +763,8 @@ void traderctp::OnRspUserPasswordUpdate(
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspUserPasswordUpdate msg");
@@ -932,11 +932,11 @@ void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcInputOrderField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspOrderInsert msg");		
 	}
 	else
@@ -945,8 +945,8 @@ void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO, "ctp OnRspOrderInsert msg");
@@ -990,11 +990,11 @@ void traderctp::OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAct
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcInputOrderActionField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspOrderAction msg");
 	}
 	else
@@ -1003,8 +1003,8 @@ void traderctp::OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAct
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspOrderAction msg");
@@ -1187,9 +1187,9 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-				.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
-				.WithPack("CThostFtdcInputOrderField",strMsg)
+				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO,"ctp OnErrRtnOrderInsert msg");
 		}
 	}
@@ -1199,8 +1199,8 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
 			.Log(LOG_INFO,"ctp OnErrRtnOrderInsert msg");
 	}
 
@@ -1264,9 +1264,9 @@ void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-				.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
-				.WithPack("CThostFtdcOrderActionField",strMsg)
+				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO,"ctp OnErrRtnOrderAction msg");
 		}
 	}
@@ -1276,8 +1276,8 @@ void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
 			.Log(LOG_INFO,"ctp OnErrRtnOrderAction msg");
 	}
 
@@ -1313,8 +1313,8 @@ void traderctp::ProcessQryInvestorPosition(
 				.WithField("user_name",_req_login.user_name)
 				.WithField("exchange_id", exchange_id)
 				.WithField("instrument_id", pRspInvestorPosition->InstrumentID)
-				.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-				.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 				.WithField("IsLast",bIsLast)
 				.WithField("RequestID",nRequestID)							
 				.Log(LOG_WARNING,"instrument is null when ProcessQryInvestorPosition");			
@@ -1583,11 +1583,11 @@ void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInves
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcInvestorPositionField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQryInvestorPosition msg");
 	}
 	else
@@ -1596,8 +1596,8 @@ void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInves
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQryInvestorPosition msg");
@@ -1651,11 +1651,11 @@ void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcBrokerTradingParamsField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO, "ctp OnRspQryBrokerTradingParams msg");
 	}
 	else
@@ -1664,8 +1664,8 @@ void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQryBrokerTradingParams msg");
@@ -1771,11 +1771,11 @@ void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvest
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcTradingAccountField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQryTradingAccount msg");
 	}
 	else
@@ -1784,8 +1784,8 @@ void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvest
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQryTradingAccount msg");
@@ -1842,11 +1842,11 @@ void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcContractBankField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQryContractBank msg");
 	}
 	else
@@ -1855,8 +1855,8 @@ void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQryContractBank msg");
@@ -1928,11 +1928,11 @@ void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccount
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcAccountregisterField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQryAccountregister msg");
 	}
 	else
@@ -1941,8 +1941,8 @@ void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccount
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQryAccountregister msg");
@@ -2008,11 +2008,11 @@ void traderctp::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferS
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcTransferSerialField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRspQryTransferSerial msg");
 	}
 	else
@@ -2021,8 +2021,8 @@ void traderctp::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferS
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
 			.Log(LOG_INFO,"ctp OnRspQryTransferSerial msg");
@@ -2119,7 +2119,7 @@ void traderctp::OnRtnFromBankToFutureByFuture(
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)				
-				.WithPack("CThostFtdcRspTransferField",strMsg)
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO,"ctp OnRtnFromBankToFutureByFuture msg");
 		}
 	}
@@ -2165,7 +2165,7 @@ void traderctp::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTr
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithPack("CThostFtdcRspTransferField",strMsg)
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO,"ctp OnRtnFromFutureToBankByFuture msg");
 		}
 	}
@@ -2235,9 +2235,9 @@ void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTra
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-				.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")				
-				.WithPack("CThostFtdcReqTransferField",strMsg)
+				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")				
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO,"ctp OnErrRtnFutureToBankByFuture msg");
 		}
 	}
@@ -2247,8 +2247,8 @@ void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTra
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
 			.Log(LOG_INFO,"ctp OnErrRtnFutureToBankByFuture msg");
 	}
 
@@ -2322,9 +2322,9 @@ void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTra
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-				.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
-				.WithPack("CThostFtdcReqTransferField",strMsg)
+				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO,"ctp OnErrRtnFutureToBankByFuture msg");			
 		}
 	}
@@ -2334,8 +2334,8 @@ void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTra
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-			.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
 			.Log(LOG_INFO, "ctp OnErrRtnFutureToBankByFuture msg");
 	}
 
@@ -2609,7 +2609,7 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)				
-				.WithPack("CThostFtdcOrderField",strMsg)
+				.WithPack("ctp_pack",strMsg)
 				.Log(LOG_INFO, "ctp OnRtnOrder msg");		
 		}
 	}
@@ -2789,7 +2789,7 @@ void traderctp::OnRtnTrade(CThostFtdcTradeField* pTrade)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithPack("CThostFtdcTradeField", strMsg)
+				.WithPack("ctp_pack", strMsg)
 				.Log(LOG_INFO, "ctp OnRtnTrade msg");
 		}
 	}
@@ -2838,7 +2838,7 @@ void traderctp::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNot
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("CThostFtdcTradingNoticeInfoField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRtnTradingNotice msg");		
 	}
 	else
@@ -2867,8 +2867,8 @@ void traderctp::OnRspError(CThostFtdcRspInfoField* pRspInfo
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithField("ErrorID",pRspInfo ? pRspInfo->ErrorID : -999)
-		.WithField("ErrMsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+		.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+		.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 		.WithField("IsLast",bIsLast)
 		.WithField("RequestID", nRequestID)
 		.Log(LOG_INFO,"ctp OnRspError msg");	
@@ -2887,7 +2887,7 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithPack("CThostFtdcInstrumentStatusField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"ctp OnRtnInstrumentStatus msg");
 	}
 	else
@@ -2983,7 +2983,7 @@ int traderctp::ReqUserLogin()
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("UserProductInfo",_req_login.broker.product_info)
+			.WithField("product_info",_req_login.broker.product_info)
 			.WithField("client_ip", _req_login.client_ip)			
 			.WithField("ret",ret)
 			.Log(LOG_WARNING,"ctp ReqUserLogin fail");	
@@ -3008,7 +3008,7 @@ void traderctp::SendLoginRequest()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name", _req_login.user_name)
 		.WithField("client_app_id",_req_login.client_app_id)
-		.WithField("client_system_info_len",(int)_req_login.client_system_info.length())	
+		.WithField("client_system_info_length",(int)_req_login.client_system_info.length())	
 		.Log(LOG_INFO,"ctp SendLoginRequest");
 	
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -4838,7 +4838,7 @@ void traderctp::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("msglength",(int)msg.length())
+				.WithField("msglen",(int)msg.length())
 				.Log(LOG_ERROR,"SendMsg exception");
 		}
 	}
@@ -4854,7 +4854,7 @@ void traderctp::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("msglength",(int)totalLength)
+				.WithField("msglen",(int)totalLength)
 				.WithField("errmsg",ex.what())
 				.Log(LOG_ERROR,"SendMsg exception");			
 		}
@@ -4911,7 +4911,7 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr, std::share
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("msglength",(int)msg.length())
+				.WithField("msglen",(int)msg.length())
 				.WithField("errmsg",ex.what())
 				.Log(LOG_ERROR,"SendMsg exception");			
 		}
@@ -4928,7 +4928,7 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr, std::share
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
-				.WithField("msglength",(int)totalLength)
+				.WithField("msglen",(int)totalLength)
 				.WithField("errmsg",ex.what())
 				.Log(LOG_ERROR,"SendMsg exception");			
 		}
@@ -5095,7 +5095,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("ret",r)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcReqTransferField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO, "send ReqFromBankToFutureByFuture request!");
 
 		if (0 != r)
@@ -5122,7 +5122,7 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("ret",r)
 			.WithField("RequestID",nRequestID)
-			.WithPack("CThostFtdcReqTransferField",strMsg)
+			.WithPack("ctp_pack",strMsg)
 			.Log(LOG_INFO,"send ReqFromFutureToBankByFuture request!");
 
 		if (0 != r)
@@ -5189,7 +5189,7 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 		.WithField("SessionID", rkey.session_id)
 		.WithField("OrderRef", rkey.order_ref)
 		.WithField("ret", r)
-		.WithPack("CThostFtdcInputOrderActionField",strMsg)
+		.WithPack("ctp_pack",strMsg)
 		.Log(LOG_INFO, "send ReqOrderAction request!"); 
 }
 
@@ -5250,7 +5250,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		.WithField("SessionID",rkey.session_id)	
 		.WithField("OrderRef",rkey.order_ref)
 		.WithField("ret",r)
-		.WithPack("CThostFtdcInputOrderField",strMsg)
+		.WithPack("ctp_pack",strMsg)
 		.Log(LOG_INFO, "send ReqOrderInsert request!");	
 	
 	m_need_save_file.store(true);
@@ -7831,6 +7831,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
+						.WithField("exchange_id", co.exchange_id)
 						.WithField("instrument_id",co.instrument_id)
 						.Log(LOG_WARNING,"can close short is less than will close short");
 
@@ -7843,6 +7844,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"can close short is less than will close short");				
 				return false;
@@ -7863,6 +7865,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"have no need close short");				
 				return false;
@@ -7899,6 +7902,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
+						.WithField("exchange_id", co.exchange_id)
 						.WithField("instrument_id",co.instrument_id)
 						.Log(LOG_WARNING,"can close long is less than will close long");				
 					return false;
@@ -7910,6 +7914,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"can close long is less than will close long");
 
@@ -7931,6 +7936,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
 					.WithField("user_name",_req_login.user_name)
+					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
 					.Log(LOG_WARNING,"have no need close long");				
 				return false;
@@ -8568,7 +8574,7 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("order_id", order.order_id)
-		.WithPack("ConditionOrder",strMsg)
+		.WithPack("co_pack",strMsg)
 		.Log(LOG_INFO,"condition order is touched");
 
 	int nOrderIndex = 0;
@@ -8718,8 +8724,8 @@ void traderctp::PrintOrderLogIfTouchedByConditionOrder(const Order& order)
 						.WithField("key",_key)
 						.WithField("bid",_req_login.bid)
 						.WithField("user_name",_req_login.user_name)
-						.WithPack("Order",strMsg2)
-						.WithPack("ConditionOrder",strMsg1)						
+						.WithPack("order_pack",strMsg2)
+						.WithPack("co_pack",strMsg1)						
 						.Log(LOG_INFO, "order is touched by condition order");
 
 					flag = true;
@@ -8753,8 +8759,8 @@ void traderctp::PrintOrderLogIfTouchedByConditionOrder(const Order& order)
 						.WithField("key", _key)
 						.WithField("bid", _req_login.bid)
 						.WithField("user_name", _req_login.user_name)
-						.WithPack("Order", strMsg2)
-						.WithPack("ConditionOrder", strMsg1)
+						.WithPack("order_pack", strMsg2)
+						.WithPack("co_pack", strMsg1)
 						.Log(LOG_INFO, "order is touched by condition order");
 
 					flag = true;
@@ -8788,8 +8794,8 @@ void traderctp::PrintOrderLogIfTouchedByConditionOrder(const Order& order)
 						.WithField("key", _key)
 						.WithField("bid", _req_login.bid)
 						.WithField("user_name", _req_login.user_name)
-						.WithPack("Order", strMsg2)
-						.WithPack("ConditionOrder", strMsg1)
+						.WithPack("order_pack", strMsg2)
+						.WithPack("co_pack", strMsg1)
 						.Log(LOG_INFO, "order is touched by condition order");
 
 					flag = true;
@@ -9011,7 +9017,7 @@ void traderctp::OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d)
 		.WithField("SessionID",rkey.session_id)
 		.WithField("OrderRef",rkey.order_ref)
 		.WithField("ret",r)
-		.WithPack("CThostFtdcInputOrderActionField",strMsg)
+		.WithPack("ctp_pack",strMsg)
 		.Log(LOG_INFO,"send ReqOrderAction request!");
 }
 
@@ -9026,7 +9032,7 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("orderid",d.local_key.order_id)
+			.WithField("order_id",d.local_key.order_id)
 			.Log(LOG_WARNING,"orderid is duplicate,can not send order");		
 		return;
 	}
@@ -9060,7 +9066,7 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.WithField("orderid",d.local_key.order_id)
+			.WithField("order_id",d.local_key.order_id)
 			.Log(LOG_WARNING,"send order request is fail");
 	}
 
@@ -9079,7 +9085,7 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 		.WithField("SessionID",rkey.session_id)
 		.WithField("OrderRef",rkey.order_ref)
 		.WithField("ret",r)
-		.WithPack("CThostFtdcInputOrderField",strMsg)
+		.WithPack("ctp_pack",strMsg)
 		.Log(LOG_INFO,"send ReqOrderInsert request!");	
 
 	m_need_save_file.store(true);
@@ -9217,11 +9223,11 @@ int traderctp::RegSystemInfo()
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithField("ClientLoginTime", f.ClientLoginTime)
-		.WithField("ClientPublicIP", _req_login.client_ip)
-		.WithField("ClientIPPort", _req_login.client_port)
-		.WithField("ClientAppID", _req_login.client_app_id)
-		.WithField("ClientSystemInfoLen", (int)client_system_info.length())
+		.WithField("client_login_time", f.ClientLoginTime)
+		.WithField("client_ip", _req_login.client_ip)
+		.WithField("client_port", _req_login.client_port)
+		.WithField("client_app_id", _req_login.client_app_id)
+		.WithField("client_system_info_length", (int)client_system_info.length())
 		.WithField("ret", ret)
 		.Log(LOG_INFO, "ctp RegisterUserSystemInfo");
 	return ret;
@@ -9263,9 +9269,9 @@ int traderctp::ReqAuthenticate()
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithField("UserProductInfo", USER_PRODUCT_INFO_NAME)
-		.WithField("AppID", _req_login.broker.product_info)
-		.WithField("AuthCode", _req_login.broker.auth_code)
+		.WithField("product_info", USER_PRODUCT_INFO_NAME)
+		.WithField("app_id", _req_login.broker.product_info)
+		.WithField("auth_code", _req_login.broker.auth_code)
 		.WithField("ret", ret)
 		.Log(LOG_INFO, "ctp ReqAuthenticate");
 	return ret;
