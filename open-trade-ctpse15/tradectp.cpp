@@ -1322,10 +1322,7 @@ void traderctp::ProcessQryInvestorPosition(
 		else
 		{
 			bool b_has_td_yd_distinct = (exchange_id == "SHFE") || (exchange_id == "INE");
-			Position& position = GetPosition(symbol);
-			position.user_id = pRspInvestorPosition->InvestorID;
-			position.exchange_id = exchange_id;
-			position.instrument_id = pRspInvestorPosition->InstrumentID;
+			Position& position = GetPosition(exchange_id,pRspInvestorPosition->InstrumentID, pRspInvestorPosition->InvestorID);		
 			if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long)
 			{
 				if (!b_has_td_yd_distinct)
@@ -1465,7 +1462,8 @@ void traderctp::InitPositionVolume()
 
 void traderctp::AdjustPositionByTrade(const Trade& trade)
 {
-	Position& pos = GetPosition(trade.symbol());
+	Position& pos = GetPosition(trade.exchange_id, trade.instrument_id,trade.user_id);
+	
 	if(trade.offset == kOffsetOpen)
 	{
 		if(trade.direction == kDirectionBuy)
@@ -3341,8 +3339,20 @@ Account& traderctp::GetAccount(const std::string account_key)
 	return m_data.m_accounts[account_key];
 }
 
-Position& traderctp::GetPosition(const std::string symbol)
+Position& traderctp::GetPosition(const std::string& exchange_id
+	, const std::string& instrument_id
+	, const std::string& user_id)
 {
+	std::string symbol = exchange_id + "." + instrument_id;
+	std::map<std::string, Position>::iterator it = m_data.m_positions.find(symbol);
+	if (it == m_data.m_positions.end())
+	{
+		Position pos;
+		pos.exchange_id = exchange_id;
+		pos.instrument_id = instrument_id;
+		pos.user_id = user_id;
+		m_data.m_positions.insert(std::map<std::string, Position>::value_type(symbol,pos));
+	}
 	Position& position = m_data.m_positions[symbol];
 	return position;
 }
@@ -3647,6 +3657,7 @@ void traderctp::SendUserData()
 				rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
 				std::string json_str;
 				nss.ToString(&json_str);
+				
 				//发送		
 				std::string str = GetConnectionStr();
 				if (!str.empty())
@@ -5557,7 +5568,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id,co.instrument_id,_req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -6300,7 +6311,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -6581,7 +6592,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -7321,7 +7332,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -7602,7 +7613,7 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -7805,7 +7816,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 	if (EOrderDirection::buy == co.direction)
 	{
 		f.Direction = THOST_FTDC_D_Buy;
-		Position& pos = GetPosition(symbol);
+		Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
@@ -7852,7 +7863,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(symbol);
+			Position& position = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 			//如果可平手数大于零
 			if (pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen > 0)
 			{
@@ -7876,7 +7887,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 	else
 	{
 		f.Direction = THOST_FTDC_D_Sell;
-		Position& pos = GetPosition(symbol);
+		Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
@@ -7923,7 +7934,7 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(symbol);
+			Position& position = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 			//如果可平手数大于零
 			if (pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen > 0)
 			{
@@ -8177,7 +8188,7 @@ bool traderctp::ConditionOrder_Reverse_Long(const ConditionOrder& order
 		}
 	}
 
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//重新生成平多单
 	
@@ -8394,7 +8405,7 @@ bool traderctp::ConditionOrder_Reverse_Short(const ConditionOrder& order
 	}
 
 	//重新生成平空单
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 	//如果分今昨
 	if (b_has_td_yd_distinct)
 	{

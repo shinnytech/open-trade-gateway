@@ -1555,7 +1555,7 @@ void tradersim::UpdateOrder(Order* order)
 {
 	order->seqno = m_last_seq_no++;
 	order->changed = true;
-	Position& position = GetPosition(order->symbol());	
+	Position& position = GetPosition(order->exchange_id, order->instrument_id,_req_login.user_name);
 	if (nullptr == position.ins)
 	{
 		Log().WithField("fun","UpdateOrder")
@@ -1579,8 +1579,20 @@ void tradersim::UpdateOrder(Order* order)
 		.Log(LOG_INFO,"update order and position");
 }
 
-Position& tradersim::GetPosition(const std::string symbol)
+Position& tradersim::GetPosition(const std::string& exchange_id
+	, const std::string& instrument_id
+	, const std::string& user_id)
 {
+	std::string symbol = exchange_id + "." + instrument_id;
+	std::map<std::string, Position>::iterator it = m_data.m_positions.find(symbol);
+	if (it == m_data.m_positions.end())
+	{
+		Position pos;
+		pos.exchange_id = exchange_id;
+		pos.instrument_id = instrument_id;
+		pos.user_id = user_id;
+		m_data.m_positions.insert(std::map<std::string, Position>::value_type(symbol, pos));
+	}
 	Position& position = m_data.m_positions[symbol];
 	return position;
 }
@@ -2864,7 +2876,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 	, int nOrderIndex)
 {
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id,co.instrument_id,_req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -3492,7 +3504,7 @@ bool tradersim::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -3753,7 +3765,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -4381,7 +4393,7 @@ bool tradersim::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -4638,7 +4650,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 	, int nOrderIndex)
 {
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
@@ -4919,7 +4931,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 	, int nOrderIndex)
 {
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	ActionOrder action_insert_order;
 	action_insert_order.aid = "insert_order";
@@ -4982,7 +4994,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(symbol);
+			Position& position = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 			//如果可平手数大于零
 			if (pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen > 0)
 			{
@@ -5007,7 +5019,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 	else
 	{
 		action_insert_order.direction = kDirectionSell;
-		Position& pos = GetPosition(symbol);
+		Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
@@ -5262,7 +5274,7 @@ bool tradersim::ConditionOrder_Reverse_Long(const ConditionOrder& order
 		}
 	}
 
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 	   
 	//重新生成平多单
 	int volume_long = 0;
@@ -5439,7 +5451,7 @@ bool tradersim::ConditionOrder_Reverse_Short(const ConditionOrder& order
 	}
 
 	//重新生成平空单
-	Position& pos = GetPosition(symbol);
+	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
 
 	int volume_short = 0;
 

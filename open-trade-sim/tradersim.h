@@ -194,7 +194,7 @@ private:
 
 	void UpdateOrder(Order* order);
 
-	Position& GetPosition(const std::string position_key);
+	Position& GetPosition(const std::string& exchange_id, const std::string& instrument_id, const std::string& user_id);
 
 	void UpdatePositionVolume(Position* position);
 

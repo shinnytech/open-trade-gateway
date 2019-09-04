@@ -366,7 +366,7 @@ private:
 
 	Account& GetAccount(const std::string account_key);
 
-	Position& GetPosition(const std::string position_key);
+	Position& GetPosition(const std::string& exchange_id,const std::string& instrument_id, const std::string& user_id);
 
 	Bank& GetBank(const std::string& bank_id);
 
