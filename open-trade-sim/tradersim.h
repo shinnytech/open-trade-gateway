@@ -136,6 +136,8 @@ private:
 
 	std::atomic_bool m_run_receive_msg;
 
+	int m_session_id;
+
 	ConditionOrderData m_condition_order_data;
 
 	ConditionOrderHisData m_condition_order_his_data;

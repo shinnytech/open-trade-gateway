@@ -4958,6 +4958,7 @@ void traderctp::OutputNotifyAsych(int connId, long notify_code, const std::strin
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id",m_session_id,nss.m_doc->GetAllocator());	
 	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
@@ -4982,6 +4983,7 @@ void traderctp::OutputNotifySycn(int connId, long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
@@ -5006,6 +5008,7 @@ void traderctp::OutputNotifyAllAsych(long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
 	
@@ -5034,6 +5037,7 @@ void traderctp::OutputNotifyAllSycn(long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);

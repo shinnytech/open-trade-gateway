@@ -48,6 +48,7 @@ tradersim::tradersim(boost::asio::io_context& ios
 ,m_next_send_dt(0)
 ,m_transfer_seq(0)
 ,m_run_receive_msg(false)
+,m_session_id(0)
 ,m_condition_order_data()
 ,m_condition_order_his_data()
 ,m_condition_order_manager(_key
@@ -361,6 +362,9 @@ void tradersim::ProcessReqLogIn(int connId, ReqLogin& req)
 
 bool tradersim::WaitLogIn()
 {
+	unsigned seed = time(0);
+	srand(seed);
+	m_session_id = rand();
 	return true;
 }
 
@@ -621,6 +625,7 @@ void tradersim::OutputNotifyAsych(int connId, long notify_code, const std::strin
 	node_message.AddMember("type",rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level",rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code",notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content",rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(),nss.m_doc->GetAllocator());
 	
 	rapidjson::Pointer("/data/0/notify/N"+std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
@@ -645,6 +650,7 @@ void tradersim::OutputNotifySycn(int connId, long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str()
 		, nss.m_doc->GetAllocator()).Move()
 		, nss.m_doc->GetAllocator());
@@ -670,6 +676,7 @@ void tradersim::OutputNotifyAllAsych(long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str()
 		,nss.m_doc->GetAllocator()).Move()
 		,nss.m_doc->GetAllocator());
@@ -695,6 +702,7 @@ void tradersim::OutputNotifyAllSycn(long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str()
 		, nss.m_doc->GetAllocator()).Move()
 		, nss.m_doc->GetAllocator());

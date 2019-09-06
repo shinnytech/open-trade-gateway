@@ -649,6 +649,7 @@ void connection::OutputNotifySycn(long notify_code
 	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+	node_message.AddMember("session_id",0,nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	rapidjson::Pointer("/data/0/notify/N" + std::to_string(0)).Set(*nss.m_doc, node_message);
 	std::string json_str;
