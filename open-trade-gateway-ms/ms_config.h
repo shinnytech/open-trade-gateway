@@ -7,6 +7,7 @@
 #pragma once
 
 #include "types.h"
+#include "config.h"
 
 #include <string>
 #include <vector>
@@ -23,11 +24,13 @@ struct SlaveNodeInfo
 	std::string port;
 
 	std::string path;
+
+	std::vector<std::string> userList;
 };
 
 typedef std::vector<SlaveNodeInfo> TSlaveNodeInfoList;
 
-typedef std::map<std::string, SlaveNodeInfo> TBrokerSlaveNodeMap;
+typedef std::map<std::string,SlaveNodeInfo> TUserSlaveNodeMap;
 
 struct MasterConfig
 {
@@ -37,8 +40,14 @@ struct MasterConfig
 	std::string host;
 
 	int port;
-
+	
 	TSlaveNodeInfoList slaveNodeList;
+
+	std::map<std::string, BrokerConfig> brokers;
+
+	std::string broker_list_str;
+
+	TUserSlaveNodeMap users_slave_node_map;
 };
 
 struct RtnBrokersMsg
@@ -51,6 +60,8 @@ struct RtnBrokersMsg
 };
 
 extern MasterConfig g_masterConfig;
+
+bool LoadBrokerList();
 
 bool LoadMasterConfig();
 
@@ -65,4 +76,6 @@ public:
 	void DefineStruct(SlaveNodeInfo& s);
 
 	void DefineStruct(RtnBrokersMsg& b);
+
+	void DefineStruct(BrokerConfig& d);
 };

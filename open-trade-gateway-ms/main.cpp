@@ -20,8 +20,17 @@ int main(int argc, char* argv[])
 		LogMs().WithField("fun","main")
 			.WithField("key","gatewayms")
 			.Log(LOG_INFO,"open trade gateway master init");
+
+		//加载BrokerList
+		if (!LoadBrokerList())
+		{
+			LogMs().WithField("fun", "main")
+				.WithField("key", "gatewayms")
+				.Log(LOG_WARNING, "open trade gateway master load broker list failed!");
+			return -1;
+		}
 				
-		//加载配置文件
+		//加载负载均衡服务配置文件
 		if (!LoadMasterConfig())
 		{
 			LogMs().WithField("fun","main")

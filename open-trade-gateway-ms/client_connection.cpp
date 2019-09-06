@@ -17,8 +17,7 @@ client_connection::client_connection(
 	,boost::asio::ip::tcp::socket socket
 	,client_connection_manager& manager
 	,int connection_id
-	,TBrokerSlaveNodeMap& broker_slave_node_Map
-	,std::string& broker_list_str)
+	,MasterConfig& masterConfig)
 	:m_ios(ios),
 	m_ws_socket(std::move(socket)),
 	m_input_buffer(),
@@ -31,8 +30,7 @@ client_connection::client_connection(
 	_X_Real_Port(""),
 	_agent(""),
 	_analysis(""),
-	m_broker_slave_node_Map(broker_slave_node_Map),
-	m_broker_list_str(broker_list_str),
+	_masterConfig(masterConfig),
 	m_connect_to_server(false),
 	m_ws_socket_to_server(ios),
 	m_resolver(ios),
@@ -42,6 +40,45 @@ client_connection::client_connection(
 	m_last_req_login(),
 	m_last_slave_node()
 {
+}
+
+client_connection::~client_connection()
+{
+	LogMs().WithField("fun","~client_connection()")
+		.WithField("key","gatewayms")
+		.Log(LOG_INFO,"client_connection is deleted");
+
+	if (m_ws_socket.next_layer().is_open())
+	{
+		LogMs().WithField("fun","~client_connection()")
+			.WithField("key","gatewayms")
+			.Log(LOG_INFO,"m_ws_socket next_layer is still open()");
+
+		boost::system::error_code ec;
+		m_ws_socket.next_layer().close(ec);
+	}
+	else
+	{
+		LogMs().WithField("fun","~client_connection()")
+			.WithField("key","gatewayms")
+			.Log(LOG_INFO,"m_ws_socket next_layer is closed");
+	}
+
+	if (m_ws_socket_to_server.next_layer().is_open())
+	{
+		LogMs().WithField("fun", "~client_connection()")
+			.WithField("key", "gatewayms")
+			.Log(LOG_INFO, "m_ws_socket_to_server next_layer is still open()");
+
+		boost::system::error_code ec;
+		m_ws_socket_to_server.next_layer().close(ec);		
+	}
+	else
+	{
+		LogMs().WithField("fun","~client_connection()")
+			.WithField("key","gatewayms")
+			.Log(LOG_INFO,"m_ws_socket_to_server next_layer is closed");
+	}
 }
 
 void client_connection::start()
@@ -124,7 +161,7 @@ void client_connection::OnOpenConnection(boost::system::error_code ec)
 		_agent= req_[boost::beast::http::field::user_agent].to_string();				
 		_analysis= req_["analysis"].to_string();
 
-		SendTextMsg(m_broker_list_str);
+		SendTextMsg(_masterConfig.broker_list_str);
 
 		DoRead();
 	}
@@ -332,57 +369,149 @@ void client_connection::OnMessage(const std::string &json_str)
 	}
 }
 
+void string_replace(std::string &strBig, const std::string &strsrc, const std::string &strdst)
+{
+	std::string::size_type pos = 0;
+	std::string::size_type srclen = strsrc.size();
+	std::string::size_type dstlen = strdst.size();
+	while ((pos = strBig.find(strsrc, pos)) != std::string::npos)
+	{
+		strBig.replace(pos, srclen, strdst);
+		pos += dstlen;
+	}
+}
+
+std::string client_connection::GetUserKey(const ReqLogin& req, const BrokerConfig& brokerConfig)
+{
+	std::string strUserKey;
+	std::string strBrokerType = brokerConfig.broker_type;	
+	//为了支持次席而添加的功能
+	if ((!req.broker_id.empty()) &&
+		(!req.front.empty()))
+	{
+		std::string strFront = req.front;
+		string_replace(strFront, ":", "_");
+		string_replace(strFront, "/", "");
+		string_replace(strFront, ".", "_");
+		strUserKey = strBrokerType + "_" + req.bid + "_"
+			+ req.user_name + "_" + req.broker_id + "_" + strFront;
+	}
+	else
+	{
+		strUserKey = strBrokerType + "_" + req.bid + "_" + req.user_name;
+	}
+	return strUserKey;
+}
+
+void client_connection::SaveMsConfig(const std::string& userKey)
+{
+	std::string fn = "/etc/open-trade-gateway/config-ms.json";
+	MasterSerializerConfig ss;
+	ss.FromVar(_masterConfig);
+	bool saveFile = ss.ToFile(fn.c_str());
+	if (!saveFile)
+	{
+		LogMs().WithField("fun","SaveMsConfig")
+			.WithField("key","gatewayms")	
+			.WithField("user_key",userKey)
+			.WithField("fileName",fn)
+			.Log(LOG_INFO, "save ms config file failed!");
+	}	
+}
+
+SlaveNodeInfo client_connection::GetSlaveNodeInfoFromUserKey(const std::string& userKey)
+{
+	TUserSlaveNodeMap::iterator it=_masterConfig.users_slave_node_map.find(userKey);
+	//还没有为用户分配结点
+	if (it == _masterConfig.users_slave_node_map.end())
+	{
+		int index = 0;
+		int nCount = _masterConfig.slaveNodeList[index].userList.size();
+		for (int i = 1; i < _masterConfig.slaveNodeList.size(); ++i)
+		{
+			if (_masterConfig.slaveNodeList[i].userList.size() < nCount)
+			{
+				index = i;
+				nCount = _masterConfig.slaveNodeList[i].userList.size();
+			}
+		}
+
+		_masterConfig.slaveNodeList[index].userList.push_back(userKey);
+		SaveMsConfig(userKey);
+
+		SlaveNodeInfo slaveNodeInfo;
+		slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+		slaveNodeInfo.host= _masterConfig.slaveNodeList[index].host;
+		slaveNodeInfo.path= _masterConfig.slaveNodeList[index].path;
+		slaveNodeInfo.port= _masterConfig.slaveNodeList[index].port;
+
+		_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+			userKey, slaveNodeInfo));
+
+		return slaveNodeInfo;
+	}
+	//已经为用户分配结点
+	else
+	{
+		return it->second;
+	}	
+}
+
 void client_connection::ProcessLogInMessage(const ReqLogin& req
 	, const std::string &json_str)
-{
+{	
+	std::map<std::string, BrokerConfig>::iterator it = _masterConfig.brokers.find(req.bid);
 	//如果请求登录的bid不存在
-	TBrokerSlaveNodeMap::iterator it = m_broker_slave_node_Map.find(req.bid);
-	if (it == m_broker_slave_node_Map.end())
+	if (it == _masterConfig.brokers.end())
 	{
-		LogMs().WithField("fun","ProcessLogInMessage")
-			.WithField("key","gatewayms")
-			.WithField("agent",_agent)
-			.WithField("ip",_X_Real_IP)
-			.WithField("analysis",_analysis)
-			.WithField("connId",_connection_id)
-			.WithField("bid",req.bid)
-			.WithField("user_name",req.user_name)
-			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-			.Log(LOG_WARNING,"open trade gateway master get invalid bid");		
-		std::stringstream ss;
-		ss << u8"暂不支持," << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(301,ss.str(), "WARNING");
+		LogMs().WithField("fun", "ProcessLogInMessage")
+			.WithField("key", "gatewayms")
+			.WithField("agent", _agent)
+			.WithField("ip", _X_Real_IP)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("bid", req.bid)
+			.WithField("user_name", req.user_name)
+			.WithField("fd", (int)m_ws_socket.next_layer().native_handle())
+			.Log(LOG_WARNING, "open trade gateway master get invalid bid");
+
+		//std::stringstream ss;
+		//ss << u8"暂不支持," << req.bid << u8",请联系该期货公司或快期技术支持人员!";
+		//OutputNotifySycn(301,ss.str(),"WARNING");
+		
+		//关闭掉客户端连接
+		OnCloseConnection();
 		return;
 	}
-
-	SlaveNodeInfo slaveNodeInfo = it->second;
-
+	
+	BrokerConfig& brokerConfig = it->second;
+	std::string strUserKey= GetUserKey(req, brokerConfig);
+	SlaveNodeInfo slaveNodeInfo = GetSlaveNodeInfoFromUserKey(strUserKey);
+	
 	//如果已经连接到服务器
 	if (m_connect_to_server)
 	{
-		//如果是同一家期货公司(一定在同一个结点上)
-		if (req.bid == m_last_req_login.bid)
-		{
-			//直接重发登录请求并返回
-			LogMs().WithField("fun","ProcessLogInMessage")
-				.WithField("key","gatewayms")
-				.WithField("agent",_agent)
-				.WithField("ip",_X_Real_IP)
-				.WithField("analysis",_analysis)
-				.WithField("connId",_connection_id)
-				.WithField("bid",req.bid)
-				.WithField("user_name",req.user_name)
-				.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-				.Log(LOG_WARNING,"same bid and last login");			
-			m_last_req_login = req;
-			SendTextMsgToServer(json_str);
-			return;
-		}
-
 		//如果在同一个结点上
 		if (slaveNodeInfo.name == m_last_slave_node.name)
 		{
 			//直接重发登录请求并返回
+			LogMs().WithField("fun", "ProcessLogInMessage")
+				.WithField("key", "gatewayms")
+				.WithField("agent", _agent)
+				.WithField("ip", _X_Real_IP)
+				.WithField("analysis", _analysis)
+				.WithField("connId", _connection_id)
+				.WithField("bid", req.bid)
+				.WithField("user_name", req.user_name)
+				.WithField("fd", (int)m_ws_socket.next_layer().native_handle())
+				.Log(LOG_INFO, "same node name and last login");
+			m_last_req_login = req;
+			SendTextMsgToServer(json_str);
+			return;
+		}
+		else
+		{
+			//否则,关闭掉客户端连接
 			LogMs().WithField("fun","ProcessLogInMessage")
 				.WithField("key","gatewayms")
 				.WithField("agent",_agent)
@@ -392,44 +521,10 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 				.WithField("bid",req.bid)
 				.WithField("user_name",req.user_name)
 				.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-				.Log(LOG_INFO,"same node name and last login");			
-			m_last_req_login = req;
-			SendTextMsgToServer(json_str);
+				.Log(LOG_WARNING, "diffrent node name and last login");
+			OnCloseConnection();
 			return;
 		}
-		
-		//否则,关闭掉客户端连接
-		LogMs().WithField("fun","ProcessLogInMessage")
-			.WithField("key","gatewayms")
-			.WithField("agent",_agent)
-			.WithField("ip",_X_Real_IP)
-			.WithField("analysis",_analysis)
-			.WithField("connId",_connection_id)
-			.WithField("bid",req.bid)
-			.WithField("user_name",req.user_name)
-			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-			.Log(LOG_WARNING,"diffrent node name and last login");		
-		OnCloseConnection();
-
-		/*
-		//如果不在同一个结点,需要关闭掉原来的连接并重新连接
-		boost::system::error_code ec;
-		m_ws_socket_to_server.next_layer().close(ec);
-		if (ec)
-		{
-			LogMs(LOG_WARNING, nullptr
-				, "msg=open trade gateway master clsoe websocket to server fail!;errmsg=%s;nodename=%s;key=gatewayms"
-				, ec.message().c_str()
-				, m_last_slave_node.name.c_str());
-		}
-		m_cached_msgs.clear();
-		m_connect_to_server = false;
-		m_last_req_login = req;
-		m_last_slave_node = slaveNodeInfo;
-
-		//尝试连接到slave
-		m_cached_msgs.push_back(json_str);
-		start_connect_to_server();*/
 	}
 	//如果还没有连接到服务器
 	else
@@ -438,11 +533,11 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		if (!m_last_req_login.bid.empty())
 		{
 			std::stringstream ss;
-			ss <<u8"重登录过于频繁,请稍后重试!";
-			OutputNotifySycn(302,ss.str(),"WARNING");
+			ss << u8"重登录过于频繁,请稍后重试!";
+			OutputNotifySycn(302, ss.str(), "WARNING");
 			return;
 		}
-		
+
 		m_cached_msgs.clear();
 		m_connect_to_server = false;
 		m_last_req_login = req;
@@ -451,7 +546,7 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 		//尝试连接到slave
 		m_cached_msgs.push_back(json_str);
 		start_connect_to_server();
-	}
+	}	
 }
 
 void client_connection::start_connect_to_server()
@@ -482,9 +577,11 @@ void client_connection::OnResolve(boost::system::error_code ec
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING, "open trade gateway master OnResolve Slave node");
 		
-		std::stringstream ss;
-		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
-		OutputNotifySycn(303,ss.str(),"WARNING");
+		//std::stringstream ss;
+		//ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
+		//OutputNotifySycn(303,ss.str(),"WARNING");
+
+		OnCloseConnection();
 		return;
 	}
 
@@ -513,9 +610,12 @@ void client_connection::OnConnectToServer(boost::system::error_code ec)
 			.WithField("nodename",m_last_slave_node.name)
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway master OnConnectToServer Slave node");		
-		std::stringstream ss;
-		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
-		OutputNotifySycn(303,ss.str(), "WARNING");
+		
+		//std::stringstream ss;
+		//ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
+		//OutputNotifySycn(303,ss.str(), "WARNING");
+		
+		OnCloseConnection();
 		return;
 	}
 
@@ -574,9 +674,11 @@ void client_connection::OnHandshakeWithServer(boost::system::error_code ec)
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway master OnHandshakeWithServer Slave node");
 				
-		std::stringstream ss;
-		ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
-		OutputNotifySycn(303,ss.str(), "WARNING");
+		//std::stringstream ss;
+		//ss << u8"服务器暂时不可用,请联系快期技术支持人员!";
+		//OutputNotifySycn(303,ss.str(), "WARNING");
+		
+		OnCloseConnection();
 		return;
 	}
 

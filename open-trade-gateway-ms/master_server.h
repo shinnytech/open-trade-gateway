@@ -27,8 +27,6 @@ public:
 		
 	void stop();
 private:	
-	bool GetSlaveBrokerList();
-
 	bool InitClientAcceptor();
 
 	void do_client_accept();
@@ -47,56 +45,4 @@ private:
 	int client_connection_;
 
 	client_connection_manager client_connection_manager_;
-
-	TBrokerSlaveNodeMap m_broker_slave_node_Map;
-
-	std::string m_broker_list_str;
 };
-
-class WebSocketClient
-{
-public:
-	WebSocketClient(SlaveNodeInfo& slaveNodeInfo);
-
-	void start();
-
-	std::string WaitBrokerList();
-private:
-	void OnResolve(boost::system::error_code ec
-		, boost::asio::ip::tcp::resolver::results_type results);
-
-	void OnConnect(boost::system::error_code ec);
-
-	void OnHandshake(boost::system::error_code ec);
-
-	void DoRead();
-
-	void OnRead(boost::system::error_code ec
-		, std::size_t bytes_transferred);
-
-	void OnTimeOut();
-
-	void OnError();
-
-	void OnFinish();
-
-	boost::asio::io_context _ios;
-
-	boost::asio::io_service::work _worker;
-
-	boost::asio::deadline_timer _timer;
-
-	SlaveNodeInfo& _slaveNodeInfo;
-
-	boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;
-
-	boost::beast::multi_buffer m_input_buffer;
-	
-	boost::asio::ip::tcp::resolver m_resolver;
-
-	std::string m_broker_list;
-
-	boost::thread m_thead;
-};
-
-typedef std::shared_ptr<WebSocketClient> WebSocketClient_Ptr;

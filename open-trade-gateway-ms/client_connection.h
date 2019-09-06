@@ -4,7 +4,6 @@
 ///@copyright	上海信易信息科技股份有限公司 版权所有 
 /////////////////////////////////////////////////////////////////////////
 
-
 #pragma once
 
 #include "types.h"
@@ -36,8 +35,9 @@ public:
 		,boost::asio::ip::tcp::socket socket
 		,client_connection_manager& manager
 		,int connection_id
-		,TBrokerSlaveNodeMap& broker_slave_node_Map
-		,std::string& broker_list_str);
+		,MasterConfig& masterConfig);
+
+	~client_connection();
 
 	client_connection(const client_connection&) = delete;
 
@@ -103,6 +103,12 @@ private:
 
 	void OnWriteServer(boost::system::error_code ec, std::size_t bytes_transferred);
 
+	std::string GetUserKey(const ReqLogin& req,const BrokerConfig& brokerConfig);
+
+	SlaveNodeInfo GetSlaveNodeInfoFromUserKey(const std::string& userKey);
+
+	void SaveMsConfig(const std::string& userKey);
+
 	boost::asio::io_context& m_ios;
 			
 	boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;
@@ -127,9 +133,7 @@ private:
 
 	std::string _analysis;
 
-	TBrokerSlaveNodeMap m_broker_slave_node_Map;
-
-	std::string m_broker_list_str;
+	MasterConfig& _masterConfig;
 
 	bool m_connect_to_server;	
 
