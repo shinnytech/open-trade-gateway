@@ -1,223 +1,236 @@
 {
-    "definitions": {
-        "req_login": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["req_login"] },
-                "bid": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "user_name": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "password": { "type": "string","minLength":1,"maxLength": 64},
-                "client_app_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"}, 
-                "client_system_info": { "type": "string", "minLength": 0 , "maxLength": 1024 },				
-				"broker_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-				"front": { "type": "string","pattern": "^[^=#|;]{1,256}$"}
-            },
-            "required": ["aid", "bid", "user_name", "password"],
-            "additionalProperties": false
+  "definitions":{
+  "req_login":{
+    "type": "object",
+    "properties": {
+      "aid": { "enum": [ "req_login" ] },
+      "bid": {
+        "type": "string",
+        "pattern": "^[^=#|;/]{1,64}$"
         },
-        "peek_message": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["peek_message"] }
-            },
-            "required": ["aid"],
-            "additionalProperties": false
+      "user_name": {
+        "type": "string",
+        "pattern": "^[^=#|;/]{1,64}$"
         },
-        "confirm_settlement": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["confirm_settlement"] }
-            },
-            "required": ["aid"],
-            "additionalProperties": false
+      "password": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
         },
-		"qry_settlement_info": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["qry_settlement_info"] },
-				"trading_day": { "type": "integer"}
-            },
-            "required": ["aid","trading_day"],
-            "additionalProperties": false
+      "client_app_id": {
+        "type": "string",
+        "pattern": "^[^=#|;/]{1,64}$"
         },
-        "change_password": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["change_password"] },
-                "old_password": { "type": "string","minLength":1,"maxLength": 64},
-                "new_password": { "type": "string","minLength":1,"maxLength": 64}
-            },
-            "required": ["aid"],
-            "additionalProperties": false
+      "client_system_info": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 1024
         },
-        "insert_order": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["insert_order"] },
-                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "order_id": { "type": "string","pattern": "^[^=#|;/]{0,256}$"},
-                "exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
-                "instrument_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "direction": { "enum": ["BUY", "SELL"]},
-                "offset": { "enum": ["OPEN", "CLOSE", "CLOSETODAY"]},
-                "limit_price": { "type": "number"},
-                "volume": { "type": "integer"},
-                "price_type": { "enum": ["LIMIT", "ANY", "BEST", "FIVELEVEL"]},
-                "volume_condition": { "enum": ["ANY", "MIN", "ALL"]},
-                "time_condition": { "enum": ["IOC", "GFS", "GFD", "GTD", "GTC", "GFA"]},
-                "hedge_flag": { "enum": ["SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER"]},
-                "contingent_condition": { "enum": ["IMMEDIATELY", "TOUCH", "TOUCHPROFIT"]}
-            },
-            "required": ["aid", "user_id", "order_id", "exchange_id", "instrument_id", "direction", "offset", "volume", "price_type", "volume_condition", "time_condition"],
-            "additionalProperties": false
+       "broker_id": {
+        "type": "string",
+        "pattern": "^[^=#|;/]{1,64}$"
         },
-        "cancel_order": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["cancel_order"] },
-                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
-            },
-            "required": ["aid", "user_id", "order_id"],
-            "additionalProperties": false
-        },
-        "req_transfer": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["req_transfer"] },
-                "bank_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "future_account": { "type": "string","pattern": "^[^=#|;/]{1,256}$"},
-                "future_password": { "type": "string","minLength":0,"maxLength": 256},
-                "bank_password": { "type": "string","minLength":0,"maxLength": 256},
-                "currency": { "type": "string","pattern": "^[^=#|;/]{1,256}$"},
-                "amount": { "type": "number"}
-            },
-            "required": ["aid", "bank_id", "future_account", "future_password", "bank_password", "currency", "amount"],
-            "additionalProperties": false
-        },
-		"insert_condition_order": {
-		  "type": "object",
-		  "properties":
-		  {
-		    "aid": { "enum": ["insert_condition_order"] },
-		    "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-            "order_id": { "type": "string","pattern": "^[^=#|;/]{0,256}$"},
-			"condition_list":
-			{
-				"type": "array",
-				"items": 
-				{
-					"type": "object",
-					"properties": 
-					{
-						"contingent_type":  { "enum": ["time", "market_open", "price", "price_range","break_even"]},
-						"exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
-						"instrument_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-						"contingent_time":{ "type": "integer"},
-						"contingent_price":{ "type": "number"},
-						"price_relation":{ "enum": ["G", "GE", "L", "LE"]},
-						"contingent_price_range_left":{ "type": "number"},
-						"contingent_price_range_right":{ "type": "number"},
-						"break_even_price":{ "type": "number"},
-						"break_even_direction": { "enum": ["BUY", "SELL"]}
-					},
-					"required": ["contingent_type", "exchange_id", "instrument_id"],
-					"additionalProperties": false
-				},
-				"minItems":1,
-				"uniqueItems": true
-			},						
-			"conditions_logic_oper":{ "enum": ["AND", "OR"]},	
-            "conditions_logic_operator":{ "enum": ["AND", "OR"]},					
-			"order_list":
-			{
-				"type": "array",
-				"items": 
-				{
-					"type": "object",
-					"properties": 
-					{
-						"exchange_id": { "enum": ["SHFE", "DCE", "CZCE", "CFFEX", "INE"]},
-						"instrument_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-						"direction": { "enum": ["BUY", "SELL"]},
-						"offset": { "enum": ["OPEN", "CLOSE","REVERSE"]},
-						"close_today_prior":{"type": "boolean"},
-						"volume_type":{ "enum": ["NUM", "CLOSE_ALL"]},
-						"volume": { "type": "integer"},
-						"price_type":{ "enum": ["CONTINGENT", "CONSIDERATION", "MARKET","OVER","LIMIT"]},
-						"limit_price":{ "type": "number"}
-					},
-					"required": ["exchange_id", "instrument_id", "direction","offset","volume_type","price_type"],
-					"additionalProperties": false
-				},
-				"minItems":1,
-				"uniqueItems": true
-			},
-			"time_condition_type": { "enum": ["GFD", "GTD", "GTC"]},
-			"GTD_date":{ "type": "integer"},
-			"is_cancel_ori_close_order":{"type": "boolean"},
-            "is_cancel_origin_close_order":{"type": "boolean"}					
-		  },
-		  "required": ["aid", "user_id","condition_list","order_list"],
-          "additionalProperties": false
-		},
-		 "cancel_condition_order": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["cancel_condition_order"] },
-                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
-            },
-            "required": ["aid", "user_id", "order_id"],
-            "additionalProperties": false
+      "front": {
+        "type": "string",
+        "pattern": "^[^=#|;]{1,256}$"
         }
-		,
-		 "pause_condition_order": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["pause_condition_order"] },
-                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
-            },
-            "required": ["aid", "user_id", "order_id"],
-            "additionalProperties": false
-        }
-		,
-		 "resume_condition_order": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["resume_condition_order"] },
-                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "order_id": { "type": "string","pattern": "^[^=#|;/]{1,256}$"}
-            },
-            "required": ["aid", "user_id", "order_id"],
-            "additionalProperties": false
-        }
-		,
-		 "qry_his_condition_order": {
-            "type": "object",
-            "properties": {
-                "aid": { "enum": ["qry_his_condition_order"] },
-                "user_id": { "type": "string","pattern": "^[^=#|;/]{1,64}$"},
-                "action_day": { "type": "integer"}
-            },
-            "required": ["aid", "user_id", "action_day"],
-            "additionalProperties": false
-        }
+      },
+      "required": [ "aid", "bid", "user_name", "password" ],
+      "additionalProperties": false
+      },
+    "peek_message": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "peek_message" ] }
+      },
+      "required": [ "aid" ],
+      "additionalProperties": false
     },
-    "anyOf": [
-        { "$ref": "#/definitions/peek_message" },
-        { "$ref": "#/definitions/req_login" },
-        { "$ref": "#/definitions/insert_order" },
-        { "$ref": "#/definitions/cancel_order" },
-        { "$ref": "#/definitions/req_transfer" },
-        { "$ref": "#/definitions/confirm_settlement" },
-		{ "$ref": "#/definitions/qry_settlement_info" },
-        { "$ref": "#/definitions/change_password" },
-		{ "$ref": "#/definitions/insert_condition_order" },
-		{ "$ref": "#/definitions/cancel_condition_order" },
-		{ "$ref": "#/definitions/pause_condition_order" },
-		{ "$ref": "#/definitions/resume_condition_order" },
-		{ "$ref": "#/definitions/qry_his_condition_order" }
-    ]
+    "confirm_settlement": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "confirm_settlement" ] }
+      },
+      "required": [ "aid" ],
+      "additionalProperties": false
+    },
+    "qry_settlement_info": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "qry_settlement_info" ] },
+        "trading_day": { "type": "integer" }
+        },
+      "required": [ "aid", "trading_day" ],
+      "additionalProperties": false
+    },
+    "change_password": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "change_password" ] },
+        "old_password": {"type": "string","minLength": 1,"maxLength": 64},
+        "new_password": {"type": "string","minLength": 1,"maxLength": 64}
+      },
+    "required": [ "aid" ],
+    "additionalProperties": false
+    },
+    "insert_order": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "insert_order" ] },
+        "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "order_id": {"type": "string","pattern": "^[^=#|;/]{0,256}$"},
+        "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX", "INE" ] },
+        "instrument_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "direction": { "enum": [ "BUY", "SELL" ] },
+        "offset": { "enum": [ "OPEN", "CLOSE", "CLOSETODAY" ] },
+        "limit_price": { "type": "number" },
+        "volume": { "type": "integer" },
+        "price_type": { "enum": [ "LIMIT", "ANY", "BEST", "FIVELEVEL" ] },
+        "volume_condition": { "enum": [ "ANY", "MIN", "ALL" ] },
+        "time_condition": { "enum": [ "IOC", "GFS", "GFD", "GTD", "GTC", "GFA" ] },
+        "hedge_flag": { "enum": [ "SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER" ] },
+        "contingent_condition": { "enum": [ "IMMEDIATELY", "TOUCH", "TOUCHPROFIT" ] }
+      },
+      "required": [ "aid", "user_id", "order_id", "exchange_id", "instrument_id", "direction", "offset", "volume", "price_type", "volume_condition", "time_condition" ],
+      "additionalProperties": false
+    },
+    "cancel_order": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "cancel_order" ] },
+        "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "order_id": {"type": "string","pattern": "^[^=#|;/]{1,256}$"}
+      },
+      "required": [ "aid", "user_id", "order_id" ],
+      "additionalProperties": false
+    },
+    "req_transfer": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "req_transfer" ] },
+        "bank_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "future_account": {"type": "string","pattern": "^[^=#|;/]{1,256}$"},
+        "future_password": {"type": "string","minLength": 0,"maxLength": 256},
+        "bank_password": {"type": "string","minLength": 0,"maxLength": 256},
+        "currency": {"type": "string","pattern": "^[^=#|;/]{1,256}$"},
+        "amount": { "type": "number" }
+      },
+      "required": [ "aid", "bank_id", "future_account", "future_password", "bank_password", "currency", "amount" ],
+      "additionalProperties": false
+    },
+    "insert_condition_order": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "insert_condition_order" ] },
+        "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "order_id": {"type": "string","pattern": "^[^=#|;/]{0,256}$"},
+        "condition_list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "contingent_type": { "enum": [ "time", "market_open", "price", "price_range", "break_even" ] },
+              "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX", "INE" ] },
+              "instrument_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+              "contingent_time": { "type": "integer" },
+              "contingent_price": { "type": "number" },
+              "price_relation": { "enum": [ "G", "GE", "L", "LE" ] },
+              "contingent_price_range_left": { "type": "number" },
+              "contingent_price_range_right": { "type": "number" },
+              "break_even_price": { "type": "number" },
+              "break_even_direction": { "enum": [ "BUY", "SELL" ] }
+            },
+            "required": [ "contingent_type", "exchange_id", "instrument_id" ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "conditions_logic_oper": { "enum": [ "AND", "OR" ] },
+        "conditions_logic_operator": { "enum": [ "AND", "OR" ] },
+        "order_list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX", "INE" ] },
+              "instrument_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+              "direction": { "enum": [ "BUY", "SELL" ] },
+              "offset": { "enum": [ "OPEN", "CLOSE", "REVERSE" ] },
+              "close_today_prior": { "type": "boolean" },
+              "volume_type": { "enum": [ "NUM", "CLOSE_ALL" ] },
+              "volume": { "type": "integer" },
+              "price_type": { "enum": [ "CONTINGENT", "CONSIDERATION", "MARKET", "OVER", "LIMIT" ] },
+              "limit_price": { "type": "number" }
+            },
+            "required": [ "exchange_id", "instrument_id", "direction", "offset", "volume_type", "price_type" ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "time_condition_type": { "enum": [ "GFD", "GTD", "GTC" ] },
+        "GTD_date": { "type": "integer" },
+        "is_cancel_ori_close_order": { "type": "boolean" },
+        "is_cancel_origin_close_order": { "type": "boolean" }
+      },
+      "required": [ "aid", "user_id", "condition_list", "order_list" ],
+      "additionalProperties": false
+    },
+    "cancel_condition_order": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "cancel_condition_order" ] },
+        "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "order_id": {"type": "string","pattern": "^[^=#|;/]{1,256}$"}
+      },
+      "required": [ "aid", "user_id", "order_id" ],
+      "additionalProperties": false
+    },
+    "pause_condition_order": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "pause_condition_order" ] },
+        "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "order_id": {"type": "string","pattern": "^[^=#|;/]{1,256}$"}
+      },
+      "required": [ "aid", "user_id", "order_id" ],
+      "additionalProperties": false
+    },
+    "resume_condition_order": {
+      "type": "object",
+      "properties": {
+      "aid": { "enum": [ "resume_condition_order" ] },
+      "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+      "order_id": {"type": "string","pattern": "^[^=#|;/]{1,256}$"}
+      },
+      "required": [ "aid", "user_id", "order_id" ],
+      "additionalProperties": false
+    },
+    "qry_his_condition_order": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "qry_his_condition_order" ] },
+        "user_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+        "action_day": { "type": "integer" }
+      },
+      "required": [ "aid", "user_id", "action_day" ],
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+      { "$ref": "#/definitions/peek_message" },
+      { "$ref": "#/definitions/req_login" },
+      { "$ref": "#/definitions/insert_order" },
+      { "$ref": "#/definitions/cancel_order" },
+      { "$ref": "#/definitions/req_transfer" },
+      { "$ref": "#/definitions/confirm_settlement" },
+      { "$ref": "#/definitions/qry_settlement_info" },
+      { "$ref": "#/definitions/change_password" },
+      { "$ref": "#/definitions/insert_condition_order" },
+      { "$ref": "#/definitions/cancel_condition_order" },
+      { "$ref": "#/definitions/pause_condition_order" },
+      { "$ref": "#/definitions/resume_condition_order" },
+      { "$ref": "#/definitions/qry_his_condition_order" }
+  ]
 }
