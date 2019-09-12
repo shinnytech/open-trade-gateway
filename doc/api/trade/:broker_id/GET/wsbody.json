@@ -4,40 +4,17 @@
     "type": "object",
     "properties": {
       "aid": { "enum": [ "req_login" ] },
-      "bid": {
-        "type": "string",
-        "pattern": "^[^=#|;/]{1,64}$"
-        },
-      "user_name": {
-        "type": "string",
-        "pattern": "^[^=#|;/]{1,64}$"
-        },
-      "password": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 64
-        },
-      "client_app_id": {
-        "type": "string",
-        "pattern": "^[^=#|;/]{1,64}$"
-        },
-      "client_system_info": {
-        "type": "string",
-        "minLength": 0,
-        "maxLength": 1024
-        },
-       "broker_id": {
-        "type": "string",
-        "pattern": "^[^=#|;/]{1,64}$"
-        },
-      "front": {
-        "type": "string",
-        "pattern": "^[^=#|;]{1,256}$"
-        }
+      "bid": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+      "user_name": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+      "password": {"type": "string","minLength": 1,"maxLength": 64},
+      "client_app_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+      "client_system_info": {"type": "string","minLength": 0,"maxLength": 1024},
+      "broker_id": {"type": "string","pattern": "^[^=#|;/]{1,64}$"},
+      "front": {"type": "string","pattern": "^[^=#|;]{1,256}$"}
       },
       "required": [ "aid", "bid", "user_name", "password" ],
       "additionalProperties": false
-      },
+    },
     "peek_message": {
       "type": "object",
       "properties": {
@@ -59,7 +36,7 @@
       "properties": {
         "aid": { "enum": [ "qry_settlement_info" ] },
         "trading_day": { "type": "integer" }
-        },
+      },
       "required": [ "aid", "trading_day" ],
       "additionalProperties": false
     },
@@ -70,8 +47,8 @@
         "old_password": {"type": "string","minLength": 1,"maxLength": 64},
         "new_password": {"type": "string","minLength": 1,"maxLength": 64}
       },
-    "required": [ "aid" ],
-    "additionalProperties": false
+      "required": [ "aid" ],
+      "additionalProperties": false
     },
     "insert_order": {
       "type": "object",
@@ -91,7 +68,8 @@
         "hedge_flag": { "enum": [ "SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER" ] },
         "contingent_condition": { "enum": [ "IMMEDIATELY", "TOUCH", "TOUCHPROFIT" ] }
       },
-      "required": [ "aid", "user_id", "order_id", "exchange_id", "instrument_id", "direction", "offset", "volume", "price_type", "volume_condition", "time_condition" ],
+      "required": [ "aid", "user_id", "order_id", "exchange_id", "instrument_id", "direction"
+        , "offset", "volume", "price_type", "volume_condition", "time_condition" ],
       "additionalProperties": false
     },
     "cancel_order": {
@@ -219,18 +197,18 @@
     }
   },
   "anyOf": [
-      { "$ref": "#/definitions/peek_message" },
-      { "$ref": "#/definitions/req_login" },
-      { "$ref": "#/definitions/insert_order" },
-      { "$ref": "#/definitions/cancel_order" },
-      { "$ref": "#/definitions/req_transfer" },
-      { "$ref": "#/definitions/confirm_settlement" },
-      { "$ref": "#/definitions/qry_settlement_info" },
-      { "$ref": "#/definitions/change_password" },
-      { "$ref": "#/definitions/insert_condition_order" },
-      { "$ref": "#/definitions/cancel_condition_order" },
-      { "$ref": "#/definitions/pause_condition_order" },
-      { "$ref": "#/definitions/resume_condition_order" },
-      { "$ref": "#/definitions/qry_his_condition_order" }
+    { "$ref": "#/definitions/peek_message" },
+    { "$ref": "#/definitions/req_login" },
+    { "$ref": "#/definitions/insert_order" },
+    { "$ref": "#/definitions/cancel_order" },
+    { "$ref": "#/definitions/req_transfer" },
+    { "$ref": "#/definitions/confirm_settlement" },
+    { "$ref": "#/definitions/qry_settlement_info" },
+    { "$ref": "#/definitions/change_password" },
+    { "$ref": "#/definitions/insert_condition_order" },
+    { "$ref": "#/definitions/cancel_condition_order" },
+    { "$ref": "#/definitions/pause_condition_order" },
+    { "$ref": "#/definitions/resume_condition_order" },
+    { "$ref": "#/definitions/qry_his_condition_order" }
   ]
 }
