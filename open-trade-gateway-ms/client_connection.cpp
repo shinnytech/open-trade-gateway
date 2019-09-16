@@ -488,7 +488,21 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 	BrokerConfig& brokerConfig = it->second;
 	std::string strUserKey= GetUserKey(req, brokerConfig);
 	SlaveNodeInfo slaveNodeInfo = GetSlaveNodeInfoFromUserKey(strUserKey);
-	
+	//已经决定了分配到哪个服务器,打一条日志
+	LogMs().WithField("fun","ProcessLogInMessage")
+		.WithField("key","gatewayms")
+		.WithField("agent",_agent)
+		.WithField("ip",_X_Real_IP)
+		.WithField("analysis",_analysis)
+		.WithField("connId",_connection_id)
+		.WithField("bid",req.bid)
+		.WithField("user_name",req.user_name)
+		.WithField("user_key",strUserKey)
+		.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
+		.WithField("SlaveNodeInfo_name",slaveNodeInfo.name)
+		.WithField("SlaveNodeInfo_host",slaveNodeInfo.host)
+		.Log(LOG_INFO,"allocate slave node to user");
+
 	//如果已经连接到服务器
 	if (m_connect_to_server)
 	{
