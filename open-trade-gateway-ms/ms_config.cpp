@@ -29,6 +29,7 @@ SlaveNodeInfo::SlaveNodeInfo()
 MasterConfig::MasterConfig()
 	:host("0.0.0.0")
 	,port(5566)	
+	,trading_day("")
 	,slaveNodeList()
 	,brokers()
 	,broker_list_str()
@@ -138,18 +139,63 @@ bool LoadBrokerList()
 
 bool LoadMasterConfig()
 {
+	std::string trading_day=GuessTradingDay();
+	std::string fn = "/etc/open-trade-gateway/config-ms.json";
 	MasterSerializerConfig ss;
-	if (!ss.FromFile("/etc/open-trade-gateway/config-ms.json"))
+	if (!ss.FromFile(fn.c_str()))
 	{
 		LogMs().WithField("fun","LoadMasterConfig")
 			.WithField("key","gatewayms")
-			.WithField("fileName","/etc/open-trade-gateway/config-ms.json")
+			.WithField("fileName",fn.c_str())
 			.Log(LOG_WARNING,"load gatewayms config file fail");
 		return false;
 	}
 
 	ss.ToVar(g_masterConfig);
 
+	//如果是一个新的交易日,需要清除所有游客	
+	bool flag = false;
+	if (trading_day != g_masterConfig.trading_day)
+	{
+		LogMs().WithField("fun","LoadMasterConfig")
+			.WithField("key","gatewayms")
+			.WithField("trading_day",trading_day)
+			.Log(LOG_INFO, "load gatewayms config file in a new trading day");
+
+		g_masterConfig.trading_day = trading_day;
+		flag = true;
+
+		for (SlaveNodeInfo & s : g_masterConfig.slaveNodeList)
+		{
+			std::vector<std::string>::iterator it = s.userList.begin();
+			for (; it != s.userList.end();)
+			{
+				std::string& u = *it;
+				if (u.find(u8"sim_快期模拟_游客_",0) != std::string::npos)
+				{
+					it = s.userList.erase(it);					
+				}
+				else
+				{
+					it++;
+				}			
+			}
+		}
+	}
+
+	if (flag)
+	{
+		ss.FromVar(g_masterConfig);
+		bool saveFile = ss.ToFile(fn.c_str());
+		if (!saveFile)
+		{
+			LogMs().WithField("fun","LoadMasterConfig")
+				.WithField("key","gatewayms")				
+				.WithField("fileName",fn)
+				.Log(LOG_INFO,"save ms config file failed!");
+		}
+	}
+	
 	if (g_masterConfig.slaveNodeList.size() == 0)
 	{
 		return false;
@@ -165,7 +211,7 @@ bool LoadMasterConfig()
 		tmpSlaveNode.port = s.port;
 		tmpSlaveNode.userList.clear();
 		for (const std::string& u : s.userList)
-		{
+		{			
 			TUserSlaveNodeMap::iterator it = g_masterConfig.users_slave_node_map.find(u);
 			if (it == g_masterConfig.users_slave_node_map.end())
 			{
@@ -182,6 +228,7 @@ void MasterSerializerConfig::DefineStruct(MasterConfig& c)
 {
 	AddItem(c.host,"host");
 	AddItem(c.port,"port");
+	AddItem(c.trading_day,"trading_day");
 	AddItem(c.slaveNodeList,"slaveNodeList");
 }
 

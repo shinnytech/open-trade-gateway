@@ -40,6 +40,9 @@ struct MasterConfig
 	std::string host;
 
 	int port;
+
+	//当前交易日
+	std::string trading_day;
 	
 	TSlaveNodeInfoList slaveNodeList;
 
