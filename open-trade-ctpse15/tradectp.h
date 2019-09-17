@@ -441,7 +441,9 @@ private:
 	int ReqQryAccount(int reqid);
 
 	int ReqQryPosition(int reqid);
-
+	
+	void ReqQryTransferSerial();
+	
 	void ReqQryBank();
 
 	void ReqQryAccountRegister();

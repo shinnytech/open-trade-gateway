@@ -1988,6 +1988,7 @@ void traderctp::ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSeria
 	if (bIsLast)
 	{
 		m_something_changed = true;
+		m_req_account_id++;
 		SendUserData();
 	}
 }
@@ -3159,6 +3160,21 @@ int traderctp::ReqQryPosition(int reqid)
 	return r;
 }
 
+void traderctp::ReqQryTransferSerial()
+{
+	CThostFtdcQryTransferSerialField field;
+	memset(&field,0,sizeof(field));
+	strcpy_x(field.BrokerID,m_broker_id.c_str());
+	strcpy_x(field.AccountID,_req_login.user_name.c_str());	
+	int r = m_pTdApi->ReqQryTransferSerial(&field,0);
+	Log().WithField("fun","ReqQryTransferSerial")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("ret",r)
+		.Log(LOG_INFO,"ctp ReqQryTransferSerial");
+}
+
 void traderctp::ReqQryBank()
 {
 	CThostFtdcQryContractBankField field;
@@ -4275,6 +4291,15 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			qry_settlement_info qrySettlementInfo;
 			ss.ToVar(qrySettlementInfo);
 			OnClientReqQrySettlementInfo(qrySettlementInfo);
+		}
+		else if (aid == "qry_transfer_serial")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(359,u8"当前时间不支持查询转账记录!","WARNING");
+				return;
+			}
+			ReqQryTransferSerial();
 		}
 		else if (aid == "insert_condition_order")
 		{			
