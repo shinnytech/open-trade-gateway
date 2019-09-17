@@ -35,6 +35,10 @@ typedef std::map<std::string,SlaveNodeInfo> TUserSlaveNodeMap;
 struct MasterConfig
 {
 	MasterConfig();
+		
+	std::map<std::string, BrokerConfig> brokers;
+
+	std::string broker_list_str;
 
 	//服务IP及端口号
 	std::string host;
@@ -44,14 +48,12 @@ struct MasterConfig
 	//当前交易日
 	std::string trading_day;
 	
-	TSlaveNodeInfoList slaveNodeList;
-
-	std::map<std::string, BrokerConfig> brokers;
-
-	std::string broker_list_str;
+	TSlaveNodeInfoList slaveNodeList;	
 
 	TUserSlaveNodeMap users_slave_node_map;
 };
+
+extern MasterConfig g_masterConfig;
 
 struct RtnBrokersMsg
 {
@@ -62,23 +64,21 @@ struct RtnBrokersMsg
 	std::vector<std::string> brokers;
 };
 
-extern MasterConfig g_masterConfig;
-
-bool LoadBrokerList();
-
-bool LoadMasterConfig();
-
 class MasterSerializerConfig
 	: public RapidSerialize::Serializer<MasterSerializerConfig>
 {
 public:
 	using RapidSerialize::Serializer<MasterSerializerConfig>::Serializer;
 
-	void DefineStruct(MasterConfig& c);
+	void DefineStruct(BrokerConfig& d);
 
 	void DefineStruct(SlaveNodeInfo& s);
 
-	void DefineStruct(RtnBrokersMsg& b);
+	void DefineStruct(MasterConfig& c);	
 
-	void DefineStruct(BrokerConfig& d);
+	void DefineStruct(RtnBrokersMsg& b);	
 };
+
+bool LoadBrokerList();
+
+bool LoadMasterConfig();

@@ -465,16 +465,16 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 	//如果请求登录的bid不存在
 	if (it == _masterConfig.brokers.end())
 	{
-		LogMs().WithField("fun", "ProcessLogInMessage")
-			.WithField("key", "gatewayms")
-			.WithField("agent", _agent)
-			.WithField("ip", _X_Real_IP)
-			.WithField("analysis", _analysis)
-			.WithField("connId", _connection_id)
-			.WithField("bid", req.bid)
-			.WithField("user_name", req.user_name)
-			.WithField("fd", (int)m_ws_socket.next_layer().native_handle())
-			.Log(LOG_WARNING, "open trade gateway master get invalid bid");
+		LogMs().WithField("fun","ProcessLogInMessage")
+			.WithField("key","gatewayms")
+			.WithField("agent",_agent)
+			.WithField("ip",_X_Real_IP)
+			.WithField("analysis",_analysis)
+			.WithField("connId",_connection_id)
+			.WithField("bid",req.bid)
+			.WithField("user_name",req.user_name)
+			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
+			.Log(LOG_WARNING,"open trade gateway master get invalid bid");
 
 		//std::stringstream ss;
 		//ss << u8"暂不支持," << req.bid << u8",请联系该期货公司或快期技术支持人员!";

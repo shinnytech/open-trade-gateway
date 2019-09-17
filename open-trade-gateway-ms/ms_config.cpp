@@ -27,12 +27,12 @@ SlaveNodeInfo::SlaveNodeInfo()
 }
 
 MasterConfig::MasterConfig()
-	:host("0.0.0.0")
+	:brokers()
+	,broker_list_str("")
+	,host("0.0.0.0")
 	,port(5566)	
 	,trading_day("")
-	,slaveNodeList()
-	,brokers()
-	,broker_list_str()
+	,slaveNodeList()	
 	,users_slave_node_map()
 {	
 }
@@ -43,30 +43,68 @@ RtnBrokersMsg::RtnBrokersMsg()
 {
 }
 
+void MasterSerializerConfig::DefineStruct(BrokerConfig& d)
+{
+	AddItem(d.broker_name,"name");
+	AddItem(d.broker_type,"type");
+	AddItem(d.is_fens,"is_fens");
+	AddItem(d.ctp_broker_id,"broker_id");
+	AddItem(d.trading_fronts,"trading_fronts");
+	AddItem(d.product_info,"product_info");
+	AddItem(d.auth_code,"auth_code");
+}
+
+void MasterSerializerConfig::DefineStruct(SlaveNodeInfo& s)
+{
+	AddItem(s.name,"name");
+	AddItem(s.host,"host");
+	AddItem(s.port,"port");
+	AddItem(s.path,"path");
+	AddItem(s.userList,"users");
+}
+
+void MasterSerializerConfig::DefineStruct(MasterConfig& c)
+{
+	AddItem(c.host, "host");
+	AddItem(c.port, "port");
+	AddItem(c.trading_day, "trading_day");
+	AddItem(c.slaveNodeList, "slaveNodeList");
+}
+
+void MasterSerializerConfig::DefineStruct(RtnBrokersMsg& b)
+{
+	AddItem(b.aid, "aid");
+	AddItem(b.brokers, "brokers");
+}
+
 bool LoadBrokerList()
 {
 	std::map<std::string, BrokerConfig> brokerConfigMap;
 	std::vector< std::string> brokerNameList;
-	std::string strFileName = "/etc/open-trade-gateway/broker_list.json";
+	std::string fn = "/etc/open-trade-gateway/broker_list.json";
 
-	if (boost::filesystem::exists(strFileName))
+	if (boost::filesystem::exists(fn))
 	{
 		MasterSerializerConfig ss_broker;
-		if (!ss_broker.FromFile(strFileName.c_str()))
+		if (!ss_broker.FromFile(fn.c_str()))
 		{
 			LogMs().WithField("fun","LoadBrokerList")
 				.WithField("key","gatewayms")
-				.WithField("fileName",strFileName).
-				Log(LOG_WARNING,"load broker list json file fail");
+				.WithField("fileName",fn)
+				.Log(LOG_WARNING,"load broker list json file fail");
 		}
 		else
 		{
 			std::vector<BrokerConfig> broker_list;
 			ss_broker.ToVar(broker_list);
-			for (auto b : broker_list)
+			for (const BrokerConfig& b : broker_list)
 			{
-				brokerNameList.push_back(b.broker_name);
-				brokerConfigMap[b.broker_name] = b;
+				std::map<std::string, BrokerConfig>::iterator it = brokerConfigMap.find(b.broker_name);
+				if (it == brokerConfigMap.end())
+				{
+					brokerNameList.push_back(b.broker_name);
+					brokerConfigMap.insert(std::map<std::string,BrokerConfig>::value_type(b.broker_name,b));					
+				}				
 			}
 		}
 	}
@@ -85,9 +123,7 @@ bool LoadBrokerList()
 			}
 			boost::filesystem::path brokerFilePath = item_begin->path();
 			brokerFilePath = boost::filesystem::system_complete(brokerFilePath);
-
 			std::string strExt = boost::filesystem::extension(brokerFilePath);
-
 			if (strExt != ".json")
 			{
 				continue;
@@ -97,23 +133,28 @@ bool LoadBrokerList()
 		}
 	}
 
-	for (auto fileName : brokerFileList)
+	for (const std::string& fileName : brokerFileList)
 	{
 		MasterSerializerConfig ss_broker;
 		if (!ss_broker.FromFile(fileName.c_str()))
 		{
 			LogMs().WithField("fun","LoadBrokerList")
 				.WithField("key","gatewayms")
-				.WithField("fileName",fileName).
-				Log(LOG_WARNING,"load broker json file fail");
+				.WithField("fileName",fileName)
+				.Log(LOG_WARNING,"load broker json file fail");
 			continue;
 		}
 
 		BrokerConfig bc;
 		ss_broker.ToVar(bc);
 
-		brokerConfigMap[bc.broker_name] = bc;
-		brokerNameList.push_back(bc.broker_name);
+		std::map<std::string, BrokerConfig>::iterator it = brokerConfigMap.find(bc.broker_name);
+		if (it == brokerConfigMap.end())
+		{
+			brokerNameList.push_back(bc.broker_name);
+			brokerConfigMap.insert(std::map<std::string,BrokerConfig>::value_type(bc.broker_name,bc));
+		}
+
 	}
 
 	if (brokerNameList.empty())
@@ -138,8 +179,7 @@ bool LoadBrokerList()
 }
 
 bool LoadMasterConfig()
-{
-	std::string trading_day=GuessTradingDay();
+{	
 	std::string fn = "/etc/open-trade-gateway/config-ms.json";
 	MasterSerializerConfig ss;
 	if (!ss.FromFile(fn.c_str()))
@@ -154,12 +194,14 @@ bool LoadMasterConfig()
 	ss.ToVar(g_masterConfig);
 
 	//如果是一个新的交易日,需要清除所有游客	
+	std::string trading_day = GuessTradingDay();
 	bool flag = false;
 	if (trading_day != g_masterConfig.trading_day)
 	{
 		LogMs().WithField("fun","LoadMasterConfig")
 			.WithField("key","gatewayms")
 			.WithField("trading_day",trading_day)
+			.WithField("old_trading_day",g_masterConfig.trading_day)
 			.Log(LOG_INFO, "load gatewayms config file in a new trading day");
 
 		g_masterConfig.trading_day = trading_day;
@@ -192,7 +234,7 @@ bool LoadMasterConfig()
 			LogMs().WithField("fun","LoadMasterConfig")
 				.WithField("key","gatewayms")				
 				.WithField("fileName",fn)
-				.Log(LOG_INFO,"save ms config file failed!");
+				.Log(LOG_WARNING,"save ms config file failed!");
 		}
 	}
 	
@@ -224,36 +266,3 @@ bool LoadMasterConfig()
 	return true;
 }
 
-void MasterSerializerConfig::DefineStruct(MasterConfig& c)
-{
-	AddItem(c.host,"host");
-	AddItem(c.port,"port");
-	AddItem(c.trading_day,"trading_day");
-	AddItem(c.slaveNodeList,"slaveNodeList");
-}
-
-void MasterSerializerConfig::DefineStruct(SlaveNodeInfo& s)
-{
-	AddItem(s.name, "name");
-	AddItem(s.host, "host");
-	AddItem(s.port, "port");
-	AddItem(s.path, "path");
-	AddItem(s.userList, "users");
-}
-
-void MasterSerializerConfig::DefineStruct(RtnBrokersMsg& b)
-{
-	AddItem(b.aid, "aid");
-	AddItem(b.brokers, "brokers");
-}
-
-void MasterSerializerConfig::DefineStruct(BrokerConfig& d)
-{
-	AddItem(d.broker_name, "name");
-	AddItem(d.broker_type, "type");
-	AddItem(d.is_fens, "is_fens");
-	AddItem(d.ctp_broker_id, "broker_id");
-	AddItem(d.trading_fronts, "trading_fronts");
-	AddItem(d.product_info, "product_info");
-	AddItem(d.auth_code, "auth_code");
-}
