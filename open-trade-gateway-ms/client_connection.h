@@ -74,11 +74,7 @@ private:
 
 	void on_read_header(boost::beast::error_code ec
 		, std::size_t bytes_transferred);
-
-	void OutputNotifySycn(long notify_code
-		, const std::string& ret_msg, const char* level = "INFO"
-		, const char* type = "MESSAGE");
-
+	
 	void SendTextMsg(const std::string& msg);
 
 	void start_connect_to_server();
