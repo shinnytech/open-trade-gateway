@@ -2534,23 +2534,10 @@ void tradersim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
 
 void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 {
-	if (action_transfer.amount > 0)
-	{
-		m_account->deposit += action_transfer.amount;
-	}
-	else
-	{
-		m_account->withdraw -= action_transfer.amount;
-	}
-	
-	m_account->static_balance += action_transfer.amount;
-	m_account->changed = true;
-
 	m_transfer_seq++;
 	TransferLog& d = GetTransferLog(std::to_string(m_transfer_seq));
 	d.currency = action_transfer.currency;
 	d.amount = action_transfer.amount;
-	
 	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
 	DateTime dt;
 	dt.date.year = now.date().year();
@@ -2559,16 +2546,46 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 	dt.time.hour = now.time_of_day().hours();
 	dt.time.minute = now.time_of_day().minutes();
 	dt.time.second = now.time_of_day().seconds();
-	dt.time.microsecond = 0;	
+	dt.time.microsecond = 0;
 	d.datetime = DateTimeToEpochNano(&dt);
+	
+	if (action_transfer.amount > 0)
+	{
+		m_account->deposit += action_transfer.amount;
+	}
+	else
+	{
+		if (m_account->available < -action_transfer.amount)
+		{
+			Log().WithField("fun", "OnClientReqTransfer")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("amount", action_transfer.amount)
+				.WithField("available", m_account->available)
+				.WithField("currency", action_transfer.currency)
+				.Log(LOG_INFO,u8"转账失败");
+			OutputNotifyAllSycn(422,u8"转账失败");
+			d.error_id = 1;
+			d.error_msg = u8"可转出资金不足";
+			return;
+		}
+		m_account->withdraw -= action_transfer.amount;
+	}
+	
 	d.error_id = 0;
 	d.error_msg = u8"正确";
 
-	SerializerSim ss;
-	ss.FromVar(action_transfer);
-	std::string strMsg;
-	ss.ToString(&strMsg);
-
+	m_account->available+= action_transfer.amount;
+	m_account->static_balance += action_transfer.amount;
+	m_account->balance+= action_transfer.amount;
+	//计算风险度
+	if (IsValid(m_account->margin) && IsValid(m_account->balance) && !IsZero(m_account->balance))
+		m_account->risk_ratio = m_account->margin / m_account->balance;
+	else
+		m_account->risk_ratio = NAN;
+	m_account->changed = true;
+		
 	Log().WithField("fun","OnClientReqTransfer")
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
@@ -2576,9 +2593,9 @@ void tradersim::OnClientReqTransfer(ActionTransfer action_transfer)
 		.WithField("amount", action_transfer.amount)
 		.WithField("currency", action_transfer.currency)		
 		.Log(LOG_INFO, u8"转账成功");
+	OutputNotifyAllSycn(421,u8"转账成功");
 
-	m_something_changed = true;
-	OutputNotifyAllSycn(421,u8"转账成功");	
+	m_something_changed = true;		
 	SendUserData();
 }
 
