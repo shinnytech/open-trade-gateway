@@ -352,13 +352,7 @@ private:
 
 	void ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField> pInputOrder
 	, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
-
-	bool OrderIdLocalToRemote(const LocalOrderKey& local_order_key
-		, RemoteOrderKey* remote_order_key);
-
-	void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key
-		, LocalOrderKey* local_order_key);
-
+	
 	void FindLocalOrderId(const std::string& exchange_id
 		, const std::string& order_sys_id, LocalOrderKey* local_order_key);
 
@@ -572,4 +566,12 @@ private:
 	virtual void SendDataDirect(int connId, const std::string& msg);
 
 	void PrintOrderLogIfTouchedByConditionOrder(const Order& order);
+
+	void PrintOtgOrderLog(std::shared_ptr<CThostFtdcOrderField> pOrder);
+
+	void PrintNotOtgOrderLog(std::shared_ptr<CThostFtdcOrderField> pOrder);
+
+	void PrintOtgTradeLog(std::shared_ptr<CThostFtdcTradeField> pTrade);
+
+	void PrintNotOtgTradeLog(std::shared_ptr<CThostFtdcTradeField> pTrade);
 };

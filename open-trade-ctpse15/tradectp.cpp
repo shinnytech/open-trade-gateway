@@ -808,10 +808,32 @@ void traderctp::ProcessRspOrderInsert(std::shared_ptr<CThostFtdcInputOrderField>
 			remote_key.order_ref = pInputOrder->OrderRef;
 
 			LocalOrderKey local_key;
-			OrderIdRemoteToLocal(remote_key, &local_key);
-
+			auto it2 = m_ordermap_remote_local.find(remote_key);
+			//不是OTG发的单子
+			if (it2 == m_ordermap_remote_local.end())
+			{
+				char buf[1024];
+				sprintf(buf, "SERVER.%s.%08x.%d"
+					, remote_key.order_ref.c_str()
+					, remote_key.session_id
+					, remote_key.front_id);
+				local_key.order_id = buf;
+				local_key.user_id = _req_login.user_name;
+				m_ordermap_local_remote[local_key] = remote_key;
+				m_ordermap_remote_local[remote_key] = local_key;
+				m_need_save_file.store(true);
+			}
+			else
+			{
+				local_key = it2->second;
+				RemoteOrderKey& r = const_cast<RemoteOrderKey&>(it2->first);
+				if (!remote_key.order_sys_id.empty())
+				{
+					r.order_sys_id = remote_key.order_sys_id;
+				}
+				m_need_save_file.store(true);
+			}
 			Order& order = GetOrder(local_key.order_id);
-
 			//委托单初始属性(由下单者在下单前确定, 不再改变)
 			order.seqno = 0;
 			order.user_id = local_key.user_id;
@@ -1047,8 +1069,32 @@ void traderctp::ProcessErrRtnOrderInsert(std::shared_ptr<CThostFtdcInputOrderFie
 			remote_key.order_ref = pInputOrder->OrderRef;
 
 			LocalOrderKey local_key;
-			OrderIdRemoteToLocal(remote_key, &local_key);
-
+			auto it2 = m_ordermap_remote_local.find(remote_key);
+			//不是OTG发的单子
+			if (it2 == m_ordermap_remote_local.end())
+			{
+				char buf[1024];
+				sprintf(buf, "SERVER.%s.%08x.%d"
+					, remote_key.order_ref.c_str()
+					, remote_key.session_id
+					, remote_key.front_id);
+				local_key.order_id = buf;
+				local_key.user_id = _req_login.user_name;
+				m_ordermap_local_remote[local_key] = remote_key;
+				m_ordermap_remote_local[remote_key] = local_key;
+				m_need_save_file.store(true);
+			}
+			else
+			{
+				local_key = it2->second;
+				RemoteOrderKey& r = const_cast<RemoteOrderKey&>(it2->first);
+				if (!remote_key.order_sys_id.empty())
+				{
+					r.order_sys_id = remote_key.order_sys_id;
+				}
+				m_need_save_file.store(true);
+			}
+			
 			Order& order = GetOrder(local_key.order_id);
 
 			//委托单初始属性(由下单者在下单前确定, 不再改变)
@@ -2382,9 +2428,48 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	remote_key.session_id = pOrder->SessionID;
 	remote_key.order_ref = pOrder->OrderRef;
 	remote_key.order_sys_id = pOrder->OrderSysID;
-	LocalOrderKey local_key;
+
 	//找到委托单local_key;
-	OrderIdRemoteToLocal(remote_key, &local_key);
+	LocalOrderKey local_key;
+	auto it = m_ordermap_remote_local.find(remote_key);
+	//不是OTG发出的Order
+	if (it == m_ordermap_remote_local.end())
+	{
+		char buf[1024];
+		sprintf(buf, "SERVER.%s.%08x.%d"
+			, remote_key.order_ref.c_str()
+			, remote_key.session_id
+			, remote_key.front_id);
+
+		local_key.order_id = buf;
+		local_key.user_id= _req_login.user_name;
+		m_ordermap_local_remote[local_key] = remote_key;
+		m_ordermap_remote_local[remote_key] = local_key;
+		m_need_save_file.store(true);
+
+		PrintNotOtgOrderLog(pOrder);
+	}
+	else
+	{
+		local_key= it->second;
+		RemoteOrderKey& r = const_cast<RemoteOrderKey&>(it->first);
+		if (!remote_key.order_sys_id.empty())
+		{
+			r.order_sys_id = remote_key.order_sys_id;
+		}
+		m_need_save_file.store(true);
+		//不是OTG发出的Order
+		if (local_key.order_id.find("SERVER.",0) != std::string::npos)
+		{
+			PrintNotOtgOrderLog(pOrder);
+		}
+		//是OTG发出的Order
+		else
+		{
+			PrintOtgOrderLog(pOrder);
+		}
+	}	
+		
 	Order& order = GetOrder(local_key.order_id);
 	//委托单初始属性(由下单者在下单前确定, 不再改变)
 	order.seqno = m_data_seq++;
@@ -2659,6 +2744,17 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 
 	LocalOrderKey local_key;
 	FindLocalOrderId(pTrade->ExchangeID, pTrade->OrderSysID, &local_key);
+	//不是OTG发出的Order产生的成交
+	if (local_key.order_id.find("SERVER.", 0) != std::string::npos)
+	{
+		PrintNotOtgTradeLog(pTrade);
+	}
+	//是OTG发出的Order产生的成交
+	else
+	{
+		PrintOtgTradeLog(pTrade);
+	}
+	
 	std::string trade_key = local_key.order_id + "|" + std::string(pTrade->TradeID);
 	Trade& trade = GetTrade(trade_key);
 	trade.seqno = m_data_seq++;
@@ -2808,6 +2904,78 @@ void traderctp::OnRtnTrade(CThostFtdcTradeField* pTrade)
 	std::shared_ptr<CThostFtdcTradeField> ptr2 =
 		std::make_shared<CThostFtdcTradeField>(CThostFtdcTradeField(*pTrade));
 	_ios.post(boost::bind(&traderctp::ProcessRtnTrade, this, ptr2));
+}
+
+void traderctp::PrintOtgOrderLog(std::shared_ptr<CThostFtdcOrderField> pOrder)
+{
+	if (nullptr != pOrder)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pOrder);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log().WithField("fun","PrintOtgOrderLog")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO, "print ogt send order log");
+	}
+}
+
+void traderctp::PrintNotOtgOrderLog(std::shared_ptr<CThostFtdcOrderField> pOrder)
+{
+	if (nullptr != pOrder)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pOrder);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log().WithField("fun","PrintNotOtgOrderLog")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO, "print not ogt send order log");
+	}
+}
+
+void traderctp::PrintOtgTradeLog(std::shared_ptr<CThostFtdcTradeField> pTrade)
+{
+	if (nullptr != pTrade)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTrade);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log().WithField("fun","PrintOtgTradeLog")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO,"print otg trade log");
+	}
+}
+
+void traderctp::PrintNotOtgTradeLog(std::shared_ptr<CThostFtdcTradeField> pTrade)
+{
+	if (nullptr != pTrade)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTrade);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		Log().WithField("fun","PrintNotOtgTradeLog")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO,"print not otg trade log");
+	}
 }
 
 void traderctp::ProcessOnRtnTradingNotice(std::shared_ptr<CThostFtdcTradingNoticeInfoField> pTradingNoticeInfo)
@@ -3274,60 +3442,6 @@ void traderctp::ReSendSettlementInfo(int connectId)
 
 
 #pragma region businesslogic
-
-bool traderctp::OrderIdLocalToRemote(const LocalOrderKey& local_order_key
-	, RemoteOrderKey* remote_order_key)
-{
-	if (local_order_key.order_id.empty())
-	{
-		remote_order_key->session_id = m_session_id;
-		remote_order_key->front_id = m_front_id;
-		remote_order_key->order_ref = std::to_string(m_order_ref++);
-		return false;
-	}
-	auto it = m_ordermap_local_remote.find(local_order_key);
-	if (it == m_ordermap_local_remote.end())
-	{
-		remote_order_key->session_id = m_session_id;
-		remote_order_key->front_id = m_front_id;
-		remote_order_key->order_ref = std::to_string(m_order_ref++);
-		m_ordermap_local_remote[local_order_key] = *remote_order_key;
-		m_ordermap_remote_local[*remote_order_key] = local_order_key;
-		return false;
-	}
-	else
-	{
-		*remote_order_key = it->second;
-		return true;
-	}
-}
-
-void traderctp::OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key
-	, LocalOrderKey* local_order_key)
-{
-	auto it = m_ordermap_remote_local.find(remote_order_key);
-	if (it == m_ordermap_remote_local.end())
-	{
-		char buf[1024];
-		sprintf(buf, "SERVER.%s.%08x.%d"
-			, remote_order_key.order_ref.c_str()
-			, remote_order_key.session_id
-			, remote_order_key.front_id);
-		local_order_key->order_id = buf;
-		local_order_key->user_id = _req_login.user_name;
-		m_ordermap_local_remote[*local_order_key] = remote_order_key;
-		m_ordermap_remote_local[remote_order_key] = *local_order_key;
-	}
-	else
-	{
-		*local_order_key = it->second;
-		RemoteOrderKey& r = const_cast<RemoteOrderKey&>(it->first);
-		if (!remote_order_key.order_sys_id.empty())
-		{
-			r.order_sys_id = remote_order_key.order_sys_id;
-		}
-	}
-}
 
 void traderctp::FindLocalOrderId(const std::string& exchange_id
 	, const std::string& order_sys_id, LocalOrderKey* local_order_key)
@@ -5181,12 +5295,20 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 		return;
 	}
 
-	RemoteOrderKey rkey;
-	if (!OrderIdLocalToRemote(d.local_key, &rkey))
+	if (d.local_key.order_id.empty())
 	{
 		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
 		return;
 	}
+	   
+	auto it = m_ordermap_local_remote.find(d.local_key);
+	if (it == m_ordermap_local_remote.end())
+	{
+		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
+		return;
+	}
+	
+	RemoteOrderKey rkey= it->second;	
 	strcpy_x(d.f.BrokerID, m_broker_id.c_str());
 	strcpy_x(d.f.UserID, _req_login.user_name.c_str());
 	strcpy_x(d.f.InvestorID, _req_login.user_name.c_str());
@@ -5244,15 +5366,39 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	strcpy_x(d.f.BrokerID, m_broker_id.c_str());
 	strcpy_x(d.f.UserID, _req_login.user_name.c_str());
 	strcpy_x(d.f.InvestorID, _req_login.user_name.c_str());
+	
 	RemoteOrderKey rkey;
 	rkey.exchange_id = d.f.ExchangeID;
 	rkey.instrument_id = d.f.InstrumentID;
-	if (OrderIdLocalToRemote(d.local_key, &rkey))
+	rkey.session_id = m_session_id;
+	rkey.front_id = m_front_id;
+	rkey.order_ref = std::to_string(m_order_ref++);
+
+	//客户端没有提供订单编号
+	if (d.local_key.order_id.empty())
 	{
-		OutputNotifyAllSycn(357, u8"报单单号重复，不能下单", "WARNING");
+		char buf[1024];
+		sprintf(buf, "OTG.%s.%08x.%d"
+			,rkey.order_ref.c_str()
+			,rkey.session_id
+			,rkey.front_id);
+		d.local_key.order_id = buf;	
+	}	
+
+	//客户端报单编号已经存在
+	auto it = m_ordermap_local_remote.find(d.local_key);
+	if (it != m_ordermap_local_remote.end())
+	{
+		OutputNotifyAllSycn(357
+			, u8"报单单号重复，不能下单"
+			, "WARNING");
 		return;
 	}
-
+	
+	m_ordermap_local_remote[d.local_key] = rkey;
+	m_ordermap_remote_local[rkey] = d.local_key;
+	m_need_save_file.store(true);
+		
 	strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
 	{
 		m_insert_order_set.insert(d.f.OrderRef);
@@ -5272,7 +5418,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");
+		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");		
 	}
 
 	SerializerLogCtp nss;
@@ -5291,9 +5437,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		.WithField("OrderRef",rkey.order_ref)
 		.WithField("ret",r)
 		.WithPack("ctp_pack",strMsg)
-		.Log(LOG_INFO, "send ReqOrderInsert request!");	
-	
-	m_need_save_file.store(true);
+		.Log(LOG_INFO, "send ReqOrderInsert request!");		
 }
 
 void traderctp::OnClientPeekMessage()
@@ -8991,18 +9135,31 @@ void traderctp::CheckConditionOrderSendOrderTask(const std::string& orderId)
 
 void traderctp::OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d)
 {
-	RemoteOrderKey rkey;
-	if (!OrderIdLocalToRemote(d.local_key, &rkey))
+	if (d.local_key.order_id.empty())
 	{
-		Log().WithField("fun","OnConditionOrderReqCancelOrder")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("orderid",d.local_key.order_id)
-			.Log(LOG_WARNING,"orderid is not exist");		
+		Log().WithField("fun", "OnConditionOrderReqCancelOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("orderid", d.local_key.order_id)
+			.Log(LOG_WARNING, "orderid is not exist");
 		return;
 	}
 
+	auto it = m_ordermap_local_remote.find(d.local_key);
+	if (it == m_ordermap_local_remote.end())
+	{
+		Log().WithField("fun", "OnConditionOrderReqCancelOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("orderid", d.local_key.order_id)
+			.Log(LOG_WARNING, "orderid is not exist");
+		return;
+	}
+
+	RemoteOrderKey rkey = it->second;
+	
 	strcpy_x(d.f.BrokerID, m_broker_id.c_str());
 	strcpy_x(d.f.UserID, _req_login.user_name.c_str());
 	strcpy_x(d.f.InvestorID, _req_login.user_name.c_str());
@@ -9066,17 +9223,38 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	RemoteOrderKey rkey;
 	rkey.exchange_id = d.f.ExchangeID;
 	rkey.instrument_id = d.f.InstrumentID;
-	if (OrderIdLocalToRemote(d.local_key, &rkey))
+	rkey.session_id = m_session_id;
+	rkey.front_id = m_front_id;
+	rkey.order_ref = std::to_string(m_order_ref++);
+
+	//客户端没有提供订单编号
+	if (d.local_key.order_id.empty())
 	{
-		Log().WithField("fun","OnConditionOrderReqInsertOrder")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("order_id",d.local_key.order_id)
-			.Log(LOG_WARNING,"orderid is duplicate,can not send order");		
-		return;
+		char buf[1024];
+		sprintf(buf, "OTG.%s.%08x.%d"
+			, rkey.order_ref.c_str()
+			, rkey.session_id
+			, rkey.front_id);
+		d.local_key.order_id = buf;
 	}
 
+	//客户端报单编号已经存在
+	auto it = m_ordermap_local_remote.find(d.local_key);
+	if (it != m_ordermap_local_remote.end())
+	{
+		Log().WithField("fun", "OnConditionOrderReqInsertOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("order_id", d.local_key.order_id)
+			.Log(LOG_WARNING, "orderid is duplicate,can not send order");
+		return;
+	}
+	   
+	m_ordermap_local_remote[d.local_key] = rkey;
+	m_ordermap_remote_local[rkey] = d.local_key;
+	m_need_save_file.store(true);
+		
 	strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
 	{
 		m_insert_order_set.insert(d.f.OrderRef);
@@ -9127,8 +9305,6 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 		.WithField("ret",r)
 		.WithPack("ctp_pack",strMsg)
 		.Log(LOG_INFO,"send ReqOrderInsert request!");	
-
-	m_need_save_file.store(true);
 }
 
 void traderctp::SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField)
