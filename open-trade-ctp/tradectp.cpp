@@ -9453,9 +9453,9 @@ int traderctp::ReqAuthenticate()
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithField("product_info", USER_PRODUCT_INFO_NAME)
-		.WithField("auth_code", _req_login.broker.auth_code)
-		.WithField("ret", ret)
+		.WithField("product_info",_req_login.broker.product_info)
+		.WithField("auth_code",_req_login.broker.auth_code)
+		.WithField("ret",ret)
 		.Log(LOG_INFO, "ctp ReqAuthenticate");
 	return ret;
 }
