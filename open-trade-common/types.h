@@ -38,7 +38,9 @@ const int kExchangeSswe = 0x00000040;
 const int kExchangeUser = 0x10000000;
 const int kExchangeAll = 0xFFFFFFFF;
 
-const int MAX_MSG_NUMS = 100;
+const int MAX_MSG_NUMS_IN = 10;
+
+const int MAX_MSG_NUMS_OUT = 20;
 
 const int MAX_MSG_LENTH = 1024;
 
@@ -47,10 +49,6 @@ const std::string BEGIN_OF_PACKAGE = "#BEGIN_OF_PACKAGE#";
 const std::string END_OF_PACKAGE = "#END_OF_PACKAGE#";
 
 const std::string CLOSE_CONNECTION_MSG = "#CLOSE_CONNECTION_MSG#";
-
-const int MAX_MSG_NUMS_GATEWAY = 5000;
-
-const int MAX_MSG_LENTH_GATEWAY = 1024*4;
 
 const std::string GATE_WAY_MSG_QUEUE_NAME = "OPEN_TRADE_GATE_WAY_MSG_QUEUE";
 

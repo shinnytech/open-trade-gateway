@@ -61,11 +61,13 @@ private:
 
 	void OnWrite(boost::system::error_code ec, std::size_t bytes_transferred);
 		
-	void OnMessage(const std::string &json_str);	
+	bool OnMessage(const std::string &json_str);	
 
-	void ProcessLogInMessage(const ReqLogin& req,const std::string &json_str);
+	void DelayProcessInMsg(std::shared_ptr<std::string> msg_ptr);
 
-	void ProcessOtherMessage(const std::string &json_str);
+	bool ProcessLogInMessage(const ReqLogin& req,const std::string &json_str);
+
+	bool ProcessOtherMessage(const std::string &json_str);
 
 	void OnCloseConnection();
 
@@ -107,6 +109,8 @@ private:
 	std::string _analysis;
 
 	std::vector<std::string> _msg_cache;
+
+	boost::asio::deadline_timer m_timer;
 };
 
 typedef std::shared_ptr<connection> connection_ptr;

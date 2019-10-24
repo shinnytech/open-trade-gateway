@@ -261,6 +261,12 @@ private:
 
 	std::atomic_bool m_run_receive_msg;
 
+	std::atomic_bool m_continue_process_msg;
+
+	boost::mutex m_continue_process_msg_mutex;
+
+	boost::condition_variable m_continue_process_msg_condition;
+
 	std::map<std::string, std::string> m_rtn_order_log_map;
 
 	std::map<std::string, std::string> m_rtn_trade_log_map;
@@ -292,6 +298,8 @@ private:
 	void ReceiveMsg(const std::string& key);
 
 	void ProcessInMsg(int connId,std::shared_ptr<std::string> msg_ptr);
+
+	void NotifyContinueProcessMsg(bool flag);
 	
 	void ProcessReqLogIn(int connId,ReqLogin& req);
 
@@ -411,7 +419,7 @@ private:
 
 	void OnClientPeekMessage();
 
-	void OnClientReqInsertOrder(CtpActionInsertOrder d);
+	int OnClientReqInsertOrder(CtpActionInsertOrder d);
 
 	void OnClientReqCancelOrder(CtpActionCancelOrder d);
 

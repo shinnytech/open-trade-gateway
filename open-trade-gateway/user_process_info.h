@@ -33,7 +33,7 @@ public:
 
 	bool ProcessIsRunning();
 
-	void SendMsg(int connid, const std::string& msg);
+	bool SendMsg(int connid, const std::string& msg);
 
 	void NotifyClose(int connid);
 

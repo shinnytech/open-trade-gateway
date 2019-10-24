@@ -178,7 +178,7 @@ bool UserProcessInfo::ProcessIsRunning()
 	return _process_ptr->running();
 }
 
-void UserProcessInfo::SendMsg(int connid,const std::string& msg)
+bool UserProcessInfo::SendMsg(int connid,const std::string& msg)
 {	
 	if (nullptr == _in_mq_ptr)
 	{
@@ -186,7 +186,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 			.WithField("key","gateway")
 			.WithField("user_key",_key)			
 			.Log(LOG_WARNING,"UserProcessInfo SendMsg and _in_mq_ptr is nullptr");		
-		return;
+		return false;
 	}
 
 	std::stringstream ss;
@@ -194,7 +194,9 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 	std::string str = ss.str();
 	try
 	{
-		_in_mq_ptr->send(str.c_str(),str.length(), 0);
+		unsigned int priority = 0;
+		bool send_success=_in_mq_ptr->try_send(str.c_str(),str.length(),priority);
+		return send_success;
 	}
 	catch (std::exception& ex)
 	{
@@ -204,6 +206,7 @@ void UserProcessInfo::SendMsg(int connid,const std::string& msg)
 			.WithField("errmsg",ex.what())
 			.WithField("msglen",(int)str.length())
 			.Log(LOG_ERROR,"UserProcessInfo SendMsg exception");	
+		return false;
 	}	
 }
 
@@ -285,7 +288,7 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 		boost::interprocess::message_queue::remove(_out_mq_name.c_str());
 		_out_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
 			(new boost::interprocess::message_queue(boost::interprocess::create_only
-				, _out_mq_name.c_str(), MAX_MSG_NUMS, MAX_MSG_LENTH));
+				, _out_mq_name.c_str(), MAX_MSG_NUMS_OUT, MAX_MSG_LENTH));
 	}
 	catch (std::exception& ex)
 	{
@@ -319,7 +322,7 @@ bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string&
 		boost::interprocess::message_queue::remove(_in_mq_name.c_str());
 		_in_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
 			(new boost::interprocess::message_queue(boost::interprocess::create_only
-				, _in_mq_name.c_str(), MAX_MSG_NUMS, MAX_MSG_LENTH));
+				, _in_mq_name.c_str(),MAX_MSG_NUMS_IN, MAX_MSG_LENTH));
 	}
 	catch (std::exception& ex)
 	{

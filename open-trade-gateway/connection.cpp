@@ -35,7 +35,8 @@ connection::connection(boost::asio::io_context& ios
 	_X_Real_Port(0),
 	_agent(""),
 	_analysis(""),
-	_msg_cache()
+	_msg_cache(),
+	m_timer(m_ios)
 {		
 }
 
@@ -59,6 +60,21 @@ void connection::stop()
 {
 	try
 	{
+		boost::system::error_code ec;
+		m_timer.cancel(ec);
+		if (ec)
+		{
+			Log().WithField("fun", "stop")
+				.WithField("key", "gateway")
+				.WithField("ip",_X_Real_IP)
+				.WithField("port",_X_Real_Port)
+				.WithField("agent",_agent)
+				.WithField("analysis",_analysis)
+				.WithField("connId",_connection_id)
+				.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
+				.Log(LOG_WARNING, "gateway cancel timer fail!");
+		}
+
 		Log().WithField("fun","stop")
 			.WithField("key","gateway")
 			.WithField("ip",_X_Real_IP)
@@ -232,42 +248,6 @@ void connection::DoWrite()
 	}	
 }
 
-void connection::DoRead()
-{
-	m_ws_socket.async_read(
-		m_input_buffer,
-		boost::beast::bind_front_handler(
-			&connection::OnRead,
-			shared_from_this()));
-}
-
-void connection::OnRead(boost::system::error_code ec, std::size_t bytes_transferred)
-{
-	if (ec)
-	{
-		if (ec != boost::beast::websocket::error::closed)
-		{
-			Log().WithField("fun","OnRead")
-				.WithField("key","gateway")
-				.WithField("ip",_X_Real_IP)
-				.WithField("port", _X_Real_Port)
-				.WithField("agent",_agent)
-				.WithField("analysis",_analysis)
-				.WithField("errmsg",ec.message())
-				.WithField("connId",_connection_id)
-				.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-				.Log(LOG_WARNING,"trade connection read fail");			
-		}
-		OnCloseConnection();
-		return;
-	}
-	
-	std::string strMsg = boost::beast::buffers_to_string(m_input_buffer.data());
-	m_input_buffer.consume(bytes_transferred);
-	OnMessage(strMsg);
-	DoRead();
-}
-
 void connection::OnWrite(boost::system::error_code ec,std::size_t bytes_transferred)
 {
 	if (ec)
@@ -296,37 +276,6 @@ void connection::OnWrite(boost::system::error_code ec,std::size_t bytes_transfer
 	}
 }
 
-void connection::OnMessage(const std::string &json_str)
-{
-	SerializerTradeBase ss;
-	if (!ss.FromString(json_str.c_str()))
-	{
-		Log().WithField("fun","OnMessage")
-			.WithField("key","gateway")
-			.WithField("ip",_X_Real_IP)
-			.WithField("port",_X_Real_Port)
-			.WithField("agent",_agent)
-			.WithField("analysis",_analysis)			
-			.WithField("connId",_connection_id)
-			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-			.WithField("msgcontent",json_str)
-			.Log(LOG_WARNING, "invalid json str");	
-		return;
-	}
-		
-	ReqLogin req;
-	ss.ToVar(req);
-
-	if (req.aid == "req_login")
-	{
-		ProcessLogInMessage(req,json_str);
-	}
-	else
-	{
-		ProcessOtherMessage(json_str);
-	}
-}
-
 void string_replace(std::string &strBig, const std::string &strsrc, const std::string &strdst)
 {
 	std::string::size_type pos = 0;
@@ -337,299 +286,6 @@ void string_replace(std::string &strBig, const std::string &strsrc, const std::s
 		strBig.replace(pos, srclen, strdst);
 		pos += dstlen;
 	}
-}
-
-void connection::ProcessLogInMessage(const ReqLogin& req, const std::string &json_str)
-{
-	_login_msg = json_str;	
-	_reqLogin = req;
-	auto it = g_config.brokers.find(_reqLogin.bid);
-	if (it == g_config.brokers.end())
-	{
-		Log().WithField("fun","ProcessLogInMessage")
-			.WithField("key","gateway")
-			.WithField("ip",_X_Real_IP)
-			.WithField("port",_X_Real_Port)
-			.WithField("agent",_agent)
-			.WithField("analysis",_analysis)
-			.WithField("connId",_connection_id)		
-			.WithField("bid",req.bid)
-			.Log(LOG_WARNING,"trade server req_login invalid bid");
-
-		std::stringstream ss;
-		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(311,ss.str(),"WARNING");
-		return;
-	}
-
-	_reqLogin.broker = it->second;
-	bool flag = false;
-	if (_reqLogin.broker.broker_type == "ctp")
-	{
-		flag = true;
-	}
-	else if (_reqLogin.broker.broker_type == "ctpse")
-	{
-		flag = true;
-	}
-	else if (_reqLogin.broker.broker_type == "sim")
-	{
-		flag = true;
-	}
-	else if (_reqLogin.broker.broker_type == "perftest")
-	{
-		flag = true;
-	}
-	else
-	{
-		flag = false;
-	}
-
-	if (!flag)
-	{
-		std::stringstream ss;
-		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(311, ss.str(), "WARNING");
-		return;
-	}
-
-	_reqLogin.client_ip = _X_Real_IP;
-	_reqLogin.client_port = _X_Real_Port;
-	SerializerTradeBase nss;
-	nss.FromVar(_reqLogin);
-	nss.ToString(&_login_msg);
-	
-	std::string strBrokerType = _reqLogin.broker.broker_type;
-
-	if (_user_broker_key.empty())
-	{
-		//为了支持次席而添加的功能
-		if ((!_reqLogin.broker_id.empty()) &&
-			(!_reqLogin.front.empty()))
-		{
-			std::string strFront = _reqLogin.front;
-			string_replace(strFront,":", "_");
-			string_replace(strFront, "/", "");
-			string_replace(strFront,".","_");
-			_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_" 
-				+ _reqLogin.user_name+"_"+ _reqLogin.broker_id+"_"+ strFront;
-		}
-		else
-		{
-			_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_" + _reqLogin.user_name;
-		}		
-
-		Log().WithField("fun", "ProcessLogInMessage")
-			.WithField("key", "gateway")
-			.WithField("ip", _reqLogin.client_ip)
-			.WithField("port", _reqLogin.client_port)
-			.WithField("agent", _agent)
-			.WithField("analysis", _analysis)
-			.WithField("connId", _connection_id)
-			.WithField("user_key",_user_broker_key)
-			.Log(LOG_INFO,"generate user key");
-	}
-	else
-	{		
-		//防止一个连接进行多个登录
-		std::string new_user_broker_key= strBrokerType + "_" + _reqLogin.bid + "_" + _reqLogin.user_name;
-		if ((!_reqLogin.broker_id.empty()) &&
-			(!_reqLogin.front.empty()))
-		{
-			std::string strFront = _reqLogin.front;
-			string_replace(strFront, ":", "_");
-			string_replace(strFront, "/", "");
-			string_replace(strFront, ".", "_");
-			new_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_"
-				+ _reqLogin.user_name + "_" + _reqLogin.broker_id + "_" + strFront;
-		}
-		
-		Log().WithField("fun","ProcessLogInMessage")
-			.WithField("key","gateway")
-			.WithField("ip", _reqLogin.client_ip)
-			.WithField("port",_reqLogin.client_port)
-			.WithField("agent",_agent)
-			.WithField("analysis",_analysis)
-			.WithField("connId",_connection_id)
-			.WithField("oldkey",_user_broker_key)
-			.WithField("newkey",new_user_broker_key)
-			.Log(LOG_INFO,"get user broker key");	
-
-		if (new_user_broker_key != _user_broker_key)
-		{
-			auto userIt = g_userProcessInfoMap.find(_user_broker_key);
-			if (userIt != g_userProcessInfoMap.end())
-			{
-				UserProcessInfo_ptr userProcessInfoPtr = userIt->second;
-				bool flag = userProcessInfoPtr->ProcessIsRunning();
-				if (flag)
-				{
-					userProcessInfoPtr->NotifyClose(_connection_id);
-				}
-				if (userProcessInfoPtr->user_connections_.find(_connection_id)
-					!= userProcessInfoPtr->user_connections_.end())
-				{
-					userProcessInfoPtr->user_connections_.erase(_connection_id);
-				}
-			}
-		}
-
-		_user_broker_key = new_user_broker_key;
-	}
-	
-	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
-	//如果用户进程没有启动,启动用户进程处理
-	if (userIt == g_userProcessInfoMap.end())
-	{
-		 UserProcessInfo_ptr userProcessInfoPtr = std::make_shared<UserProcessInfo>(m_ios,_user_broker_key,_reqLogin);
-		 if (nullptr == userProcessInfoPtr)
-		 {
-			 Log().WithField("fun","ProcessLogInMessage")
-				 .WithField("key","gateway")
-				 .WithField("ip", _reqLogin.client_ip)
-				 .WithField("port",_reqLogin.client_port)
-				 .WithField("agent",_agent)
-				 .WithField("analysis",_analysis)
-				 .WithField("connId",_connection_id)	
-				 .WithField("user_key",_user_broker_key)
-				 .Log(LOG_ERROR,"new user process fail");					
-			 return;
-		 }
-
-		 if (!userProcessInfoPtr->StartProcess())
-		 {
-			 Log().WithField("fun","ProcessLogInMessage")
-				 .WithField("key","gateway")
-				 .WithField("ip",_reqLogin.client_ip)
-				 .WithField("port",_reqLogin.client_port)
-				 .WithField("agent",_agent)
-				 .WithField("analysis",_analysis)
-				 .WithField("connId",_connection_id)
-				 .WithField("user_key",_user_broker_key)
-				 .Log(LOG_ERROR,"can not start up user process");					
-			 return;
-		 }
-
-		 userProcessInfoPtr->user_connections_.insert(
-			 std::map<int,connection_ptr>::value_type(
-				 _connection_id,shared_from_this()));
-		 g_userProcessInfoMap.insert(TUserProcessInfoMap::value_type(
-			 _user_broker_key,userProcessInfoPtr));		
-		 userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
-
-		 if (!_msg_cache.empty())
-		 {
-			 for (int i = 0; i < _msg_cache.size(); ++i)
-			 {
-				 userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-
-				 Log().WithField("fun","ProcessLogInMessage")
-					 .WithField("key","gateway")
-					 .WithField("ip",_reqLogin.client_ip)
-					 .WithField("port",_reqLogin.client_port)
-					 .WithField("agent",_agent)
-					 .WithField("analysis",_analysis)
-					 .WithField("connId",_connection_id)
-					 .WithField("user_key",_user_broker_key)
-					 .Log(LOG_INFO,"connection send cache msg");				 
-			 }
-			 _msg_cache.clear();
-		 }
-		 
-		 return;
-	}
-	//如果用户进程已经启动,直接利用
-	else
-	{
-		UserProcessInfo_ptr userProcessInfoPtr = userIt->second;
-		//进程是否正常运行
-		bool flag = userProcessInfoPtr->ProcessIsRunning();
-		if (flag)
-		{
-			userProcessInfoPtr->user_connections_.insert(
-				std::map<int, connection_ptr>::value_type(
-					_connection_id, shared_from_this()));
-			userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
-			if (!_msg_cache.empty())
-			{
-				for (int i = 0; i < _msg_cache.size(); ++i)
-				{
-					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-
-					Log().WithField("fun","ProcessLogInMessage")
-						.WithField("key","gateway")
-						.WithField("ip",_reqLogin.client_ip)
-						.WithField("port",_reqLogin.client_port)
-						.WithField("agent",_agent)
-						.WithField("analysis",_analysis)
-						.WithField("connId",_connection_id)
-						.WithField("user_key",_user_broker_key)
-						.Log(LOG_INFO,"connection send cache msg");					
-				}
-				_msg_cache.clear();
-			}
-			return;
-		}
-		else
-		{
-			flag = userProcessInfoPtr->StartProcess();
-			if (!flag)
-			{
-				Log().WithField("fun","ProcessLogInMessage")
-					.WithField("key","gateway")
-					.WithField("ip",_reqLogin.client_ip)
-					.WithField("port",_reqLogin.client_port)
-					.WithField("agent",_agent)
-					.WithField("analysis",_analysis)
-					.WithField("connId",_connection_id)
-					.WithField("user_key",_user_broker_key)
-					.Log(LOG_INFO,"can not start up user process");					
-				return;
-			}
-			userProcessInfoPtr->user_connections_.insert(
-				std::map<int, connection_ptr>::value_type(
-					_connection_id, shared_from_this()));			
-			userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
-			if (!_msg_cache.empty())
-			{
-				for (int i = 0; i < _msg_cache.size(); ++i)
-				{
-					userProcessInfoPtr->SendMsg(_connection_id, _msg_cache[i]);
-					Log().WithField("fun","ProcessLogInMessage")
-						.WithField("key","gateway")
-						.WithField("ip",_reqLogin.client_ip)
-						.WithField("port",_reqLogin.client_port)
-						.WithField("agent",_agent)
-						.WithField("analysis",_analysis)
-						.WithField("connId",_connection_id)
-						.WithField("user_key",_user_broker_key)
-						.Log(LOG_INFO,"connection send cache");					
-				}
-				_msg_cache.clear();
-			}
-			return;
-		}
-	}
-}
-
-void connection::ProcessOtherMessage(const std::string &json_str)
-{
-	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
-	if (userIt == g_userProcessInfoMap.end())
-	{
-		_msg_cache.push_back(json_str);
-		return;
-	}
-
-	UserProcessInfo_ptr userProcessInfoPtr = userIt->second;	
-	bool flag = userProcessInfoPtr->ProcessIsRunning();
-	if (!flag)
-	{
-		OnCloseConnection();
-		return;
-	}
-		
-	userProcessInfoPtr->SendMsg(_connection_id,json_str);
 }
 
 void connection::OnCloseConnection()
@@ -691,4 +347,408 @@ void connection::OutputNotifySycn(long notify_code
 	std::string json_str;
 	nss.ToString(&json_str);
 	SendTextMsg(json_str);	
+}
+
+void connection::DoRead()
+{
+	m_ws_socket.async_read(
+		m_input_buffer,
+		boost::beast::bind_front_handler(
+			&connection::OnRead,
+			shared_from_this()));
+}
+
+void connection::OnRead(boost::system::error_code ec, std::size_t bytes_transferred)
+{
+	if (ec)
+	{
+		if (ec != boost::beast::websocket::error::closed)
+		{
+			Log().WithField("fun", "OnRead")
+				.WithField("key", "gateway")
+				.WithField("ip", _X_Real_IP)
+				.WithField("port", _X_Real_Port)
+				.WithField("agent", _agent)
+				.WithField("analysis", _analysis)
+				.WithField("errmsg", ec.message())
+				.WithField("connId", _connection_id)
+				.WithField("fd", (int)m_ws_socket.next_layer().native_handle())
+				.Log(LOG_WARNING, "trade connection read fail");
+		}
+		OnCloseConnection();
+		return;
+	}
+
+	std::string strMsg = boost::beast::buffers_to_string(m_input_buffer.data());
+	m_input_buffer.consume(bytes_transferred);
+	bool b_on_message=OnMessage(strMsg);
+	//处理成功,立即读下一个消息
+	if (b_on_message)
+	{		
+		this->DoRead();
+	}
+	//处理失败,过一会再处理
+	else
+	{
+		std::shared_ptr<std::string> msg_ptr(new std::string(strMsg));
+		m_timer.expires_from_now(boost::posix_time::milliseconds(10));		
+		m_timer.async_wait(boost::bind(&connection::DelayProcessInMsg,shared_from_this(),msg_ptr));
+	}
+}
+
+void connection::DelayProcessInMsg(std::shared_ptr<std::string> msg_ptr)
+{
+	std::string& strMsg = *msg_ptr;
+	bool b_on_message = OnMessage(strMsg);
+
+	//处理成功,立即读下一个消息
+	if (b_on_message)
+	{
+		this->DoRead();
+	}
+	//处理失败,过一会再处理
+	else
+	{	
+		Log().WithField("fun","DelayProcessInMsg")
+			.WithField("key","gateway")
+			.WithField("ip",_X_Real_IP)
+			.WithField("port",_X_Real_Port)
+			.WithField("agent",_agent)
+			.WithField("analysis",_analysis)			
+			.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
+			.Log(LOG_INFO,"client send request too fast");
+		m_timer.expires_from_now(boost::posix_time::milliseconds(10));
+		m_timer.async_wait(boost::bind(&connection::DelayProcessInMsg,shared_from_this(),msg_ptr));
+	}
+}
+
+bool connection::OnMessage(const std::string &json_str)
+{
+	SerializerTradeBase ss;
+	if (!ss.FromString(json_str.c_str()))
+	{
+		Log().WithField("fun", "OnMessage")
+			.WithField("key", "gateway")
+			.WithField("ip", _X_Real_IP)
+			.WithField("port", _X_Real_Port)
+			.WithField("agent", _agent)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("fd", (int)m_ws_socket.next_layer().native_handle())
+			.WithField("msgcontent", json_str)
+			.Log(LOG_WARNING, "invalid json str");
+		return true;
+	}
+
+	ReqLogin req;
+	ss.ToVar(req);
+
+	if (req.aid == "req_login")
+	{
+		return ProcessLogInMessage(req,json_str);
+	}
+	else
+	{
+		return ProcessOtherMessage(json_str);
+	}
+}
+
+bool connection::ProcessLogInMessage(const ReqLogin& req, const std::string &json_str)
+{
+	_login_msg = json_str;
+	_reqLogin = req;
+	auto it = g_config.brokers.find(_reqLogin.bid);
+	if (it == g_config.brokers.end())
+	{
+		Log().WithField("fun", "ProcessLogInMessage")
+			.WithField("key", "gateway")
+			.WithField("ip", _X_Real_IP)
+			.WithField("port", _X_Real_Port)
+			.WithField("agent", _agent)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("bid", req.bid)
+			.Log(LOG_WARNING, "trade server req_login invalid bid");
+
+		std::stringstream ss;
+		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
+		OutputNotifySycn(311, ss.str(), "WARNING");
+		return true;
+	}
+
+	_reqLogin.broker = it->second;
+	bool flag = false;
+	if (_reqLogin.broker.broker_type == "ctp")
+	{
+		flag = true;
+	}
+	else if (_reqLogin.broker.broker_type == "ctpse")
+	{
+		flag = true;
+	}
+	else if (_reqLogin.broker.broker_type == "sim")
+	{
+		flag = true;
+	}
+	else if (_reqLogin.broker.broker_type == "perftest")
+	{
+		flag = true;
+	}
+	else
+	{
+		flag = false;
+	}
+
+	if (!flag)
+	{
+		std::stringstream ss;
+		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
+		OutputNotifySycn(311, ss.str(), "WARNING");
+		return true;
+	}
+
+	_reqLogin.client_ip = _X_Real_IP;
+	_reqLogin.client_port = _X_Real_Port;
+	SerializerTradeBase nss;
+	nss.FromVar(_reqLogin);
+	nss.ToString(&_login_msg);
+
+	std::string strBrokerType = _reqLogin.broker.broker_type;
+
+	if (_user_broker_key.empty())
+	{
+		//为了支持次席而添加的功能
+		if ((!_reqLogin.broker_id.empty()) &&
+			(!_reqLogin.front.empty()))
+		{
+			std::string strFront = _reqLogin.front;
+			string_replace(strFront, ":", "_");
+			string_replace(strFront, "/", "");
+			string_replace(strFront, ".", "_");
+			_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_"
+				+ _reqLogin.user_name + "_" + _reqLogin.broker_id + "_" + strFront;
+		}
+		else
+		{
+			_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_" + _reqLogin.user_name;
+		}
+
+		Log().WithField("fun", "ProcessLogInMessage")
+			.WithField("key", "gateway")
+			.WithField("ip", _reqLogin.client_ip)
+			.WithField("port", _reqLogin.client_port)
+			.WithField("agent", _agent)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("user_key", _user_broker_key)
+			.Log(LOG_INFO, "generate user key");
+	}
+	else
+	{
+		//防止一个连接进行多个登录
+		std::string new_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_" + _reqLogin.user_name;
+		if ((!_reqLogin.broker_id.empty()) &&
+			(!_reqLogin.front.empty()))
+		{
+			std::string strFront = _reqLogin.front;
+			string_replace(strFront, ":", "_");
+			string_replace(strFront, "/", "");
+			string_replace(strFront, ".", "_");
+			new_user_broker_key = strBrokerType + "_" + _reqLogin.bid + "_"
+				+ _reqLogin.user_name + "_" + _reqLogin.broker_id + "_" + strFront;
+		}
+
+		Log().WithField("fun", "ProcessLogInMessage")
+			.WithField("key", "gateway")
+			.WithField("ip", _reqLogin.client_ip)
+			.WithField("port", _reqLogin.client_port)
+			.WithField("agent", _agent)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("oldkey", _user_broker_key)
+			.WithField("newkey", new_user_broker_key)
+			.Log(LOG_INFO, "get user broker key");
+
+		if (new_user_broker_key != _user_broker_key)
+		{
+			auto userIt = g_userProcessInfoMap.find(_user_broker_key);
+			if (userIt != g_userProcessInfoMap.end())
+			{
+				UserProcessInfo_ptr userProcessInfoPtr = userIt->second;
+				bool flag = userProcessInfoPtr->ProcessIsRunning();
+				if (flag)
+				{
+					userProcessInfoPtr->NotifyClose(_connection_id);
+				}
+				if (userProcessInfoPtr->user_connections_.find(_connection_id)
+					!= userProcessInfoPtr->user_connections_.end())
+				{
+					userProcessInfoPtr->user_connections_.erase(_connection_id);
+				}
+			}
+		}
+
+		_user_broker_key = new_user_broker_key;
+	}
+
+	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
+	//如果用户进程没有启动,启动用户进程处理
+	if (userIt == g_userProcessInfoMap.end())
+	{
+		UserProcessInfo_ptr userProcessInfoPtr = std::make_shared<UserProcessInfo>(m_ios, _user_broker_key, _reqLogin);
+		if (nullptr == userProcessInfoPtr)
+		{
+			Log().WithField("fun", "ProcessLogInMessage")
+				.WithField("key", "gateway")
+				.WithField("ip", _reqLogin.client_ip)
+				.WithField("port", _reqLogin.client_port)
+				.WithField("agent", _agent)
+				.WithField("analysis", _analysis)
+				.WithField("connId", _connection_id)
+				.WithField("user_key", _user_broker_key)
+				.Log(LOG_ERROR, "new user process fail");
+			return true;
+		}
+
+		if (!userProcessInfoPtr->StartProcess())
+		{
+			Log().WithField("fun", "ProcessLogInMessage")
+				.WithField("key", "gateway")
+				.WithField("ip", _reqLogin.client_ip)
+				.WithField("port", _reqLogin.client_port)
+				.WithField("agent", _agent)
+				.WithField("analysis", _analysis)
+				.WithField("connId", _connection_id)
+				.WithField("user_key", _user_broker_key)
+				.Log(LOG_ERROR, "can not start up user process");
+			return true;
+		}
+
+		userProcessInfoPtr->user_connections_.insert(
+			std::map<int, connection_ptr>::value_type(
+				_connection_id, shared_from_this()));
+		g_userProcessInfoMap.insert(TUserProcessInfoMap::value_type(
+			_user_broker_key, userProcessInfoPtr));
+		bool send_msg = userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
+		if (!_msg_cache.empty())
+		{
+			for (auto msg_it = _msg_cache.begin(); msg_it != _msg_cache.end();)
+			{
+				std::string& msg = *msg_it;
+				send_msg = userProcessInfoPtr->SendMsg(_connection_id,msg);
+				if (!send_msg)
+				{
+					break;
+				}
+				else
+				{
+					msg_it = _msg_cache.erase(msg_it);
+					continue;
+				}
+			}
+		}
+		return send_msg;
+	}
+	//如果用户进程已经启动,直接利用
+	else
+	{
+		UserProcessInfo_ptr userProcessInfoPtr = userIt->second;
+		//进程是否正常运行
+		bool flag = userProcessInfoPtr->ProcessIsRunning();
+		if (flag)
+		{
+			userProcessInfoPtr->user_connections_.insert(
+				std::map<int, connection_ptr>::value_type(
+					_connection_id, shared_from_this()));
+			bool send_msg = false;
+			send_msg=userProcessInfoPtr->SendMsg(_connection_id, _login_msg);
+			if (!send_msg)
+			{
+				return send_msg;
+			}
+			if (!_msg_cache.empty())
+			{
+				for (auto msg_it = _msg_cache.begin(); msg_it != _msg_cache.end();)
+				{
+					std::string& msg = *msg_it;
+					send_msg = userProcessInfoPtr->SendMsg(_connection_id, msg);
+					if (!send_msg)
+					{
+						break;
+					}
+					else
+					{
+						msg_it = _msg_cache.erase(msg_it);
+						continue;
+					}
+				}
+			}
+			return send_msg;
+		}
+		else
+		{
+			flag = userProcessInfoPtr->StartProcess();
+			if (!flag)
+			{
+				Log().WithField("fun", "ProcessLogInMessage")
+					.WithField("key", "gateway")
+					.WithField("ip", _reqLogin.client_ip)
+					.WithField("port", _reqLogin.client_port)
+					.WithField("agent", _agent)
+					.WithField("analysis", _analysis)
+					.WithField("connId", _connection_id)
+					.WithField("user_key", _user_broker_key)
+					.Log(LOG_INFO, "can not start up user process");
+				return true;
+			}
+			userProcessInfoPtr->user_connections_.insert(
+				std::map<int, connection_ptr>::value_type(
+					_connection_id, shared_from_this()));
+			bool send_msg = false;
+			send_msg =userProcessInfoPtr->SendMsg(_connection_id,_login_msg);
+			if (!send_msg)
+			{
+				return send_msg;
+			}
+			if (!_msg_cache.empty())
+			{
+				for (auto msg_it = _msg_cache.begin(); msg_it != _msg_cache.end();)
+				{
+					std::string& msg = *msg_it;
+					send_msg = userProcessInfoPtr->SendMsg(_connection_id, msg);
+					if (!send_msg)
+					{
+						break;
+					}
+					else
+					{
+						msg_it = _msg_cache.erase(msg_it);
+						continue;
+					}
+				}
+			}
+			return send_msg;
+		}
+	}
+}
+
+bool connection::ProcessOtherMessage(const std::string &json_str)
+{
+	auto userIt = g_userProcessInfoMap.find(_user_broker_key);
+	if (userIt == g_userProcessInfoMap.end())
+	{
+		_msg_cache.push_back(json_str);
+		return true;
+	}
+
+	UserProcessInfo_ptr userProcessInfoPtr = userIt->second;
+	bool flag = userProcessInfoPtr->ProcessIsRunning();
+	if (!flag)
+	{
+		OnCloseConnection();
+		return true;
+	}
+
+	bool send_msg = userProcessInfoPtr->SendMsg(_connection_id,json_str);
+	return send_msg;
 }

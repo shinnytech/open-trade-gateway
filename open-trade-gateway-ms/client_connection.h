@@ -67,9 +67,7 @@ private:
 	void OnMessage(const std::string &json_str);	
 
 	void ProcessLogInMessage(const ReqLogin& req,const std::string &json_str);
-
-	void ProcessOtherMessage(const std::string &json_str);
-
+	
 	void OnCloseConnection();
 
 	void on_read_header(boost::beast::error_code ec
