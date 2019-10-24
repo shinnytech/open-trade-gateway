@@ -26,51 +26,54 @@ traderctp::traderctp(boost::asio::io_context& ios
 	, _key(key)
 	, m_settlement_info("")
 	, _ios(ios)
-	, _out_mq_ptr()
-	, _out_mq_name(_key + "_msg_out")
-	, _in_mq_ptr()
-	, _in_mq_name(_key + "_msg_in")
-	, _thread_ptr()
-	, m_notify_seq(0)
-	, m_data_seq(0)
-	, _req_login()
-	, m_broker_id("")
-	, m_pTdApi(NULL)
-	, m_trading_day("")
-	, m_front_id(0)
-	, m_session_id(0)
-	, m_order_ref(0)
-	, m_input_order_key_map()
-	, m_action_order_map()
-	, m_req_transfer_list()
-	, _logIn_status(ECTPLoginStatus::init)
-	, _logInmutex()
-	, _logInCondition()
-	, m_loging_connectId(-1)
-	, m_logined_connIds()
-	, m_user_file_path("")
-	, m_ordermap_local_remote()
-	, m_ordermap_remote_local()
-	, m_data()
-	, m_Algorithm_Type(THOST_FTDC_AG_None)
-	, m_banks()
-	, m_try_req_authenticate_times(0)
-	, m_try_req_login_times(0)
-	, m_run_receive_msg(false)
-	, m_rtn_order_log_map()
-	, m_rtn_trade_log_map()
-	, m_err_rtn_future_to_bank_by_future_log_map()
-	, m_err_rtn_bank_to_future_by_future_log_map()
-	, m_rtn_from_bank_to_future_by_future_log_map()
-	, m_rtn_from_future_to_bank_by_future_log_map()
-	, m_err_rtn_order_insert_log_map()
-	, m_err_rtn_order_action_log_map()
-	, m_condition_order_data()
-	, m_condition_order_his_data()
-	, m_condition_order_manager(_key
-		,m_condition_order_data
-		,m_condition_order_his_data,*this)
-	, m_condition_order_task()
+	,_out_mq_ptr()
+	,_out_mq_name(_key + "_msg_out")
+	,_in_mq_ptr()
+	,_in_mq_name(_key + "_msg_in")
+	,_thread_ptr()
+	,m_notify_seq(0)
+	,m_data_seq(0)
+	,_req_login()
+	,m_broker_id("")
+	,m_pTdApi(NULL)
+	,m_trading_day("")
+	,m_front_id(0)
+	,m_session_id(0)
+	,m_order_ref(0)
+	,m_input_order_key_map()
+	,m_action_order_map()
+	,m_req_transfer_list()
+	,_logIn_status(ECTPLoginStatus::init)
+	,_logInmutex()
+	,_logInCondition()
+	,m_loging_connectId(-1)
+	,m_logined_connIds()
+	,m_user_file_path("")
+	,m_ordermap_local_remote()
+	,m_ordermap_remote_local()
+	,m_data()
+	,m_Algorithm_Type(THOST_FTDC_AG_None)
+	,m_banks()
+	,m_try_req_authenticate_times(0)
+	,m_try_req_login_times(0)
+	,m_run_receive_msg(false)
+	,m_continue_process_msg(false)
+	,m_continue_process_msg_mutex()
+	,m_continue_process_msg_condition()
+	,m_rtn_order_log_map()
+	,m_rtn_trade_log_map()
+	,m_err_rtn_future_to_bank_by_future_log_map()
+	,m_err_rtn_bank_to_future_by_future_log_map()
+	,m_rtn_from_bank_to_future_by_future_log_map()
+	,m_rtn_from_future_to_bank_by_future_log_map()
+	,m_err_rtn_order_insert_log_map()
+	,m_err_rtn_order_action_log_map()
+	,m_condition_order_data()
+	,m_condition_order_his_data()
+	,m_condition_order_manager(_key
+	,m_condition_order_data
+	,m_condition_order_his_data,*this)
+	,m_condition_order_task()
 {
 	_requestID.store(0);
 
@@ -4120,9 +4123,29 @@ void traderctp::ReceiveMsg(const std::string& key)
 				std::string strId = line.substr(0, nPos);
 				connId = atoi(strId.c_str());
 				msg = line.substr(nPos + 1);
-				std::shared_ptr<std::string> msg_ptr(new std::string(msg));
-				_ios.post(boost::bind(&traderctp::ProcessInMsg
-					, this, connId, msg_ptr));
+				std::shared_ptr<std::string> msg_ptr=std::make_shared<std::string>(msg);
+				do
+				{
+					boost::unique_lock<boost::mutex> lock(m_continue_process_msg_mutex);
+					m_continue_process_msg.store(false);
+					_ios.post(boost::bind(&traderctp::ProcessInMsg
+						, this, connId, msg_ptr));
+					bool notify = m_continue_process_msg_condition.timed_wait(lock,boost::posix_time::milliseconds(10));
+					if (!notify)
+					{
+						break;
+					}					
+					if (m_continue_process_msg.load()
+						&& m_run_receive_msg.load())
+					{						
+						boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+						continue;
+					}
+					else
+					{
+						break;
+					}
+				} while (true);				
 			}
 		}
 		catch (const std::exception& ex)
@@ -4132,6 +4155,359 @@ void traderctp::ReceiveMsg(const std::string& key)
 				.WithField("errmsg",ex.what())
 				.Log(LOG_ERROR,"traderctp ReceiveMsg exception!");		
 			break;
+		}
+	}
+}
+
+void traderctp::NotifyContinueProcessMsg(bool flag)
+{
+	boost::unique_lock<boost::mutex> lock(m_continue_process_msg_mutex);
+	m_continue_process_msg.store(flag);
+	m_continue_process_msg_condition.notify_all();
+}
+
+void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
+{
+	if (nullptr == msg_ptr)
+	{
+		NotifyContinueProcessMsg(false);
+		return;
+	}
+	std::string& msg = *msg_ptr;
+	//一个特殊的消息
+	if (msg == CLOSE_CONNECTION_MSG)
+	{
+		CloseConnection(connId);
+		NotifyContinueProcessMsg(false);
+		return;
+	}
+
+	SerializerTradeBase ss;
+	if (!ss.FromString(msg.c_str()))
+	{
+		Log().WithField("fun", "ProcessInMsg")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("msgcontent", msg)
+			.WithField("connId", connId)
+			.Log(LOG_WARNING, "traderctp parse json fail");
+		NotifyContinueProcessMsg(false);
+		return;
+	}
+
+	ReqLogin req;
+	ss.ToVar(req);
+	if (req.aid == "req_login")
+	{
+		ProcessReqLogIn(connId, req);
+		NotifyContinueProcessMsg(false);
+		return;
+	}
+	else if (req.aid == "change_password")
+	{
+		if (nullptr == m_pTdApi)
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_ERROR, "trade ctp receive change_password msg before receive login msg");
+
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		if ((!m_b_login.load()) && (m_loging_connectId != connId))
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_ERROR, "trade ctp receive change_password msg from a diffrent connection before login suceess");
+
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		m_loging_connectId = connId;
+
+		SerializerCtp ssCtp;
+		if (!ssCtp.FromString(msg.c_str()))
+		{
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ssCtp.m_doc));
+		if (!dt || !dt->IsString())
+		{
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		std::string aid = dt->GetString();
+		if (aid == "change_password")
+		{
+			CThostFtdcUserPasswordUpdateField f;
+			memset(&f, 0, sizeof(f));
+			ssCtp.ToVar(f);
+			OnClientReqChangePassword(f);
+		}
+
+		NotifyContinueProcessMsg(false);
+		return;
+	}
+	else
+	{
+		if (!m_b_login)
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_ERROR, "trade ctp receive other msg before login");
+
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		if (!IsConnectionLogin(connId)
+			&& (connId != 0))
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_WARNING, "trade ctp receive other msg which from not login connecion");
+
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		SerializerCtp ssCtp;
+		if (!ssCtp.FromString(msg.c_str()))
+		{
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ssCtp.m_doc));
+		if (!dt || !dt->IsString())
+		{
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+
+		std::string aid = dt->GetString();
+		if (aid == "peek_message")
+		{
+			OnClientPeekMessage();
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "req_reconnect_trade")
+		{
+			if (connId != 0)
+			{
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+
+			SerializerConditionOrderData ns;
+			if (!ns.FromString(msg.c_str()))
+			{
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			req_reconnect_trade_instance req_reconnect_trade;
+			ns.ToVar(req_reconnect_trade);
+			for (auto id : req_reconnect_trade.connIds)
+			{
+				m_logined_connIds.push_back(id);
+			}
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "insert_order")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(333, u8"当前时间不支持下单!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			CtpActionInsertOrder d;
+			ssCtp.ToVar(d);
+			int ret=OnClientReqInsertOrder(d);
+			if ((-2 == ret) || (-3 == ret))
+			{
+				NotifyContinueProcessMsg(true);
+				return;
+			}
+			else
+			{
+				NotifyContinueProcessMsg(false);
+				return;
+			}			
+		}
+		else if (aid == "cancel_order")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(334, u8"当前时间不支持撤单!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			CtpActionCancelOrder d;
+			ssCtp.ToVar(d);
+			OnClientReqCancelOrder(d);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "req_transfer")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(335, u8"当前时间不支持转账!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			CThostFtdcReqTransferField f;
+			memset(&f, 0, sizeof(f));
+			ssCtp.ToVar(f);
+			OnClientReqTransfer(f);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "confirm_settlement")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(336, u8"当前时间不支持确认结算单!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+
+			if (0 == m_confirm_settlement_status.load())
+			{
+				m_confirm_settlement_status.store(1);
+			}
+			ReqConfirmSettlement();
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "qry_settlement_info")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(337, u8"当前时间不支持查询历史结算单!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+
+			qry_settlement_info qrySettlementInfo;
+			ss.ToVar(qrySettlementInfo);
+			OnClientReqQrySettlementInfo(qrySettlementInfo);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "qry_transfer_serial")
+		{
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(359, u8"当前时间不支持查询转账记录!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			ReqQryTransferSerial();
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "insert_condition_order")
+		{
+			m_condition_order_manager.InsertConditionOrder(msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "cancel_condition_order")
+		{
+			m_condition_order_manager.CancelConditionOrder(msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "pause_condition_order")
+		{
+			m_condition_order_manager.PauseConditionOrder(msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "resume_condition_order")
+		{
+			m_condition_order_manager.ResumeConditionOrder(msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "qry_his_condition_order")
+		{
+			m_condition_order_manager.QryHisConditionOrder(connId, msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "req_ccos_status")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive ccos msg");
+			if (connId != 0)
+			{
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			m_condition_order_manager.ChangeCOSStatus(msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "req_start_ctp")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive req_start_ctp msg");
+			if (connId != 0)
+			{
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			OnReqStartCTP(msg);
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "req_stop_ctp")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive req_stop_ctp msg");
+			if (connId != 0)
+			{
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			OnReqStopCTP(msg);
+			NotifyContinueProcessMsg(false);
+			return;
 		}
 	}
 }
@@ -4203,281 +4579,6 @@ void traderctp::CloseConnection(int nId)
 			break;
 		}
 	}	
-}
-
-void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
-{
-	if (nullptr == msg_ptr)
-	{
-		return;
-	}
-	std::string& msg = *msg_ptr;
-	//一个特殊的消息
-	if (msg == CLOSE_CONNECTION_MSG)
-	{
-		CloseConnection(connId);
-		return;
-	}
-
-	SerializerTradeBase ss;
-	if (!ss.FromString(msg.c_str()))
-	{
-		Log().WithField("fun","ProcessInMsg")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("msgcontent",msg)
-			.WithField("connId",connId)
-			.Log(LOG_WARNING,"traderctp parse json fail");		
-		return;
-	}
-
-	ReqLogin req;
-	ss.ToVar(req);
-	if (req.aid == "req_login")
-	{
-		ProcessReqLogIn(connId, req);
-	}
-	else if (req.aid == "change_password")
-	{
-		if (nullptr == m_pTdApi)
-		{
-			Log().WithField("fun","ProcessInMsg")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)			
-				.WithField("connId",connId)
-				.Log(LOG_ERROR,"trade ctp receive change_password msg before receive login msg");			
-			return;
-		}
-
-		if ((!m_b_login.load()) && (m_loging_connectId != connId))
-		{
-			Log().WithField("fun","ProcessInMsg")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("connId",connId)
-				.Log(LOG_ERROR,"trade ctp receive change_password msg from a diffrent connection before login suceess");		
-			return;
-		}
-
-		m_loging_connectId = connId;
-
-		SerializerCtp ssCtp;
-		if (!ssCtp.FromString(msg.c_str()))
-		{
-			return;
-		}
-
-		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ssCtp.m_doc));
-		if (!dt || !dt->IsString())
-		{
-			return;
-		}
-
-		std::string aid = dt->GetString();
-		if (aid == "change_password")
-		{
-			CThostFtdcUserPasswordUpdateField f;
-			memset(&f, 0, sizeof(f));
-			ssCtp.ToVar(f);
-			OnClientReqChangePassword(f);
-		}
-	}
-	else
-	{
-		if (!m_b_login)
-		{
-			Log().WithField("fun","ProcessInMsg")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("connId",connId)
-				.Log(LOG_ERROR,"trade ctp receive other msg before login");		
-			return;
-		}
-			   
-		if (!IsConnectionLogin(connId)
-			&&(connId!=0))
-		{
-			Log().WithField("fun","ProcessInMsg")
-				.WithField("key",_key)
-				.WithField("bid",_req_login.bid)
-				.WithField("user_name",_req_login.user_name)
-				.WithField("connId",connId)
-				.Log(LOG_WARNING,"trade ctp receive other msg which from not login connecion");			
-			return;
-		}
-
-		SerializerCtp ssCtp;
-		if (!ssCtp.FromString(msg.c_str()))
-		{
-			return;
-		}
-
-		rapidjson::Value* dt = rapidjson::Pointer("/aid").Get(*(ssCtp.m_doc));
-		if (!dt || !dt->IsString())
-		{
-			return;
-		}
-
-		std::string aid = dt->GetString();
-		if (aid == "peek_message")
-		{
-			OnClientPeekMessage();
-		}
-		else if (aid == "req_reconnect_trade")
-		{
-			if (connId != 0)
-			{
-				return;
-			}
-
-			SerializerConditionOrderData ns;
-			if (!ns.FromString(msg.c_str()))
-			{
-				return;
-			}
-			req_reconnect_trade_instance req_reconnect_trade;
-			ns.ToVar(req_reconnect_trade);
-			for (auto id : req_reconnect_trade.connIds)
-			{
-				m_logined_connIds.push_back(id);
-			}
-		}
-		else if (aid == "insert_order")
-		{
-			if (nullptr == m_pTdApi)
-			{
-				OutputNotifyAllSycn(333,u8"当前时间不支持下单!","WARNING");
-				return;
-			}
-			CtpActionInsertOrder d;
-			ssCtp.ToVar(d);
-			OnClientReqInsertOrder(d);
-		}
-		else if (aid == "cancel_order")
-		{
-			if (nullptr == m_pTdApi)
-			{
-				OutputNotifyAllSycn(334,u8"当前时间不支持撤单!", "WARNING");
-				return;
-			}
-			CtpActionCancelOrder d;
-			ssCtp.ToVar(d);
-			OnClientReqCancelOrder(d);
-		}
-		else if (aid == "req_transfer")
-		{
-			if (nullptr == m_pTdApi)
-			{
-				OutputNotifyAllSycn(335,u8"当前时间不支持转账!", "WARNING");
-				return;
-			}
-			CThostFtdcReqTransferField f;
-			memset(&f, 0, sizeof(f));
-			ssCtp.ToVar(f);
-			OnClientReqTransfer(f);
-		}
-		else if (aid == "confirm_settlement")
-		{
-			if (nullptr == m_pTdApi)
-			{
-				OutputNotifyAllSycn(336,u8"当前时间不支持确认结算单!", "WARNING");
-				return;
-			}
-
-			if (0 == m_confirm_settlement_status.load())
-			{
-				m_confirm_settlement_status.store(1);
-			}
-			ReqConfirmSettlement();
-		}
-		else if (aid == "qry_settlement_info")
-		{
-			if (nullptr == m_pTdApi)
-			{
-				OutputNotifyAllSycn(337,u8"当前时间不支持查询历史结算单!","WARNING");
-				return;
-			}
-
-			qry_settlement_info qrySettlementInfo;
-			ss.ToVar(qrySettlementInfo);
-			OnClientReqQrySettlementInfo(qrySettlementInfo);
-		}
-		else if (aid == "qry_transfer_serial")
-		{
-			if (nullptr == m_pTdApi)
-			{
-				OutputNotifyAllSycn(359,u8"当前时间不支持查询转账记录!","WARNING");
-				return;
-			}
-			ReqQryTransferSerial();
-		}
-		else if (aid == "insert_condition_order")
-		{			
-			m_condition_order_manager.InsertConditionOrder(msg);
-		}
-		else if (aid == "cancel_condition_order")
-		{
-			m_condition_order_manager.CancelConditionOrder(msg);
-		}
-		else if (aid == "pause_condition_order")
-		{
-			m_condition_order_manager.PauseConditionOrder(msg);
-		}
-		else if (aid == "resume_condition_order")
-		{
-			m_condition_order_manager.ResumeConditionOrder(msg);
-		}
-		else if (aid == "qry_his_condition_order")
-		{
-			m_condition_order_manager.QryHisConditionOrder(connId,msg);
-		}
-		else if (aid == "req_ccos_status")
-		{
-			Log().WithField("fun","ProcessInMsg")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("connId",connId)
-			.Log(LOG_INFO,"trade ctp receive ccos msg");					
-			if (connId != 0)
-			{
-				return;
-			}
-			m_condition_order_manager.ChangeCOSStatus(msg);
-		}
-		else if (aid == "req_start_ctp")
-		{
-			Log().WithField("fun","ProcessInMsg")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("connId",connId)
-			.Log(LOG_INFO,"trade ctp receive req_start_ctp msg");			
-			if (connId != 0)
-			{
-				return;
-			}
-			OnReqStartCTP(msg);
-		}
-		else if (aid == "req_stop_ctp")
-		{
-			Log().WithField("fun","ProcessInMsg")
-			.WithField("key",_key)
-			.WithField("bid",_req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithField("connId",connId)
-			.Log(LOG_INFO,"trade ctp receive req_stop_ctp msg");		
-			if (connId != 0)
-			{
-				return;
-			}
-			OnReqStopCTP(msg);
-		}
-	}
 }
 
 void traderctp::ClearOldData()
@@ -5355,12 +5456,14 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 		.Log(LOG_INFO, "send ReqOrderAction request!"); 
 }
 
-void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
+int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
+	static int order_count = 0;
+
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
 		OutputNotifyAllSycn(356,u8"报单user_id错误，不能下单", "WARNING");
-		return;
+		return 0;
 	}
 
 	strcpy_x(d.f.BrokerID, m_broker_id.c_str());
@@ -5392,7 +5495,7 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		OutputNotifyAllSycn(357
 			, u8"报单单号重复，不能下单"
 			, "WARNING");
-		return;
+		return 0;
 	}
 	
 	m_ordermap_local_remote[d.local_key] = rkey;
@@ -5416,28 +5519,69 @@ void traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		, ServerOrderInfo>::value_type(strKey, serverOrder));
 
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);
-	if (0 != r)
+	if (0 == r)
+	{		
+		SerializerLogCtp nss;
+		nss.FromVar(d.f);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+		
+		order_count++;
+
+		Log().WithField("fun", "OnClientReqInsertOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("user_id", d.local_key.user_id)
+			.WithField("order_id", d.local_key.order_id)
+			.WithField("FrontID", rkey.front_id)
+			.WithField("SessionID", rkey.session_id)
+			.WithField("OrderRef", rkey.order_ref)
+			.WithField("ret", r)
+			.WithField("order_count", order_count)
+			.WithPack("ctp_pack", strMsg)
+			.Log(LOG_INFO, "send ReqOrderInsert request!");
+	}
+	else if (-1 != r)
 	{
-		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");		
+		SerializerLogCtp nss;
+		nss.FromVar(d.f);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+
+		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");
+
+		Log().WithField("fun", "OnClientReqInsertOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("user_id", d.local_key.user_id)
+			.WithField("order_id", d.local_key.order_id)
+			.WithField("FrontID", rkey.front_id)
+			.WithField("SessionID", rkey.session_id)
+			.WithField("OrderRef", rkey.order_ref)
+			.WithField("ret", r)
+			.WithField("order_count",order_count)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO, "send ReqOrderInsert request fail!");
+	}	
+	else
+	{
+		Log().WithField("fun","OnClientReqInsertOrder")
+			.WithField("key", _key)
+			.WithField("bid", _req_login.bid)
+			.WithField("user_name", _req_login.user_name)
+			.WithField("user_id", d.local_key.user_id)
+			.WithField("order_id", d.local_key.order_id)
+			.WithField("FrontID", rkey.front_id)
+			.WithField("SessionID", rkey.session_id)
+			.WithField("OrderRef", rkey.order_ref)
+			.WithField("ret", r)
+			.WithField("order_count", order_count)
+			.Log(LOG_WARNING,"send order to ctp fail,because of sending too fast,will try it again later");
 	}
 
-	SerializerLogCtp nss;
-	nss.FromVar(d.f);
-	std::string strMsg = "";
-	nss.ToString(&strMsg);	
-
-	Log().WithField("fun","OnClientReqInsertOrder")
-		.WithField("key",_key)
-		.WithField("bid",_req_login.bid)
-		.WithField("user_name",_req_login.user_name)		
-		.WithField("user_id",d.local_key.user_id)
-		.WithField("order_id",d.local_key.order_id)
-		.WithField("FrontID",rkey.front_id)
-		.WithField("SessionID",rkey.session_id)	
-		.WithField("OrderRef",rkey.order_ref)
-		.WithField("ret",r)
-		.WithPack("ctp_pack",strMsg)
-		.Log(LOG_INFO, "send ReqOrderInsert request!");		
+	return r;
 }
 
 void traderctp::OnClientPeekMessage()
@@ -9453,9 +9597,9 @@ int traderctp::ReqAuthenticate()
 		.WithField("key", _key)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
-		.WithField("product_info",_req_login.broker.product_info)
-		.WithField("auth_code",_req_login.broker.auth_code)
-		.WithField("ret",ret)
+		.WithField("product_info", _req_login.broker.product_info)
+		.WithField("auth_code", _req_login.broker.auth_code)
+		.WithField("ret", ret)
 		.Log(LOG_INFO, "ctp ReqAuthenticate");
 	return ret;
 }
