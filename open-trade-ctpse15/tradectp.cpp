@@ -4428,6 +4428,25 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			NotifyContinueProcessMsg(false);
 			return;
 		}
+		else if (aid == "qry_account_info")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive qry_account_info msg");
+
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(359, u8"当前时间不支持查询资金账号!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+			m_req_account_id++;
+			NotifyContinueProcessMsg(false);
+			return;
+		}
 		else if (aid == "insert_condition_order")
 		{
 			m_condition_order_manager.InsertConditionOrder(msg);

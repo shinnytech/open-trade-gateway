@@ -71,6 +71,14 @@
       "required": [ "aid" ],
       "additionalProperties": false
     },
+    "qry_account_info": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "qry_account_info" ] }
+      },
+      "required": [ "aid" ],
+      "additionalProperties": false
+    },
     "change_password": {
       "type": "object",
       "properties": {
@@ -320,11 +328,12 @@
     { "$ref": "#/definitions/confirm_settlement" },
     { "$ref": "#/definitions/qry_settlement_info" },
     { "$ref": "#/definitions/qry_transfer_serial" },
+    { "$ref": "#/definitions/qry_account_info" },
     { "$ref": "#/definitions/change_password" },
     { "$ref": "#/definitions/insert_condition_order" },
     { "$ref": "#/definitions/cancel_condition_order" },
     { "$ref": "#/definitions/pause_condition_order" },
     { "$ref": "#/definitions/resume_condition_order" },
-    { "$ref": "#/definitions/qry_his_condition_order" }
+    { "$ref": "#/definitions/qry_his_condition_order" }   
   ]
 }
