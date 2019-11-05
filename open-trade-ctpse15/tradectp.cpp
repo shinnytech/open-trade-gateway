@@ -4975,7 +4975,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 			m_condition_order_manager.Load(_req_login.bid,
 				_req_login.user_name,
 				_req_login.password,
-				m_trading_day);
+				m_trading_day);			
 		}		
 	}
 }

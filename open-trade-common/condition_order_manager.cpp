@@ -66,13 +66,16 @@ void ConditionOrderManager::Load(const std::string& bid
         , const std::string& user_password
         , const std::string& trading_day)
 {
+		m_condition_order_data.condition_orders.clear();
+		m_condition_order_his_data.his_condition_orders.clear();
+
         if (!g_config.user_file_path.empty())
         {
-                m_user_file_path = g_config.user_file_path + "/" + bid;
+             m_user_file_path = g_config.user_file_path + "/" + bid;
         }
         else
         {
-                m_user_file_path = "/var/local/lib/open-trade-gateway/" + bid;
+             m_user_file_path = "/var/local/lib/open-trade-gateway/" + bid;
         }
                 
         //加载条件单数据
@@ -129,6 +132,7 @@ void ConditionOrderManager::Load(const std::string& bid
                         .WithField("fileName",fn)
                         .Log(LOG_INFO, "ConditionOrderManager load condition order data file success!");
 
+				m_condition_order_data.condition_orders.clear();				
                 nss.ToVar(m_condition_order_data);
 				
                 m_condition_order_data.broker_id = bid;
