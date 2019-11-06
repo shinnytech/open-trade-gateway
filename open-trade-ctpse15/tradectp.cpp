@@ -3698,16 +3698,29 @@ void traderctp::SendUserData()
 					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 					ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+					
 					if (ps.volume_long > 0)
 					{
 						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 					}
+					else
+					{
+						ps.open_price_long = 0;
+						ps.position_price_long = 0;
+					}
+
 					if (ps.volume_short > 0)
 					{
 						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 					}
+					else
+					{
+						ps.open_price_short = 0;
+						ps.position_price_short = 0;
+					}
+
 					ps.changed = true;
 					m_something_changed = true;
 				}
@@ -3790,7 +3803,7 @@ void traderctp::SendUserData()
 				rapidjson::Pointer("/data/0/trade").Set(*nss.m_doc, node_user);
 				std::string json_str;
 				nss.ToString(&json_str);
-				
+
 				//发送		
 				std::string str = GetConnectionStr();
 				if (!str.empty())
