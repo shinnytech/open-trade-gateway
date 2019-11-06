@@ -1723,6 +1723,11 @@ void tradersim::UpdatePositionVolume(Position* position)
 		//计算多头持仓均价
 		position->position_price_long = position->position_cost_long / (position->volume_long * position->ins->volume_multiple);
 	}
+	else
+	{
+		position->open_price_long = 0;
+		position->position_price_long = 0;
+	}
 
 	if (position->volume_short > 0)
 	{
@@ -1731,6 +1736,11 @@ void tradersim::UpdatePositionVolume(Position* position)
 
 		//计算空头持仓均价
 		position->position_price_short = position->position_cost_short / (position->volume_short * position->ins->volume_multiple);
+	}
+	else
+	{
+		position->open_price_short = 0;
+		position->position_price_short = 0;
 	}
 
 	position->changed = true;
