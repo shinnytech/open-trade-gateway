@@ -547,6 +547,11 @@ void  traderctp::ProcessQrySettlementInfo(std::shared_ptr<CThostFtdcSettlementIn
 			m_settlement_info += str;
 			if (0 == m_confirm_settlement_status.load())
 			{
+				Log().WithField("fun","ProcessQrySettlementInfo")
+					.WithField("key", _key)
+					.WithField("bid", _req_login.bid)
+					.WithField("user_name", _req_login.user_name)					
+					.Log(LOG_INFO, "send settlement info to client");
 				OutputNotifyAllSycn(325,m_settlement_info,"INFO","SETTLEMENT");
 			}
 		}
@@ -570,6 +575,11 @@ void traderctp::ProcessEmptySettlementInfo()
 		m_need_query_settlement.store(false);
 		if (0 == m_confirm_settlement_status.load())
 		{
+			Log().WithField("fun", "ProcessEmptySettlementInfo")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.Log(LOG_INFO, "send empty settlement info to client");
 			OutputNotifyAllSycn(325,"","INFO","SETTLEMENT");
 		}
 	}	
@@ -4406,6 +4416,12 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				return;
 			}
 
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.Log(LOG_INFO, "receive confirm settlement info request");
+
 			if (0 == m_confirm_settlement_status.load())
 			{
 				m_confirm_settlement_status.store(1);
@@ -5936,6 +5952,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 			//平今
 			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
 
+			//买平
 			f.Direction = THOST_FTDC_D_Buy;
 
 			f.VolumeTotalOriginal = co.volume;
