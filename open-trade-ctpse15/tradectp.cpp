@@ -5950,7 +5950,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		//要平的手数小于等于可平的今仓手数
+		//要平的手数小于等于可平的今仓手数,不需要撤单
 		if (co.volume <= pos.pos_short_today - pos.volume_short_frozen_today)
 		{
 			CThostFtdcInputOrderField f;
@@ -5997,7 +5997,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				return  false;
 			}
 		}
-		//要平的手数小于等于今仓手数(包括冻结的手数)
+		//要平的手数小于等于今仓手数(包括冻结的手数),需要先撤掉平今仓的手数
 		else if (co.volume <= pos.pos_short_today)
 		{
 			CThostFtdcInputOrderField f;
@@ -6081,7 +6081,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 			}
 
 		}
-		//要平的手数小于等于所有空仓(不包手冻结的昨仓)
+		//要平的手数小于等于所有空仓(不包手冻结的昨仓),需要先撤掉平今仓的手数
 		else if (co.volume <= pos.pos_short_today + pos.pos_short_his - pos.volume_short_frozen_his)
 		{
 			CThostFtdcInputOrderField f1;
@@ -6188,7 +6188,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				return false;
 			}
 		}
-		//要平的手数小于等于所有空仓(包括冻结的手数)
+		//要平的手数小于等于所有空仓(包括冻结的手数),要先撤掉所有平仓的挂单,包括平今和平昨
 		else if (co.volume <= pos.pos_short_today + pos.pos_short_his)
 		{
 			CThostFtdcInputOrderField f1;
@@ -6314,7 +6314,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 	//卖平
 	else
 	{
-		//要平的手数小于等于可平的今仓手数
+		//要平的手数小于等于可平的今仓手数,不需要撤单
 		if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today)
 		{
 			CThostFtdcInputOrderField f;
@@ -6361,7 +6361,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 			}
 
 		}
-		//要平的手数小于等于今仓手数(包括冻结的手数)
+		//要平的手数小于等于今仓手数(包括冻结的手数),需要先撤掉平今仓的手数
 		else if (co.volume <= pos.pos_long_today)
 		{
 			CThostFtdcInputOrderField f;
@@ -6445,7 +6445,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 				return  false;
 			}
 		}
-		//要平的手数小于等于所有多仓(不包手冻结的昨仓)
+		//要平的手数小于等于所有多仓(不包手冻结的昨仓),需要先撤掉平今仓的手数
 		else if (co.volume <= pos.pos_long_today + pos.pos_long_his - pos.volume_long_frozen_his)
 		{
 			CThostFtdcInputOrderField f1;
@@ -6555,7 +6555,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 			}
 
 		}
-		//要平的手数小于等于所有多仓(包括冻结的手数)
+		//要平的手数小于等于所有多仓(包括冻结的手数),要先撤掉所有平仓的挂单,包括平今和平昨
 		else if (co.volume <= pos.pos_long_today + pos.pos_long_his)
 		{
 			CThostFtdcInputOrderField f1;
@@ -6658,7 +6658,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& 
 
 				return true;
 			}
-			//价格设国置不合法
+			//价格设置不合法
 			else
 			{
 				return false;
@@ -6694,7 +6694,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		//要平的手数小于等于可平的今仓手数
+		//要平的手数小于等于可平的今仓手数,只平今
 		if (co.volume <= pos.pos_short_today - pos.volume_short_frozen_today)
 		{
 			CThostFtdcInputOrderField f;
@@ -6740,7 +6740,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				return  false;
 			}
 		}
-		//如果可平的手数小于所有可平的今昨仓手数
+		//如果可平的手数小于所有可平的今昨仓手数,平今同时平昨
 		else if (co.volume <= pos.pos_short_today - pos.volume_short_frozen_today+ pos.pos_short_his- pos.volume_short_frozen_his)
 		{
 			CThostFtdcInputOrderField f1;
@@ -6813,7 +6813,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				return false;
 			}			
 		}
-		//可平不足
+		//可平不足,不平
 		else
 		{
 			Log().WithField("fun", "ConditionOrder_CloseTodayPrior_NotNeedCancel")
@@ -6829,7 +6829,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 	//卖平
 	else
 	{
-		//要平的手数小于等于可平的今仓手数
+		//要平的手数小于等于可平的今仓手数,平今
 		if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today)
 		{
 			CThostFtdcInputOrderField f;
@@ -6875,6 +6875,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				return  false;
 			}
 		}
+		//如果可平的手数小于所有可平的今昨仓手数,平今同时平昨
 		else if (co.volume <= pos.pos_long_today - pos.volume_long_frozen_today+pos.pos_long_his- pos.volume_long_frozen_his)
 		{
 			CThostFtdcInputOrderField f1;
@@ -6946,7 +6947,7 @@ bool traderctp::ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrde
 				return false;
 			}
 		}
-		//可平不足
+		//可平不足,不平
 		else
 		{
 			Log().WithField("fun","ConditionOrder_CloseTodayPrior_NotNeedCancel")
@@ -6975,7 +6976,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		//要平的手数小于等于可平的昨仓手数
+		//要平的手数小于等于可平的昨仓手数,不需要撤原平仓单
 		if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7021,7 +7022,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				return  false;
 			}
 		}
-		//要平的手数小于等于昨仓手数(包括冻结的手数)
+		//要平的手数小于等于昨仓手数(包括冻结的手数),要先撤掉所有平昨仓的挂单
 		else if (co.volume <= pos.pos_short_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7105,7 +7106,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 			}
 
 		}
-		//要平的手数小于等于所有空仓(不包手冻结的昨仓)
+		//要平的手数小于等于所有空仓(不包手冻结的昨仓),要先撤掉所有平昨仓的挂单
 		else if (co.volume <= pos.pos_short_his+pos.pos_short_today-pos.volume_short_frozen_today)
 		{
 			CThostFtdcInputOrderField f1;
@@ -7212,7 +7213,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				return false;
 			}
 		}
-		//要平的手数小于等于所有空仓(包括冻结的手数)
+		//要平的手数小于等于所有空仓(包括冻结的手数),要先撤掉所有平仓的挂单
 		else if (co.volume <= pos.pos_short_his+pos.pos_short_today)
 		{
 			CThostFtdcInputOrderField f1;
@@ -7335,7 +7336,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 	//卖平
 	else
 	{
-		//要平的手数小于等于可平的昨仓手数
+		//要平的手数小于等于可平的昨仓手数,不需要撤原平仓单
 		if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7382,7 +7383,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 			}
 
 		}
-		//要平的手数小于等于昨仓手数(包括冻结的手数)
+		//要平的手数小于等于昨仓手数(包括冻结的手数),先撤掉所有平昨仓的挂单
 		else if (co.volume <= pos.pos_long_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7466,7 +7467,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 				return  false;
 			}
 		}
-		//要平的手数小于等于所有多仓(不包手冻结的昨仓)
+		//要平的手数小于等于所有多仓(不包手冻结的昨仓),先撤掉所有平昨仓的挂单
 		else if (co.volume <= pos.pos_long_his+pos.pos_long_today-pos.volume_long_frozen_today)
 		{
 			CThostFtdcInputOrderField f1;
@@ -7576,7 +7577,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrde
 			}
 
 		}
-		//要平的手数小于等于所有多仓(包括冻结的手数)
+		//要平的手数小于等于所有多仓(包括冻结的手数),要先撤掉所有平仓的挂单
 		else if (co.volume <= pos.pos_long_his+pos.pos_long_today)
 		{
 			CThostFtdcInputOrderField f1;
@@ -7715,7 +7716,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		//要平的手数小于等于可平的昨仓手数
+		//要平的手数小于等于可平的昨仓手数,只平昨
 		if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7761,7 +7762,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				return  false;
 			}
 		}
-		//如果可平的手数小于所有可平的今昨仓手数
+		//如果可平的手数小于所有可平的今昨仓手数,平昨又平今
 		else if (co.volume <= pos.pos_short_his - pos.volume_short_frozen_his + pos.pos_short_today - pos.volume_short_frozen_today)
 		{
 			CThostFtdcInputOrderField f1;
@@ -7850,7 +7851,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 	//卖平
 	else
 	{
-		//要平的手数小于等于可平的昨仓手数
+		//要平的手数小于等于可平的昨仓手数,只平昨
 		if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his)
 		{
 			CThostFtdcInputOrderField f;
@@ -7896,6 +7897,7 @@ bool traderctp::ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionO
 				return  false;
 			}
 		}
+		//如果可平的手数小于所有可平的今昨仓手数,平昨又平今
 		else if (co.volume <= pos.pos_long_his - pos.volume_long_frozen_his+pos.pos_long_today - pos.volume_long_frozen_today)
 		{
 			CThostFtdcInputOrderField f1;
@@ -7991,13 +7993,53 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 	//合约
 	std::string symbol = co.exchange_id + "." + co.instrument_id;
 	//持仓
-	Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
+	Position& pos = GetPosition(co.exchange_id,co.instrument_id,_req_login.user_name);
 
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
-		//如果可平今仓手数大于零
-		if (pos.pos_short_today - pos.volume_short_frozen_today > 0)
+		task.has_second_orders_to_send = false;
+
+		//撤掉所有平仓的挂单
+		for (auto it : m_data.m_orders)
+		{
+			const std::string& orderId = it.first;
+			const Order& order = it.second;
+			if (order.status == kOrderStatusFinished)
+			{
+				continue;
+			}
+
+			if (order.symbol() != symbol)
+			{
+				continue;
+			}
+
+			if ((order.direction == kDirectionBuy)
+				&& ((order.offset == kOffsetClose) || (order.offset == kOffsetCloseToday)))
+			{
+				CtpActionCancelOrder cancelOrder;
+				cancelOrder.local_key.order_id = orderId;
+				cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+				CThostFtdcInputOrderActionField f3;
+				memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+				strcpy_x(f3.BrokerID, m_broker_id.c_str());
+				strcpy_x(f3.UserID, _req_login.user_name.c_str());
+				strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+				strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+				strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+				cancelOrder.f = f3;
+
+				task.has_order_to_cancel = true;
+				task.orders_to_cancel.push_back(cancelOrder);
+
+			}
+		}//end for
+
+		//如果今仓手数大于零(包括冻结的今仓手数),平今
+		if (pos.pos_short_today  > 0)
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -8009,7 +8051,7 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平今
 			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
 			f.Direction = THOST_FTDC_D_Buy;
-			f.VolumeTotalOriginal = pos.pos_short_today - pos.volume_short_frozen_today;
+			f.VolumeTotalOriginal = pos.pos_short_today;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
 			if (SetConditionOrderPrice(f,order,co,ins))
@@ -8034,8 +8076,8 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 			}								
 		}
 
-		//如果可平昨仓手数大于零
-		if (pos.pos_short_his - pos.volume_short_frozen_his > 0)
+		//如果昨仓手数大于零(包括冻结的昨仓手数)
+		if (pos.pos_short_his > 0)
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -8047,7 +8089,7 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平昨
 			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
 			f.Direction = THOST_FTDC_D_Buy;
-			f.VolumeTotalOriginal = pos.pos_short_his - pos.volume_short_frozen_his;
+			f.VolumeTotalOriginal = pos.pos_short_his;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
 			if (SetConditionOrderPrice(f,order,co,ins))
@@ -8074,8 +8116,6 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 
 		if (task.has_first_orders_to_send)
 		{
-			task.has_order_to_cancel = false;
-			task.has_second_orders_to_send = false;
 			return true;
 		}
 		else
@@ -8086,8 +8126,47 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 	//卖平
 	else
 	{
-		//如果可平今仓手数大于零
-		if (pos.pos_long_today - pos.volume_long_frozen_today > 0)
+		task.has_second_orders_to_send = false;
+
+		//撤掉所有平仓的挂单
+		for (auto it : m_data.m_orders)
+		{
+			const std::string& orderId = it.first;
+			const Order& order = it.second;
+			if (order.status == kOrderStatusFinished)
+			{
+				continue;
+			}
+
+			if (order.symbol() != symbol)
+			{
+				continue;
+			}
+
+			if ((order.direction == kDirectionSell)
+				&& ((order.offset == kOffsetClose) || (order.offset == kOffsetCloseToday)))
+			{
+				CtpActionCancelOrder cancelOrder;
+				cancelOrder.local_key.order_id = orderId;
+				cancelOrder.local_key.user_id = _req_login.user_name.c_str();
+
+				CThostFtdcInputOrderActionField f3;
+				memset(&f3, 0, sizeof(CThostFtdcInputOrderActionField));
+				strcpy_x(f3.BrokerID, m_broker_id.c_str());
+				strcpy_x(f3.UserID, _req_login.user_name.c_str());
+				strcpy_x(f3.InvestorID, _req_login.user_name.c_str());
+				strcpy_x(f3.ExchangeID, order.exchange_id.c_str());
+				strcpy_x(f3.InstrumentID, order.instrument_id.c_str());
+
+				cancelOrder.f = f3;
+
+				task.has_order_to_cancel = true;
+				task.orders_to_cancel.push_back(cancelOrder);
+			}
+		}//end for
+
+		//如果今仓手数大于零(包括冻结的今仓手数),平今
+		if (pos.pos_long_today > 0)
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -8099,7 +8178,7 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平今
 			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
 			f.Direction = THOST_FTDC_D_Sell;
-			f.VolumeTotalOriginal = pos.pos_long_today - pos.volume_long_frozen_today;
+			f.VolumeTotalOriginal = pos.pos_long_today;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
 			if (SetConditionOrderPrice(f, order, co, ins))
@@ -8121,8 +8200,8 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 			}
 		}
 
-		//如果可平昨仓手数大于零
-		if (pos.pos_long_his - pos.volume_long_frozen_his > 0)
+		//如果昨仓手数大于零(包括冻结的昨仓手数),平昨
+		if (pos.pos_long_his > 0)
 		{
 			CThostFtdcInputOrderField f;
 			memset(&f, 0, sizeof(CThostFtdcInputOrderField));
@@ -8134,7 +8213,7 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平昨
 			f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
 			f.Direction = THOST_FTDC_D_Sell;
-			f.VolumeTotalOriginal = pos.pos_long_his - pos.volume_long_frozen_his;
+			f.VolumeTotalOriginal = pos.pos_long_his;
 			f.VolumeCondition = THOST_FTDC_VC_AV;
 
 			if (SetConditionOrderPrice(f,order,co,ins))
@@ -8157,9 +8236,7 @@ bool traderctp::ConditionOrder_CloseAll(const ConditionOrder& order
 		}
 
 		if (task.has_first_orders_to_send)
-		{
-			task.has_order_to_cancel = false;
-			task.has_second_orders_to_send = false;
+		{			
 			return true;
 		}
 		else
@@ -8199,13 +8276,13 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
 		{
-			//要平的手数小于等于可平手数
+			//要平的手数小于等于可平手数,不需要撤单
 			if (co.volume <= pos.pos_short_his+ pos.pos_short_today - pos.volume_short_frozen)
 			{
 				f.VolumeTotalOriginal = co.volume;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
-			//要平的手数小于等于可平手数(包括冻结的手数)
+			//要平的手数小于等于可平手数(包括冻结的手数),需要撤掉所有挂单
 			else if (co.volume <= pos.pos_short_his + pos.pos_short_today)
 			{
 				if (order.is_cancel_ori_close_order)
@@ -8227,6 +8304,13 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 					return false;
 				}
 			}
+			//仍然发出平仓指今以应对组合持仓的情况
+			else if (co.volume>0)
+			{
+				f.VolumeTotalOriginal = co.volume;
+				f.VolumeCondition = THOST_FTDC_VC_AV;
+				needCancelOrderType = ENeedCancelOrderType::all_buy;
+			}
 			else
 			{
 				Log().WithField("fun","ConditionOrder_Close")
@@ -8241,42 +8325,45 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
-			//如果可平手数大于零
-			if (pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen > 0)
+			//如果是组合持仓,且用了close_all指令,这里没法处理
+
+			//先要撤掉所有平仓挂单
+			needCancelOrderType = ENeedCancelOrderType::all_buy;			
+			//如果有持仓(包括冻结的持仓),全部平掉
+			if (pos.pos_short_his + pos.pos_short_today > 0)
 			{
-				f.VolumeTotalOriginal = pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen;
+				f.VolumeTotalOriginal = pos.pos_short_his + pos.pos_short_today;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
 			else
 			{
-				Log().WithField("fun","ConditionOrder_Close")
-					.WithField("key",_key)
-					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
+				Log().WithField("fun", "ConditionOrder_Close")
+					.WithField("key", _key)
+					.WithField("bid", _req_login.bid)
+					.WithField("user_name", _req_login.user_name)
 					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id",co.instrument_id)
-					.Log(LOG_WARNING,"have no need close short");				
+					.WithField("instrument_id", co.instrument_id)
+					.Log(LOG_WARNING, "have no need close short because of short position is zero");
 				return false;
-			}
+			}			
 		}
 	}
 	//卖平
 	else
 	{
 		f.Direction = THOST_FTDC_D_Sell;
-		Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
+		Position& pos = GetPosition(co.exchange_id,co.instrument_id,_req_login.user_name);
 
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
 		{
-			//要平的手数小于等于可平的手数
+			//要平的手数小于等于可平的手数,不需要撤单
 			if (co.volume <= pos.pos_long_his+ pos.pos_long_today - pos.volume_long_frozen)
 			{
 				f.VolumeTotalOriginal = co.volume;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
-			//要平的手数小于等于可平手数(包括冻结的手数)
+			//要平的手数小于等于可平手数(包括冻结的手数),需要撤掉所有挂单
 			else if (co.volume <= pos.pos_long_his + pos.pos_long_today)
 			{
 				if (order.is_cancel_ori_close_order)
@@ -8297,6 +8384,13 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 					return false;
 				}
 			}
+			//仍然发出平仓指今以应对组合持仓的情况
+			else if (co.volume > 0)
+			{
+				f.VolumeTotalOriginal = co.volume;
+				f.VolumeCondition = THOST_FTDC_VC_AV;
+				needCancelOrderType = ENeedCancelOrderType::all_sell;
+			}
 			else
 			{
 				Log().WithField("fun","ConditionOrder_Close")
@@ -8312,11 +8406,15 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
-			//如果可平手数大于零
-			if (pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen > 0)
+			//如果是组合持仓,且用了close_all指令,这里没法处理
+
+			//先要撤掉所有平仓挂单
+			needCancelOrderType = ENeedCancelOrderType::all_sell;
+			
+			//如果有持仓(包括冻结的持仓),全部平掉
+			if (pos.pos_long_his + pos.pos_long_today > 0)
 			{
-				f.VolumeTotalOriginal = pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen;
+				f.VolumeTotalOriginal = pos.pos_long_his + pos.pos_long_today;
 				f.VolumeCondition = THOST_FTDC_VC_AV;
 			}
 			else
@@ -8324,12 +8422,12 @@ bool traderctp::ConditionOrder_Close(const ConditionOrder& order
 				Log().WithField("fun","ConditionOrder_Close")
 					.WithField("key",_key)
 					.WithField("bid",_req_login.bid)
-					.WithField("user_name",_req_login.user_name)
+					.WithField("user_name", _req_login.user_name)
 					.WithField("exchange_id", co.exchange_id)
-					.WithField("instrument_id",co.instrument_id)
-					.Log(LOG_WARNING,"have no need close long");				
+					.WithField("instrument_id", co.instrument_id)
+					.Log(LOG_WARNING,"have no need close long because of long position is zero");
 				return false;
-			}
+			}			
 		}
 	}
 
@@ -8962,7 +9060,7 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.WithField("order_id", order.order_id)
+		.WithField("order_id",order.order_id)
 		.WithPack("co_pack",strMsg)
 		.Log(LOG_INFO,"condition order is touched");
 
@@ -9006,10 +9104,12 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 					{
 						if (order.is_cancel_ori_close_order)
 						{
+							//平今优先，如果可平不足需要撤原平仓单
 							flag = ConditionOrder_CloseTodayPrior_NeedCancel(order, co, *ins, task, nOrderIndex);
 						}
 						else
 						{
+							//平今优先,如果可平不足不需要撤原平仓单
 							flag = ConditionOrder_CloseTodayPrior_NotNeedCancel(order, co, *ins, task, nOrderIndex);
 						}
 					}
@@ -9018,10 +9118,12 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 					{
 						if (order.is_cancel_ori_close_order)
 						{
+							//平昨优先,如果可平不足需要撤原平仓单
 							flag = ConditionOrder_CloseYesTodayPrior_NeedCancel(order, co, *ins, task, nOrderIndex);
 						}
 						else
 						{
+							//平昨优先,如果可平不足不需要撤原平仓单
 							flag = ConditionOrder_CloseYesTodayPrior_NotNeedCancel(order, co, *ins, task, nOrderIndex);
 						}
 					}
@@ -9029,6 +9131,7 @@ void traderctp::OnTouchConditionOrder(const ConditionOrder& order)
 				//如果是全平
 				else if (EVolumeType::close_all == co.volume_type)
 				{
+					//先撤掉所有平仓挂单,再平掉所有今昨仓
 					flag = ConditionOrder_CloseAll(order, co, *ins, task, nOrderIndex);
 				}						
 			}

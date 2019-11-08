@@ -4690,9 +4690,34 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 	//买平
 	if (EOrderDirection::buy == co.direction)
 	{
+		//先撤掉所有平昨仓的单子
+		for (auto it : m_data.m_orders)
+		{
+			const std::string& orderId = it.first;
+			const Order& order = it.second;
+			if (order.status == kOrderStatusFinished)
+			{
+				continue;
+			}
+			if (order.symbol() != symbol)
+			{
+				continue;
+			}
+
+			if ((order.direction == kDirectionBuy)
+				&& (order.offset == kOffsetClose))
+			{
+				ActionOrder action_cancel_order;
+				action_cancel_order.aid = "cancel_order";
+				action_cancel_order.order_id = orderId;
+				action_cancel_order.user_id = _req_login.user_name.c_str();
+				OnConditionOrderReqCancelOrder(action_cancel_order);
+			}
+		}
+
 		bool flag = false;
-		//如果可平今仓手数大于零
-		if (pos.pos_short_today - pos.volume_short_frozen_today > 0)
+		//如果今仓手数大于零
+		if (pos.pos_short_today> 0)
 		{
 			ActionOrder action_insert_order;
 			action_insert_order.aid = "insert_order";
@@ -4704,7 +4729,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平今
 			action_insert_order.offset = kOffsetCloseToday;
 			//数量
-			action_insert_order.volume = pos.pos_short_today - pos.volume_short_frozen_today;
+			action_insert_order.volume = pos.pos_short_today;
 			action_insert_order.volume_condition = kOrderVolumeConditionAny;
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
@@ -4712,7 +4737,6 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closetoday_" + std::to_string(nOrderIndex);
 				OnConditionOrderReqInsertOrder(action_insert_order);
-
 				flag = true;
 			}
 			//价格设置错误
@@ -4731,8 +4755,8 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			}
 		}
 
-		//如果可平昨仓手数大于零
-		if (pos.pos_short_his - pos.volume_short_frozen_his > 0)
+		//如果昨仓手数大于零
+		if (pos.pos_short_his> 0)
 		{
 			ActionOrder action_insert_order;
 			action_insert_order.aid = "insert_order";
@@ -4744,7 +4768,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平昨
 			action_insert_order.offset = kOffsetClose;
 			//数量
-			action_insert_order.volume = pos.pos_short_his - pos.volume_short_frozen_his;
+			action_insert_order.volume = pos.pos_short_his;
 			action_insert_order.volume_condition = kOrderVolumeConditionAny;
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
@@ -4752,7 +4776,6 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 				action_insert_order.hedge_flag = kHedgeFlagSpeculation;
 				action_insert_order.order_id = order.order_id + "_closeyestoday_" + std::to_string(nOrderIndex);
 				OnConditionOrderReqInsertOrder(action_insert_order);
-
 				flag = true;
 			}
 			//价格设置错误
@@ -4776,9 +4799,35 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 	//卖平
 	else
 	{
+			
+		//先撤掉所有平仓的单子
+		for (auto it : m_data.m_orders)
+		{
+			const std::string& orderId = it.first;
+			const Order& order = it.second;
+			if (order.status == kOrderStatusFinished)
+			{
+				continue;
+			}
+			if (order.symbol() != symbol)
+			{
+				continue;
+			}
+
+			if ((order.direction == kDirectionSell)
+				&& ((order.offset == kOffsetCloseToday) || (order.offset == kOffsetClose)))
+			{
+				ActionOrder action_cancel_order;
+				action_cancel_order.aid = "cancel_order";
+				action_cancel_order.order_id = orderId;
+				action_cancel_order.user_id = _req_login.user_name.c_str();
+				OnConditionOrderReqCancelOrder(action_cancel_order);
+			}
+		}
+
 		bool flag = false;
-		//如果可平今仓手数大于零
-		if (pos.pos_long_today - pos.volume_long_frozen_today > 0)
+		//如果今仓手数大于零
+		if (pos.pos_long_today > 0)
 		{
 			ActionOrder action_insert_order;
 			action_insert_order.aid = "insert_order";
@@ -4790,7 +4839,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平今
 			action_insert_order.offset = kOffsetCloseToday;
 			//数量
-			action_insert_order.volume = pos.pos_long_today - pos.volume_long_frozen_today;
+			action_insert_order.volume = pos.pos_long_today;
 			action_insert_order.volume_condition = kOrderVolumeConditionAny;
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
@@ -4817,8 +4866,8 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			}
 		}
 
-		//如果可平昨仓手数大于零
-		if (pos.pos_long_his - pos.volume_long_frozen_his > 0)
+		//如果昨仓手数大于零
+		if (pos.pos_long_his > 0)
 		{
 			ActionOrder action_insert_order;
 			action_insert_order.aid = "insert_order";
@@ -4830,7 +4879,7 @@ bool tradersim::ConditionOrder_CloseAll(const ConditionOrder& order
 			//平昨
 			action_insert_order.offset = kOffsetClose;
 			//数量
-			action_insert_order.volume = pos.pos_long_his - pos.volume_long_frozen_his;
+			action_insert_order.volume = pos.pos_long_his;
 			action_insert_order.volume_condition = kOrderVolumeConditionAny;
 
 			if (SetConditionOrderPrice(action_insert_order, order, co, ins))
@@ -5029,11 +5078,13 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
-			Position& position = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
+			//先要撤掉所有平仓挂单
+			needCancelOrderType = ENeedCancelOrderType::all_buy;
+						
 			//如果可平手数大于零
-			if (pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen > 0)
+			if (pos.pos_short_his + pos.pos_short_today  > 0)
 			{
-				action_insert_order.volume = pos.pos_short_his + pos.pos_short_today - pos.volume_short_frozen;
+				action_insert_order.volume = pos.pos_short_his + pos.pos_short_today;
 				action_insert_order.volume_condition = kOrderVolumeConditionAny;
 			}
 			else
@@ -5045,7 +5096,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("order_id", order.order_id)
 					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
-					.Log(LOG_WARNING,"have no need close short");			
+					.Log(LOG_WARNING,"have no need close short because of short position is zero");			
 				return false;
 			}
 		}
@@ -5054,8 +5105,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 	else
 	{
 		action_insert_order.direction = kDirectionSell;
-		Position& pos = GetPosition(co.exchange_id, co.instrument_id, _req_login.user_name);
-
+		
 		//数量类型
 		if (EVolumeType::num == co.volume_type)
 		{
@@ -5103,10 +5153,12 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 		}
 		else if (EVolumeType::close_all == co.volume_type)
 		{
+			needCancelOrderType = ENeedCancelOrderType::all_sell;
+
 			//如果可平手数大于零
-			if (pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen > 0)
+			if (pos.pos_long_his + pos.pos_long_today> 0)
 			{
-				action_insert_order.volume = pos.pos_long_his + pos.pos_long_today - pos.volume_long_frozen;
+				action_insert_order.volume = pos.pos_long_his + pos.pos_long_today;
 				action_insert_order.volume_condition = kOrderVolumeConditionAny;
 			}
 			else
@@ -5118,7 +5170,7 @@ bool tradersim::ConditionOrder_Close(const ConditionOrder& order
 					.WithField("order_id", order.order_id)
 					.WithField("exchange_id", co.exchange_id)
 					.WithField("instrument_id",co.instrument_id)
-					.Log(LOG_WARNING,"have no need close long");				
+					.Log(LOG_WARNING,"have no need close long because of long position is zero");				
 				return false;
 			}
 		}
