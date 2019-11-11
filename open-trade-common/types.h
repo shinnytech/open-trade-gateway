@@ -57,22 +57,30 @@ const std::string USER_PRODUCT_INFO_NAME = "SHINNYOTG";
 struct Instrument
 {
 	Instrument()
-	{
-		product_class = kProductClassFutures;
-		price_tick = NAN;
-		last_price = NAN;
-		pre_settlement = NAN;
-		margin = 0.0;
-		commission = 0.0;
-		upper_limit = NAN;
-		lower_limit = NAN;
-		ask_price1 = NAN;
-		bid_price1 = NAN;
+		:expired(false)
+		,product_class(kProductClassFutures)
+		,volume_multiple(0)
+		,volume(0)
+		,margin(0.0)
+		,commission(0.0)
+		,price_tick(NAN)
+		,last_price(NAN)
+		,pre_settlement(NAN)
+		,upper_limit(NAN)
+		,lower_limit(NAN)
+		,ask_price1(NAN)
+		,bid_price1(NAN)
+		,settlement(NAN)
+		,pre_close(NAN)
+	{	
 	}
 
 	bool expired;
+
 	long product_class;
 	long volume_multiple;
+	long volume;
+
 	volatile double margin;
 	volatile double commission;
 	volatile double price_tick;
@@ -83,6 +91,8 @@ struct Instrument
 	volatile double lower_limit;
 	volatile double ask_price1;
 	volatile double bid_price1;
+	volatile double settlement;
+	volatile double pre_close;
 };
 
 const int kNotifyTypeMessage = 1;

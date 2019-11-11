@@ -22,12 +22,15 @@ public:
 
 	void DefineStruct(Instrument& data)
 	{
-		AddItem(data.last_price, ("last_price"));
-		AddItem(data.pre_settlement, ("pre_settlement"));
-		AddItem(data.upper_limit, ("upper_limit"));
-		AddItem(data.lower_limit, ("lower_limit"));
-		AddItem(data.ask_price1, ("ask_price1"));
-		AddItem(data.bid_price1, ("bid_price1"));		
+		AddItem(data.last_price,("last_price"));
+		AddItem(data.pre_settlement,("pre_settlement"));
+		AddItem(data.upper_limit,("upper_limit"));
+		AddItem(data.lower_limit,("lower_limit"));
+		AddItem(data.ask_price1,("ask_price1"));
+		AddItem(data.bid_price1,("bid_price1"));		
+		AddItem(data.settlement,("settlement"));
+		AddItem(data.pre_close,("pre_close"));		
+		AddItem(data.volume,("volume"));
 	}
 };
 
@@ -288,6 +291,9 @@ void  md_connection::OnMessage(const std::string &json_str)
 		instObj.AddMember("lower_limit", it->second.lower_limit, instDoc.GetAllocator());
 		instObj.AddMember("ask_price1", it->second.ask_price1, instDoc.GetAllocator());
 		instObj.AddMember("bid_price1", it->second.bid_price1, instDoc.GetAllocator());		
+		instObj.AddMember("settlement", it->second.settlement, instDoc.GetAllocator());
+		instObj.AddMember("pre_close", it->second.pre_close, instDoc.GetAllocator());
+		instObj.AddMember("volume", it->second.volume, instDoc.GetAllocator());
 		rapidjson::Pointer(strKey.c_str()).Set(instDoc,instObj);
 		std::string strMerge = "";
 		ToString(instDoc,strMerge);
