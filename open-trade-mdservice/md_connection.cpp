@@ -27,7 +27,7 @@ public:
 		AddItem(data.upper_limit, ("upper_limit"));
 		AddItem(data.lower_limit, ("lower_limit"));
 		AddItem(data.ask_price1, ("ask_price1"));
-		AddItem(data.bid_price1, ("bid_price1"));
+		AddItem(data.bid_price1, ("bid_price1"));		
 	}
 };
 
@@ -46,7 +46,7 @@ md_connection::md_connection(boost::asio::io_context& ios
 	, m_input_buffer()
 	, m_output_buffer()	
 	, m_connect_to_server(false)
-{
+{	
 }
 
 md_connection::~md_connection()
@@ -131,7 +131,15 @@ void md_connection::OnConnect(boost::system::error_code ec)
 		return;
 	}
 	m_connect_to_server = true;
-	//Perform the websocket handshake
+	
+	boost::beast::websocket::permessage_deflate pmd;
+	pmd.client_enable = true;
+	pmd.server_enable = true;	
+	m_ws_socket.set_option(pmd);
+	m_ws_socket.auto_fragment(false);
+	m_ws_socket.read_message_max(64 * 1024 * 1024);
+
+	//Perform the websocket handshake	
 	m_ws_socket.set_option(boost::beast::websocket::stream_base::decorator(
 		[](boost::beast::websocket::request_type& m)
 	{
@@ -141,7 +149,7 @@ void md_connection::OnConnect(boost::system::error_code ec)
 	m_ws_socket.async_handshake(md_host,md_path,
 		boost::beast::bind_front_handler(
 			&md_connection::OnHandshake
-			,shared_from_this()));
+			,shared_from_this()));	
 }
 
 void md_connection::OnHandshake(boost::system::error_code ec)
@@ -292,7 +300,7 @@ void  md_connection::OnMessage(const std::string &json_str)
 			.WithField("key","mdservice")
 			.WithPack("diff",strDiff)
 			.WithPack("merge",strMerge)
-			.Log(LOG_INFO, "md_connection receive md message");		
+			.Log(LOG_INFO, "md_connection receive md message");	
 	}
 }
 

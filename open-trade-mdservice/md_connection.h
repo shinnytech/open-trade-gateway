@@ -58,7 +58,7 @@ private:
 
 	boost::asio::ip::tcp::resolver m_resolver;
 
-	boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;
+	boost::beast::websocket::stream<boost::asio::ip::tcp::socket,true> m_ws_socket;
 
 	boost::beast::multi_buffer m_input_buffer;
 
