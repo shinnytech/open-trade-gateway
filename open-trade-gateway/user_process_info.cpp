@@ -418,7 +418,7 @@ void UserProcessInfo::ReceiveMsg_i(const std::string& key)
 		}
 		catch (const std::exception& ex)
 		{
-			Log().WithField("fun","StartProcess_i")
+			Log().WithField("fun","ReceiveMsg_i")
 				.WithField("key","gateway")				
 				.WithField("errmsg",ex.what())
 				.Log(LOG_ERROR,"ReceiveMsg_i Erro");			

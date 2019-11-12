@@ -1809,12 +1809,37 @@ void tradersim::RecaculatePositionAndFloatProfit()
 
 		//得到最新价
 		double last_price = ps.ins->last_price;
-
-		//如果最新价不合法,用昨结算价
-		if (!IsValid(last_price))
+		//开盘前
+		if (!IsValid(ps.ins->last_price) && !IsValid(ps.ins->settlement))
 		{
-			last_price = ps.ins->pre_settlement;
+			if (ps.market_status != 0)
+			{
+				ps.market_status = 0;
+				ps.changed = true;
+			}
+			last_price = ps.ins->pre_close;
+			if (!IsValid(last_price))
+				last_price = ps.ins->pre_settlement;
 		}
+		else if (IsValid(ps.ins->last_price) && !IsValid(ps.ins->settlement))
+		{
+			if (ps.market_status != 1)
+			{
+				ps.market_status = 1;
+				ps.changed = true;
+			}
+			last_price = ps.ins->last_price;
+		}
+		//收盘后
+		else if (IsValid(ps.ins->last_price) && IsValid(ps.ins->settlement))
+		{
+			if (ps.market_status != 2)
+			{
+				ps.market_status = 2;
+				ps.changed = true;
+			}
+			last_price = ps.ins->last_price;
+		}			
 
 		if ((IsValid(last_price) && (last_price != ps.last_price)) || ps.changed)
 		{

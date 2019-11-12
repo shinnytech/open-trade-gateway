@@ -363,6 +363,7 @@ struct Position
 		//内部使用
 		ins = NULL;
 		changed = true;
+		market_status = 1;
 	}
 
 	//交易所和合约代码
@@ -472,6 +473,9 @@ struct Position
 	const Instrument* ins;
 
 	bool changed;
+
+	//当前市场状态:0,开盘前;1:交易中;2:收盘后
+	int market_status;
 };
 
 struct Account
