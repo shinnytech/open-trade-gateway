@@ -2688,10 +2688,10 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 	{
 		std::stringstream ss;
 		ss << pOrder->FrontID
-			<< pOrder->SessionID
-			<< pOrder->OrderRef
-			<< pOrder->OrderSubmitStatus
-			<< pOrder->OrderStatus;
+			<< "_" << pOrder->SessionID
+			<< "_" << pOrder->OrderRef
+			<< "_" << pOrder->OrderSubmitStatus
+			<< "_" << pOrder->OrderStatus;
 		std::string strKey = ss.str();
 		std::map<std::string, std::string>::iterator it = m_rtn_order_log_map.find(strKey);
 		if (it == m_rtn_order_log_map.end())
