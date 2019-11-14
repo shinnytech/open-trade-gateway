@@ -312,8 +312,8 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 
 			m_settlement_info = "";
 
-			m_notify_seq = 0;
-			m_data_seq = 0;
+			m_notify_seq.store(0);
+			m_data_seq.store(0);
 			_requestID.store(0);
 
 			m_trading_day = "";
@@ -2263,7 +2263,7 @@ void traderctp::ProcessOnErrRtnBankToFutureByFuture(
 
 	if (!m_req_transfer_list.empty())
 	{
-		OutputNotifyAllAsych(pRspInfo->ErrorID
+		OutputNotifyAllSycn(pRspInfo->ErrorID
 			, u8"银行资金转期货错误," + GBKToUTF8(pRspInfo->ErrorMsg)
 			, "WARNING");
 		m_req_transfer_list.pop_front();
@@ -2688,7 +2688,7 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 	{
 		std::stringstream ss;
 		ss << pOrder->FrontID
-			<< "_" << pOrder->SessionID
+			<<"_"<< pOrder->SessionID
 			<< "_" << pOrder->OrderRef
 			<< "_" << pOrder->OrderSubmitStatus
 			<< "_" << pOrder->OrderStatus;
@@ -3001,7 +3001,7 @@ void traderctp::ProcessOnRtnTradingNotice(std::shared_ptr<CThostFtdcTradingNotic
 	auto s = GBKToUTF8(pTradingNoticeInfo->FieldContent);
 	if (!s.empty())
 	{		
-		OutputNotifyAllAsych(332,s);
+		OutputNotifyAllSycn(332,s);
 	}
 }
 
@@ -4891,8 +4891,8 @@ void traderctp::ClearOldData()
 
 	m_settlement_info = "";
 
-	m_notify_seq = 0;
-	m_data_seq = 0;
+	m_notify_seq.store(0);
+	m_data_seq.store(0);
 	_requestID.store(0);
 
 	m_trading_day = "";
@@ -5469,30 +5469,6 @@ void traderctp::SendMsgAll(std::shared_ptr<std::string> conn_str_ptr, std::share
 	}
 }
 
-void traderctp::OutputNotifyAsych(int connId, long notify_code, const std::string& notify_msg
-	, const char* level, const char* type)
-{
-	//构建数据包
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
-
-	rapidjson::Value node_message;
-	node_message.SetObject();
-	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("session_id",m_session_id,nss.m_doc->GetAllocator());	
-	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
-	
-	std::string json_str;
-	nss.ToString(&json_str);
-
-	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
-}
-
 void traderctp::OutputNotifySycn(int connId, long notify_code
 	, const std::string& notify_msg, const char* level
 	, const char* type)
@@ -5516,35 +5492,6 @@ void traderctp::OutputNotifySycn(int connId, long notify_code
 
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	_ios.post(boost::bind(&traderctp::SendMsg, this, connId, msg_ptr));
-}
-
-void traderctp::OutputNotifyAllAsych(long notify_code
-	, const std::string& ret_msg, const char* level
-	, const char* type)
-{
-	//构建数据包
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
-
-	rapidjson::Value node_message;
-	node_message.SetObject();
-	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
-	
-	std::string json_str;
-	nss.ToString(&json_str);
-
-	std::string str = GetConnectionStr();
-	if (!str.empty())
-	{
-		std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-		std::shared_ptr<std::string> conn_ptr(new std::string(str));
-		_ios.post(boost::bind(&traderctp::SendMsgAll, this, conn_ptr, msg_ptr));
-	}
 }
 
 void traderctp::OutputNotifyAllSycn(long notify_code

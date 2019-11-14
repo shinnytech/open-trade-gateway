@@ -613,30 +613,6 @@ void tradersim::OnIdle()
 	}
 }
 
-void tradersim::OutputNotifyAsych(int connId, long notify_code, const std::string& notify_msg
-	, const char* level, const char* type)
-{
-	//构建数据包
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
-	
-	rapidjson::Value node_message;
-	node_message.SetObject();
-	node_message.AddMember("type",rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("level",rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("code",notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
-	node_message.AddMember("content",rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(),nss.m_doc->GetAllocator());
-	
-	rapidjson::Pointer("/data/0/notify/N"+std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
-	
-	std::string json_str;
-	nss.ToString(&json_str);
-	
-	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios.post(boost::bind(&tradersim::SendMsg,this,connId, msg_ptr));
-}
-
 void tradersim::OutputNotifySycn(int connId, long notify_code
 	, const std::string& notify_msg, const char* level
 	, const char* type)
@@ -661,32 +637,6 @@ void tradersim::OutputNotifySycn(int connId, long notify_code
 
 	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
 	SendMsg(connId, msg_ptr);
-}
-
-void tradersim::OutputNotifyAllAsych(long notify_code
-	, const std::string& ret_msg, const char* level
-	, const char* type)
-{
-	//构建数据包
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc,"rtn_data");
-
-	rapidjson::Value node_message;
-	node_message.SetObject();
-	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str()
-		,nss.m_doc->GetAllocator()).Move()
-		,nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
-	
-	std::string json_str;
-	nss.ToString(&json_str);
-
-	std::shared_ptr<std::string> msg_ptr(new std::string(json_str));
-	_ios.post(boost::bind(&tradersim::SendMsgAll, this, msg_ptr));
 }
 
 void tradersim::OutputNotifyAllSycn(long notify_code

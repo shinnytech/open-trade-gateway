@@ -156,9 +156,9 @@ private:
 
 	boost::shared_ptr<boost::thread> _thread_ptr;
 
-	int m_notify_seq;
+	std::atomic_int m_notify_seq;
 
-	int m_data_seq;
+	std::atomic_int m_data_seq;
 
 	ReqLogin _req_login;	
 
@@ -302,19 +302,11 @@ private:
 	void NotifyContinueProcessMsg(bool flag);
 	
 	void ProcessReqLogIn(int connId,ReqLogin& req);
-
-	void OutputNotifyAsych(int connId, long notify_code
-		, const std::string& ret_msg, const char* level = "INFO"
-		, const char* type = "MESSAGE");
-
+		
 	void OutputNotifySycn(int connId, long notify_code
 		, const std::string& ret_msg, const char* level = "INFO"
 		, const char* type = "MESSAGE");	
-
-	void OutputNotifyAllAsych(long notify_code
-		, const std::string& ret_msg, const char* level = "INFO"
-		, const char* type = "MESSAGE");
-
+		
 	void OutputNotifyAllSycn(long notify_code
 		, const std::string& ret_msg, const char* level = "INFO"
 		, const char* type = "MESSAGE");

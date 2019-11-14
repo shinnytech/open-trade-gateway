@@ -122,11 +122,11 @@ private:
 
 	bool m_something_changed;
 
-	int m_notify_seq;
+	std::atomic_int m_notify_seq;
 
-	int m_data_seq;
+	std::atomic_int m_data_seq;
 
-	int m_last_seq_no;
+	std::atomic_int m_last_seq_no;
 
 	bool m_peeking_message;
 
@@ -149,20 +149,12 @@ private:
 	void CloseConnection(int nId);
 
 	bool IsConnectionLogin(int nId);
-
-	void OutputNotifyAsych(int connId, long notify_code
-		, const std::string& ret_msg, const char* level = "INFO"
-		, const char* type = "MESSAGE");
-
+	
 	void OutputNotifySycn(int connId, long notify_code
 		, const std::string& ret_msg, const char* level = "INFO"
 		, const char* type = "MESSAGE");
 
 	void SendMsg(int connId,std::shared_ptr<std::string> msg_ptr);
-
-	void OutputNotifyAllAsych(long notify_code
-		, const std::string& ret_msg, const char* level = "INFO"
-		, const char* type = "MESSAGE");
 
 	void OutputNotifyAllSycn(long notify_code
 		, const std::string& ret_msg, const char* level = "INFO"
