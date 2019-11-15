@@ -296,9 +296,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_input_order_key_map.clear();
 			m_action_order_map.clear();
 			m_req_transfer_list.clear();
-			m_insert_order_set.clear();
-			m_cancel_order_set.clear();
-
+			
 			m_data.m_accounts.clear();
 			m_data.m_banks.clear();
 			m_data.m_orders.clear();
@@ -351,6 +349,8 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
+			m_insert_order_set.clear();
+			m_cancel_order_set.clear();
 
 			m_is_qry_his_settlement_info.store(false);
 			m_his_settlement_info = "";
@@ -367,6 +367,8 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
+			m_insert_order_set.clear();
+			m_cancel_order_set.clear();
 			OutputNotifyAllSycn(323,u8"交易服务器重登录成功");
 
 			m_req_position_id++;
@@ -446,6 +448,8 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			m_front_id = pRspUserLogin->FrontID;
 			m_session_id = pRspUserLogin->SessionID;
 			m_order_ref = atoi(pRspUserLogin->MaxOrderRef);
+			m_insert_order_set.clear();
+			m_cancel_order_set.clear();
 			OutputNotifySycn(m_loging_connectId,324,u8"登录成功");
 			AfterLogin();
 			SetExchangeTime(*pRspUserLogin);
