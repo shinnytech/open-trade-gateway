@@ -73,11 +73,7 @@ private:
 
 	void on_read_header(boost::beast::error_code ec
 		, std::size_t bytes_transferred);
-
-	void OutputNotifySycn(long notify_code
-		, const std::string& ret_msg, const char* level = "INFO"
-		, const char* type = "MESSAGE");
-
+	
 	boost::asio::io_context& m_ios;
 		
 	boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_ws_socket;

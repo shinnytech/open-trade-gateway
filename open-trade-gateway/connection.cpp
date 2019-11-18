@@ -329,26 +329,6 @@ void connection::OnCloseConnection()
 	}	
 }
 
-void connection::OutputNotifySycn(long notify_code
-	, const std::string& notify_msg, const char* level
-	, const char* type)
-{
-	//构建数据包
-	SerializerTradeBase nss;
-	rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
-	rapidjson::Value node_message;
-	node_message.SetObject();
-	node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
-	node_message.AddMember("session_id",0,nss.m_doc->GetAllocator());
-	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(0)).Set(*nss.m_doc, node_message);
-	std::string json_str;
-	nss.ToString(&json_str);
-	SendTextMsg(json_str);	
-}
-
 void connection::DoRead()
 {
 	m_ws_socket.async_read(
@@ -470,9 +450,7 @@ bool connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 			.WithField("bid", req.bid)
 			.Log(LOG_WARNING, "trade server req_login invalid bid");
 
-		std::stringstream ss;
-		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(311, ss.str(), "WARNING");
+		OnCloseConnection();
 		return true;
 	}
 
@@ -501,9 +479,7 @@ bool connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 
 	if (!flag)
 	{
-		std::stringstream ss;
-		ss << u8"暂不支持:" << req.bid << u8",请联系该期货公司或快期技术支持人员!";
-		OutputNotifySycn(311, ss.str(), "WARNING");
+		OnCloseConnection();
 		return true;
 	}
 

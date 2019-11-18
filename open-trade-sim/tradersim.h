@@ -122,8 +122,6 @@ private:
 
 	bool m_something_changed;
 
-	std::atomic_int m_notify_seq;
-
 	std::atomic_int m_data_seq;
 
 	std::atomic_int m_last_seq_no;

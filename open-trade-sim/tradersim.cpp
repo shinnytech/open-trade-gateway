@@ -41,7 +41,6 @@ tradersim::tradersim(boost::asio::io_context& ios
 ,m_logined_connIds()
 ,m_account(NULL)
 ,m_something_changed(false)
-,m_notify_seq(0)
 ,m_data_seq(0)
 ,m_last_seq_no(0)
 ,m_peeking_message(false)
@@ -631,7 +630,7 @@ void tradersim::OutputNotifySycn(int connId, long notify_code
 		, nss.m_doc->GetAllocator()).Move()
 		, nss.m_doc->GetAllocator());
 	
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	rapidjson::Pointer("/data/0/notify/" + GenerateGuid()).Set(*nss.m_doc, node_message);
 	std::string json_str;
 	nss.ToString(&json_str);
 
@@ -656,7 +655,7 @@ void tradersim::OutputNotifyAllSycn(long notify_code
 	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str()
 		, nss.m_doc->GetAllocator()).Move()
 		, nss.m_doc->GetAllocator());
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc,node_message);
+	rapidjson::Pointer("/data/0/notify/" + GenerateGuid()).Set(*nss.m_doc,node_message);
 
 	std::string json_str;
 	nss.ToString(&json_str);

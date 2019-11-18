@@ -13,6 +13,9 @@
 #include <stdio.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 std::string GenerateUniqFileName()
 {	
@@ -166,4 +169,22 @@ void CutDigital_Ex(std::string& instId)
 
 	instId= vecs[0];
 	CutDigital(instId);
+}
+
+std::string GenerateGuid()
+{
+	std::string result;
+	result.reserve(36);	
+	boost::uuids::uuid u = boost::uuids::random_generator()();
+	std::size_t i = 0;
+	for (boost::uuids::uuid::const_iterator it_data = u.begin()
+		; it_data != u.end()
+		; ++it_data, ++i)
+	{
+		const size_t hi = ((*it_data) >> 4) & 0x0F;
+		result += boost::uuids::detail::to_char(hi);
+		const size_t lo = (*it_data) & 0x0F;
+		result += boost::uuids::detail::to_char(lo);
+	}
+	return result;	
 }

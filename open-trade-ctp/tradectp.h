@@ -155,9 +155,7 @@ private:
 	std::string _in_mq_name;
 
 	boost::shared_ptr<boost::thread> _thread_ptr;
-
-	std::atomic_int m_notify_seq;
-
+	
 	std::atomic_int m_data_seq;
 
 	ReqLogin _req_login;	

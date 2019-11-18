@@ -30,8 +30,7 @@ traderctp::traderctp(boost::asio::io_context& ios
 	,_out_mq_name(_key + "_msg_out")
 	,_in_mq_ptr()
 	,_in_mq_name(_key + "_msg_in")
-	,_thread_ptr()
-	,m_notify_seq(0)
+	,_thread_ptr()	
 	,m_data_seq(0)
 	,_req_login()
 	,m_broker_id("")
@@ -309,8 +308,7 @@ void traderctp::ProcessOnRspUserLogin(std::shared_ptr<CThostFtdcRspUserLoginFiel
 			m_banks.clear();
 
 			m_settlement_info = "";
-
-			m_notify_seq.store(0);
+						
 			m_data_seq.store(0);
 			_requestID.store(0);
 
@@ -4895,7 +4893,6 @@ void traderctp::ClearOldData()
 
 	m_settlement_info = "";
 
-	m_notify_seq.store(0);
 	m_data_seq.store(0);
 	_requestID.store(0);
 
@@ -5489,7 +5486,7 @@ void traderctp::OutputNotifySycn(int connId, long notify_code
 	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	rapidjson::Pointer("/data/0/notify/" + GenerateGuid()).Set(*nss.m_doc, node_message);
 	
 	std::string json_str;
 	nss.ToString(&json_str);
@@ -5514,7 +5511,7 @@ void traderctp::OutputNotifyAllSycn(long notify_code
 	node_message.AddMember("session_id", m_session_id, nss.m_doc->GetAllocator());
 	node_message.AddMember("content", rapidjson::Value(ret_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
 	
-	rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+	rapidjson::Pointer("/data/0/notify/" + GenerateGuid()).Set(*nss.m_doc, node_message);
 	
 	std::string json_str;
 	nss.ToString(&json_str);
