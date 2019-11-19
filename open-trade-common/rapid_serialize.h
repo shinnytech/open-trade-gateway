@@ -577,6 +577,26 @@ namespace RapidSerialize
 			}
 		}
 
+		bool Process(char& data, rapidjson::Value& node)
+		{
+			if (is_save)
+			{
+				std::string strData;
+				strData.push_back(data);
+				node.SetString(strData, m_doc->GetAllocator());
+				return false;
+			}
+			else
+			{
+				if (node.IsString())
+				{
+					std::string strData = node.GetString();
+					data = strData[0];
+				}
+				return false;
+			}
+		}
+		
 		bool Process(std::string& data, rapidjson::Value& node)
 		{
 			if (is_save)
