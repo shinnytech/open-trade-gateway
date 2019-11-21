@@ -3800,50 +3800,103 @@ void traderctp::SendUserData()
 				//收盘后
 				else if (IsValid(ps.ins->last_price) && IsValid(ps.ins->settlement))
 				{
-					if (ps.market_status != 2)
+					boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+					int nTime = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
+					//新的交易日
+					if ((nTime >= 2020)||(nTime<=820))
 					{
-						ps.market_status = 2;
-						ps.changed = true;
+						if (ps.market_status != 2)
+						{
+							ps.market_status = 2;
+							ps.changed = true;
+						}
+
+						double last_price = ps.ins->last_price;
+						if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
+						{
+							ps.last_price = last_price;
+
+							ps.position_profit_long = 0;
+							ps.position_profit_short = 0;
+							ps.position_profit = 0;
+
+							ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+							ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+							ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+
+							if (ps.volume_long > 0)
+							{
+								ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+								ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+							}
+							else
+							{
+								ps.open_price_long = 0;
+								ps.position_price_long = 0;
+							}
+
+							if (ps.volume_short > 0)
+							{
+								ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+								ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+							}
+							else
+							{
+								ps.open_price_short = 0;
+								ps.position_price_short = 0;
+							}
+
+							ps.changed = true;
+							m_something_changed = true;
+						}
 					}
-
-					double last_price = ps.ins->last_price;
-					if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
+					else
 					{
-						ps.last_price = last_price;
-
-						ps.position_profit_long = 0;
-						ps.position_profit_short = 0;
-						ps.position_profit = 0;
-
-						ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
-						ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-						ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+						if (ps.market_status != 1)
+						{
+							ps.market_status = 1;
+							ps.changed = true;
+						}
 						
-						if (ps.volume_long > 0)
+						double last_price = ps.ins->last_price;
+						if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
 						{
-							ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-							ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-						}
-						else
-						{
-							ps.open_price_long = 0;
-							ps.position_price_long = 0;
-						}
+							ps.last_price = last_price;
 
-						if (ps.volume_short > 0)
-						{
-							ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-							ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-						}
-						else
-						{
-							ps.open_price_short = 0;
-							ps.position_price_short = 0;
-						}
+							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
 
-						ps.changed = true;
-						m_something_changed = true;
-					}
+							ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+							ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+							ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+
+							if (ps.volume_long > 0)
+							{
+								ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+								ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+							}
+							else
+							{
+								ps.open_price_long = 0;
+								ps.position_price_long = 0;
+							}
+
+							if (ps.volume_short > 0)
+							{
+								ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+								ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+							}
+							else
+							{
+								ps.open_price_short = 0;
+								ps.position_price_short = 0;
+							}
+
+							ps.changed = true;
+							m_something_changed = true;
+						}						
+					}							
 				}
 							
 				if (IsValid(ps.position_profit))
@@ -4113,49 +4166,102 @@ void traderctp::SendUserDataImd(int connectId)
 		//收盘后
 		else if (IsValid(ps.ins->last_price) && IsValid(ps.ins->settlement))
 		{
-			if (ps.market_status != 2)
+			boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
+			int nTime = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
+			//新的交易日
+			if ((nTime >= 2020) || (nTime <= 820))
 			{
-				ps.market_status = 2;
-				ps.changed = true;
+				if (ps.market_status != 2)
+				{
+					ps.market_status = 2;
+					ps.changed = true;
+				}
+
+				double last_price = ps.ins->last_price;
+				if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
+				{
+					ps.last_price = last_price;
+
+					ps.position_profit_long = 0;
+					ps.position_profit_short = 0;
+					ps.position_profit = 0;
+
+					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+
+					if (ps.volume_long > 0)
+					{
+						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					}
+					else
+					{
+						ps.open_price_long = 0;
+						ps.position_price_long = 0;
+					}
+
+					if (ps.volume_short > 0)
+					{
+						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+					}
+					else
+					{
+						ps.open_price_short = 0;
+						ps.position_price_short = 0;
+					}
+
+					ps.changed = true;
+					m_something_changed = true;
+				}
 			}
-
-			double last_price = ps.ins->last_price;
-			if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
+			else
 			{
-				ps.last_price = last_price;
-
-				ps.position_profit_long = 0;
-				ps.position_profit_short = 0;
-				ps.position_profit = 0;
-
-				ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
-				ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-				ps.float_profit = ps.float_profit_long + ps.float_profit_short;
-							   
-				if (ps.volume_long > 0)
+				if (ps.market_status != 1)
 				{
-					ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-					ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
-				}
-				else
-				{
-					ps.open_price_long = 0;
-					ps.position_price_long = 0;
+					ps.market_status = 1;
+					ps.changed = true;
 				}
 
-				if (ps.volume_short > 0)
+				double last_price = ps.ins->last_price;
+				if (IsValid(last_price) && (last_price != ps.last_price || ps.changed))
 				{
-					ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-					ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
-				}
-				else
-				{
-					ps.open_price_short = 0;
-					ps.position_price_short = 0;
-				}
+					ps.last_price = last_price;
 
-				ps.changed = true;
-				m_something_changed = true;
+					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+
+					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
+					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.float_profit = ps.float_profit_long + ps.float_profit_short;
+
+					if (ps.volume_long > 0)
+					{
+						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					}
+					else
+					{
+						ps.open_price_long = 0;
+						ps.position_price_long = 0;
+					}
+
+					if (ps.volume_short > 0)
+					{
+						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+					}
+					else
+					{
+						ps.open_price_short = 0;
+						ps.position_price_short = 0;
+					}
+
+					ps.changed = true;
+					m_something_changed = true;
+				}
 			}
 		}
 
