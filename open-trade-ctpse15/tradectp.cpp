@@ -4811,11 +4811,34 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 
 			if (nullptr == m_pTdApi)
 			{
-				OutputNotifyAllSycn(359, u8"当前时间不支持查询资金账号!", "WARNING");
+				OutputNotifyAllSycn(360, u8"当前时间不支持查询资金账号!", "WARNING");
 				NotifyContinueProcessMsg(false);
 				return;
 			}
 			m_req_account_id++;
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "qry_account_register")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive qry_account_register msg");
+			
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(361, u8"当前时间不支持查询银期签约关系!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+
+			m_data.m_banks.clear();
+			m_banks.clear();
+			m_need_query_bank.store(true);
+			m_need_query_register.store(true);	
 			NotifyContinueProcessMsg(false);
 			return;
 		}
