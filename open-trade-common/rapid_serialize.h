@@ -577,7 +577,7 @@ namespace RapidSerialize
 			}
 		}
 
-		/*bool Process(char& data, rapidjson::Value& node)
+		bool Process(char& data, rapidjson::Value& node)
 		{
 			if (is_save)
 			{
@@ -595,7 +595,7 @@ namespace RapidSerialize
 				}
 				return false;
 			}
-		}*/
+		}
 		
 		bool Process(std::string& data, rapidjson::Value& node)
 		{
