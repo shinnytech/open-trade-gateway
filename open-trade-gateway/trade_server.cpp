@@ -370,6 +370,10 @@ void trade_server::StartTradeInstance(const std::string& strKey
 	{
 		flag = true;
 	}
+	else if (broker_type == "ctpsopt")
+	{
+		flag = true;
+	}
 	else if (broker_type == "ctpse")
 	{
 		flag = true;
@@ -551,6 +555,10 @@ void trade_server::StopTradeInstance(const std::string& strKey
 	std::string broker_type = it->second.broker_type;
 	bool flag = false;
 	if (broker_type == "ctp")
+	{
+		flag = true;
+	}
+	else if (broker_type == "ctpsopt")
 	{
 		flag = true;
 	}

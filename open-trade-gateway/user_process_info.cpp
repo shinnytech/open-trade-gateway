@@ -41,6 +41,10 @@ bool UserProcessInfo::StartProcess()
 		{			
 			return StartProcess_i("open-trade-ctp",_key);
 		}
+		else if (_reqLogin.broker.broker_type == "ctpsopt")
+		{
+			return StartProcess_i("open-trade-ctpsopt", _key);
+		}
 		else if (_reqLogin.broker.broker_type == "ctpse")
 		{
 			return StartProcess_i("open-trade-ctpse15",_key);
@@ -80,6 +84,10 @@ bool UserProcessInfo::ReStartProcess()
 	if (_reqLogin.broker.broker_type == "ctp")
 	{
 		flag=RestartProcess_i("open-trade-ctp", _key);
+	}
+	else if (_reqLogin.broker.broker_type == "ctpsopt")
+	{
+		return RestartProcess_i("open-trade-ctpsopt", _key);
 	}
 	else if (_reqLogin.broker.broker_type == "ctpse")
 	{

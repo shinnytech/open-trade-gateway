@@ -460,6 +460,10 @@ bool connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	{
 		flag = true;
 	}
+	else if (_reqLogin.broker.broker_type == "ctpsopt")
+	{
+		flag = true;
+	}
 	else if (_reqLogin.broker.broker_type == "ctpse")
 	{
 		flag = true;
