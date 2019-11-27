@@ -176,10 +176,12 @@ bool LoadInsList()
 	{
 		//下载和加载合约表文件
 		std::string content;
-		if (HttpGet(ins_file_url, &content) != 0)
+		long ret = HttpGet(ins_file_url, &content);
+		if (ret != 0)
 		{
 			Log().WithField("fun", "LoadInsList")
 				.WithField("key", "gateway")
+				.WithField("ret", (int)ret)
 				.Log(LOG_FATAL, "md service download ins file fail");
 			return false;
 		}

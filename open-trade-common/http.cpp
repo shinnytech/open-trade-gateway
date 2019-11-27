@@ -6,7 +6,9 @@
 
 #include "http.h"
 #include <curl/curl.h>
+#include "log.h"
 
+using namespace std;
 
 static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
@@ -21,8 +23,10 @@ long HttpGet(const char* url, std::string* response)
     CURL* curl;
     CURLcode res;
     curl = curl_easy_init();
-    if (!curl)
-        return -1;
+	if (!curl)
+	{
+		return -1;
+	}        
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
