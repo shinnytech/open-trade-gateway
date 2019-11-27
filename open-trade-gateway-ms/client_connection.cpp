@@ -289,22 +289,45 @@ void client_connection::ProcessLogInMessage(const ReqLogin& req
 
 	BrokerConfig& brokerConfig = it->second;
 	std::string strUserKey = GetUserKey(req, brokerConfig);
-	SlaveNodeInfo slaveNodeInfo = GetSlaveNodeInfoFromUserKey(strUserKey);
-	//已经决定了分配到哪个服务器,打一条日志
-	LogMs().WithField("fun","ProcessLogInMessage")
-		.WithField("key","gatewayms")
-		.WithField("agent",_agent)
-		.WithField("ip",_X_Real_IP)
-		.WithField("port",_X_Real_Port)
-		.WithField("analysis",_analysis)
-		.WithField("connId",_connection_id)
-		.WithField("bid",req.bid)
-		.WithField("user_name",req.user_name)
-		.WithField("user_key",strUserKey)
-		.WithField("fd",(int)m_ws_socket.next_layer().native_handle())
-		.WithField("SlaveNodeInfo_name",slaveNodeInfo.name)
-		.WithField("SlaveNodeInfo_host",slaveNodeInfo.host)
-		.Log(LOG_INFO, "allocate slave node to user");
+	SlaveNodeInfo slaveNodeInfo;
+	bool flag=GetSlaveNodeInfoFromUserKey(req.bid,strUserKey,slaveNodeInfo);
+	if (!flag)
+	{
+		//分配服务器失败,打一条日志
+		LogMs().WithField("fun", "ProcessLogInMessage")
+			.WithField("key", "gatewayms")
+			.WithField("agent", _agent)
+			.WithField("ip", _X_Real_IP)
+			.WithField("port", _X_Real_Port)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("bid", req.bid)
+			.WithField("user_name", req.user_name)
+			.WithField("user_key", strUserKey)
+			.WithField("fd", (int)m_ws_socket.next_layer().native_handle())			
+			.Log(LOG_WARNING,"allocate slave node to user failed");
+		//关闭掉客户端连接
+		OnCloseConnection();
+		return;
+	}
+	else
+	{
+		//已经决定了分配到哪个服务器,打一条日志
+		LogMs().WithField("fun", "ProcessLogInMessage")
+			.WithField("key", "gatewayms")
+			.WithField("agent", _agent)
+			.WithField("ip", _X_Real_IP)
+			.WithField("port", _X_Real_Port)
+			.WithField("analysis", _analysis)
+			.WithField("connId", _connection_id)
+			.WithField("bid", req.bid)
+			.WithField("user_name", req.user_name)
+			.WithField("user_key", strUserKey)
+			.WithField("fd", (int)m_ws_socket.next_layer().native_handle())
+			.WithField("SlaveNodeInfo_name", slaveNodeInfo.name)
+			.WithField("SlaveNodeInfo_host", slaveNodeInfo.host)
+			.Log(LOG_INFO, "allocate slave node to user");
+	}	
 
 	//如果已经连接到服务器
 	if (m_connect_to_server)
@@ -650,41 +673,81 @@ void client_connection::SaveMsConfig(const std::string& userKey)
 	}	
 }
 
-SlaveNodeInfo client_connection::GetSlaveNodeInfoFromUserKey(const std::string& userKey)
+bool client_connection::GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey,SlaveNodeInfo& slaveNodeInfo)
 {
 	TUserSlaveNodeMap::iterator it=_masterConfig.users_slave_node_map.find(userKey);
 	//还没有为用户分配结点
 	if (it == _masterConfig.users_slave_node_map.end())
 	{
-		int index = 0;
-		int nCount = _masterConfig.slaveNodeList[index].userList.size();
-		for (int i = 1; i < _masterConfig.slaveNodeList.size(); ++i)
+		TBidSlaveNodeMap::iterator it=_masterConfig.bids_slave_node_map.find(bid);
+		if (it == _masterConfig.bids_slave_node_map.end())
 		{
-			if (_masterConfig.slaveNodeList[i].userList.size() < nCount)
-			{
-				index = i;
-				nCount = _masterConfig.slaveNodeList[i].userList.size();
-			}
+			return false;
 		}
+		std::vector<std::string>& nodeList = it->second;
+		if (0== nodeList.size())
+		{
+			return false;
+		}
+		else if (1 == nodeList.size())
+		{
+			for (auto& s : _masterConfig.slaveNodeList)
+			{
+				if (s.name == nodeList[0])
+				{
+					slaveNodeInfo.name = s.name;
+					slaveNodeInfo.host = s.host;
+					slaveNodeInfo.path = s.path;
+					slaveNodeInfo.port = s.port;
+					s.userList.push_back(userKey);
+					SaveMsConfig(userKey);
+					_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+						userKey,slaveNodeInfo));
+					return true;
+				}
+			}
+			return false;
+		}
+		else
+		{			
+			int nCount = std::numeric_limits<int>::max();
+			int index = -1;
+			for (int i = 0; i < _masterConfig.slaveNodeList.size(); ++i)
+			{
+				for (auto& n : nodeList)
+				{
+					if (_masterConfig.slaveNodeList[i].name == n)
+					{
+						if (_masterConfig.slaveNodeList[i].userList.size() < nCount)
+						{
+							index = i;
+							nCount = _masterConfig.slaveNodeList[i].userList.size();
+						}
+					}
+				}
+			}
 
-		_masterConfig.slaveNodeList[index].userList.push_back(userKey);
-		SaveMsConfig(userKey);
+			if (index < 0)
+			{
+				return false;
+			}
 
-		SlaveNodeInfo slaveNodeInfo;
-		slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
-		slaveNodeInfo.host= _masterConfig.slaveNodeList[index].host;
-		slaveNodeInfo.path= _masterConfig.slaveNodeList[index].path;
-		slaveNodeInfo.port= _masterConfig.slaveNodeList[index].port;
-
-		_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
-			userKey, slaveNodeInfo));
-
-		return slaveNodeInfo;
+			_masterConfig.slaveNodeList[index].userList.push_back(userKey);
+			SaveMsConfig(userKey);			
+			slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+			slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+			slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+			slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+			_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+				userKey, slaveNodeInfo));
+			return true;
+		}		
 	}
 	//已经为用户分配结点
 	else
 	{
-		return it->second;
+		slaveNodeInfo=it->second;
+		return true;
 	}	
 }
 

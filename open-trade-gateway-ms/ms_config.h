@@ -32,6 +32,18 @@ typedef std::vector<SlaveNodeInfo> TSlaveNodeInfoList;
 
 typedef std::map<std::string,SlaveNodeInfo> TUserSlaveNodeMap;
 
+struct SlaveNodeInfoBids
+{
+	SlaveNodeInfoBids();
+
+	std::string name;
+	
+	std::vector<std::string> bidList;
+};
+
+//bid和slavenode的name之间的映射关系
+typedef std::map<std::string,std::vector<std::string>> TBidSlaveNodeMap;
+
 struct MasterConfig
 {
 	MasterConfig();
@@ -51,6 +63,8 @@ struct MasterConfig
 	TSlaveNodeInfoList slaveNodeList;	
 
 	TUserSlaveNodeMap users_slave_node_map;
+
+	TBidSlaveNodeMap bids_slave_node_map;
 };
 
 extern MasterConfig g_masterConfig;
@@ -73,6 +87,8 @@ public:
 	void DefineStruct(BrokerConfig& d);
 
 	void DefineStruct(SlaveNodeInfo& s);
+
+	void DefineStruct(SlaveNodeInfoBids& s);
 
 	void DefineStruct(MasterConfig& c);	
 

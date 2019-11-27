@@ -26,6 +26,12 @@ SlaveNodeInfo::SlaveNodeInfo()
 {
 }
 
+SlaveNodeInfoBids::SlaveNodeInfoBids()
+	:name("")
+	,bidList()
+{
+}
+
 MasterConfig::MasterConfig()
 	:brokers()
 	,broker_list_str("")
@@ -34,6 +40,7 @@ MasterConfig::MasterConfig()
 	,trading_day("")
 	,slaveNodeList()	
 	,users_slave_node_map()
+	,bids_slave_node_map()
 {	
 }
 
@@ -63,12 +70,18 @@ void MasterSerializerConfig::DefineStruct(SlaveNodeInfo& s)
 	AddItem(s.userList,"users");
 }
 
+void MasterSerializerConfig::DefineStruct(SlaveNodeInfoBids& s)
+{
+	AddItem(s.name,"name");
+	AddItem(s.bidList,"bids");
+}
+
 void MasterSerializerConfig::DefineStruct(MasterConfig& c)
 {
 	AddItem(c.host, "host");
 	AddItem(c.port, "port");
-	AddItem(c.trading_day, "trading_day");
-	AddItem(c.slaveNodeList, "slaveNodeList");
+	AddItem(c.trading_day,"trading_day");
+	AddItem(c.slaveNodeList,"slaveNodeList");
 }
 
 void MasterSerializerConfig::DefineStruct(RtnBrokersMsg& b)
@@ -180,14 +193,69 @@ bool LoadBrokerList()
 
 bool LoadMasterConfig()
 {	
-	std::string fn = "/etc/open-trade-gateway/config-ms.json";
 	MasterSerializerConfig ss;
+
+	//加载bid配置文件
+	std::string fn_bid = "/etc/open-trade-gateway/config-ms-bids.json";	
+	if (!ss.FromFile(fn_bid.c_str()))
+	{
+		LogMs().WithField("fun","LoadMasterConfig")
+			.WithField("key","gatewayms")
+			.WithField("fileName", fn_bid.c_str())
+			.Log(LOG_WARNING,"load gatewayms config file config-ms-bids.json fail");
+		return false;
+	}
+	std::vector<SlaveNodeInfoBids> slaveNodeInfoBidsList;
+	ss.ToVar(slaveNodeInfoBidsList);
+	if (slaveNodeInfoBidsList.empty())
+	{
+		LogMs().WithField("fun", "LoadMasterConfig")
+			.WithField("key", "gatewayms")
+			.WithField("fileName", fn_bid.c_str())
+			.Log(LOG_WARNING, "config-ms-bids.json is empty or wrong");
+		return false;
+	}
+
+	g_masterConfig.bids_slave_node_map.clear();
+	for (auto& a : slaveNodeInfoBidsList)
+	{
+		for (auto& b : a.bidList)
+		{
+			TBidSlaveNodeMap::iterator it = g_masterConfig.bids_slave_node_map.find(b);
+			if (it == g_masterConfig.bids_slave_node_map.end())
+			{
+				std::vector<std::string> nodeList;
+				nodeList.push_back(a.name);
+				g_masterConfig.bids_slave_node_map.insert(TBidSlaveNodeMap::value_type(b,nodeList));
+			}
+			else
+			{
+				std::vector<std::string>& nodeList = it->second;
+				bool flag = false;
+				for (auto& n : nodeList)
+				{
+					if (n == a.name)
+					{
+						flag = true;
+						break;
+					}
+				}
+				if (!flag)
+				{
+					nodeList.push_back(a.name);
+				}				
+			}
+		}		
+	}
+	
+	//加载用户配置文件
+	std::string fn = "/etc/open-trade-gateway/config-ms.json";
 	if (!ss.FromFile(fn.c_str()))
 	{
 		LogMs().WithField("fun","LoadMasterConfig")
 			.WithField("key","gatewayms")
 			.WithField("fileName",fn.c_str())
-			.Log(LOG_WARNING,"load gatewayms config file fail");
+			.Log(LOG_WARNING,"load gatewayms config file config-ms.json fail");
 		return false;
 	}
 

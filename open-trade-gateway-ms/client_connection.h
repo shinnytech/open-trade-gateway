@@ -99,7 +99,7 @@ private:
 
 	std::string GetUserKey(const ReqLogin& req,const BrokerConfig& brokerConfig);
 
-	SlaveNodeInfo GetSlaveNodeInfoFromUserKey(const std::string& userKey);
+	bool GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey,SlaveNodeInfo& slaveNodeInfo);
 
 	void SaveMsConfig(const std::string& userKey);
 
