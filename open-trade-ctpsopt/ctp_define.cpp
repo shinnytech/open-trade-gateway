@@ -101,12 +101,14 @@ void SerializerCtp::DefineStruct(CtpActionInsertOrder& d)
 		{ THOST_FTDC_TC_GTC, ("GTC") },
 		{ THOST_FTDC_TC_GFA, ("GFA") },
 		});
+	
 	d.f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
 	AddItemEnum(d.f.CombHedgeFlag[0], ("hedge_flag"), {
 	   { THOST_FTDC_HF_Speculation, ("SPECULATION") },
 	   { THOST_FTDC_HF_Arbitrage, ("ARBITRAGE") },
 	   { THOST_FTDC_HF_Hedge, ("HEDGE") },
 	   { THOST_FTDC_HF_MarketMaker, ("MARKETMAKER") },
+		{ THOST_FTDC_HF_Covered, ("COVERED") },
 		});
 	d.f.ContingentCondition = THOST_FTDC_CC_Immediately;
 	AddItemEnum(d.f.ContingentCondition, ("contingent_condition"), {
@@ -141,6 +143,11 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspAuthenticateField& d)
 
 	std::string strUserProductInfo = GBKToUTF8(d.UserProductInfo);
 	AddItem(strUserProductInfo, ("UserProductInfo"));
+
+	std::string strAppID = GBKToUTF8(d.AppID);
+	AddItem(strAppID, ("AppID"));
+
+	AddItem(d.AppType, ("AppType"));
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcRspUserLoginField& d)
@@ -241,6 +248,8 @@ void SerializerLogCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
 
 	std::string strNewPassword = GBKToUTF8(d.NewPassword);
 	AddItem(strNewPassword, ("NewPassword"));
+
+	AddItem(d.EncryptType,("EncryptType"));
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderField& d)
@@ -630,9 +639,6 @@ void SerializerLogCtp::DefineStruct(CThostFtdcAccountregisterField& d)
 
 	std::string strCustomerName = GBKToUTF8(d.CustomerName);
 	AddItem(strCustomerName, ("CustomerName"));
-
-	//std::string strLongCustomerName = GBKToUTF8(d.LongCustomerName);
-	//AddItem(strLongCustomerName, ("LongCustomerName"));
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcTransferSerialField& d)
@@ -711,11 +717,14 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 	std::string strBankID = GBKToUTF8(d.BankID);
 	AddItem(strBankID, ("BankID"));
 
-	std::string strBrokerBranchID = GBKToUTF8(d.BrokerBranchID);
-	AddItem(strBrokerBranchID, ("BrokerBranchID"));
+	std::string strBankBranchID = GBKToUTF8(d.BankBranchID);
+	AddItem(strBankBranchID, ("BankBranchID"));
 
 	std::string strBrokerID = GBKToUTF8(d.BrokerID);
 	AddItem(strBrokerID, ("BrokerID"));
+
+	std::string strBrokerBranchID = GBKToUTF8(d.BrokerBranchID);
+	AddItem(strBrokerBranchID, ("BrokerBranchID"));
 
 	AddItem(d.TradeDate, ("TradeDate"));
 	AddItem(d.TradeTime, ("TradeTime"));
@@ -727,6 +736,9 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 	AddItem(d.PlateSerial, ("PlateSerial"));
 	AddItem(d.LastFragment, ("LastFragment"));
 	AddItem(d.SessionID, ("SessionID"));
+
+	std::string strCustomerName = GBKToUTF8(d.CustomerName);
+	AddItem(strCustomerName, ("CustomerName"));
 
 	AddItem(d.IdCardType, ("IdCardType"));
 
@@ -765,6 +777,13 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 	AddItem(d.CustFee, ("CustFee"));
 
 	AddItem(d.BrokerFee, ("BrokerFee"));
+
+	std::string strMessage = GBKToUTF8(d.Message);
+	AddItem(strMessage, ("Message"));
+
+	std::string strDigest = GBKToUTF8(d.Digest);
+	AddItem(strDigest, ("Digest"));
+
 	AddItem(d.BankAccType, ("BankAccType"));
 
 	std::string strDeviceID = GBKToUTF8(d.DeviceID);
@@ -788,21 +807,9 @@ void SerializerLogCtp::DefineStruct(CThostFtdcRspTransferField& d)
 	AddItem(d.TransferStatus, ("TransferStatus"));
 
 	AddItem(d.ErrorID, ("ErrorID"));
-
-	std::string strCustomerName = GBKToUTF8(d.CustomerName);
-	AddItem(strCustomerName, ("CustomerName"));
-
-	std::string strMessage = GBKToUTF8(d.Message);
-	AddItem(strMessage, ("Message"));
-
-	std::string strDigest = GBKToUTF8(d.Digest);
-	AddItem(strDigest, ("Digest"));
-
+	
 	std::string strErrorMsg = GBKToUTF8(d.ErrorMsg);
 	AddItem(strErrorMsg, ("ErrorMsg"));
-
-	//std::string strLongCustomerName = GBKToUTF8(d.LongCustomerName);
-	//AddItem(strLongCustomerName, ("LongCustomerName"));
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcReqTransferField& d)
@@ -832,6 +839,9 @@ void SerializerLogCtp::DefineStruct(CThostFtdcReqTransferField& d)
 	AddItem(d.LastFragment, ("LastFragment"));
 	AddItem(d.SessionID, ("SessionID"));
 
+	std::string strCustomerName = GBKToUTF8(d.CustomerName);
+	AddItem(strCustomerName, ("CustomerName"));
+
 	AddItem(d.IdCardType, ("IdCardType"));
 
 	std::string strIdentifiedCardNo = GBKToUTF8(d.IdentifiedCardNo);
@@ -869,6 +879,13 @@ void SerializerLogCtp::DefineStruct(CThostFtdcReqTransferField& d)
 	AddItem(d.CustFee, ("CustFee"));
 
 	AddItem(d.BrokerFee, ("BrokerFee"));
+	
+	std::string strMessage = GBKToUTF8(d.Message);
+	AddItem(strMessage, ("Message"));
+
+	std::string strDigest = GBKToUTF8(d.Digest);
+	AddItem(strDigest, ("Digest"));
+		
 	AddItem(d.BankAccType, ("BankAccType"));
 
 	std::string strDeviceID = GBKToUTF8(d.DeviceID);
@@ -892,18 +909,6 @@ void SerializerLogCtp::DefineStruct(CThostFtdcReqTransferField& d)
 	AddItem(d.RequestID, ("RequestID"));
 	AddItem(d.TID, ("TID"));
 	AddItem(d.TransferStatus, ("TransferStatus"));
-
-	std::string strCustomerName = GBKToUTF8(d.CustomerName);
-	AddItem(strCustomerName, ("CustomerName"));
-
-	std::string strMessage = GBKToUTF8(d.Message);
-	AddItem(strMessage, ("Message"));
-
-	std::string strDigest = GBKToUTF8(d.Digest);
-	AddItem(strDigest, ("Digest"));
-
-	//std::string strLongCustomerName = GBKToUTF8(d.LongCustomerName);
-	//AddItem(strLongCustomerName, ("LongCustomerName"));
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcOrderField& d)
@@ -988,6 +993,10 @@ void SerializerLogCtp::DefineStruct(CThostFtdcOrderField& d)
 
 	AddItem(d.SessionID, ("SessionID"));
 	AddItem(d.UserProductInfo, ("UserProductInfo"));
+
+	std::string strStatusMsg = GBKToUTF8(d.StatusMsg);
+	AddItem(strStatusMsg, ("StatusMsg"));
+
 	AddItem(d.UserForceClose, ("UserForceClose"));
 
 	std::string strActiveUserID = GBKToUTF8(d.ActiveUserID);
@@ -1014,10 +1023,7 @@ void SerializerLogCtp::DefineStruct(CThostFtdcOrderField& d)
 	AddItem(strIPAddress, ("IPAddress"));
 
 	std::string strMacAddress = GBKToUTF8(d.MacAddress);
-	AddItem(strMacAddress, ("MacAddress"));
-
-	std::string strStatusMsg = GBKToUTF8(d.StatusMsg);
-	AddItem(strStatusMsg, ("StatusMsg"));
+	AddItem(strMacAddress, ("MacAddress"));	
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcTradeField& d)
@@ -1075,8 +1081,7 @@ void SerializerLogCtp::DefineStruct(CThostFtdcTradeField& d)
 	AddItem(d.SettlementID, ("SettlementID"));
 
 	AddItem(d.BrokerOrderSeq, ("BrokerOrderSeq"));
-
-
+	
 	AddItem(d.TradeSource, ("TradeSource"));
 
 	std::string stInvestUnitID = GBKToUTF8(d.InvestUnitID);
@@ -1094,15 +1099,16 @@ void SerializerLogCtp::DefineStruct(CThostFtdcTradingNoticeInfoField& d)
 	AddItem(strInvestorID, ("InvestorID"));
 
 	AddItem(d.SendTime, ("SendTime"));
+
+	std::string strContent = GBKToUTF8(d.FieldContent);
+	AddItem(strContent, ("FieldContent"));
+
 	AddItem(d.SequenceSeries, ("SequenceSeries"));
 
 	AddItem(d.SequenceNo, ("SequenceNo"));
 
 	std::string stInvestUnitID = GBKToUTF8(d.InvestUnitID);
-	AddItem(stInvestUnitID, ("InvestUnitID"));
-
-	std::string strContent = GBKToUTF8(d.FieldContent);
-	AddItem(strContent, ("FieldContent"));
+	AddItem(stInvestUnitID, ("InvestUnitID"));	
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInstrumentStatusField& d)

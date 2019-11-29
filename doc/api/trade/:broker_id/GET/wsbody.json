@@ -117,7 +117,7 @@
           "type": "string",
           "pattern": "^[^=#|;/]{0,256}$"
         },
-        "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX", "INE" ] },
+        "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX","INE","SSE","SZSE"] },
         "instrument_id": {
           "type": "string",
           "pattern": "^[^=#|;/]{1,64}$"
@@ -129,7 +129,7 @@
         "price_type": { "enum": [ "LIMIT", "ANY", "BEST", "FIVELEVEL" ] },
         "volume_condition": { "enum": [ "ANY", "MIN", "ALL" ] },
         "time_condition": { "enum": [ "IOC", "GFS", "GFD", "GTD", "GTC", "GFA" ] },
-        "hedge_flag": { "enum": [ "SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER" ] },
+        "hedge_flag": { "enum": [ "SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER","COVERED" ] },
         "contingent_condition": { "enum": [ "IMMEDIATELY", "TOUCH", "TOUCHPROFIT" ] }
       },
       "required": [

@@ -8,7 +8,7 @@
 
 #include "ctp_define.h"
 #include "types.h"
-#include "condition_order_manager.h"
+#include "condition_order_serializer.h"
 
 #include <map>
 #include <queue>
@@ -40,7 +40,6 @@ enum class ECTPLoginStatus
 };
 
 class traderctp : public CThostFtdcTraderSpi
-	,public IConditionOrderCallBack
 {
 public:
 	traderctp(boost::asio::io_context& ios
@@ -280,15 +279,7 @@ private:
 	std::map<std::string, std::string> m_err_rtn_order_insert_log_map;
 
 	std::map<std::string, std::string> m_err_rtn_order_action_log_map;
-
-	ConditionOrderData m_condition_order_data;
-
-	ConditionOrderHisData m_condition_order_his_data;
-
-	ConditionOrderManager m_condition_order_manager;
-
-	std::vector<ctp_condition_order_task> m_condition_order_task;
-
+	   	 
 	void InitTdApi();
 
 	void StopTdApi();
@@ -479,91 +470,7 @@ private:
 
 	void AdjustPositionByTrade(const Trade& trade);
 
-	void CheckTimeConditionOrder();
-
-	void CheckPriceConditionOrder();
-
-	virtual void OnUserDataChange();
-
-	virtual void OutputNotifyAll(long notify_code,const std::string& ret_msg
-		, const char* level	, const char* type);
-
-	virtual void OnTouchConditionOrder(const ConditionOrder& order);
-
-	bool ConditionOrder_Open(const ConditionOrder& order
-		,const ContingentOrder& co
-		,const Instrument& ins
-		,ctp_condition_order_task& task
-		,int nOrderIndex);	
-
-	bool SetConditionOrderPrice(CThostFtdcInputOrderField& f
-		,const ConditionOrder& order
-		,const ContingentOrder& co
-		,const Instrument& ins);
-	   
-	bool ConditionOrder_CloseTodayPrior_NeedCancel(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_CloseTodayPrior_NotNeedCancel(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_CloseYesTodayPrior_NeedCancel(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_CloseYesTodayPrior_NotNeedCancel(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_CloseAll(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_Close(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_Reverse_Long(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	bool ConditionOrder_Reverse_Short(const ConditionOrder& order
-		, const ContingentOrder& co
-		, const Instrument& ins
-		, ctp_condition_order_task& task
-		, int nOrderIndex);
-
-	void OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d);
-
-	void OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d);
-
-	void CheckConditionOrderCancelOrderTask(const std::string& orderId);
-
-	void CheckConditionOrderSendOrderTask(const std::string& orderId);
-
 	int RegSystemInfo();
-
-	void SetExchangeTime(CThostFtdcRspUserLoginField& userLogInField);	
-
-	virtual void SendDataDirect(int connId, const std::string& msg);
-
-	void PrintOrderLogIfTouchedByConditionOrder(const Order& order);
 
 	void PrintOtgOrderLog(std::shared_ptr<CThostFtdcOrderField> pOrder);
 
