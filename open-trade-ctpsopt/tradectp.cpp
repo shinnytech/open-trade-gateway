@@ -3955,6 +3955,7 @@ void traderctp::SendUserDataImd(int connectId)
 	//重算所有持仓项的持仓盈亏和浮动盈亏
 	double total_position_profit = 0;
 	double total_float_profit = 0;
+	/*
 	for (auto it = m_data.m_positions.begin();
 		it != m_data.m_positions.end(); ++it)
 	{
@@ -4186,8 +4187,7 @@ void traderctp::SendUserDataImd(int connectId)
 
 		if (IsValid(ps.float_profit))
 			total_float_profit += ps.float_profit;
-	}
-
+	}*/
 	//重算资金账户
 	if (m_something_changed)
 	{
