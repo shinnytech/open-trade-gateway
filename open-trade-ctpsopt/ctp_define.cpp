@@ -339,8 +339,7 @@ void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderActionField& d)
 
 	std::string strUserID = GBKToUTF8(d.UserID);
 	AddItem(strUserID, ("UserID"));
-
-
+	
 	AddItem(d.InstrumentID, ("InstrumentID"));
 
 	std::string strInvestUnitID = GBKToUTF8(d.InvestUnitID);
