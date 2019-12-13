@@ -1355,7 +1355,7 @@ void traderctp::ProcessQryInvestorPosition(
 			exchange_id=GuessExchangeId(pRspInvestorPosition->InstrumentID);
 		}		
 		std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
-		/*auto ins = GetInstrument(symbol);
+		auto ins = GetInstrument(symbol);
 		if (nullptr==ins)
 		{
 			Log().WithField("fun","ProcessQryInvestorPosition")
@@ -1370,7 +1370,7 @@ void traderctp::ProcessQryInvestorPosition(
 				.WithField("RequestID",nRequestID)							
 				.Log(LOG_WARNING,"instrument is null when ProcessQryInvestorPosition");			
 		}
-		else*/
+		else
 		{		
 			Position& position = GetPosition(exchange_id,pRspInvestorPosition->InstrumentID, pRspInvestorPosition->InvestorID);		
 			if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long)
@@ -2439,7 +2439,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	order.order_id = local_key.order_id;
 	order.exchange_id = pOrder->ExchangeID;
 	order.instrument_id = pOrder->InstrumentID;
-	/*auto ins = GetInstrument(order.symbol());
+	auto ins = GetInstrument(order.symbol());
 	if (nullptr==ins)
 	{
 		Log().WithField("fun","ProcessRtnOrder")
@@ -2450,7 +2450,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 			.WithField("instrument_id", order.instrument_id)
 			.Log(LOG_ERROR,"ctp ProcessRtnOrder,instrument not exist");		
 		return;
-	}*/
+	}
 	switch (pOrder->Direction)
 	{
 	case THOST_FTDC_D_Buy:
@@ -2724,7 +2724,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	trade.instrument_id = pTrade->InstrumentID;
 	trade.exchange_trade_id = pTrade->TradeID;
 	
-	/*auto ins = GetInstrument(trade.symbol());
+	auto ins = GetInstrument(trade.symbol());
 	if (nullptr==ins)
 	{
 		Log().WithField("fun","ProcessRtnTrade")
@@ -2735,7 +2735,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 			.WithField("instrument_id",trade.instrument_id)
 			.Log(LOG_ERROR,"ctpsopt OnRtnTrade,instrument not exist");		
 		return;
-	}*/
+	}
 
 	switch (pTrade->Direction)
 	{
@@ -3535,8 +3535,7 @@ void traderctp::SendUserData()
 		{
 			//重算所有持仓项的持仓盈亏和浮动盈亏
 			double total_position_profit = 0;
-			double total_float_profit = 0;
-			/*			
+			double total_float_profit = 0;						
 			for (auto it = m_data.m_positions.begin();
 				it != m_data.m_positions.end(); ++it)
 			{
@@ -3768,8 +3767,7 @@ void traderctp::SendUserData()
 
 				if (IsValid(ps.float_profit))
 					total_float_profit += ps.float_profit;
-			}
-			*/
+			}			
 			//重算资金账户
 			if (m_something_changed)
 			{
@@ -3879,7 +3877,6 @@ void traderctp::SendUserDataImd(int connectId)
 	//重算所有持仓项的持仓盈亏和浮动盈亏
 	double total_position_profit = 0;
 	double total_float_profit = 0;
-	/*
 	for (auto it = m_data.m_positions.begin();
 		it != m_data.m_positions.end(); ++it)
 	{
@@ -4111,7 +4108,7 @@ void traderctp::SendUserDataImd(int connectId)
 
 		if (IsValid(ps.float_profit))
 			total_float_profit += ps.float_profit;
-	}*/
+	}
 	//重算资金账户
 	if (m_something_changed)
 	{
