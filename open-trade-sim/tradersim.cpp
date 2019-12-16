@@ -1321,6 +1321,30 @@ void tradersim::LoadUserDataFile()
 				.Log(LOG_INFO, "diffrent trading day!");
 
 		}
+
+		//删除持仓为零的持仓项
+		for (auto it = m_data.m_positions.begin(); it != m_data.m_positions.end();)
+		{
+			Position& pos = it->second;
+
+			if ((pos.volume_long_today == 0)
+				&& (pos.volume_long_his == 0)
+				&& (pos.volume_short_today == 0)
+				&& (pos.volume_short_his == 0)
+				&&(pos.pos_long_today==0)
+				&&(pos.pos_long_his == 0)
+				&& (pos.pos_short_today == 0)
+				&& (pos.pos_short_his == 0)
+				)
+			{
+				it = m_data.m_positions.erase(it);
+			}
+			else
+			{
+				++it;
+			}			
+		}
+
 		m_data.trading_day = g_config.trading_day;
 	}
 	else
