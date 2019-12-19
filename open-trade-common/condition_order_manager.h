@@ -44,7 +44,7 @@ public:
 	
 	void ChangeCOSStatus(const std::string& msg);
 		
-	void OnMarketOpen(const std::string& strSymbol);
+	void OnMarketOpen(const std::string& strSymbol,EInstrumentStatus instStatus);
 
 	void OnCheckTime();
 

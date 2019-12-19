@@ -37,6 +37,8 @@ void CutDigital(std::string& instId);
 
 void CutDigital_Ex(std::string& instId);
 
+bool IsCombinationInst(const std::string& instId);
+
 std::string base64_decode(const std::string &in);
 
 std::string GenerateGuid();

@@ -169,6 +169,28 @@ void CutDigital_Ex(std::string& instId)
 
 	instId= vecs[0];
 	CutDigital(instId);
+
+	return;
+}
+
+bool IsCombinationInst(const std::string& instId)
+{
+	std::vector<std::string> vecs;
+	boost::split(vecs,instId,boost::is_any_of(" "),boost::token_compress_on);
+	if (vecs.size() != 2)
+	{
+		return false;
+	}
+
+	std::string strInst= vecs[1];
+	vecs.clear();
+	boost::split(vecs, strInst,boost::is_any_of("&"), boost::token_compress_on);
+	if (vecs.size() != 2)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 std::string GenerateGuid()

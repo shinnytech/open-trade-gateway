@@ -1479,7 +1479,7 @@ void ConditionOrderManager::OnUpdateInstrumentTradeStatus(const InstrumentTradeS
                 return;
         }
 
-        OnMarketOpen(strSymbolId);        
+        OnMarketOpen(strSymbolId,instTradeStatusInfo.instumentStatus);
 }
 
 bool ConditionOrderManager::InstrumentLastTradeStatusIsContinousTrading(const std::string& instId)
@@ -1497,7 +1497,7 @@ bool ConditionOrderManager::InstrumentLastTradeStatusIsContinousTrading(const st
         }
 }
 
-void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
+void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol,EInstrumentStatus instStatus)
 {
         if (!m_run_server)
         {
@@ -1532,19 +1532,27 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
                 {
                         if (c.contingent_type != EContingentType::market_open)
                         {
-                                continue;
+                            continue;
                         }
 
                         if (c.is_touched)
                         {
-                                continue;
+                            continue;
                         }
+
+						//组合合约集合竞价报单时不触发条件单
+						if (IsCombinationInst(c.instrument_id) 
+							&& (instStatus== EInstrumentStatus::auctionOrdering))
+						{
+							continue;
+						}
+
                         std::string strInstId= c.instrument_id;
                         CutDigital_Ex(strInstId);
                         std::string symbol = c.exchange_id + "." + strInstId;
                         if (symbol != strSymbol)
                         {
-                                continue;
+                            continue;
                         }
 
                         c.is_touched = true;
@@ -1559,8 +1567,7 @@ void ConditionOrderManager::OnMarketOpen(const std::string& strSymbol)
                         //发单
                         m_callBack.OnTouchConditionOrder(conditionOrder);
                         flag = true;
-                }
-                
+                }                
         }
 
         if (flag)
