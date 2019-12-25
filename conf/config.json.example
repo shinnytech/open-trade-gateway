@@ -1,5 +1,8 @@
 {
   "host": "0.0.0.0",
   "port": 7788,
-  "user_file_path": "/var/local/lib/open-trade-gateway"
+  "user_file_path": "/var/local/lib/open-trade-gateway",
+  "auto_confirm_settlement":true,
+  "log_price_info":true,
+  "use_new_inst_service":false
 }

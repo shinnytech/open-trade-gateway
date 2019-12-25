@@ -28,6 +28,12 @@ struct Config
     //是否要求用户确认结算单
     bool auto_confirm_settlement;
 
+	//是否打印行情日志
+	bool log_price_info;
+
+	//是否使用新的合约服务
+	bool use_new_inst_service;
+
     //broker配置
     std::map<std::string, BrokerConfig> brokers;
 

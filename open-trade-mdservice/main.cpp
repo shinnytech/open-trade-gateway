@@ -7,6 +7,7 @@
 #include "log.h"
 #include "md_service.h"
 #include "ins_list.h"
+#include "config.h"
 
 #include <iostream>
 #include <string>
@@ -19,6 +20,15 @@ int main(int argc, char* argv[])
 	Log().WithField("fun","main")
 		.WithField("key","mdservice")
 		.Log(LOG_INFO,"mdservice init!");
+
+	//加载配置文件
+	if (!LoadConfig())
+	{
+		Log().WithField("fun", "main")
+			.WithField("key", "mdservice")
+			.Log(LOG_WARNING, "mdservice load config failed!");
+		return -1;
+	}
 	
 	boost::asio::io_context ioc;
 
