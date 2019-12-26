@@ -55,7 +55,7 @@ Config
       "port": 7788,                                           //提供服务的端口号
       "auto_confirm_settlement": false,                       //是否自动确认结算单
       "user_file_path": "/var/local/lib/open-trade-gateway",  //存放用户文件的目录，必须事先创建好
-	  "log_price_info":true,                       			  //是否打印行情日志
+      "log_price_info":true,                       			  //是否打印行情日志
       "use_new_inst_service":false				   			  //是否启用新版的合约服务
     }
 
@@ -196,11 +196,11 @@ Test
   {"weekday":5,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
   {"weekday":6,"timespan":[{"begin":235,"end":240}]}
   ],
-  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":900,"end":1530}]},
-  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
   {"weekday":6,"timespan":[{"begin":0,"end":230}]}
   ]
  }

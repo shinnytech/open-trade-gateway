@@ -15,11 +15,11 @@
   {"weekday":5,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
   {"weekday":6,"timespan":[{"begin":235,"end":240}]}
   ],
-  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":855,"end":1530}]},
-  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
-  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
-  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
-  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530}]},
+  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":855,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":855,"end":1530},{"begin":2100,"end":2359}]},
   {"weekday":6,"timespan":[{"begin":0,"end":230}]}
   ]
 }
