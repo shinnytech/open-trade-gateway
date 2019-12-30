@@ -673,21 +673,76 @@ void client_connection::SaveMsConfig(const std::string& userKey)
 	}	
 }
 
-bool client_connection::GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey,SlaveNodeInfo& slaveNodeInfo)
+bool client_connection::GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey
+	,SlaveNodeInfo& slaveNodeInfo)
 {
 	TUserSlaveNodeMap::iterator it=_masterConfig.users_slave_node_map.find(userKey);
 	//还没有为用户分配结点
 	if (it == _masterConfig.users_slave_node_map.end())
-	{
-		TBidSlaveNodeMap::iterator it=_masterConfig.bids_slave_node_map.find(bid);
-		if (it == _masterConfig.bids_slave_node_map.end())
+	{		
+		TBidSlaveNodeMap::iterator it2=_masterConfig.bids_slave_node_map.find(bid);
+		//如果没有为该bid分配过结点,则默认分配用户最少的结点
+		if (it2 == _masterConfig.bids_slave_node_map.end())
 		{
-			return false;
+			int nCount = std::numeric_limits<int>::max();
+			int index = -1;
+			for (int i = 0; i < _masterConfig.slaveNodeList.size(); ++i)
+			{
+				if (_masterConfig.slaveNodeList[i].userList.size() < nCount)
+				{
+					index = i;
+					nCount = _masterConfig.slaveNodeList[i].userList.size();
+				}
+			}
+			
+			//没有找到结点
+			if (index < 0)
+			{
+				return false;
+			}
+
+			_masterConfig.slaveNodeList[index].userList.push_back(userKey);
+			SaveMsConfig(userKey);
+			slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+			slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+			slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+			slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+			_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+				userKey,slaveNodeInfo));
+			return true;			
 		}
-		std::vector<std::string>& nodeList = it->second;
+
+		std::vector<std::string>& nodeList = it2->second;
+		//如果没有为该bid分配过结点,则默认分配用户最少的结点
 		if (0== nodeList.size())
 		{
-			return false;
+			int nCount = std::numeric_limits<int>::max();
+			int index = -1;
+			for (int i = 0; i < _masterConfig.slaveNodeList.size(); ++i)
+			{
+				if (_masterConfig.slaveNodeList[i].userList.size() < nCount)
+				{
+					index = i;
+					nCount = _masterConfig.slaveNodeList[i].userList.size();
+				}
+			}
+			
+			//没有找到结点
+			if (index < 0)
+			{
+				return false;
+			}
+
+			_masterConfig.slaveNodeList[index].userList.push_back(userKey);
+			SaveMsConfig(userKey);
+			slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+			slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+			slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+			slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+			_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+				userKey, slaveNodeInfo));
+			return true;
+
 		}
 		else if (1 == nodeList.size())
 		{
