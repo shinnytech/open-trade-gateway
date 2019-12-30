@@ -500,6 +500,9 @@ struct Account
 		//当前权益
 		balance = 0.0;
 
+		//市值权益
+		value_balance = 0.0;
+
 		//保证金占用, 冻结及风险度
 		margin = 0.0;
 		frozen_margin = 0.0;
@@ -531,7 +534,7 @@ struct Account
 
 	double commission;//手续费
 
-	double premium;//暂时无用
+	double premium;//权利金
 
 	double static_balance;//静态权益
 
@@ -543,11 +546,14 @@ struct Account
 	//当前权益(动态权益)
 	double balance;
 
+	//市值权益
+	double value_balance;
+
 	//保证金占用, 冻结及风险度
 	double margin;//保证金
 	double frozen_margin;//冻结保证金
 	double frozen_commission;//冻结手续费
-	double frozen_premium;//暂时无用
+	double frozen_premium;//冻结的权利金(买入期权还没有成交时冻结的现金)
 	double available;//可用资金
 	double risk_ratio;//风险度
 

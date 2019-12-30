@@ -84,6 +84,7 @@ void SerializerTradeBase::DefineStruct(Account& d)
 	AddItem(d.float_profit, ("float_profit"));
 
 	AddItem(d.balance, ("balance"));
+	AddItem(d.value_balance, ("value_balance"));
 
 	AddItem(d.margin, ("margin"));
 	AddItem(d.frozen_margin, ("frozen_margin"));
