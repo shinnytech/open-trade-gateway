@@ -3639,9 +3639,19 @@ void traderctp::SendUserData()
 					{
 						ps.last_price = last_price;
 
-						ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-						ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-						ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							ps.position_profit_long = 0;
+							ps.position_profit_short = 0;
+							ps.position_profit = 0;
+						}
+						else
+						{
+							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+						}						
 
 						ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 						ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
@@ -3759,10 +3769,20 @@ void traderctp::SendUserData()
 						{
 							ps.last_price = last_price;
 
-							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								ps.position_profit_long = 0;
+								ps.position_profit_short = 0;
+								ps.position_profit = 0;
+							}
+							else
+							{
+								ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+								ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+								ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+							}
+							
 							ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 							ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 							ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -4022,10 +4042,20 @@ void traderctp::SendUserDataImd(int connectId)
 			{
 				ps.last_price = last_price;
 
-				ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-				ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-				ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+				//如果是期权
+				if (ps.ins->product_class == kProductClassOptions)
+				{
+					ps.position_profit_long = 0;
+					ps.position_profit_short = 0;
+					ps.position_profit = 0;
+				}
+				else
+				{
+					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+				}
+				
 				ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 				ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 				ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -4143,10 +4173,20 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.last_price = last_price;
 
-					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						ps.position_profit_long = 0;
+						ps.position_profit_short = 0;
+						ps.position_profit = 0;
+					}
+					else
+					{
+						ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+						ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+						ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+					}
+					
 					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 					ps.float_profit = ps.float_profit_long + ps.float_profit_short;
