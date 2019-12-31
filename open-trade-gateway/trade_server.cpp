@@ -382,6 +382,10 @@ void trade_server::StartTradeInstance(const std::string& strKey
 	{
 		flag = true;
 	}
+	else if (broker_type == "kingstar")
+	{
+		flag = true;
+	}
 	else if (broker_type == "perftest")
 	{
 		flag = true;
@@ -567,6 +571,10 @@ void trade_server::StopTradeInstance(const std::string& strKey
 		flag = true;
 	}
 	else if (broker_type == "sim")
+	{
+		flag = true;
+	}
+	else if (broker_type == "kingstar")
 	{
 		flag = true;
 	}

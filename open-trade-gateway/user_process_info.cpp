@@ -53,6 +53,10 @@ bool UserProcessInfo::StartProcess()
 		{
 			return StartProcess_i("open-trade-sim",_key);
 		}
+		else if (_reqLogin.broker.broker_type == "kingstar")
+		{
+			return StartProcess_i("open-trade-kingstar",_key);
+		}
 		else if (_reqLogin.broker.broker_type == "perftest")
 		{
 			return StartProcess_i("open-trade-perftest", _key);
@@ -96,6 +100,10 @@ bool UserProcessInfo::ReStartProcess()
 	else if (_reqLogin.broker.broker_type == "sim")
 	{
 		flag=RestartProcess_i("open-trade-sim", _key);
+	}
+	else if (_reqLogin.broker.broker_type == "kingstar")
+	{
+		flag = RestartProcess_i("open-trade-kingstar",_key);
 	}
 	else if (_reqLogin.broker.broker_type == "perftest")
 	{

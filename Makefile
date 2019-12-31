@@ -3,6 +3,7 @@ CTP_NAME := open-trade-ctp
 CTP_SOPT_NAME := open-trade-ctpsopt
 CTPSE15_NAME := open-trade-ctpse15
 SIM_NAME := open-trade-sim
+KS_NAME := open-trade-kingstar
 MD_NAME := open-trade-mdservice
 GATEWAY_NAME := open-trade-gateway
 GATEWAYMS_NAME := open-trade-gateway-ms
@@ -12,6 +13,7 @@ CTP_SRCS:= $(wildcard open-trade-ctp/*.cpp)
 CTP_SOPT_SRCS:= $(wildcard open-trade-ctpsopt/*.cpp)
 CTPSE15_SRCS:= $(wildcard open-trade-ctpse15/*.cpp)
 SIM_SRCS:= $(wildcard open-trade-sim/*.cpp)
+KS_SRCS:= $(wildcard open-trade-kingstar/*.cpp)
 MD_SRCS:= $(wildcard open-trade-mdservice/*.cpp)
 GATEWAY_SRCS:= $(wildcard open-trade-gateway/*.cpp)
 GATEWAYMS_SRCS:= $(wildcard open-trade-gateway-ms/*.cpp)
@@ -21,6 +23,7 @@ CTP_OBJS := $(patsubst open-trade-ctp/%,obj/ctp/%,$(CTP_SRCS:.cpp=.o))
 CTP_SOPT_OBJS := $(patsubst open-trade-ctpsopt/%,obj/ctpsopt/%,$(CTP_SOPT_SRCS:.cpp=.o))
 CTPSE15_OBJS := $(patsubst open-trade-ctpse15/%,obj/ctpse15/%,$(CTPSE15_SRCS:.cpp=.o))
 SIM_OBJS := $(patsubst open-trade-sim/%,obj/sim/%,$(SIM_SRCS:.cpp=.o))
+KS_OBJS := $(patsubst open-trade-kingstar/%,obj/ks/%,$(KS_SRCS:.cpp=.o))
 MD_OBJS := $(patsubst open-trade-mdservice/%,obj/md/%,$(MD_SRCS:.cpp=.o))
 GATEWAY_OBJS := $(patsubst open-trade-gateway/%,obj/gateway/%,$(GATEWAY_SRCS:.cpp=.o))
 GATEWAYMS_OBJS := $(patsubst open-trade-gateway-ms/%,obj/gatewayms/%,$(GATEWAYMS_SRCS:.cpp=.o))
@@ -30,6 +33,7 @@ CTP_DEPS := $(CTP_OBJS:%.o=%.d)
 CTP_SOPT_DEPS := $(CTP_SOPT_OBJS:%.o=%.d)
 CTPSE15_DEPS := $(CTPSE15_OBJS:%.o=%.d)
 SIM_DEPS := $(SIM_OBJS:%.o=%.d)
+KS_DEPS := $(KS_OBJS:%.o=%.d)
 MD_DEPS := $(MD_OBJS:%.o=%.d)
 GATEWAY_DEPS := $(GATEWAY_OBJS:%.o=%.d)
 GATEWAYMS_DEPS := $(GATEWAYMS_OBJS:%.o=%.d)
@@ -41,7 +45,7 @@ LDLIBS += -lssl -lcrypto -lcurl -lboost_system -lstdc++fs -lrt
 
 .PHONY: all clean install
 
-all: bin/$(COMMON_NAME) bin/$(CTP_NAME) bin/$(CTP_SOPT_NAME) bin/$(CTPSE15_NAME) bin/$(SIM_NAME) bin/$(MD_NAME) bin/$(GATEWAY_NAME) bin/$(GATEWAYMS_NAME)
+all: bin/$(COMMON_NAME) bin/$(CTP_NAME) bin/$(CTP_SOPT_NAME) bin/$(CTPSE15_NAME) bin/$(SIM_NAME) bin/$(KS_NAME) bin/$(MD_NAME) bin/$(GATEWAY_NAME) bin/$(GATEWAYMS_NAME)
 
 bin/$(COMMON_NAME): $(COMMON_OBJS)
 	@mkdir -p $(@D)
@@ -105,6 +109,16 @@ obj/sim/%.o: open-trade-sim/%.cpp
 
 -include $(SIM_DEPS)
 
+bin/$(KS_NAME):$(KS_OBJS)
+	@mkdir -p $(@D)
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS) 
+
+obj/ks/%.o: open-trade-kingstar/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) -o $@ -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -c $<
+
+-include $(KS_DEPS)
+
 bin/$(MD_NAME):$(MD_OBJS)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS)
@@ -147,6 +161,7 @@ install: all
 	install -m 755 bin/$(CTP_SOPT_NAME) /usr/local/bin/	
 	install -m 755 bin/$(CTPSE15_NAME) /usr/local/bin/
 	install -m 755 bin/$(SIM_NAME) /usr/local/bin/
+	install -m 755 bin/$(KS_NAME) /usr/local/bin/
 	install -m 755 bin/$(MD_NAME) /usr/local/bin/	
 	install -m 755 bin/$(GATEWAY_NAME) /usr/local/bin/
 	install -m 755 bin/$(GATEWAYMS_NAME) /usr/local/bin/
