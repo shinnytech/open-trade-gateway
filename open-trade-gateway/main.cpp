@@ -7,6 +7,7 @@
 #include "trade_server.h"
 #include "config.h"
 #include "http.h"
+#include "version.h"
 
 #include <iostream>
 #include <string>
@@ -14,21 +15,37 @@
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <printf.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+
 boost::interprocess::managed_shared_memory* m_segment= nullptr;
 ShmemAllocator* m_alloc_inst = nullptr;
 InsMapType* m_ins_map = nullptr;
-const char* ins_file_url = "http://openmd.shinnytech.com/t/md/symbols/latest.json";
 
 bool LoadInsList();
+
+bool otg_already_running(const char* procname);
 
 int main(int argc, char* argv[])
 {
 	try
 	{
-		Log().WithField("fun","main")
-			.WithField("key","gateway")
-			.Log(LOG_INFO,"trade server init");
-			
+		if (otg_already_running("open-trade-gateway"))
+		{			
+			std::cout << VERSION_STR <<std::endl;
+			return -1;
+		}
+
+		Log().WithField("fun", "main")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "trade server init");
+							
 		//加载配置文件
 		if (!LoadConfig())
 		{
@@ -139,10 +156,14 @@ public:
 	}
 };
 
+bool GetInstListFromOldService();
+
+bool GetInstListFromNewService();
+
 bool LoadInsList()
 {
 	try
-	{
+	{		
 		boost::interprocess::shared_memory_object::remove("InsMapSharedMemory");
 
 		m_segment = new boost::interprocess::managed_shared_memory
@@ -172,6 +193,19 @@ bool LoadInsList()
 		return false;
 	}
 
+	if (g_config.use_new_inst_service)
+	{
+		return GetInstListFromNewService();
+	}
+	else
+	{
+		return GetInstListFromOldService();
+	}	
+}
+
+bool GetInstListFromOldService()
+{
+	const char* ins_file_url = "http://openmd.shinnytech.com/t/md/symbols/latest.json";
 	try
 	{
 		//下载和加载合约表文件
@@ -179,24 +213,24 @@ bool LoadInsList()
 		long ret = HttpGet(ins_file_url, &content);
 		if (ret != 0)
 		{
-			Log().WithField("fun", "LoadInsList")
-				.WithField("key", "gateway")
-				.WithField("ret", (int)ret)
-				.Log(LOG_FATAL, "md service download ins file fail");
+			Log().WithField("fun","GetInstListFromOldService")
+				.WithField("key","gateway")
+				.WithField("ret",(int)ret)
+				.Log(LOG_FATAL,"md service download ins file fail");
 			return false;
 		}
 
-		Log().WithField("fun", "LoadInsList")
-			.WithField("key", "gateway")
-			.WithField("msglen", (int)content.length())
-			.Log(LOG_INFO, "mdservice download ins file success");
+		Log().WithField("fun","GetInstListFromOldService")
+			.WithField("key","gateway")
+			.WithField("msglen",(int)content.length())
+			.Log(LOG_INFO,"mdservice download ins file success");
 
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str()))
 		{
-			Log().WithField("fun", "LoadInsList")
-				.WithField("key", "gateway")
-				.Log(LOG_FATAL, "md service parse downloaded ins file fail");
+			Log().WithField("fun","GetInstListFromOldService")
+				.WithField("key","gateway")
+				.Log(LOG_FATAL,"md service parse downloaded ins file fail");
 			return false;
 		}
 
@@ -209,12 +243,56 @@ bool LoadInsList()
 	}
 	catch (std::exception& ex)
 	{
-		Log().WithField("fun", "LoadInsList")
-			.WithField("key", "gateway")
-			.WithField("errmsg", ex.what())
-			.Log(LOG_FATAL, "get inst list fail");
+		Log().WithField("fun","GetInstListFromOldService")
+			.WithField("key","gateway")
+			.WithField("errmsg",ex.what())
+			.Log(LOG_FATAL,"get inst list fail");
 		return false;
 	}
 
 	return true;
+}
+
+bool GetInstListFromNewService()
+{
+	return false;
+}
+
+static int lockfile(int fd)
+{
+	struct flock fl;
+	fl.l_type = F_WRLCK;
+	fl.l_start = 0;
+	fl.l_whence = SEEK_SET;
+	fl.l_len = 0;
+	return(fcntl(fd,F_SETLK, &fl));
+}
+
+bool otg_already_running(const char* procname)
+{
+	int  fd;
+	char buf[16];
+	char filename[100];
+	sprintf(filename,"/var/run/%s.pid",procname);
+
+	fd = open(filename, O_RDWR | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+	if (fd < 0) 
+	{
+		std::cout << "open pid file fail!" << std::endl;
+		return true;
+	}
+
+	if (lockfile(fd) == -1)
+	{
+		close(fd);
+		std::cout << "lock pid file fail!" << std::endl;
+		return true;
+	}
+	else
+	{
+		ftruncate(fd, 0);
+		sprintf(buf,"%ld\n", (long)getpid());
+		write(fd,buf,strlen(buf)+1);
+		return false;
+	}
 }
