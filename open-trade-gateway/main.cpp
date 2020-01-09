@@ -15,20 +15,13 @@
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <printf.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/stat.h>
-
 boost::interprocess::managed_shared_memory* m_segment= nullptr;
 ShmemAllocator* m_alloc_inst = nullptr;
 InsMapType* m_ins_map = nullptr;
 
 bool LoadInsList();
+
+void FreeInstList();
 
 bool otg_already_running(const char* procname);
 
@@ -103,6 +96,8 @@ int main(int argc, char* argv[])
 			md_child.terminate();
 			md_child.wait();
 			
+			FreeInstList();
+
 			Log().WithField("fun","main")
 				.WithField("key","gateway")				
 				.Log(LOG_INFO,"trade_server exit");			
@@ -183,13 +178,17 @@ bool LoadInsList()
 			m_segment->construct<InsMapType>("InsMap")//object name
 			(CharArrayComparer() //first  ctor parameter
 				, *m_alloc_inst);     //second ctor parameter		
+
+		Log().WithField("fun", "LoadInsList")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "trade_server construct m_ins_map success");
 	}
 	catch (std::exception& ex)
 	{
 		Log().WithField("fun", "LoadInsList")
 			.WithField("key", "gateway")
 			.WithField("errmsg", ex.what())
-			.Log(LOG_FATAL, "mdservice construct m_ins_map fail");
+			.Log(LOG_FATAL, "trade_server construct m_ins_map fail");
 		return false;
 	}
 
@@ -201,6 +200,37 @@ bool LoadInsList()
 	{
 		return GetInstListFromOldService();
 	}	
+}
+
+void FreeInstList()
+{
+	try
+	{
+		if (nullptr != m_segment)
+		{
+			m_segment->destroy<InsMapType>("InsMap");
+			m_ins_map = nullptr;
+			if (nullptr != m_alloc_inst)
+			{
+				delete m_alloc_inst;
+				m_alloc_inst = nullptr;
+			}
+			delete m_segment;
+			m_segment = nullptr;
+		}
+		boost::interprocess::shared_memory_object::remove("InsMapSharedMemory");
+
+		Log().WithField("fun", "FreeInstList")
+			.WithField("key", "gateway")		
+			.Log(LOG_INFO, "trade_server destroy m_ins_map success");
+	}
+	catch (std::exception& ex)
+	{
+		Log().WithField("fun", "FreeInstList")
+			.WithField("key", "gateway")
+			.WithField("errmsg", ex.what())
+			.Log(LOG_FATAL, "trade_server destroy m_ins_map fail");		
+	}
 }
 
 bool GetInstListFromOldService()
