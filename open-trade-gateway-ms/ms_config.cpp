@@ -15,20 +15,24 @@
 
 using namespace std;
 
-MasterConfig g_masterConfig;
-
 SlaveNodeInfo::SlaveNodeInfo()
 	:name("")
 	,host("")
 	,port("7788")
 	,path("/")
-	,userList()
+	,bids()
 {
 }
 
-SlaveNodeInfoBids::SlaveNodeInfoBids()
-	:name("")
-	,bidList()
+SlaveNodeUserInfo::SlaveNodeUserInfo()
+	:name("")	
+	,users()
+{
+}
+
+TMsUsersConfig::TMsUsersConfig()
+	:trading_day("")
+	,slaveNodeUserInfoList()
 {
 }
 
@@ -36,13 +40,15 @@ MasterConfig::MasterConfig()
 	:brokers()
 	,broker_list_str("")
 	,host("0.0.0.0")
-	,port(5566)	
-	,trading_day("")
-	,slaveNodeList()	
+	,port(5566)		
+	,slaveNodeList()
+	,usersConfig()
 	,users_slave_node_map()
 	,bids_slave_node_map()
-{	
+{
 }
+
+MasterConfig g_masterConfig;
 
 RtnBrokersMsg::RtnBrokersMsg()
 	:aid("")
@@ -58,7 +64,7 @@ void MasterSerializerConfig::DefineStruct(BrokerConfig& d)
 	AddItem(d.ctp_broker_id,"broker_id");
 	AddItem(d.trading_fronts,"trading_fronts");
 	AddItem(d.product_info,"product_info");
-	AddItem(d.auth_code,"auth_code");
+	AddItem(d.auth_code,"auth_code");	
 }
 
 void MasterSerializerConfig::DefineStruct(SlaveNodeInfo& s)
@@ -67,21 +73,26 @@ void MasterSerializerConfig::DefineStruct(SlaveNodeInfo& s)
 	AddItem(s.host,"host");
 	AddItem(s.port,"port");
 	AddItem(s.path,"path");
-	AddItem(s.userList,"users");
+	AddItem(s.bids,"bids");	
 }
 
-void MasterSerializerConfig::DefineStruct(SlaveNodeInfoBids& s)
+void MasterSerializerConfig::DefineStruct(SlaveNodeUserInfo& d)
 {
-	AddItem(s.name,"name");
-	AddItem(s.bidList,"bids");
+	AddItem(d.name, "name");	
+	AddItem(d.users, "users");	
 }
 
 void MasterSerializerConfig::DefineStruct(MasterConfig& c)
 {
 	AddItem(c.host, "host");
-	AddItem(c.port, "port");
-	AddItem(c.trading_day,"trading_day");
+	AddItem(c.port, "port");	
 	AddItem(c.slaveNodeList,"slaveNodeList");
+}
+
+void MasterSerializerConfig::DefineStruct(TMsUsersConfig& d)
+{
+	AddItem(d.trading_day,"trading_day");	
+	AddItem(d.slaveNodeUserInfoList,"slaveNodeUserInfoList");
 }
 
 void MasterSerializerConfig::DefineStruct(RtnBrokersMsg& b)
@@ -195,31 +206,32 @@ bool LoadMasterConfig()
 {	
 	MasterSerializerConfig ss;
 
-	//加载bid配置文件
-	std::string fn_bid = "/etc/open-trade-gateway/config-ms-bids.json";	
-	if (!ss.FromFile(fn_bid.c_str()))
+	//加载用户配置文件
+	std::string fn = "/etc/open-trade-gateway/config-ms.json";
+	if (!ss.FromFile(fn.c_str()))
 	{
 		LogMs().WithField("fun","LoadMasterConfig")
 			.WithField("key","gatewayms")
-			.WithField("fileName", fn_bid.c_str())
-			.Log(LOG_WARNING,"load gatewayms config file config-ms-bids.json fail");
-		return false;
-	}
-	std::vector<SlaveNodeInfoBids> slaveNodeInfoBidsList;
-	ss.ToVar(slaveNodeInfoBidsList);
-	if (slaveNodeInfoBidsList.empty())
-	{
-		LogMs().WithField("fun", "LoadMasterConfig")
-			.WithField("key", "gatewayms")
-			.WithField("fileName", fn_bid.c_str())
-			.Log(LOG_WARNING, "config-ms-bids.json is empty or wrong");
+			.WithField("fileName",fn.c_str())
+			.Log(LOG_WARNING,"load gatewayms config file config-ms.json fail");
 		return false;
 	}
 
-	g_masterConfig.bids_slave_node_map.clear();
-	for (auto& a : slaveNodeInfoBidsList)
+	ss.ToVar(g_masterConfig);
+	if (g_masterConfig.slaveNodeList.size() == 0)
 	{
-		for (auto& b : a.bidList)
+		LogMs().WithField("fun","LoadMasterConfig")
+			.WithField("key","gatewayms")
+			.WithField("fileName",fn.c_str())
+			.Log(LOG_WARNING,"slaveNodeList is empty");
+		return false;
+	}
+
+	//生成bid和slavenode的name之间的映射关系
+	g_masterConfig.bids_slave_node_map.clear();
+	for (auto& a : g_masterConfig.slaveNodeList)
+	{
+		for (auto& b : a.bids)
 		{
 			TBidSlaveNodeMap::iterator it = g_masterConfig.bids_slave_node_map.find(b);
 			if (it == g_masterConfig.bids_slave_node_map.end())
@@ -243,94 +255,112 @@ bool LoadMasterConfig()
 				if (!flag)
 				{
 					nodeList.push_back(a.name);
-				}				
-			}
-		}		
-	}
-	
-	//加载用户配置文件
-	std::string fn = "/etc/open-trade-gateway/config-ms.json";
-	if (!ss.FromFile(fn.c_str()))
-	{
-		LogMs().WithField("fun","LoadMasterConfig")
-			.WithField("key","gatewayms")
-			.WithField("fileName",fn.c_str())
-			.Log(LOG_WARNING,"load gatewayms config file config-ms.json fail");
-		return false;
-	}
-
-	ss.ToVar(g_masterConfig);
-
-	//如果是一个新的交易日,需要清除所有游客	
-	std::string trading_day = GuessTradingDay();
-	bool flag = false;
-	if (trading_day != g_masterConfig.trading_day)
-	{
-		LogMs().WithField("fun","LoadMasterConfig")
-			.WithField("key","gatewayms")
-			.WithField("trading_day",trading_day)
-			.WithField("old_trading_day",g_masterConfig.trading_day)
-			.Log(LOG_INFO, "load gatewayms config file in a new trading day");
-
-		g_masterConfig.trading_day = trading_day;
-		flag = true;
-
-		for (SlaveNodeInfo & s : g_masterConfig.slaveNodeList)
-		{
-			std::vector<std::string>::iterator it = s.userList.begin();
-			for (; it != s.userList.end();)
-			{
-				std::string& u = *it;
-				if (u.find(u8"sim_快期模拟_游客_",0) != std::string::npos)
-				{
-					it = s.userList.erase(it);					
 				}
-				else
-				{
-					it++;
-				}			
 			}
 		}
 	}
-
-	if (flag)
+	
+	//加载ms-users.json配置文件
+	g_masterConfig.usersConfig.trading_day = "";
+	g_masterConfig.usersConfig.slaveNodeUserInfoList.clear();
+	std::string fn_users = "/etc/open-trade-gateway/ms-users.json";
+	if (ss.FromFile(fn_users.c_str()))
 	{
-		ss.FromVar(g_masterConfig);
-		bool saveFile = ss.ToFile(fn.c_str());
-		if (!saveFile)
+		ss.ToVar(g_masterConfig.usersConfig);
+		//如果是一个新的交易日,需要清除所有游客	
+		std::string trading_day = GuessTradingDay();
+		bool flag = false;
+		if (trading_day != g_masterConfig.usersConfig.trading_day)
 		{
 			LogMs().WithField("fun","LoadMasterConfig")
-				.WithField("key","gatewayms")				
-				.WithField("fileName",fn)
-				.Log(LOG_WARNING,"save ms config file failed!");
-		}
-	}
-	
-	if (g_masterConfig.slaveNodeList.size() == 0)
-	{
-		return false;
-	}
+				.WithField("key","gatewayms")
+				.WithField("trading_day",trading_day)
+				.WithField("old_trading_day", g_masterConfig.usersConfig.trading_day)
+				.Log(LOG_INFO, "load ms-users.json in a new trading day");
 
-	g_masterConfig.users_slave_node_map.clear();
-	for (const SlaveNodeInfo & s : g_masterConfig.slaveNodeList)
-	{
-		SlaveNodeInfo tmpSlaveNode;
-		tmpSlaveNode.name = s.name;
-		tmpSlaveNode.host = s.host;
-		tmpSlaveNode.path = s.path;
-		tmpSlaveNode.port = s.port;
-		tmpSlaveNode.userList.clear();
-		for (const std::string& u : s.userList)
-		{			
-			TUserSlaveNodeMap::iterator it = g_masterConfig.users_slave_node_map.find(u);
-			if (it == g_masterConfig.users_slave_node_map.end())
+			g_masterConfig.usersConfig.trading_day = trading_day;
+			flag = true;
+
+			//清除游客数据
+			for (auto & s : g_masterConfig.usersConfig.slaveNodeUserInfoList)
 			{
-				g_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
-					u,tmpSlaveNode));
+				std::vector<std::string>::iterator it = s.users.begin();
+				for (; it != s.users.end();)
+				{
+					std::string& u = *it;
+					if (u.find(u8"sim_快期模拟_游客_", 0) != std::string::npos)
+					{
+						it = s.users.erase(it);
+					}
+					else
+					{
+						it++;
+					}
+				}
 			}
 		}
+
+		//保存用户配置文件
+		if (flag)
+		{
+			ss.FromVar(g_masterConfig.usersConfig);
+			bool saveFile = ss.ToFile(fn_users.c_str());
+			if (!saveFile)
+			{
+				LogMs().WithField("fun", "LoadMasterConfig")
+					.WithField("key", "gatewayms")
+					.WithField("fileName", fn_users)
+					.Log(LOG_WARNING, "save ms-users.json file failed!");
+			}
+		}
+
+
+	}
+	//原来不存在ms-users.json配置文件,生成一个空的
+	else
+	{
+		std::string trading_day = GuessTradingDay();
+		g_masterConfig.usersConfig.trading_day = trading_day;
+		for (auto& a : g_masterConfig.slaveNodeList)
+		{
+			SlaveNodeUserInfo slaveNodeUserInfo;
+			slaveNodeUserInfo.name = a.name;
+			slaveNodeUserInfo.users.clear();
+			g_masterConfig.usersConfig.slaveNodeUserInfoList.push_back(slaveNodeUserInfo);
+		}
 	}
 
+	//生成user和和slavenode之间的映射关系
+	g_masterConfig.users_slave_node_map.clear();
+	for (auto& u : g_masterConfig.usersConfig.slaveNodeUserInfoList)
+	{
+		std::string nodeName = u.name;
+		SlaveNodeInfo tmpSlaveNode;
+		for (const SlaveNodeInfo & s : g_masterConfig.slaveNodeList)
+		{
+			if (s.name == nodeName)
+			{
+				tmpSlaveNode.name = s.name;
+				tmpSlaveNode.host = s.host;
+				tmpSlaveNode.path = s.path;
+				tmpSlaveNode.port = s.port;
+				break;
+			}
+		}
+
+		if (!tmpSlaveNode.name.empty())
+		{
+			for (auto & uk : u.users)
+			{
+				TUserSlaveNodeMap::iterator it = g_masterConfig.users_slave_node_map.find(uk);
+				if (it == g_masterConfig.users_slave_node_map.end())
+				{
+					g_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+						uk, tmpSlaveNode));
+				}
+			}
+		}
+
+	}
 	return true;
 }
-

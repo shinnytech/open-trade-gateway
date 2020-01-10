@@ -7,21 +7,21 @@
     "host": "192.168.1.35",
     "port": "7788",
     "path": "/",
-    "users": []   
+    "bids": ["simnow","nhqhsopt"]
   },
   {
     "name": "136",
     "host": "192.168.1.36",
     "port": "7788",
     "path": "/",
-    "users": []   
+    "bids": ["simnow","shzq"] 
   },
   {
    "name": "137",
     "host": "192.168.1.37",
     "port": "7788",
     "path": "/",
-    "users": []   
+    "bids": ["simnow","simsy"]  
   }
 ]
 }

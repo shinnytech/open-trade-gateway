@@ -25,29 +25,41 @@ struct SlaveNodeInfo
 
 	std::string path;
 
-	std::vector<std::string> userList;
+	std::vector<std::string> bids;
 };
 
 typedef std::vector<SlaveNodeInfo> TSlaveNodeInfoList;
 
-typedef std::map<std::string,SlaveNodeInfo> TUserSlaveNodeMap;
+//user和slavenode之间的映射关系
+typedef std::map<std::string, SlaveNodeInfo> TUserSlaveNodeMap;
 
-struct SlaveNodeInfoBids
+struct SlaveNodeUserInfo
 {
-	SlaveNodeInfoBids();
+	SlaveNodeUserInfo();
 
 	std::string name;
 	
-	std::vector<std::string> bidList;
+	std::vector<std::string> users;
+};
+
+typedef std::vector<SlaveNodeUserInfo> TSlaveNodeUserInfoList;
+
+struct TMsUsersConfig
+{
+	TMsUsersConfig();
+
+	std::string trading_day;
+
+	TSlaveNodeUserInfoList slaveNodeUserInfoList;
 };
 
 //bid和slavenode的name之间的映射关系
-typedef std::map<std::string,std::vector<std::string>> TBidSlaveNodeMap;
+typedef std::map<std::string, std::vector<std::string>> TBidSlaveNodeMap;
 
 struct MasterConfig
 {
 	MasterConfig();
-		
+
 	std::map<std::string, BrokerConfig> brokers;
 
 	std::string broker_list_str;
@@ -56,11 +68,10 @@ struct MasterConfig
 	std::string host;
 
 	int port;
-
-	//当前交易日
-	std::string trading_day;
 	
 	TSlaveNodeInfoList slaveNodeList;	
+
+	TMsUsersConfig usersConfig;
 
 	TUserSlaveNodeMap users_slave_node_map;
 
@@ -88,11 +99,13 @@ public:
 
 	void DefineStruct(SlaveNodeInfo& s);
 
-	void DefineStruct(SlaveNodeInfoBids& s);
+	void DefineStruct(SlaveNodeUserInfo& d);
 
-	void DefineStruct(MasterConfig& c);	
+	void DefineStruct(TMsUsersConfig& d);
+	
+	void DefineStruct(MasterConfig& c);
 
-	void DefineStruct(RtnBrokersMsg& b);	
+	void DefineStruct(RtnBrokersMsg& b);
 };
 
 bool LoadBrokerList();

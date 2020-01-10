@@ -126,46 +126,33 @@ Test
 			"name":"135",//结点名称,不能重复
 			"host":"192.168.1.35",//open_trade_gateway实例的IP地址
 			"port":"7788", //open_trade_gateway实例的端口号(注意:这里是字符串)
-			"path":"/" //open_trade_gateway实例的路径,默认为"/"
+			"path":"/", //open_trade_gateway实例的路径,默认为"/"
+			"bids": ["simnow","nhqhsopt"]   //bid名称列表,来自于broker_list.json的name字段
 		},
 		{
 			"name":"136",
 			"host":"192.168.1.36",
 			"port":"7788",
-			"path":"/"
+			"path":"/",
+			"bids": ["simnow","shzq"] 
 		},
 		{
 			"name":"137",
 			"host":"192.168.1.37",
 			"port":"7788",
 			"path":"/",
+			"bids": ["simnow","simsy"] 
 		}
 		]
 	}
 
 3、上述配置的负载均衡服务器结点名称不可重复,如果重复,按步骤2中结点配置的顺序,先出现的有效,后出现的忽略;
 
-4、按下面的配置文件(文件名config-ms-bids.json,需要安装在/etc/open-trade-gateway/下)的说明给各个负载均衡服务器结点分配bid;
-::
+4、一个bid可以出现在一个或者多个结点的bid名称列表中,如果一个bid只出现在一个结点中,则该bid的用户只会分配到该结点中;
 
-	[
-  		{
-			"name": "135",                  //负载均衡服务器结点名称  
-			"bids": ["simnow","nhqhsopt"]   //bid名称列表,来自于broker_list.json的name字段
-  		},
-  		{
-			"name": "136",   
-    		"bids": ["simnow","shzq"] 
-  		},
-  		{
-    		"name": "137",   
-    		"bids": ["simnow","simsy"]  
-  		}
-	]
+5、如果一个bid出现在多个结点中,则该bid的用户会分别分配到不同的结点中,按当时总用户最少优先的原则分配;
 
-5、一个bid可以出现在一个或者多个结点的bid列表中,如果一个bid只出现在一个结点中,则该bid的用户只会分配到该结点中;
-
-6、如果一个bid出现在多个结点中,则该bid的用户会分别分配到不同的结点中;
+6、如果一个bid没有出现在任何结点中,则该bid的用户会在所有结点中进行分配,按当时总用户最少优先的原则分配;
 
 7、首先正确启动上述结点上的open_trade_gateway实例,最后启动负载均衡服务器open-trade-gateway-ms;
 

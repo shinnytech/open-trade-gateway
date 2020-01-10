@@ -101,7 +101,7 @@ private:
 
 	bool GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey,SlaveNodeInfo& slaveNodeInfo);
 
-	void SaveMsConfig(const std::string& userKey);
+	void SaveMsUsersConfig(const std::string& userKey);
 
 	boost::asio::io_context& m_ios;
 			
