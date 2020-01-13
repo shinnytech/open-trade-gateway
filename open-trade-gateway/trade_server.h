@@ -60,4 +60,6 @@ private:
 	boost::asio::deadline_timer _timer;
 
 	bool m_need_auto_start_ctp;
+
+	bool m_stop_server;
 };

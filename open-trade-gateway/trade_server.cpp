@@ -43,6 +43,7 @@ trade_server::trade_server(boost::asio::io_context& ios,int port)
 	,_connection_id(0)
 	,_timer(io_context_)	
 	,m_need_auto_start_ctp(true)
+	,m_stop_server(false)
 {
 }
 
@@ -95,9 +96,12 @@ bool trade_server::init()
 	}
 
 	do_accept();
-		
-	_timer.expires_from_now(boost::posix_time::seconds(10));
-	_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus,this));
+	
+	if (!m_stop_server)
+	{
+		_timer.expires_from_now(boost::posix_time::seconds(10));
+		_timer.async_wait(boost::bind(&trade_server::OnCheckServerStatus, this));
+	}
 
 	return true;
 }
@@ -138,6 +142,7 @@ void trade_server::OnAccept(boost::system::error_code ec
 
 void trade_server::stop()
 {
+	m_stop_server = true;
 	boost::system::error_code ec;
 	_timer.cancel(ec);
 	if (ec)
@@ -146,6 +151,12 @@ void trade_server::stop()
 			.WithField("key","gateway")
 			.WithField("errmsg",ec.message())
 			.Log(LOG_WARNING,"open trade gateway cancel timer fail!");	
+	}
+	else
+	{
+		Log().WithField("fun", "stop")
+			.WithField("key", "gateway")			
+			.Log(LOG_INFO, "open trade gateway cancel timer success!");
 	}
 
 	acceptor_.close();
@@ -168,6 +179,11 @@ void trade_server::OnCheckServerStatus()
 	Log().WithField("fun","OnCheckServerStatus")
 		.WithField("key","gateway")
 		.Log(LOG_INFO,"on check server status");
+
+	if (m_stop_server)
+	{
+		return;
+	}
 	
 	boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
 	int weekNumber = tm.date().day_of_week();
@@ -382,6 +398,10 @@ void trade_server::StartTradeInstance(const std::string& strKey
 	{
 		flag = true;
 	}
+	else if (broker_type == "kingstar")
+	{
+		flag = true;
+	}
 	else if (broker_type == "perftest")
 	{
 		flag = true;
@@ -567,6 +587,10 @@ void trade_server::StopTradeInstance(const std::string& strKey
 		flag = true;
 	}
 	else if (broker_type == "sim")
+	{
+		flag = true;
+	}
+	else if (broker_type == "kingstar")
 	{
 		flag = true;
 	}

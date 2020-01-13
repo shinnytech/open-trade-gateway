@@ -89,10 +89,9 @@ int main(int argc, char* argv[])
 				.WithField("sig",sig)
 				.Log(LOG_INFO,"trade_server got sig");
 
-			s.stop();	
 			flag.store(false);
-			ios.stop();
-
+			s.stop();				
+			
 			md_child.terminate();
 			md_child.wait();
 			
@@ -101,6 +100,8 @@ int main(int argc, char* argv[])
 			Log().WithField("fun","main")
 				.WithField("key","gateway")				
 				.Log(LOG_INFO,"trade_server exit");			
+
+			ios.stop();
 		});
 		
 		while (flag.load())
