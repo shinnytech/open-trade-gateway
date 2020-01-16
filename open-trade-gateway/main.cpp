@@ -8,12 +8,12 @@
 #include "config.h"
 #include "http.h"
 #include "version.h"
-
 #include <iostream>
 #include <string>
 #include <atomic>
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
+#include <boost/stacktrace.hpp>
 
 boost::interprocess::managed_shared_memory* m_segment= nullptr;
 ShmemAllocator* m_alloc_inst = nullptr;
@@ -22,6 +22,8 @@ InsMapType* m_ins_map = nullptr;
 bool LoadInsList();
 
 void FreeInstList();
+
+void dump_execinfo();
 
 bool otg_already_running(const char* procname);
 
@@ -83,25 +85,26 @@ int main(int argc, char* argv[])
 		#endif 
 		signals_.async_wait(
 			[&s,&ios,&md_child,&flag](boost::system::error_code, int sig)
-		{				
-			Log().WithField("fun","main")
-				.WithField("key","gateway")
-				.WithField("sig",sig)
-				.Log(LOG_INFO,"trade_server got sig");
+		{			
+			Log().WithField("fun", "main")
+				.WithField("key", "gateway")
+				.WithField("sig", sig)
+				.Log(LOG_INFO, "trade_server got sig");
 
 			flag.store(false);
-			s.stop();				
+												
+			s.stop();			
 			
 			md_child.terminate();
 			md_child.wait();
 			
 			FreeInstList();
-
-			Log().WithField("fun","main")
-				.WithField("key","gateway")				
-				.Log(LOG_INFO,"trade_server exit");			
-
+			
 			ios.stop();
+
+			Log().WithField("fun", "main")
+				.WithField("key", "gateway")
+				.Log(LOG_INFO, "trade_server exit");
 		});
 		
 		while (flag.load())
@@ -111,8 +114,18 @@ int main(int argc, char* argv[])
 				ios.run();
 				break;
 			}
+			catch (std::bad_alloc& bd)
+			{
+				dump_execinfo();
+				Log().WithField("fun","main")
+					.WithField("key","gateway")
+					.WithField("errmsg",bd.what())
+					.Log(LOG_WARNING, "ios run exception");
+				break;
+			}
 			catch(std::exception& ex)
 			{
+				dump_execinfo();
 				Log().WithField("fun","main")
 					.WithField("key","gateway")
 					.WithField("errmsg",ex.what())
@@ -227,6 +240,7 @@ void FreeInstList()
 	}
 	catch (std::exception& ex)
 	{
+		dump_execinfo();
 		Log().WithField("fun", "FreeInstList")
 			.WithField("key", "gateway")
 			.WithField("errmsg", ex.what())
@@ -325,5 +339,34 @@ bool otg_already_running(const char* procname)
 		sprintf(buf,"%ld\n", (long)getpid());
 		write(fd,buf,strlen(buf)+1);
 		return false;
+	}
+}
+
+#include <execinfo.h>
+
+void dump_execinfo()
+{
+	#define BACKTRACE_SIZE   16
+	
+	void *buffer[BACKTRACE_SIZE];
+	char **strings;
+
+	int nptrs = backtrace(buffer,BACKTRACE_SIZE);
+	strings = backtrace_symbols(buffer,nptrs);
+	if (nullptr ==strings )
+	{
+		Log().WithField("fun", "dump_execinfo")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "dump_execinfo strings is nullptr");
+		return;
+	}
+
+	for (int j = 0; j < nptrs; j++)
+	{
+		Log().WithField("fun","dump_execinfo")
+			.WithField("key","gateway")
+			.WithField("j",j)
+			.WithField("str",strings[j])
+			.Log(LOG_INFO, "dump_execinfo strings");
 	}
 }
