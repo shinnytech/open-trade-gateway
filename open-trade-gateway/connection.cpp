@@ -472,6 +472,10 @@ bool connection::ProcessLogInMessage(const ReqLogin& req, const std::string &jso
 	{
 		flag = true;
 	}
+	else if (_reqLogin.broker.broker_type == "kingstar")
+	{
+		flag = true;
+	}
 	else if (_reqLogin.broker.broker_type == "perftest")
 	{
 		flag = true;
