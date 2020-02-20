@@ -260,15 +260,67 @@ bool UserProcessInfo::RestartProcess_i(const std::string& name, const std::strin
 {
 	try
 	{
+		_out_mq_name = cmd + "_msg_out";
+		boost::interprocess::message_queue::remove(_out_mq_name.c_str());
+		_out_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
+			(new boost::interprocess::message_queue(boost::interprocess::create_only
+				,_out_mq_name.c_str(),MAX_MSG_NUMS_OUT, MAX_MSG_LENTH));
+	}
+	catch (std::exception& ex)
+	{
+		Log().WithField("fun","RestartProcess_i")
+			.WithField("key","gateway")
+			.WithField("user_key",_key)
+			.WithField("errmsg",ex.what())
+			.Log(LOG_ERROR,"RestartProcess_i and create out message queue exception");
+		return false;
+	}
+
+	try
+	{
+		_thread_ptr.reset();
+		_thread_ptr = std::shared_ptr<boost::thread>(
+			new boost::thread(boost::bind(&UserProcessInfo::ReceiveMsg_i, shared_from_this(), _key)));
+	}
+	catch (std::exception& ex)
+	{
+		Log().WithField("fun","RestartProcess_i")
+			.WithField("key","gateway")
+			.WithField("user_key", _key)
+			.WithField("errmsg", ex.what())
+			.Log(LOG_ERROR, "RestartProcess_i and start ReceiveMsg_i thread exception");
+		return false;
+	}
+
+	try
+	{
+		_in_mq_name = cmd + "_msg_in";
+		boost::interprocess::message_queue::remove(_in_mq_name.c_str());
+		_in_mq_ptr = std::shared_ptr <boost::interprocess::message_queue>
+			(new boost::interprocess::message_queue(boost::interprocess::create_only
+				, _in_mq_name.c_str(), MAX_MSG_NUMS_IN, MAX_MSG_LENTH));
+	}
+	catch (std::exception& ex)
+	{
+		Log().WithField("fun", "RestartProcess_i")
+			.WithField("key", "gateway")
+			.WithField("user_key", _key)
+			.WithField("errmsg", ex.what())
+			.Log(LOG_ERROR, "RestartProcess_i and create in message queue exception");
+		return false;
+	}
+
+	try
+	{
 		if (nullptr != _process_ptr)
 		{
 			_process_ptr->wait();
 
 			Log().WithField("fun", "RestartProcess_i")
 				.WithField("key", "gateway")
-				.WithField("user_key", _key)
-				.WithField("exit_code", _process_ptr->exit_code())
-				.WithField("native_exit_code", _process_ptr->native_exit_code())
+				.WithField("user_key",_key)
+				.WithField("exit_code",_process_ptr->exit_code())
+				.WithField("native_exit_code",_process_ptr->native_exit_code())
 				.Log(LOG_ERROR, "before restart process user process");
 
 			_process_ptr.reset();
@@ -277,12 +329,10 @@ bool UserProcessInfo::RestartProcess_i(const std::string& name, const std::strin
 		_process_ptr = std::make_shared<boost::process::child>(boost::process::child(
 			boost::process::search_path(name)
 			, cmd.c_str()));
-		
 		if (nullptr == _process_ptr)
 		{
 			return false;
 		}
-
 		return _process_ptr->running();
 	}
 	catch (std::exception& ex)
@@ -290,10 +340,10 @@ bool UserProcessInfo::RestartProcess_i(const std::string& name, const std::strin
 		Log().WithField("fun","RestartProcess_i")
 			.WithField("key","gateway")
 			.WithField("user_key",_key)
-			.WithField("errmsg",ex.what())		
-			.Log(LOG_ERROR,"restart process user process exception");	
+			.WithField("errmsg",ex.what())
+			.Log(LOG_ERROR, "RestartProcess_i and start user process fail");
 		return false;
-	}
+	}	
 }
 
 bool UserProcessInfo::StartProcess_i(const std::string& name, const std::string& cmd)

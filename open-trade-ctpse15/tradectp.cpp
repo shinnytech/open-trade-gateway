@@ -4587,7 +4587,7 @@ void traderctp::ReceiveMsg(const std::string& key)
 			memset(buf, 0, sizeof(buf));
 			boost::posix_time::ptime tm = boost::get_system_time()
 				+ boost::posix_time::milliseconds(100);
-			bool flag = _in_mq_ptr->timed_receive(buf, sizeof(buf), recvd_size, priority, tm);
+			bool flag = _in_mq_ptr->timed_receive(buf, sizeof(buf), recvd_size, priority, tm);			
 			if (!m_run_receive_msg.load())
 			{
 				break;
