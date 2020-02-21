@@ -41,6 +41,7 @@ GATEWAYMS_DEPS := $(GATEWAYMS_OBJS:%.o=%.d)
 CXXFLAGS += -std=c++17 -pthread -g -O2 -flto -Icontrib/include/ \
 -Iopen-trade-common/
 LDFLAGS += -Lcontrib/lib
+LDFLAGS += -Lcontrib/lib/ks
 LDLIBS += -lssl -lcrypto -lcurl -lboost_system -lstdc++fs -lrt
 
 .PHONY: all clean install
@@ -168,5 +169,5 @@ install: all
 	install -m 755 bin/$(GATEWAY_NAME) /usr/local/bin/
 	install -m 755 bin/$(GATEWAYMS_NAME) /usr/local/bin/
 	install -m 755 contrib/lib/*.so /usr/local/lib/
-	install -m 755 contrib/lib/KSInterB2C.lkc /usr/local/lib/
+	install -m 755 contrib/lib/ks/*.* /usr/local/bin/
 	install -m 644 conf/* /etc/$(GATEWAY_NAME)/

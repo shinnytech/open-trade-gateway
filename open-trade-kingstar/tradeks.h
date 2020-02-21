@@ -145,18 +145,7 @@ public:
 	// 请求号
 	int m_nRequestID;
 	//////////
-private:
-	//////////////////////
-	// 实例指针
-	KingstarAPI::CThostFtdcTraderApi *m_pUserApi;
-	// 经济公司代码
-	KingstarAPI::TThostFtdcBrokerIDType m_chBrokerID;
-	// 用户名
-	KingstarAPI::TThostFtdcUserIDType m_chUserID;
-	// 用户密码
-	KingstarAPI::TThostFtdcPasswordType m_chPassword;
-	// 合约
-	KingstarAPI::TThostFtdcContractCodeType m_chContract;
+private:	
 	//////////////////////
 	std::atomic_bool m_b_login;
 

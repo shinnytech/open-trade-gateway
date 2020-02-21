@@ -25,11 +25,11 @@ using namespace KingstarAPI;
 traderctp::traderctp(boost::asio::io_context& ios
 	, const std::string& key)
 	:m_b_login(false)
-	, _key(key)
-	, m_settlement_info("")
-	, _ios(ios)
-	, _out_mq_ptr()
-	, _out_mq_name(_key + "_msg_out")
+	,_key(key)
+	,m_settlement_info("")
+	,_ios(ios)
+	,_out_mq_ptr()
+	,_out_mq_name(_key + "_msg_out")
 	, _in_mq_ptr()
 	, _in_mq_name(_key + "_msg_in")
 	, _thread_ptr()
@@ -4537,7 +4537,7 @@ void traderctp::AfterLogin()
 #pragma region systemlogic
 
 void traderctp::Start()
-{
+{	
 	try
 	{
 		_out_mq_ptr = std::shared_ptr<boost::interprocess::message_queue>
@@ -5411,8 +5411,8 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 
 		_req_login = req;
 		auto it = g_config.brokers.find(_req_login.bid);
-		_req_login.broker = it->second;
-
+		_req_login.broker = it->second;		
+									
 		//为了支持次席而添加的功能
 		if ((!_req_login.broker_id.empty()) &&
 			(!_req_login.front.empty()))
@@ -5434,9 +5434,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		{
 			m_user_file_path = g_config.user_file_path + "/" + _req_login.bid;
 		}
-
 		
-
 		m_data.user_id = _req_login.user_name;
 		LoadFromFile();
 		m_loging_connectId = connId;
@@ -5547,12 +5545,7 @@ void traderctp::InitTdApi()
 	m_try_req_authenticate_times = 0;
 	m_try_req_login_times = 0;
 	std::string flow_file_name = GenerateUniqFileName();
-
-	Log().WithField("fun", "InitTdApi")
-		.WithField("key", _key)
-		.WithField("fileName",flow_file_name)
-		.Log(LOG_INFO, "InitTdApi 1");
-
+		
 	//m_pTdApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flow_file_name.c_str());
 	m_pTdApi = CThostFtdcTraderApi::CreateFtdcTraderApi();
 	if (NULL == m_pTdApi)
@@ -5564,40 +5557,11 @@ void traderctp::InitTdApi()
 		return;
 	}
 
-	Log().WithField("fun", "InitTdApi")
-		.WithField("key", _key)
-		.WithField("fileName", flow_file_name)
-		.Log(LOG_INFO, "InitTdApi 2");
-
 	m_pTdApi->RegisterSpi(this);
-
-	Log().WithField("fun", "InitTdApi")
-		.WithField("key", _key)
-		.WithField("fileName", flow_file_name)
-		.Log(LOG_INFO, "InitTdApi 3");
-
 	m_pTdApi->SubscribePrivateTopic(THOST_TERT_RESUME);
-
-	Log().WithField("fun", "InitTdApi")
-		.WithField("key", _key)
-		.WithField("fileName", flow_file_name)
-		.Log(LOG_INFO, "InitTdApi 4");
-
-
-	m_pTdApi->SubscribePublicTopic(THOST_TERT_RESUME);
-
-	Log().WithField("fun", "InitTdApi")
-		.WithField("key", _key)
-		.WithField("fileName", flow_file_name)
-		.Log(LOG_INFO, "InitTdApi 5");
-
+	m_pTdApi->SubscribePublicTopic(THOST_TERT_QUICK);
 	m_broker_id = _req_login.broker.ctp_broker_id;
-
-	Log().WithField("fun", "InitTdApi")
-		.WithField("key", _key)
-		.WithField("fileName", flow_file_name)
-		.Log(LOG_INFO, "InitTdApi 6");
-		
+   		
 	if (_req_login.broker.is_fens)
 	{
 		Log().WithField("fun", "InitTdApi")
@@ -5622,21 +5586,13 @@ void traderctp::InitTdApi()
 	}
 	else
 	{
-		Log().WithField("fun", "InitTdApi")
-			.WithField("key", _key)
-			.Log(LOG_INFO, "InitTdApi 7");
-
 		for (auto it = _req_login.broker.trading_fronts.begin()
 			; it != _req_login.broker.trading_fronts.end(); ++it)
 		{
 			std::string& f = *it;
 			m_pTdApi->RegisterFront((char*)(f.c_str()));
 		}
-
-		Log().WithField("fun", "InitTdApi")
-			.WithField("key", _key)
-			.Log(LOG_INFO, "InitTdApi 8");
-	}
+	}	
 }
 
 void traderctp::StopTdApi()
@@ -10281,27 +10237,22 @@ int traderctp::ReqAuthenticate()
 	}
 
 	CThostFtdcReqAuthenticateField field;
-	memset(&field, 0, sizeof(field));
-	//	strcpy_x(field.BrokerID, m_chBrokerID);
-	//	strcpy_x(field.UserID, m_chUserID);
-	//	strcpy_x(field.UserProductInfo, USER_PRODUCT_INFO_NAME.c_str());
-	//	strcpy_x(field.AppID, "ks2");
-	//	strcpy_x(field.AuthCode, "812ed069bf157ec51336eddf8b764948");
-	strcpy_x(field.BrokerID, m_broker_id.c_str());
-	strcpy_x(field.UserID, _req_login.user_name.c_str());
-	//	strcpy_x(field.UserProductInfo, USER_PRODUCT_INFO_NAME.c_str());
-	strcpy_x(field.AppID, _req_login.broker.product_info.c_str());
-	strcpy_x(field.AuthCode, _req_login.broker.auth_code.c_str());
+	memset(&field,0,sizeof(field));	
+	strcpy_x(field.BrokerID,"");
+	strcpy_x(field.UserID,_req_login.user_name.c_str());
+	//strcpy_x(field.UserProductInfo, USER_PRODUCT_INFO_NAME.c_str());
+	strcpy_x(field.AuthCode,_req_login.broker.auth_code.c_str());
+	strcpy_x(field.AppID,_req_login.broker.product_info.c_str());	
 	int ret = m_pTdApi->ReqAuthenticate(&field, ++_requestID);
-	Log().WithField("fun", "ReqAuthenticate")
-		.WithField("key", _key)
-		.WithField("bid", _req_login.bid)
-		.WithField("user_name", _req_login.user_name)
-		.WithField("AppID", _req_login.broker.product_info)
-		.WithField("auth_code", _req_login.broker.auth_code)
-		.WithField("ret", ret)
-		.Log(LOG_INFO, "ctp ReqAuthenticate");
-	return ret;
+	Log().WithField("fun","ReqAuthenticate")
+		.WithField("key",_key)
+		.WithField("BrokerID",m_broker_id)
+		.WithField("UserID",_req_login.user_name)
+		.WithField("UserProductInfo",USER_PRODUCT_INFO_NAME)
+		.WithField("AuthCode",_req_login.broker.auth_code)
+		.WithField("AppID",_req_login.broker.product_info)		
+		.WithField("ret",ret)
+		.Log(LOG_INFO,"ctp ReqAuthenticate");
 	return ret;
 }
 
