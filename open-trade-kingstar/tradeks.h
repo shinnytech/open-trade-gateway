@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file tradeks.h
-///@brief	ks½»Ò×Âß¼­ÊµÏÖ
-///@copyright	ÉÏº£ĞÅÒ×ĞÅÏ¢¿Æ¼¼¹É·İÓĞÏŞ¹«Ë¾ °æÈ¨ËùÓĞ
+///@brief	ksäº¤æ˜“é€»è¾‘å®ç°
+///@copyright	ä¸Šæµ·ä¿¡æ˜“ä¿¡æ¯ç§‘æŠ€è‚¡ä»½æœ‰é™å…¬å¸ ç‰ˆæƒæ‰€æœ‰
 /////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -54,95 +54,95 @@ public:
 
 	void Stop();
 
-	///µ±¿Í»§¶ËÓë½»Ò×ºóÌ¨½¨Á¢ÆğÍ¨ĞÅÁ¬½ÓÊ±£¨»¹Î´µÇÂ¼Ç°£©£¬¸Ã·½·¨±»µ÷ÓÃ¡£
+	///å½“å®¢æˆ·ç«¯ä¸äº¤æ˜“åå°å»ºç«‹èµ·é€šä¿¡è¿æ¥æ—¶ï¼ˆè¿˜æœªç™»å½•å‰ï¼‰ï¼Œè¯¥æ–¹æ³•è¢«è°ƒç”¨ã€‚
 	virtual void OnFrontConnected();
 
-	///µ±¿Í»§¶ËÓë½»Ò×ºóÌ¨Í¨ĞÅÁ¬½Ó¶Ï¿ªÊ±£¬¸Ã·½·¨±»µ÷ÓÃ¡£µ±·¢ÉúÕâ¸öÇé¿öºó£¬API»á×Ô¶¯ÖØĞÂÁ¬½Ó£¬¿Í»§¶Ë¿É²»×ö´¦Àí¡£
-	///@param nReason ´íÎóÔ­Òò
-	///        0x1001 ÍøÂç¶ÁÊ§°Ü
-	///        0x1002 ÍøÂçĞ´Ê§°Ü
-	///        0x2001 ½ÓÊÕĞÄÌø³¬Ê±
-	///        0x2002 ·¢ËÍĞÄÌøÊ§°Ü
-	///        0x2003 ÊÕµ½´íÎó±¨ÎÄ
+	///å½“å®¢æˆ·ç«¯ä¸äº¤æ˜“åå°é€šä¿¡è¿æ¥æ–­å¼€æ—¶ï¼Œè¯¥æ–¹æ³•è¢«è°ƒç”¨ã€‚å½“å‘ç”Ÿè¿™ä¸ªæƒ…å†µåï¼ŒAPIä¼šè‡ªåŠ¨é‡æ–°è¿æ¥ï¼Œå®¢æˆ·ç«¯å¯ä¸åšå¤„ç†ã€‚
+	///@param nReason é”™è¯¯åŸå› 
+	///        0x1001 ç½‘ç»œè¯»å¤±è´¥
+	///        0x1002 ç½‘ç»œå†™å¤±è´¥
+	///        0x2001 æ¥æ”¶å¿ƒè·³è¶…æ—¶
+	///        0x2002 å‘é€å¿ƒè·³å¤±è´¥
+	///        0x2003 æ”¶åˆ°é”™è¯¯æŠ¥æ–‡
 	virtual void OnFrontDisconnected(int nReason);
 
-	///¿Í»§¶ËÈÏÖ¤ÏìÓ¦
+	///å®¢æˆ·ç«¯è®¤è¯å“åº”
 	virtual void OnRspAuthenticate(KingstarAPI::CThostFtdcRspAuthenticateField *pRspAuthenticateField, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///µÇÂ¼ÇëÇóÏìÓ¦
+	///ç™»å½•è¯·æ±‚å“åº”
 	virtual void OnRspUserLogin(KingstarAPI::CThostFtdcRspUserLoginField* pRspUserLogin, KingstarAPI::CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÓÃ»§¿ÚÁî¸üĞÂÇëÇóÏìÓ¦
+	///ç”¨æˆ·å£ä»¤æ›´æ–°è¯·æ±‚å“åº”
 	virtual void OnRspUserPasswordUpdate(KingstarAPI::CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÇëÇó²éÑ¯½áËãĞÅÏ¢È·ÈÏÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢ç»“ç®—ä¿¡æ¯ç¡®è®¤å“åº”
 	virtual void OnRspQrySettlementInfoConfirm(KingstarAPI::CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÇëÇó²éÑ¯Í¶×ÊÕß½áËã½á¹ûÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢æŠ•èµ„è€…ç»“ç®—ç»“æœå“åº”
 	virtual void OnRspQrySettlementInfo(KingstarAPI::CThostFtdcSettlementInfoField *pSettlementInfo, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///Í¶×ÊÕß½áËã½á¹ûÈ·ÈÏÏìÓ¦
+	///æŠ•èµ„è€…ç»“ç®—ç»“æœç¡®è®¤å“åº”
 	virtual void OnRspSettlementInfoConfirm(KingstarAPI::CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///±¨µ¥Â¼ÈëÇëÇóÏìÓ¦
+	///æŠ¥å•å½•å…¥è¯·æ±‚å“åº”
 	virtual void OnRspOrderInsert(KingstarAPI::CThostFtdcInputOrderField* pInputOrder, KingstarAPI::CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-	///±¨µ¥²Ù×÷ÇëÇóÏìÓ¦
+	///æŠ¥å•æ“ä½œè¯·æ±‚å“åº”
 	virtual void OnRspOrderAction(KingstarAPI::CThostFtdcInputOrderActionField* pInputOrderAction, KingstarAPI::CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-	///±¨µ¥Â¼Èë´íÎó»Ø±¨
+	///æŠ¥å•å½•å…¥é”™è¯¯å›æŠ¥
 	virtual void OnErrRtnOrderInsert(KingstarAPI::CThostFtdcInputOrderField *pInputOrder, KingstarAPI::CThostFtdcRspInfoField *pRspInfo);
 
-	///±¨µ¥²Ù×÷´íÎó»Ø±¨
+	///æŠ¥å•æ“ä½œé”™è¯¯å›æŠ¥
 	virtual void OnErrRtnOrderAction(KingstarAPI::CThostFtdcOrderActionField *pOrderAction, KingstarAPI::CThostFtdcRspInfoField *pRspInfo);
 
-	///ÇëÇó²éÑ¯Í¶×ÊÕß³Ö²ÖÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢æŠ•èµ„è€…æŒä»“å“åº”
 	virtual void OnRspQryInvestorPosition(KingstarAPI::CThostFtdcInvestorPositionField* pInvestorPosition, KingstarAPI::CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÇëÇó²éÑ¯×Ê½ğÕË»§ÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢èµ„é‡‘è´¦æˆ·å“åº”
 	virtual void OnRspQryTradingAccount(KingstarAPI::CThostFtdcTradingAccountField* pTradingAccount, KingstarAPI::CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÇëÇó²éÑ¯Ç©Ô¼ÒøĞĞÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢ç­¾çº¦é“¶è¡Œå“åº”
 	virtual void OnRspQryContractBank(KingstarAPI::CThostFtdcContractBankField *pContractBank, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);;
 
-	///ÇëÇó²éÑ¯ÒøÆÚÇ©Ô¼¹ØÏµÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢é“¶æœŸç­¾çº¦å…³ç³»å“åº”
 	virtual void OnRspQryAccountregister(KingstarAPI::CThostFtdcAccountregisterField *pAccountregister, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÇëÇó²éÑ¯×ªÕÊÁ÷Ë®ÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢è½¬å¸æµæ°´å“åº”
 	virtual void OnRspQryTransferSerial(KingstarAPI::CThostFtdcTransferSerialField *pTransferSerial, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///ÆÚ»õ·¢ÆğÒøĞĞ×Ê½ğ×ªÆÚ»õÍ¨Öª
+	///æœŸè´§å‘èµ·é“¶è¡Œèµ„é‡‘è½¬æœŸè´§é€šçŸ¥
 	virtual void OnRtnFromBankToFutureByFuture(KingstarAPI::CThostFtdcRspTransferField *pRspTransfer);
 
-	///ÆÚ»õ·¢ÆğÆÚ»õ×Ê½ğ×ªÒøĞĞÍ¨Öª
+	///æœŸè´§å‘èµ·æœŸè´§èµ„é‡‘è½¬é“¶è¡Œé€šçŸ¥
 	virtual void OnRtnFromFutureToBankByFuture(KingstarAPI::CThostFtdcRspTransferField *pRspTransfer);
 
-	///ÆÚ»õ·¢ÆğÒøĞĞ×Ê½ğ×ªÆÚ»õ´íÎó»Ø±¨
+	///æœŸè´§å‘èµ·é“¶è¡Œèµ„é‡‘è½¬æœŸè´§é”™è¯¯å›æŠ¥
 	virtual void OnErrRtnBankToFutureByFuture(KingstarAPI::CThostFtdcReqTransferField *pReqTransfer, KingstarAPI::CThostFtdcRspInfoField *pRspInfo);
 
-	///ÆÚ»õ·¢ÆğÆÚ»õ×Ê½ğ×ªÒøĞĞ´íÎó»Ø±¨
+	///æœŸè´§å‘èµ·æœŸè´§èµ„é‡‘è½¬é“¶è¡Œé”™è¯¯å›æŠ¥
 	virtual void OnErrRtnFutureToBankByFuture(KingstarAPI::CThostFtdcReqTransferField *pReqTransfer, KingstarAPI::CThostFtdcRspInfoField *pRspInfo);
 
-	///´íÎóÓ¦´ğ
+	///é”™è¯¯åº”ç­”
 	virtual void OnRspError(KingstarAPI::CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 
-	///±¨µ¥Í¨Öª
+	///æŠ¥å•é€šçŸ¥
 	virtual void OnRtnOrder(KingstarAPI::CThostFtdcOrderField* pOrder);
 
-	///³É½»Í¨Öª
+	///æˆäº¤é€šçŸ¥
 	virtual void OnRtnTrade(KingstarAPI::CThostFtdcTradeField* pTrade);
 
-	///½»Ò×Í¨Öª
+	///äº¤æ˜“é€šçŸ¥
 	virtual void OnRtnTradingNotice(KingstarAPI::CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo);
 
-	///ÇëÇó²éÑ¯¾­¼Í¹«Ë¾½»Ò×²ÎÊıÏìÓ¦
+	///è¯·æ±‚æŸ¥è¯¢ç»çºªå…¬å¸äº¤æ˜“å‚æ•°å“åº”
 	virtual void OnRspQryBrokerTradingParams(KingstarAPI::CThostFtdcBrokerTradingParamsField *pBrokerTradingParams
 		, KingstarAPI::CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-	///ºÏÔ¼½»Ò××´Ì¬Í¨Öª
+	///åˆçº¦äº¤æ˜“çŠ¶æ€é€šçŸ¥
 	virtual void OnRtnInstrumentStatus(KingstarAPI::CThostFtdcInstrumentStatusField *pInstrumentStatus);
 	//////////
-	// ÇëÇóºÅ
+	// è¯·æ±‚å·
 	int m_nRequestID;
 	//////////
 private:	
@@ -197,7 +197,7 @@ private:
 
 	std::string m_user_file_path;
 
-	//Î¯ÍĞµ¥µ¥ºÅÓ³Éä±í¹ÜÀí
+	//å§”æ‰˜å•å•å·æ˜ å°„è¡¨ç®¡ç†
 	std::map<LocalOrderKey, RemoteOrderKey> m_ordermap_local_remote;
 
 	std::map<RemoteOrderKey, LocalOrderKey> m_ordermap_remote_local;
@@ -220,7 +220,7 @@ private:
 
 	std::list<int> m_qry_his_settlement_info_trading_days;
 
-	//½»Ò×ÕË»§È«ĞÅÏ¢
+	//äº¤æ˜“è´¦æˆ·å…¨ä¿¡æ¯
 	User m_data;
 
 	std::atomic_bool m_something_changed;
@@ -229,7 +229,7 @@ private:
 
 	std::atomic_bool m_position_ready;
 
-	//µ±ÈÕ³õÊ¼³Ö²ÖĞÅÏ¢ÊÇ·ñÒÑµ½Î»,Ã¿¸ö½»Ò×ÈÕÖ»ĞèÒ»´Î
+	//å½“æ—¥åˆå§‹æŒä»“ä¿¡æ¯æ˜¯å¦å·²åˆ°ä½,æ¯ä¸ªäº¤æ˜“æ—¥åªéœ€ä¸€æ¬¡
 	std::atomic_bool m_position_inited;
 
 	std::atomic_int m_rsp_position_id;
@@ -242,12 +242,12 @@ private:
 
 	std::list<int> m_req_transfer_list;
 
-	//ÓÃ»§²Ù×÷·´À¡
+	//ç”¨æˆ·æ“ä½œåé¦ˆ
 
-	//»¹ĞèÒª¸øÓÃ»§ÏÂµ¥·´À¡µÄµ¥ºÅ¼¯ºÏ
+	//è¿˜éœ€è¦ç»™ç”¨æˆ·ä¸‹å•åé¦ˆçš„å•å·é›†åˆ
 	std::set<std::string> m_insert_order_set;
 
-	//»¹ĞèÒª¸øÓÃ»§³·µ¥·´À¡µÄµ¥ºÅ¼¯ºÏ
+	//è¿˜éœ€è¦ç»™ç”¨æˆ·æ’¤å•åé¦ˆçš„å•å·é›†åˆ
 	std::set<std::string> m_cancel_order_set;
 
 	long long m_next_qry_dt;
