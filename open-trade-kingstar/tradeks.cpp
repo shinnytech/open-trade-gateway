@@ -5627,25 +5627,11 @@ void traderctp::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 	}
 	
 	std::string& msg = *msg_ptr;
-
-	Log().WithField("fun", "SendMsg")
-		.WithField("key", _key)
-		.WithField("bid", _req_login.bid)
-		.WithField("user_name", _req_login.user_name)
-		.WithPack("jsmsg", msg)
-		.Log(LOG_ERROR, "1");
-
+		
 	std::stringstream ss;
 	ss << connId << "#";
 	msg = ss.str() + msg;
-
-	Log().WithField("fun", "SendMsg")
-		.WithField("key", _key)
-		.WithField("bid", _req_login.bid)
-		.WithField("user_name", _req_login.user_name)
-		.WithField("jsmsg2", msg)
-		.Log(LOG_ERROR, "2");
-	
+			
 	size_t totalLength = msg.length();
 	if (totalLength > MAX_MSG_LENTH)
 	{

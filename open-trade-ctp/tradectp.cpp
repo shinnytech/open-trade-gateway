@@ -2635,7 +2635,78 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		if (it != m_insert_order_set.end())
 		{
 			m_insert_order_set.erase(it);
-			OutputNotifyAllSycn(328,u8"下单成功");
+			
+			std::stringstream ss_1;		
+			
+			std::string strInstrumentId = u8"合约代码:";
+			strInstrumentId += pOrder->ExchangeID;
+			strInstrumentId += ".";
+			strInstrumentId += pOrder->InstrumentID;
+			ss_1 <<  strInstrumentId;
+
+			std::string strDirection = (pOrder->Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+			ss_1 << u8"，" << strDirection;
+
+			std::string strOffsetFlag = "";
+			if (THOST_FTDC_OF_Open == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:开仓";
+			}
+			else if (THOST_FTDC_OF_Close == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平仓";
+			}
+			else if (THOST_FTDC_OF_ForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强平";
+			}
+			else if (THOST_FTDC_OF_CloseToday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平今";
+			}
+			else if (THOST_FTDC_OF_CloseYesterday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平昨";
+			}
+			else if (THOST_FTDC_OF_ForceOff == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强减";
+			}
+			else if (THOST_FTDC_OF_LocalForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:本地强平";
+			}
+			else
+			{
+				strOffsetFlag = u8"开平标志:未知";
+			}
+			ss_1 << u8"，" << strOffsetFlag;
+
+			if (pOrder->OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:市价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_BestPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:最优价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:五档最优";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:" << pOrder->LimitPrice;
+			}
+			else
+			{
+				ss_1 << u8"，" << u8"委托价格:未知";
+			}
+			ss_1 << u8"，" << u8"委托手数:" << pOrder->VolumeTotalOriginal;
+
+			std::string strNotify = u8"下单成功，";
+			strNotify += ss_1.str();
+			OutputNotifyAllSycn(328,strNotify.c_str());
 		}
 
 		//更新Order Key				
@@ -2656,7 +2727,78 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		if (it != m_cancel_order_set.end())
 		{
 			m_cancel_order_set.erase(it);
-			OutputNotifyAllSycn(329,u8"撤单成功");
+			std::stringstream ss_1;
+
+			std::string strInstrumentId = u8"合约代码:";
+			strInstrumentId += pOrder->ExchangeID;
+			strInstrumentId += ".";
+			strInstrumentId += pOrder->InstrumentID;
+			ss_1 <<  strInstrumentId;
+
+			std::string strDirection = (pOrder->Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+			ss_1 << u8"，" << strDirection;
+
+			std::string strOffsetFlag = "";
+			if (THOST_FTDC_OF_Open == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:开仓";
+			}
+			else if (THOST_FTDC_OF_Close == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平仓";
+			}
+			else if (THOST_FTDC_OF_ForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强平";
+			}
+			else if (THOST_FTDC_OF_CloseToday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平今";
+			}
+			else if (THOST_FTDC_OF_CloseYesterday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平昨";
+			}
+			else if (THOST_FTDC_OF_ForceOff == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强减";
+			}
+			else if (THOST_FTDC_OF_LocalForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:本地强平";
+			}
+			else
+			{
+				strOffsetFlag = u8"开平标志:未知";
+			}
+			ss_1 << u8"，" << strOffsetFlag;
+
+			if (pOrder->OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:市价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_BestPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:最优价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:五档最优";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:" << pOrder->LimitPrice;
+			}
+			else
+			{
+				ss_1 << u8"，" << u8"委托价格:未知";
+			}
+			ss_1 << u8"，" << u8"委托手数:" << pOrder->VolumeTotalOriginal;
+
+			std::string strNotify = u8"撤单成功，";
+			strNotify += ss_1.str();
+			OutputNotifyAllSycn(329,strNotify.c_str());
+
 			CheckConditionOrderCancelOrderTask(order.order_id);
 			//删除Order
 			auto itOrder = m_input_order_key_map.find(strKey);
@@ -2671,7 +2813,79 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 			if (it2 != m_insert_order_set.end())
 			{
 				m_insert_order_set.erase(it2);
-				OutputNotifyAllSycn(330,u8"下单失败," + order.last_msg,"WARNING");
+
+				std::stringstream ss_1;	
+
+				std::string strInstrumentId = u8"合约代码:";
+				strInstrumentId += pOrder->ExchangeID;
+				strInstrumentId += ".";
+				strInstrumentId += pOrder->InstrumentID;
+				ss_1 <<  strInstrumentId;
+
+				std::string strDirection = (pOrder->Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+				ss_1 << u8"，" << strDirection;
+
+				std::string strOffsetFlag = "";
+				if (THOST_FTDC_OF_Open == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:开仓";
+				}
+				else if (THOST_FTDC_OF_Close == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:平仓";
+				}
+				else if (THOST_FTDC_OF_ForceClose == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:强平";
+				}
+				else if (THOST_FTDC_OF_CloseToday == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:平今";
+				}
+				else if (THOST_FTDC_OF_CloseYesterday == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:平昨";
+				}
+				else if (THOST_FTDC_OF_ForceOff == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:强减";
+				}
+				else if (THOST_FTDC_OF_LocalForceClose == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:本地强平";
+				}
+				else
+				{
+					strOffsetFlag = u8"开平标志:未知";
+				}
+				ss_1 << u8"，" << strOffsetFlag;
+
+				if (pOrder->OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:市价";
+				}
+				else if (pOrder->OrderPriceType == THOST_FTDC_OPT_BestPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:最优价";
+				}
+				else if (pOrder->OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:五档最优";
+				}
+				else if (pOrder->OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:" << pOrder->LimitPrice;
+				}
+				else
+				{
+					ss_1 << u8"，" << u8"委托价格:未知";
+				}
+				ss_1 << u8"，" << u8"委托手数:" << pOrder->VolumeTotalOriginal;
+
+				std::string strNotify = u8"下单失败,"+ order.last_msg;
+				strNotify+="，";
+				strNotify += ss_1.str();
+				OutputNotifyAllSycn(330,strNotify.c_str(),"WARNING");
 			}
 
 			//删除Order
@@ -2742,13 +2956,55 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 		if ((serverOrderInfo.ExchangeId == exchangeId)
 			&& (serverOrderInfo.OrderSysID == orderSysId))
 		{
-			serverOrderInfo.VolumeLeft -= pTrade->Volume;
+			std::stringstream ss;		
 
-			std::stringstream ss;
-			ss << u8"成交通知,合约:" << serverOrderInfo.ExchangeId
-				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume ;
+			ss << u8"成交通知";
+			std::string strInstrumentId = u8"合约代码:"+serverOrderInfo.ExchangeId+"."+ serverOrderInfo.InstrumentId;
+			ss << "," << strInstrumentId;
+
+			std::string strDirection = (pTrade->Direction== THOST_FTDC_D_Buy)? u8"下单方向:买": u8"下单方向:卖";
+			ss << "," << strDirection;
+
+			std::string strOffsetFlag = "";
+			if (THOST_FTDC_OF_Open ==pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:开仓";
+			}
+			else if (THOST_FTDC_OF_Close == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:平仓";
+			}
+			else if (THOST_FTDC_OF_ForceClose == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:强平";
+			}
+			else if (THOST_FTDC_OF_CloseToday == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:平今";
+			}
+			else if (THOST_FTDC_OF_CloseYesterday == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:平昨";
+			}
+			else if (THOST_FTDC_OF_ForceOff == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:强减";
+			}
+			else if (THOST_FTDC_OF_LocalForceClose == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:本地强平";
+			}
+			else
+			{
+				strOffsetFlag = u8"开平标志:未知";
+			}			
+			ss << "," << strOffsetFlag;
+
+			ss << "," << u8"成交价格:" << pTrade->Price<<","<< u8"成交手数:"<< pTrade->Volume;
+		
 			OutputNotifyAllSycn(331, ss.str().c_str());
 
+			serverOrderInfo.VolumeLeft -= pTrade->Volume;
 			if (serverOrderInfo.VolumeLeft <= 0)
 			{
 				m_input_order_key_map.erase(it);
@@ -5879,23 +6135,41 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 }
 
 void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
-{
+{	
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(353,u8"撤单user_id错误,不能撤单","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单user_id错误,不能撤单，";		
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(353,strNotify.c_str(),"WARNING");
 		return;
 	}
 
 	if (d.local_key.order_id.empty())
 	{
-		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单指定的order_id不存在,不能撤单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(354,strNotify.c_str(),"WARNING");
 		return;
 	}
 	   
 	auto it = m_ordermap_local_remote.find(d.local_key);
 	if (it == m_ordermap_local_remote.end())
 	{
-		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单指定的order_id不存在,不能撤单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(354, strNotify.c_str(), "WARNING");
 		return;
 	}
 	
@@ -5924,7 +6198,13 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(355,u8"撤单请求发送失败!", "WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(355,strNotify.c_str(),"WARNING");
 	}
 
 	SerializerLogCtp nss;
@@ -5950,9 +6230,80 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
 	static int order_count = 0;
 
+	std::stringstream ss_1;
+	
+	std::string strInstrumentId = u8"合约代码:";
+	strInstrumentId += d.f.ExchangeID;
+	strInstrumentId += ".";
+	strInstrumentId +=d.f.InstrumentID;
+	ss_1 << strInstrumentId;
+
+	std::string strDirection = (d.f.Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+	ss_1 << u8"，" << strDirection;
+
+	std::string strOffsetFlag = "";
+	if (THOST_FTDC_OF_Open == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:开仓";
+	}
+	else if (THOST_FTDC_OF_Close == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平仓";
+	}
+	else if (THOST_FTDC_OF_ForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强平";
+	}
+	else if (THOST_FTDC_OF_CloseToday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平今";
+	}
+	else if (THOST_FTDC_OF_CloseYesterday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平昨";
+	}
+	else if (THOST_FTDC_OF_ForceOff == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强减";
+	}
+	else if (THOST_FTDC_OF_LocalForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:本地强平";
+	}
+	else
+	{
+		strOffsetFlag = u8"开平标志:未知";
+	}
+	ss_1 << u8"，" << strOffsetFlag;
+	
+	if (d.f.OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:市价" ;
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_BestPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:最优价";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:五档最优";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:"<< d.f.LimitPrice;
+	}
+	else
+	{
+		ss_1 << u8"，" << u8"委托价格:未知";
+	}
+	
+	ss_1 << u8"，" << u8"委托手数:" << d.f.VolumeTotalOriginal;
+	
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(356,u8"报单user_id错误，不能下单", "WARNING");
+		std::string strNotify = u8"报单user_id错误，不能下单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(356,strNotify.c_str(),"WARNING");
 		return 0;
 	}
 
@@ -5982,9 +6333,11 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	auto it = m_ordermap_local_remote.find(d.local_key);
 	if (it != m_ordermap_local_remote.end())
 	{
+		std::string strNotify = u8"报单单号重复，不能下单，";
+		strNotify += ss_1.str();
 		OutputNotifyAllSycn(357
-			, u8"报单单号重复，不能下单"
-			, "WARNING");
+			,strNotify.c_str()
+			,"WARNING");
 		return 0;
 	}
 	
@@ -6039,7 +6392,9 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		std::string strMsg = "";
 		nss.ToString(&strMsg);
 
-		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");
+		std::string strNotify = u8"下单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(358,strNotify.c_str(),"WARNING");
 
 		Log().WithField("fun", "OnClientReqInsertOrder")
 			.WithField("key", _key)
@@ -9922,13 +10277,25 @@ void traderctp::OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d)
 	
 	if (nullptr == m_pTdApi)
 	{
-		OutputNotifyAllSycn(334,u8"当前时间不支持撤单!","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"当前时间不支持撤单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(334, strNotify.c_str(),"WARNING");
 		return;
 	}
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(355,u8"撤单请求发送失败!","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(355,strNotify.c_str(),"WARNING");
 		Log().WithField("fun","OnConditionOrderReqCancelOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
@@ -9965,6 +10332,75 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	rkey.front_id = m_front_id;
 	rkey.order_ref = std::to_string(m_order_ref++);
 
+	std::stringstream ss_1;
+
+	std::string strInstrumentId = u8"合约代码:";
+	strInstrumentId += d.f.ExchangeID;
+	strInstrumentId += ".";
+	strInstrumentId += d.f.InstrumentID;
+	ss_1 <<strInstrumentId;
+
+	std::string strDirection = (d.f.Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+	ss_1 << u8"，" << strDirection;
+
+	std::string strOffsetFlag = "";
+	if (THOST_FTDC_OF_Open == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:开仓";
+	}
+	else if (THOST_FTDC_OF_Close == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平仓";
+	}
+	else if (THOST_FTDC_OF_ForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强平";
+	}
+	else if (THOST_FTDC_OF_CloseToday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平今";
+	}
+	else if (THOST_FTDC_OF_CloseYesterday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平昨";
+	}
+	else if (THOST_FTDC_OF_ForceOff == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强减";
+	}
+	else if (THOST_FTDC_OF_LocalForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:本地强平";
+	}
+	else
+	{
+		strOffsetFlag = u8"开平标志:未知";
+	}
+	ss_1 << u8"，" << strOffsetFlag;
+
+	if (d.f.OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:市价";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_BestPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:最优价";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:五档最优";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:" << d.f.LimitPrice;
+	}
+	else
+	{
+		ss_1 << u8"，" << u8"委托价格:未知";
+	}
+
+	ss_1 << u8"，" << u8"委托手数:" << d.f.VolumeTotalOriginal;
+		
 	//客户端没有提供订单编号
 	if (d.local_key.order_id.empty())
 	{
@@ -10011,13 +10447,17 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	
 	if (nullptr == m_pTdApi)
 	{
-		OutputNotifyAllSycn(333,u8"当前时间不支持下单!","WARNING");
+		std::string strNotify = u8"当前时间不支持下单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(333,strNotify.c_str(),"WARNING");
 		return;
 	}
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);	
 	if (0 != r)
 	{		
-		OutputNotifyAllSycn(358,u8"下单请求发送失败!","WARNING");
+		std::string strNotify = u8"下单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(358,strNotify.c_str(),"WARNING");
 		Log().WithField("fun","OnConditionOrderReqInsertOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
@@ -10153,7 +10593,7 @@ void traderctp::SendDataDirect(int connId, const std::string& msg)
 
 int traderctp::RegSystemInfo()
 {
-	return 0;	
+	return 0;
 }
 
 int traderctp::ReqAuthenticate()
