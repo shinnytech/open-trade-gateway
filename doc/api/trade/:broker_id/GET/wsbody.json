@@ -105,6 +105,38 @@
       "required": [ "aid" ],
       "additionalProperties": false
     },
+    "change_trading_account_password": {
+      "type": "object",
+      "properties": {
+        "aid": { "enum": [ "change_trading_account_password" ] },
+        "account_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "old_password": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "new_password": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "currency_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16
+        }
+      },
+      "required": [
+        "aid",
+        "account_id",
+        "currency_id"
+      ],
+      "additionalProperties": false
+    },
     "insert_order": {
       "type": "object",
       "properties": {
@@ -117,7 +149,7 @@
           "type": "string",
           "pattern": "^[^=#|;/]{0,256}$"
         },
-        "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX","INE","SSE","SZSE"] },
+        "exchange_id": { "enum": [ "SHFE", "DCE", "CZCE", "CFFEX", "INE", "SSE", "SZSE" ] },
         "instrument_id": {
           "type": "string",
           "pattern": "^[^=#|;/]{1,64}$"
@@ -129,7 +161,7 @@
         "price_type": { "enum": [ "LIMIT", "ANY", "BEST", "FIVELEVEL" ] },
         "volume_condition": { "enum": [ "ANY", "MIN", "ALL" ] },
         "time_condition": { "enum": [ "IOC", "GFS", "GFD", "GTD", "GTC", "GFA" ] },
-        "hedge_flag": { "enum": [ "SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER","COVERED" ] },
+        "hedge_flag": { "enum": [ "SPECULATION", "ARBITRAGE", "HEDGE", "MARKETMAKER", "COVERED" ] },
         "contingent_condition": { "enum": [ "IMMEDIATELY", "TOUCH", "TOUCHPROFIT" ] }
       },
       "required": [
@@ -330,7 +362,8 @@
   "anyOf": [
     { "$ref": "#/definitions/peek_message" },
     { "$ref": "#/definitions/req_login" },
-    { "$ref": "#/definitions/insert_order" },
+    { "$ref": "#/definitions/change_trading_account_password" },
+	{ "$ref": "#/definitions/insert_order" },
     { "$ref": "#/definitions/cancel_order" },
     { "$ref": "#/definitions/req_transfer" },
     { "$ref": "#/definitions/confirm_settlement" },

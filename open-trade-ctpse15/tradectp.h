@@ -137,6 +137,10 @@ public:
 
 	///合约交易状态通知
 	virtual void OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus);
+
+	///资金账户口令更新请求响应
+	virtual void OnRspTradingAccountPasswordUpdate(CThostFtdcTradingAccountPasswordUpdateField
+		*pTradingAccountPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 private:
 	std::atomic_bool m_b_login;
 
@@ -375,6 +379,9 @@ private:
 	void ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPasswordUpdateField>
 		pUserPasswordUpdate,std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
+	void ProcessTradingAccountPasswordUpdate(std::shared_ptr<CThostFtdcTradingAccountPasswordUpdateField>
+		pTradingAccountPasswordUpdate, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
+
 	void ProcessOrderAction(std::shared_ptr<CThostFtdcInputOrderActionField> pInputOrderAction,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo);
 
@@ -402,7 +409,7 @@ private:
 
 	void ProcessQryTransferSerial(std::shared_ptr<CThostFtdcTransferSerialField> pTransferSerial,
 		std::shared_ptr<CThostFtdcRspInfoField> pRspInfo, int nRequestID, bool bIsLast);
-	
+	   	
 	void ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder);
 
 	void ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade);
@@ -443,6 +450,8 @@ private:
 	void ReqQrySettlementInfo();
 
 	void ReqQryHistorySettlementInfo();
+
+	void ReqChangeTradingAccountPassword(CtpChangeTradingAccountPassword& f);
 
 	bool NeedReset();
 

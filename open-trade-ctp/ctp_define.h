@@ -100,6 +100,25 @@ struct CtpActionCancelOrder
 	CThostFtdcInputOrderActionField f;
 };
 
+struct CtpChangeTradingAccountPassword
+{
+	CtpChangeTradingAccountPassword()
+		:account_id("")
+		,old_password("")
+		,new_password("")
+		,currency_id("")
+	{
+	}
+
+	std::string account_id;
+
+	std::string old_password;
+
+	std::string new_password;
+
+	std::string currency_id;
+};
+
 class SerializerCtp
 	: public RapidSerialize::Serializer<SerializerCtp>
 {
@@ -123,6 +142,8 @@ public:
 	void DefineStruct(CThostFtdcReqTransferField& d);
 
 	void DefineStruct(CThostFtdcTransferSerialField& d);
+
+	void DefineStruct(CtpChangeTradingAccountPassword& d);
 };
 
 class SerializerLogCtp
@@ -170,6 +191,8 @@ public:
 	void DefineStruct(CThostFtdcTradingNoticeInfoField& d);
 
 	void DefineStruct(CThostFtdcInstrumentStatusField& d);
+
+	void DefineStruct(CThostFtdcTradingAccountPasswordUpdateField& d);	
 };
 
 struct ctp_condition_order_task

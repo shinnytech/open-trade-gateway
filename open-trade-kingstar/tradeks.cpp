@@ -4692,17 +4692,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			.Log(LOG_WARNING, "traderctp parse json fail");
 		NotifyContinueProcessMsg(false);
 		return;
-	}
-	else
-	{
-		Log().WithField("fun", "ProcessInMsg")
-			.WithField("key", _key)
-			.WithField("bid", _req_login.bid)
-			.WithField("user_name",_req_login.user_name)
-			.WithPack("msgcontent",msg)
-			.WithField("connId",connId)
-			.Log(LOG_INFO, "traderctp parse json ok");
-	}
+	}	
 
 	ReqLogin req;
 	ss.ToVar(req);
@@ -5560,7 +5550,8 @@ void traderctp::InitTdApi()
 
 	m_pTdApi->RegisterSpi(this);
 	m_pTdApi->SubscribePrivateTopic(THOST_TERT_RESUME);
-	m_pTdApi->SubscribePublicTopic(THOST_TERT_QUICK);
+	m_pTdApi->SubscribePublicTopic(THOST_TERT_RESUME);
+	//m_pTdApi->SubscribePublicTopic(THOST_TERT_QUICK);
 	m_broker_id = _req_login.broker.ctp_broker_id;
    		
 	if (_req_login.broker.is_fens)
@@ -5614,8 +5605,6 @@ void traderctp::StopTdApi()
 
 void traderctp::SendMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 {
-	
-
 	if (nullptr == msg_ptr)
 	{
 		return;

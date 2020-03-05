@@ -750,6 +750,28 @@ void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPas
 	}
 }
 
+void traderctp::ProcessTradingAccountPasswordUpdate(std::shared_ptr<CThostFtdcTradingAccountPasswordUpdateField>
+	pTradingAccountPasswordUpdate, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
+{
+	if (nullptr == pRspInfo)
+	{
+		return;
+	}
+
+	if (pRspInfo->ErrorID == 0)
+	{		
+		OutputNotifySycn(m_loging_connectId
+			,363
+			,u8"修改资金密码成功");		
+	}
+	else
+	{
+		OutputNotifySycn(m_loging_connectId, pRspInfo->ErrorID
+			, u8"修改资金密码失败," + GBKToUTF8(pRspInfo->ErrorMsg)
+			, "WARNING");
+	}
+}
+
 void traderctp::OnRspUserPasswordUpdate(
 	CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -3348,6 +3370,57 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 	_ios.post(boost::bind(&traderctp::ProcessRtnInstrumentStatus,this,ptr1));
 }
 
+void traderctp::OnRspTradingAccountPasswordUpdate(CThostFtdcTradingAccountPasswordUpdateField
+	*pTradingAccountPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+	if (nullptr != pTradingAccountPasswordUpdate)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTradingAccountPasswordUpdate);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+		Log().WithField("fun","OnRspTradingAccountPasswordUpdate")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("IsLast",bIsLast)
+			.WithField("RequestID",nRequestID)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO,"ctp OnRspTradingAccountPasswordUpdate msg");
+	}
+	else
+	{
+		Log().WithField("fun","OnRspTradingAccountPasswordUpdate")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("IsLast",bIsLast)
+			.WithField("RequestID",nRequestID)
+			.Log(LOG_INFO, "ctp OnRspTradingAccountPasswordUpdate msg");
+	}
+
+	std::shared_ptr<CThostFtdcTradingAccountPasswordUpdateField> ptr1 = nullptr;
+	if (nullptr != pTradingAccountPasswordUpdate)
+	{
+		ptr1 = std::make_shared<CThostFtdcTradingAccountPasswordUpdateField>(
+			CThostFtdcTradingAccountPasswordUpdateField(*pTradingAccountPasswordUpdate));
+	}
+	
+	std::shared_ptr<CThostFtdcRspInfoField> ptr2 = nullptr;
+	if (nullptr != pRspInfo)
+	{
+		ptr2 = std::make_shared<CThostFtdcRspInfoField>(
+			CThostFtdcRspInfoField(*pRspInfo));
+	}
+
+	_ios.post(boost::bind(&traderctp::ProcessTradingAccountPasswordUpdate
+		, this, ptr1, ptr2));
+}
+
 void traderctp::ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentStatusField>
 	pInstrumentStatus)
 {
@@ -3612,6 +3685,24 @@ void traderctp::ReqQryTransferSerial()
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
 		.Log(LOG_INFO,"ctp ReqQryTransferSerial");
+}
+
+void traderctp::ReqChangeTradingAccountPassword(CtpChangeTradingAccountPassword& f)
+{
+	CThostFtdcTradingAccountPasswordUpdateField field;
+	memset(&field, 0, sizeof(field));
+	strcpy_x(field.BrokerID,m_broker_id.c_str());
+	strcpy_x(field.AccountID,f.account_id.c_str());
+	strcpy_x(field.OldPassword,f.old_password.c_str());
+	strcpy_x(field.NewPassword,f.new_password.c_str());
+	strcpy_x(field.CurrencyID,f.currency_id.c_str());
+	int r = m_pTdApi->ReqTradingAccountPasswordUpdate(&field,0);
+	Log().WithField("fun","ReqChangeTradingAccountPassword")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("ret", r)
+		.Log(LOG_INFO, "ctp ReqQryTransferSerial");
 }
 
 void traderctp::ReqQryBank()
@@ -5225,6 +5316,28 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			m_banks.clear();
 			m_need_query_bank.store(true);
 			m_need_query_register.store(true);	
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "change_trading_account_password")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive change_trading_account_password msg");
+
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(362, u8"当前时间不支持修改资金密码!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+
+			CtpChangeTradingAccountPassword d;
+			ssCtp.ToVar(d);
+			ReqChangeTradingAccountPassword(d);
 			NotifyContinueProcessMsg(false);
 			return;
 		}

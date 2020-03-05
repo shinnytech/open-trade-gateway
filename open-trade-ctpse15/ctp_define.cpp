@@ -41,6 +41,14 @@ void SerializerCtp::DefineStruct(CThostFtdcTransferSerialField& d)
 	AddItem(d.ErrorMsg, ("error_msg"));
 }
 
+void SerializerCtp::DefineStruct(CtpChangeTradingAccountPassword& d)
+{
+	AddItem(d.account_id,("account_id"));
+	AddItem(d.old_password,("old_password"));
+	AddItem(d.new_password,("new_password"));
+	AddItem(d.currency_id,("currency_id"));
+}
+
 void SerializerCtp::DefineStruct(OrderKeyPair& d)
 {
 	AddItem(d.local_key, "local");
@@ -241,6 +249,26 @@ void SerializerLogCtp::DefineStruct(CThostFtdcUserPasswordUpdateField& d)
 
 	std::string strNewPassword = GBKToUTF8(d.NewPassword);
 	AddItem(strNewPassword, ("NewPassword"));
+}
+
+void SerializerLogCtp::DefineStruct(CThostFtdcTradingAccountPasswordUpdateField& d)
+{
+	AddItem("CThostFtdcTradingAccountPasswordUpdateField", ("aid"));
+
+	std::string strBrokerID = GBKToUTF8(d.BrokerID);
+	AddItem(strBrokerID, ("BrokerID"));
+
+	std::string strAccountID = GBKToUTF8(d.AccountID);
+	AddItem(strAccountID, ("AccountID"));
+
+	std::string strOldPassword = GBKToUTF8(d.OldPassword);
+	AddItem(strOldPassword, ("OldPassword"));
+
+	std::string strNewPassword = GBKToUTF8(d.NewPassword);
+	AddItem(strNewPassword, ("NewPassword"));
+
+	std::string strCurrencyID = GBKToUTF8(d.CurrencyID);
+	AddItem(strCurrencyID, ("CurrencyID"));
 }
 
 void SerializerLogCtp::DefineStruct(CThostFtdcInputOrderField& d)
